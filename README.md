@@ -3,6 +3,24 @@
 **Status: alpha.** It runs end to end and produces a report you can read. Parts of it are
 experimental, and they are marked as such below.
 
+## Looking for feedback
+
+This is an early release, and outside eyes are the most useful thing it can get right now.
+If you try it, I would like to hear about any of these:
+
+- **Wrong flags.** Run it on a skill or agent repository you know well. What did it flag that
+  is not a concern?
+- **Misses.** What did it not catch that you would expect an audit like this to find?
+- **The report.** Read `report/summary.html`. Was it clear what to look at, and what would you
+  do next? If the answer is nothing, why?
+- **The approach.** Walkdown gives no verdict and no score, only evidence. Does that help you,
+  or does it leave you without an answer you needed?
+
+Open an issue at https://github.com/BytesFromToby/Walkdown/issues with what you ran it on (a
+link or a commit is enough) and what you saw. Short reports are welcome. If what you found is a
+security problem in someone else's repository, please don't post the details in a public
+issue; contact the repository's author first.
+
 Walkdown examines the instruction layer of AI skills and agents: the SKILL.md files, agent
 definitions, reference docs, hooks, and manifests that get loaded into a model's context and
 run with your permissions. It answers two questions, each answer cited to a file and line:
