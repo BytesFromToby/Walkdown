@@ -9,8 +9,9 @@ Walkdown builds on other people's ideas, research, and tools. This page names th
   data. Walkdown's stage 5 and the checklist at the top of every report are organized around it;
   the plain terms ("Reads your data", "Takes outside input", "Sends data out") are Walkdown's.
   [The lethal trifecta for AI agents](https://simonw.substack.com/p/the-lethal-trifecta-for-ai-agents)
-- **Interpretable Context Methodology (ICM)**: context kept in inspectable files, organized as
-  numbered stages that each have a written contract. Walkdown is laid out as an ICM workspace.
+- **Interpretable Context Methodology (ICM)**, by Jake Van Clief: context kept in inspectable
+  files, organized as numbered stages that each have a written contract. Walkdown is laid out as
+  an ICM workspace.
 
 ## Prior work on agent skill security
 
