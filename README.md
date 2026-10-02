@@ -3,6 +3,21 @@
 **Status: alpha.** It runs end to end and produces a report you can read. Parts of it are
 experimental, and they are marked as such below.
 
+Walkdown examines the instruction layer of AI skills and agents: the SKILL.md files, agent
+definitions, reference docs, hooks, and manifests that get loaded into a model's context and
+run with your permissions. It answers two questions, each answer cited to a file and line:
+
+1. What does this text ask the model to do?
+2. What does installing it grant?
+
+Ordinary security scanners read code. Here the payload is English, so they miss it.
+
+Walkdown reports what an artifact *can* do and where that is written. It does not guess at the
+author's intent, it gives no score, and it reaches no verdict. You read the evidence and decide.
+
+The name comes from engineering: a walkdown is the step where someone walks a system as it was
+actually built and records what is there, before anyone decides whether to run it.
+
 ## Looking for feedback
 
 This is an early release, and outside eyes are the most useful thing it can get right now.
@@ -20,21 +35,6 @@ Open an issue at https://github.com/BytesFromToby/Walkdown/issues with what you 
 link or a commit is enough) and what you saw. Short reports are welcome. If what you found is a
 security problem in someone else's repository, please don't post the details in a public
 issue; contact the repository's author first.
-
-Walkdown examines the instruction layer of AI skills and agents: the SKILL.md files, agent
-definitions, reference docs, hooks, and manifests that get loaded into a model's context and
-run with your permissions. It answers two questions, each answer cited to a file and line:
-
-1. What does this text ask the model to do?
-2. What does installing it grant?
-
-Ordinary security scanners read code. Here the payload is English, so they miss it.
-
-Walkdown reports what an artifact *can* do and where that is written. It does not guess at the
-author's intent, it gives no score, and it reaches no verdict. You read the evidence and decide.
-
-The name comes from engineering: a walkdown is the step where someone walks a system as it was
-actually built and records what is there, before anyone decides whether to run it.
 
 ## What a run produces
 
