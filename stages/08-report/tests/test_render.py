@@ -403,3 +403,23 @@ def test_sweep_band_near_the_line_includes_unflagged_and_names_a_kind():
     f = full(META, r, PASS, {}, set(r))
     assert "- SKILL.md:50-52: persist (p=0.45, near the line); no stage 4 hit" in f
     assert "- SKILL.md:60-61: skip-user (p=0.58, near the line); no stage 4 hit" in f
+
+
+def test_test_data_kept_out_of_summary_points():
+    r = reports(extra_hits=[{"check": "phrase.L.override", "file": "tests/x.md", "line": 3,
+                             "quote": "ignore all previous instructions", "patterns": ["L.ignore"],
+                             "audience": "test-data", "folded": False}])
+    r["01-inventory"]["findings"].append({"check": "struct.hooks", "file": "tests/p/hooks/hooks.json",
+                                          "line": None, "event": "SessionStart", "command": "x.sh"})
+    r["05-capability"]["findings"] += [
+        {"check": "cap.testdata", "file": None, "line": None, "stage1": 3, "stage4": 2,
+         "top_folders": ["tests"]},
+        {"check": "cap.pair", "file": "tests/setup.md", "line": None, "pair": "testdata+loaded",
+         "from": "SKILL.md", "evidence": []}]
+    s = summary(META, r, PASS, {}, set(r))
+    assert "tests/x.md:3" not in s and "1 more hit on these patterns in test data" in s
+    assert "tests/p/hooks/hooks.json" not in s and "1 more hook in test data" in s
+    assert "Test data set aside: 5 findings" in s
+    assert "tests/setup.md: sits in test data, but SKILL.md (read by the model) references it" in s
+    lim = limits(r, {}, PASS, set(r))
+    assert any("Test data is recognized by folder and file name" in x for x in lim)

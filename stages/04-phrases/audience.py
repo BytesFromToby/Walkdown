@@ -35,10 +35,29 @@ def _build_file(low: str) -> bool:
     return low in BUILD_FILES or any(fnmatch.fnmatch(low, g) for g in BUILD_GLOBS)
 
 
+# Test data: fixtures and tests that exercise the code, never loaded as instructions when the
+# artifact is installed (2026-10-02, Walkdown self-audit: a security tool's own attack samples
+# lit every stage). Decided by folder or file name. A test-data file that a model-read file
+# references directly is reported by stage 5 as a pair, so the name alone never hides it.
+TEST_DIRS = {"test", "tests", "__tests__", "testdata", "test-data", "test_data", "fixture",
+             "fixtures", "__fixtures__", "__snapshots__", "spec"}
+TEST_FILE_GLOBS = ("test_*.py", "*_test.py", "*_test.go", "*.test.*", "*.spec.js",
+                   "*.spec.ts", "*.spec.mjs", "*.spec.tsx", "*.spec.jsx", "conftest.py")
+
+
+def is_test_data(rel: str) -> bool:
+    parts = (rel or "").split("/")
+    folders, low = parts[:-1], parts[-1].lower()
+    return (any(f.lower() in TEST_DIRS for f in folders)
+            or any(fnmatch.fnmatch(low, g) for g in TEST_FILE_GLOBS))
+
+
 def audience(rel: str, scripts=(), hook_configs=()) -> str:
     parts = rel.split("/")
     folders, base = parts[:-1], parts[-1]
     low = base.lower()
+    if is_test_data(rel):
+        return "test-data"
     if low.startswith(HUMAN_PREFIXES) or any(f.lower() in HUMAN_DIRS for f in folders):
         return "human"
     if any(f.lower() in SUBAGENT_DIRS for f in folders) or fnmatch.fnmatch(low, "*prompt*.md"):

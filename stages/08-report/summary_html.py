@@ -54,7 +54,7 @@ def _item(stage, title, where, quote=None, note=None, lead=None) -> dict:
 def first_items(r) -> list[dict]:
     """Everything the summary's points of attention name, as plain items, stage order."""
     out = []
-    for h in R.fnd(r, "01-inventory", "struct.hooks"):
+    for h in [h for h in R.fnd(r, "01-inventory", "struct.hooks") if not R.is_test_data(h.get("file"))]:
         out.append(_item(1, "Runs commands on its own", h["file"],
                          f"{h.get('event')}: {h.get('command')}",
                          "A hook runs when the harness fires the event, not when you ask."))
@@ -68,7 +68,7 @@ def first_items(r) -> list[dict]:
                else "Loaded only by a folder or glob, named by nothing")
         out.append(_item(3, why + ", and it reads like an instruction", R.loc(p), p["quote"].strip()))
     hits = [h for h in R.phrase_hits(r) if R.POINT_PATTERNS & set(h.get("patterns", []))
-            and h.get("audience") != "human"]
+            and h.get("audience") not in ("human", "test-data")]
     for h in hits:
         pats = sorted(R.POINT_PATTERNS & set(h["patterns"]))
         out.append(_item(4, _family(pats), R.loc(h), h["quote"].strip(), R.rates_note(r, pats),
@@ -85,6 +85,9 @@ def first_items(r) -> list[dict]:
         elif x.get("tier") == "prohibited" and not x.get("confirmation"):
             out.append(_item(4, "An irreversible or prohibited action with no confirmation step",
                              R.loc(x), x["quote"].strip()))
+    for p in R.pairs(r, "testdata+loaded"):
+        out.append(_item(5, "Test data that the model is pointed at", p["file"],
+                         note=f"Referenced directly from {p.get('from')}, which the model reads."))
     for p in R.pairs(r, "hook+phrase"):
         out.append(_item(5, "An instruction the model sees before you type anything", R.loc(p),
                          p["quote"].strip(), "A context-injecting hook runs this script."))

@@ -11,7 +11,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "04-phrases"))
 import baserates  # noqa: E402
+from audience import is_test_data  # noqa: E402
 
 HEADINGS = {
     "01-inventory": "What ships",
@@ -261,6 +263,9 @@ def _s5(r):
     grants = [f["grant"] for f in fnd(r, "05-capability", "cap.grant")]
     line += "\n" + " " * COL + ("Install grants: " + ", ".join(grants) + "." if grants
                                else "Install grants: none.")
+    for t in fnd(r, "05-capability", "cap.testdata"):
+        line += ("\n" + " " * COL + f"Test data set aside: {t.get('stage1', 0) + t.get('stage4', 0)} "
+                 "findings in test or fixture folders count toward none of the above.")
     return line
 
 
@@ -273,11 +278,17 @@ STATUS = {"01-inventory": _s1, "02-reader": _s2, "03-graph": _s3, "04-phrases": 
 def points(reports, stage) -> list[str]:
     r = reports
     if stage == "01-inventory":
+        hooks = fnd(r, stage, "struct.hooks")
         items = [f"{h['file']}: {h.get('event')} hook runs {code(h.get('command'))}"
-                 for h in fnd(r, stage, "struct.hooks")]
+                 for h in hooks if not is_test_data(h.get("file"))]
         items += [f"{c['file']}: over the reader window ({c.get('detail')})"
                   for c in fnd(r, stage, "struct.census") if c.get("flag") == "reader-window"]
-        return _points(items, str)
+        lines = _points(items, str)
+        td = sum(1 for h in hooks if is_test_data(h.get("file")))
+        if td:
+            lines.append(f"  - {n(td, 'more hook')} in test data (never loaded on install), "
+                         "in the full report")
+        return lines
     if stage == "02-reader":
         model, counted = _split_audience(r, pairs(r, "hidden+phrase"))
         lines = _points(model, lambda p: f"{loc(p)}: hidden when rendered and matches "
@@ -293,8 +304,9 @@ def points(reports, stage) -> list[str]:
         return lines + _counted_line(counted, "More such pairs")
     if stage == "04-phrases":
         hits = [h for h in phrase_hits(r) if POINT_PATTERNS & set(h.get("patterns", []))]
-        model = [h for h in hits if h.get("audience") != "human"]
-        human = len(hits) - len(model)
+        model = [h for h in hits if h.get("audience") not in ("human", "test-data")]
+        human = sum(1 for h in hits if h.get("audience") == "human")
+        test = sum(1 for h in hits if h.get("audience") == "test-data")
         lines = _points(_part2_points(r) + model,
                         lambda h: h if isinstance(h, str) else
                         f"{loc(h)}: {code(h['quote'].strip())} "
@@ -302,9 +314,13 @@ def points(reports, stage) -> list[str]:
         if human:
             lines.append(f"  - {n(human, 'more hit')} on these patterns in human-facing files, "
                          "in the full report")
+        if test:
+            lines.append(f"  - {n(test, 'more hit')} on these patterns in test data, "
+                         "in the full report")
         return lines
     if stage == "05-capability":
-        items = [("hook", p) for p in pairs(r, "hook+phrase")]
+        items = [("testdata", p) for p in pairs(r, "testdata+loaded")]
+        items += [("hook", p) for p in pairs(r, "hook+phrase")]
         items += [("inj", i) for i in fnd(r, stage, "cap.injection") if i.get("mechanism") == "hook"]
         return _points(items, _point5)
     if stage == "06-soft":
@@ -316,7 +332,8 @@ def _split_audience(r, items):
     """Pairs on lines the model reads (model or subagent audience) are listed; pairs in
     scripts (tool) and human-facing files are counted. Stage 4 tags audience by path."""
     aud = {(h["file"], h["line"]): h.get("audience") for h in fnd(r, "04-phrases")}
-    listed = [p for p in items if aud.get((p["file"], p["line"])) not in ("human", "tool")]
+    listed = [p for p in items
+              if aud.get((p["file"], p["line"])) not in ("human", "tool", "test-data")]
     counted = collections.Counter(aud.get((p["file"], p["line"])) for p in items
                                   if p not in listed)
     return listed, counted
@@ -329,6 +346,8 @@ def _counted_line(counted, what) -> list[str]:
     if counted.get("human"):
         parts.append(f"{counted['human']} in human-facing files (changelog, license, docs, "
                      "templates)")
+    if counted.get("test-data"):
+        parts.append(f"{counted['test-data']} in test data")
     return [f"  - {what}: " + " and ".join(parts) + ", in the full report"] if parts else []
 
 
@@ -547,6 +566,9 @@ def _f6(r):
 
 def _point5(item) -> str:
     kind, x = item
+    if kind == "testdata":
+        return (f"{x['file']}: sits in test data, but {x.get('from')} (read by the model) "
+                "references it directly, so it is read like any other file")
     if kind == "hook":
         return (f"{loc(x)}: an instruction in a script a context-injecting hook runs, so it can "
                 f"reach the model before the first user input: {code(x['quote'].strip())}")
@@ -649,6 +671,11 @@ def limits(reports, notes, stamps, runs_ok) -> list[str]:
             out.append(key)
     for u in fnd(reports, "03-graph", "graph.unscanned"):
         out.append(f"Not scanned for references: {u['file']}: {u.get('reason')}")
+    for t in fnd(reports, "05-capability", "cap.testdata"):
+        out.append(f"Test data is recognized by folder and file name (tests, fixtures, test_*.py "
+                   f"and the like): {t.get('stage1', 0)} stage 1 and {t.get('stage4', 0)} stage 4 "
+                   "findings there were kept out of the capability map and the summary. Test data "
+                   "that a model-read file references directly is listed in section 5.")
     return out + STANDING_LIMITS
 
 
@@ -893,6 +920,9 @@ def _f5(r, capability_full):
                lambda p: f"{loc(p)}: {', '.join(p.get('posture', []))}"
                          f"{' (least privilege)' if p.get('least_privilege') else ''}; "
                          f"job {code(p.get('description'))}")
+    L += _list("Pairs: Test data a model-read file references directly",
+               pairs(r, "testdata+loaded"),
+               lambda p: f"{p['file']}: referenced from {p.get('from')}")
     for kind, title in (("orphan+phrase", "Orphan with a phrase hit"),
                         ("hidden+phrase", "Hidden text with a phrase hit"),
                         ("dynamic+phrase", "Load-only file with a phrase hit"),
@@ -933,7 +963,7 @@ def log(meta, runs, stamps, reports) -> str:
             L.append(f"| {stage} | | | | not run | |")
             continue
         res = f"{len(x.report['findings'])} findings" if x.ok else f"FAILED: {x.error}"
-        L.append(f"| {stage} | {x.started} | {x.finished or ''} | {stage + '.json' if x.ok else ''} | "
+        L.append(f"| {stage} | {x.started} | {x.finished or ''} | {'data/' + stage + '.json' if x.ok else ''} | "
                  f"{res} | {st.text if st else ''} |")
     L += [f"| 07-limits | | {meta.get('finished', '')} | 07-limits.md | written | |",
           f"| 08-report | | {meta.get('finished', '')} | report/summary.md, report/full.md | written | |",

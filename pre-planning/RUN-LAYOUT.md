@@ -1,5 +1,9 @@
 # Run layout: the files a run leaves on disk
 
+> **Current layout: [docs/RUN-FOLDER.md](../docs/RUN-FOLDER.md).** Since 2026-10-02 the reports
+> and LOG.md sit at the top of a run folder and everything else under `data/`. This document is
+> the design history; where they disagree, docs/RUN-FOLDER.md describes what the code does.
+
 METHOD owns the **why** (what each stage does, and the rule that detection never
 concludes). This doc owns the **files**: exactly what a single audit writes, in
 order, into its run folder. If the two ever disagree, METHOD is authoritative

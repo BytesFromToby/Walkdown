@@ -48,3 +48,14 @@ def test_guides_are_human_and_pattern_lists_are_tool():
         assert audience(rel) == "human", rel
     for rel in [".gitignore", "sub/.gitattributes", ".npmignore", "CODEOWNERS"]:
         assert audience(rel) == "tool", rel
+
+
+def test_test_data_by_folder_and_file_name():
+    from audience import is_test_data
+    for p in ["tests/x.md", "Fixtures/01/SKILL.md", "pkg/__tests__/a.js", "src/testdata/in.txt",
+              "spec/foo_spec.rb", "test_utils.py", "lib/parse_test.go", "src/a.test.ts",
+              "src/a.spec.js", "conftest.py", "tests/README.md"]:
+        assert is_test_data(p) and audience(p) == "test-data", p
+    for p in ["SKILL.md", "specs/run.SPEC.md", "examples/demo/SKILL.md", "contest.md",
+              "skills/testing/SKILL.md", "latest.md"]:
+        assert not is_test_data(p), p

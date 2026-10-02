@@ -236,15 +236,22 @@ in it.
 13. ~~Run Walkdown on Walkdown before publishing it.~~ Done 2026-10-02
    (`RepoResults/walkdown/2026-10-02_749e736`, label + sweep): every stage PASS except
    stage 2 INCOMPLETE (no Tesseract). The report is dominated by `Fixtures/` (hostile
-   samples) and quoted threats in the docs; Walkdown has no notion of test data. Sweep
-   flagged 1 passage outside Fixtures. Walked through in `docs/READING-THE-REPORT.md`.
+   samples) and quoted threats in the docs. Sweep flagged 1 passage outside Fixtures.
+   Walked through in `docs/READING-THE-REPORT.md`.
 14. Alpha docs 2026-10-02: `README.md`, `docs/READING-THE-REPORT.md`. `ReposToExamine/`
    and `RepoResults/` contents are out of git (the folders stay; only their READMEs are
    tracked). Specs moved to `stages/NN-*/specs/`.
+15. 2026-10-02: test data recognized by path (`audience` `test-data`; stage 5 sets it aside,
+   `cap.testdata` counts it, `testdata+loaded` pairs test data a model-read file references).
+   Self-audit after: ~950 findings set aside, exec-at-load gone; legs remain from the design
+   docs. Run folder layout changed (reports + LOG.md on top, rest under `data/`; layout.py).
+   Docs: `docs/HOW-IT-WORKS.md`, `docs/RUN-FOLDER.md`, rewritten `docs/READING-THE-REPORT.md`.
 
 Stage 6 working notes and open decisions: `pre-planning/soft/` (README lists D1 to D4).
-Reports: `report/summary.html` is the page for people; re-render an existing run's
-report with `python stages/08-report/run.py --rerender RepoResults/<repo>/<run>`.
+Reports: `summary.html` at the top of a run folder is the page for people (since
+2026-10-02 the reports and LOG.md sit at the top and everything else under `data/`;
+`docs/RUN-FOLDER.md`). Re-render with `python stages/08-report/run.py --rerender RepoResults/<repo>/<run>`.
+Public docs: `docs/READING-THE-REPORT.md`, `docs/HOW-IT-WORKS.md`, `docs/RUN-FOLDER.md`.
 
 *Git repo since 2026-09-25 (local, `main`). Each stage is built on its own branch
 and merged when the grader passes.*

@@ -31,6 +31,16 @@ tag describes the file, never the reader's intent.
 Folders are matched at any depth (`plugin/docs/x.md` is `human`), since
 bundles nest plugins.
 
+## Test data (added 2026-10-02)
+
+`is_test_data(rel)`: true when any folder in the path is one of `TEST_DIRS` (test, tests,
+__tests__, testdata, test-data, test_data, fixture, fixtures, __fixtures__, __snapshots__,
+spec; case-insensitive) or the file name matches `TEST_FILE_GLOBS` (test_*.py, *_test.py,
+*_test.go, *.test.*, *.spec.js/ts/mjs/tsx/jsx, conftest.py). `audience` returns `test-data`
+for such a path before any other rule. Test-data lines are never instruction lines, frontmatter
+included. Stage 5 sets test data aside and pairs any test-data file a model-read file
+references (stage 5 `specs/testdata.SPEC.md`).
+
 ## Must never
 
 - Read the file, or judge who the text is really for.

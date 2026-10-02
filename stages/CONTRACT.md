@@ -104,7 +104,7 @@ emits it.
 
 One check per PHRASES set or detector. Every finding carries `quote` (the
 original line, verbatim) and may carry `audience` (`model`, `subagent`, `human`,
-`tool`).
+`tool`, `test-data` (added 2026-10-02)).
 
 | Check | Sub-group | Class |
 |---|---|---|
@@ -153,7 +153,8 @@ Derived from stages 1 to 4; no new detection. `evidence` is a list of
 | `cap.injection` | path by which text reaches context at load | `mechanism`: `description` or `hook`; `event` (hooks); `bytes`: int or null; `basis`: `exact`, `estimate`, `unknown` |
 | `cap.load-bytes` | hook config, one per host (`file` the config; null when no hook injects at load) | `bytes`; `basis`; `unknown_parts` |
 | `cap.posture` | agent or command definition | `tools`; `posture`: list of `read`, `write`, `execute`, `network`, `delegate`, `all`, `other`; `least_privilege`: bool; `description` |
-| `cap.pair` | phrase hit on an orphan, a dynamic-only file, or hidden text | `pair`: `orphan+phrase`, `dynamic+phrase`, `hidden+phrase`, `hook+phrase` (added 2026-09-29); `phrase_check`; `patterns`; `quote`; `evidence` |
+| `cap.pair` | phrase hit on an orphan, a dynamic-only file, or hidden text; or test data a model-read file references | `pair`: `orphan+phrase`, `dynamic+phrase`, `hidden+phrase`, `hook+phrase` (added 2026-09-29), `testdata+loaded` (added 2026-10-02: `file` is the test-data file, `from` the model-read file referencing it; no `phrase_check` or `quote`); `phrase_check`; `patterns`; `quote`; `evidence` |
+| `cap.testdata` | run (`file`: null), only when test data was set aside (added 2026-10-02) | `stage1`, `stage4`: findings set aside from each stage; `top_folders`: up to five top-level folders they were in |
 
 ### Stage 6: soft reads (`06-soft`)
 

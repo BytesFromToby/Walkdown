@@ -21,7 +21,7 @@ sys.path.insert(0, str(HERE))
 import pipeline  # noqa: E402
 
 DEFAULT_OUT = HERE / "baserates.json"
-SKIP_AUDIENCES = ("human",)
+SKIP_AUDIENCES = ("human", "test-data")
 # Levels name the base rate in words; they are bins of the count, never a judgment.
 RARE, UNCOMMON, COMMON = "rare", "uncommon", "common"
 

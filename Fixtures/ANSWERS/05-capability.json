@@ -677,6 +677,152 @@
           "note": "An agent granted mcp__google-drive tools and nothing else: Reads your data."
         }
       ]
+    },
+    {
+      "root": "testdata-only",
+      "fixtures": {
+        "SKILL.md": "57cb9935168d2fc4b739ce7c11c116fc3ef3f2c2418162b8042a59c138ae33e1",
+        "tests/fake-plugin/hooks/hooks.json": "ee626ca7dbbe5d2141a6aab163798a4eeb1d31e755731e60d590d52f1a7af716",
+        "tests/fake-plugin/skills/leak/SKILL.md": "229bbb2f5428b997aa020b8bc3d032f0be4ecf664d4ca4241cfd8f6335f9c838"
+      },
+      "expect": [
+        {
+          "id": "cap-tdonly-leg-private-data-no",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "private-data"
+            },
+            "present": {
+              "eq": false
+            }
+          },
+          "note": "Hostile samples sit only under tests/: a fake plugin with a SessionStart hook and an exfiltration skill. Test data is never loaded on install, so none of it counts (2026-10-02)."
+        },
+        {
+          "id": "cap-tdonly-leg-untrusted-content-no",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "untrusted-content"
+            },
+            "present": {
+              "eq": false
+            }
+          }
+        },
+        {
+          "id": "cap-tdonly-leg-external-comms-no",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "external-comms"
+            },
+            "present": {
+              "eq": false
+            }
+          }
+        },
+        {
+          "id": "cap-tdonly-grant-exec-at-load-no",
+          "polarity": "negative",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "exec-at-load"
+            }
+          }
+        },
+        {
+          "id": "cap-tdonly-grant-network-no",
+          "polarity": "negative",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "network"
+            }
+          }
+        },
+        {
+          "id": "cap-tdonly-grant-elevated-no",
+          "polarity": "negative",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "elevated"
+            }
+          }
+        },
+        {
+          "id": "cap-tdonly-set-aside",
+          "polarity": "gate",
+          "check": "cap.testdata",
+          "match": {
+            "top_folders": {
+              "includes": "tests"
+            }
+          },
+          "note": "What was set aside is reported, never silently dropped."
+        },
+        {
+          "id": "cap-tdonly-no-loaded-pair",
+          "polarity": "negative",
+          "check": "cap.pair",
+          "match": {
+            "pair": {
+              "eq": "testdata+loaded"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "root": "testdata-loaded",
+      "fixtures": {
+        "SKILL.md": "d89363fbe72d92f7c5ef5174b9ae103593746ad98b639cc87460c388fc1178f1",
+        "tests/fixtures/setup.md": "e12a2701c8028e05e3cded9a1e12e0c2874962ca70b08640fd2077a57bbc06a9"
+      },
+      "expect": [
+        {
+          "id": "cap-tdloaded-pair",
+          "polarity": "gate",
+          "check": "cap.pair",
+          "file": "tests/fixtures/setup.md",
+          "match": {
+            "pair": {
+              "eq": "testdata+loaded"
+            }
+          },
+          "note": "SKILL.md tells the model to read and follow a file under tests/. A folder name never hides text the model is pointed at."
+        },
+        {
+          "id": "cap-tdloaded-leg-external-comms-yes",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "external-comms"
+            },
+            "present": {
+              "eq": true
+            }
+          },
+          "note": "The loaded test-data file's upload instruction counts like any other model-read text."
+        },
+        {
+          "id": "cap-tdloaded-grant-network",
+          "polarity": "gate",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "network"
+            }
+          }
+        }
+      ]
     }
   ]
 }

@@ -75,6 +75,13 @@ to <plain kind> (p=..)". Flagged passages stage 4 already covers are one counted
 status line adds "Sweep: ..: N passages read, F flagged, U with no stage 4 hit". The full
 report lists every flagged passage with its kind, p, and coverage.
 
+## Test data (added 2026-10-02)
+
+Hits, hooks, and pairs in test data are counted in the summary ("N more ... in test data"),
+never listed as points. Section 5's status adds "Test data set aside: N findings ...", the
+`testdata+loaded` pairs lead the stage 5 points and have their own list in the full report,
+and section 7 states that test data is recognized by name.
+
 ## Must never
 
 - Emit a score, severity, rank, or verdict word (benign, concerning, safe,

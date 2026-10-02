@@ -70,6 +70,8 @@ def instruction_lines(rel: str, aud: str, lines: list[str]) -> set[int]:
     of any markdown file (frontmatter is loaded). CONTEXT-part2 "Shared rules"."""
     if aud in INSTRUCTION_AUDIENCES:
         return set(range(1, len(lines) + 1))
+    if aud == "test-data":  # never loaded as instructions, frontmatter included (2026-10-02)
+        return set()
     if rel.lower().endswith(MARKDOWN_EXTS):
         return frontmatter_lines(lines)
     return set()

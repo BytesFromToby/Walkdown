@@ -26,7 +26,7 @@ If you try it, I would like to hear about any of these:
 - **Wrong flags.** Run it on a skill or agent repository you know well. What did it flag that
   is not a concern?
 - **Misses.** What did it not catch that you would expect an audit like this to find?
-- **The report.** Read `report/summary.html`. Was it clear what to look at, and what would you
+- **The report.** Read `summary.html`. Was it clear what to look at, and what would you
   do next? If the answer is nothing, why?
 - **The approach.** Walkdown gives no verdict and no score, only evidence. Does that help you,
   or does it leave you without an answer you needed?
@@ -42,15 +42,20 @@ One command runs every stage and writes a run folder:
 
 ```
 RepoResults/<name>/<date>_<hash7>/
-  LOG.md                 what ran, when, and each stage's validation stamp
-  07-limits.md           what this run could not see
-  report/summary.html    the page for people: what to look at first, one sentence per stage
-  report/summary.md      the same summary as text
-  report/full.md         every finding, with file and line
-  0N-*.json              each stage's raw findings
+  summary.html    the page for people: what to look at first, one sentence per stage
+  summary.md      the same summary as text
+  full.md         every finding, with file and line
+  LOG.md          what ran, when, and each stage's validation stamp
+  data/           everything the reports were built from: each stage's raw findings, limits, working files
 ```
 
-How to read a report, section by section: [docs/READING-THE-REPORT.md](docs/READING-THE-REPORT.md).
+The documentation:
+
+| Read | For |
+|---|---|
+| [docs/READING-THE-REPORT.md](docs/READING-THE-REPORT.md) | how to read the reports, part by part |
+| [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) | every stage and check: what it looks for, why, what to expect, where it shows |
+| [docs/RUN-FOLDER.md](docs/RUN-FOLDER.md) | every file a run leaves, LOG.md, and the raw data |
 
 ## The stages
 
@@ -99,7 +104,7 @@ python walkdown.py path/to/a/folder
 
 A URL is cloned into `ReposToExamine/<repo>`; a folder is examined where it is. The run lands in
 `RepoResults/<repo>/`, and the command ends with a short brief: the trifecta legs, what to look
-at first, each stage's validation stamp, and the path to `report/summary.html`. Open that page.
+at first, each stage's validation stamp, and the path to `summary.html`. Open that page.
 
 ### From a chat
 
@@ -158,9 +163,11 @@ stage that fails its fixtures says so in the report.
 - **Static only.** Nothing is executed. Walkdown makes no claim about what a skill does when it runs.
 - **Known shapes.** Stage 4 finds the phrasings it has patterns for. A new phrasing of a hostile
   instruction can get through; the stage 6 sweep exists to narrow that gap, and is experimental.
-- **No notion of test data.** A repository that ships attack samples (any security tool,
-  Walkdown included) reads as hostile: Walkdown's own self-audit lights every stage from its
-  test fixtures and quoted threat descriptions.
+- **Test data is recognized by name.** Files under folders such as `tests/` and `fixtures/`,
+  or named like `test_*.py`, are set aside from the capability map and the summary, and
+  counted. Test data a model-read file references directly still counts. A repository whose
+  documentation discusses attacks (any security tool, Walkdown included) still reads as capable
+  of them; stage 6 is where quotes separate from instructions.
 - **Stage 6 is experimental.** Model labels agree with a hand-labeled set about half the time
   overall, and are far more reliable when confident. The report lists only confident reads,
   shows a "near the line" band where repeat reads drift, and never changes a stage 1 to 5
@@ -186,7 +193,7 @@ stages/CONTRACT.md  the report format every stage emits
 grader/           runs a stage on its fixtures and scores it
 Fixtures/         fixture repositories per stage; ANSWERS/ is read only by the grader
 pre-planning/     the design: charter, method, threat classes, phrase sets, reporting standard
-docs/             reading the report
+docs/             reading the report, how it works, what a run leaves
 ReposToExamine/   your copies of repositories to audit (not in git)
 RepoResults/      audit runs (not in git)
 ```

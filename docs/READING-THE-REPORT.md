@@ -1,39 +1,43 @@
 # Reading a Walkdown report
 
-A run writes one folder: `RepoResults/<name>/<date>_<hash7>/`. This page walks through what is
-in it, section by section, and how to read each signal. Examples come from Walkdown's audit of
-its own repository.
-
-## The files
+A run produces three reports, at the top of its run folder
+(`RepoResults/<name>/<date>_<hash7>/`):
 
 | File | For | What it holds |
 |---|---|---|
-| `report/summary.html` | most readers | what to look at first, one sentence per stage, the trifecta checklist |
-| `report/summary.md` | the same, as text | one status line per stage and up to five points under each |
-| `report/full.md` | checking a point | every finding, grouped by stage, with file and line |
-| `LOG.md` | trust in the run | the source and its hash, the Walkdown version, which models ran, each stage's validation stamp |
-| `07-limits.md` | trust in a zero | everything this run could not see |
-| `0N-*.json` | tools | each stage's raw findings in the format of `stages/CONTRACT.md` |
-| `06-packet.md` | a person doing stage 6 by hand | the stage 6 questions, with the text each one is about |
+| `summary.html` | most readers | what to look at first, the trifecta checklist, one plain sentence per stage |
+| `summary.md` | the same, as text | one status line per stage and up to five points under each |
+| `full.md` | checking a point | every finding, by stage, with file and line |
 
-Start with `summary.html`. Go to `full.md` when you want the evidence behind a point.
+Start with `summary.html`. Go to `full.md` for the evidence behind a point. `LOG.md`, next to
+them, says whether each stage passed its validation; the data the reports were built from is in
+`data/` ([RUN-FOLDER.md](RUN-FOLDER.md)). What each check means, and why it exists, is in
+[HOW-IT-WORKS.md](HOW-IT-WORKS.md).
 
 ## Three rules behind every page
 
 1. **Every finding is a location.** It says "this text, at this file and line, matches this
    shape". It does not say the author meant harm.
-2. **No score.** Nothing is added up into a rating. Counts always come with what they were
-   counted over.
-3. **Clean means not found.** A section with nothing in it means these stages found nothing
-   there. Check `07-limits.md` before trusting a zero.
+2. **No score.** Nothing is added up into a rating. Counts come with what they were counted over.
+3. **Clean means not found.** An empty section means these stages found nothing there. Check
+   section 7 before trusting a zero.
 
-## The summary page
+## A suggested reading order
+
+1. **LOG.md, the Validation column.** Every stage should say PASS. INCOMPLETE means a check was
+   skipped (usually an optional tool not installed); FAIL means do not trust that stage's
+   findings in this run.
+2. **The trifecta checklist** at the top of `summary.html`: what the repository can do.
+3. **Look at these first**: the short list of points.
+4. **Section 7, Not examined**: what the run could not see.
+5. **`full.md`** for any point you want to check.
+
+## summary.html
 
 ### Header and tiles
 
-The header names the repository, where the copy came from, and the hash it was pinned to, so a
-later reader can tell exactly which version was examined. The tiles count files examined, things
-to look at first, and things not examined.
+The header names the repository, where the copy came from, and the version it was pinned to.
+The tiles count files examined, things to look at first, and things not examined.
 
 ### What it can do: the trifecta checklist
 
@@ -46,195 +50,105 @@ Three boxes, one per leg of the lethal trifecta
 | **Takes outside input** | brings in text the user didn't write: the web, other people's issues or email, MCP tools, third-party code |
 | **Sends data out** | moves data off the machine or into shared places: web requests, webhooks, pushes, posts |
 
-A box is checked when at least one piece of evidence supports it. **Three checked boxes are
-common in well-built repositories**: any agent that reads files, uses the web, and pushes
-commits has all three. The combination raises risk. It is not an issue on its own. The evidence
-for each leg is listed under section 5 of `full.md`.
+A box is checked when at least one piece of evidence supports it, and the evidence is listed in
+`full.md` section 5. **Three checked boxes are common in well-built repositories**: an agent
+that reads files, uses the web, and pushes commits has all three. The combination raises risk.
+It is not an issue on its own.
+
+Under the boxes: the install grants (runs at load, injects context, persists, uses the network,
+elevated permissions), explained in [HOW-IT-WORKS.md](HOW-IT-WORKS.md#install-grants-capgrant).
 
 If stage 6 read every line cited for a leg as not an instruction (a quote, a description), a note
 says so under the box. The box stays checked: a model's read never removes a finding.
 
 ### Look at these first
 
-Cards, in stage order. Each card has a stage tag, a headline, the places it applies to, the
-quoted text, and sometimes a note. Places with the same headline share one card.
+Cards in stage order: a stage tag, a headline, the places it applies to, the quoted text, and
+sometimes a note. Places with the same headline share one card.
 
-How to read the headline:
+| Headline | Stage | What it means |
+|---|---|---|
+| Runs commands on its own | 1 | a hook that runs whenever the host fires its event, without anyone asking |
+| Hidden when rendered, and reads like an instruction | 2 | text the model receives that a person viewing the file does not see, which also matches a phrase pattern |
+| Nothing refers to this file / Loaded only by a folder or glob, named by nothing, and it reads like an instruction | 3 | a file a reviewer following references would not open, which also matches a phrase pattern |
+| Matches the wording of ... | 4 | the text matches a phrase pattern; the quote lets you judge, and the note gives the pattern's base rate |
+| A word is defined more than one way / Redefines a safety word / An irreversible or prohibited action with no confirmation step | 4 | from stage 4's tables of definitions and guarded actions |
+| Test data that the model is pointed at | 5 | a file in a test or fixture folder that a model-read file references directly, so it is read like any other file |
+| An instruction the model sees before you type anything | 5 | text a context-injecting hook prints into the session |
+| No pattern matched, but a model read this as an instruction | 6 | the coverage sweep flagged a passage stage 4 had no hit in |
+| Read as a real instruction to do the flagged thing | 6 | a model's confident reading of a flagged line |
+| Near the line | 6 | a model reading close enough to the cutoff that a repeat read could flip it |
 
-- **"Matches the wording of ..."** (stage 4): the text matches a phrase pattern. The pattern
-  can match innocent text; the quote lets you judge. The note says how often that pattern turns
-  up in other audited repositories:
-  - **rare**: in none of them
-  - **uncommon**: in one
-  - **common**: in two or more
+**Base rates.** A stage 4 card's note says how often its pattern turns up in the other audited
+repositories: **rare** (none of them), **uncommon** (one), **common** (two or more). A rare
+pattern is more worth reading. The level describes the pattern across repositories; it says
+nothing about this one.
 
-  A rare pattern in your report is more worth reading than a common one. The level is a fact
-  about the pattern, measured over the repositories audited so far; it says nothing about this
-  repository.
-- **"Hidden when rendered, and reads like an instruction"** (stage 2): the model receives text a
-  person viewing the file does not see (an HTML comment, a zero-width character, white-on-white).
-- **"Loaded only by a folder or glob, named by nothing"** (stage 3): no file names it directly,
-  so a reviewer following references would not find it.
-- **"Runs commands on its own"** (stage 1): a hook that runs whenever the host fires its
-  event, without you asking.
-- **"An instruction the model sees before you type anything"** (stage 5): text that a
-  context-injecting hook prints into the session.
-- **Stage 6 cards** (only when stage 6 ran with a model; see below).
+**What is kept off this list.** Hits in human-facing files (README, docs, changelog) and in test
+data (tests, fixtures) are counted, never listed: installing the artifact does not put them in
+front of a model. They are all in `full.md`.
 
 ### Stage by stage
 
-One plain sentence per stage, with a pill when the stage did not pass its validation (see
-"Validation stamps"). "Technical detail" opens the status line from `summary.md`.
+One plain sentence per stage, with a pill when the stage did not pass validation. "Technical
+detail" opens the status line from `summary.md`.
 
 ### Recommendations
 
-Suggestions for the builder, each tied to a file and line, each conditional ("if this skill
-does not need X, ...") and each naming a narrower way to do the same thing. They are listed in
-stage order and never ranked: ranking by importance would be a score by another name.
+Suggestions for the builder, each tied to a file and line, each conditional ("if this skill does
+not need X, ..."), each naming a narrower way to do the same thing. Listed in stage order and
+never ranked: ranking by importance would be a score by another name.
 
-## The sections
+## summary.md
 
-### 1 What ships
+The same content as text. Each stage has one **status line** (counts, with what they were
+counted over) and up to five **points** under it. Lines such as "+4 more in the full report" or
+"3 more hits on these patterns in test data" say what was left off and where it is.
 
-Every file, its format, and the structures that matter: entry points (skills, agents, commands,
-hooks, manifests, MCP configs, project instructions such as CLAUDE.md), descriptions that are
-always in context, tool grants, hooks.
+## full.md
 
-> Self-audit: 451 files, 5 hooks (4 host configs), 10 agent or command definitions.
+Every finding, grouped by stage:
 
-All five hooks are in Walkdown's test fixtures. Walkdown itself ships none.
-
-### 2 What the model actually reads
-
-Each file is read twice: as raw text (what a model receives) and as rendered (what a person
-sees). Differences are **divergences**: comments, zero-width characters, bidirectional controls,
-hidden HTML, white-on-white, text in image metadata. Lines that change when invisible
-characters are folded away are listed too, because a pattern may only match the folded line.
-
-### 3 What loads what
-
-The graph of references from entry points. Watch for:
-
-- **orphans**: files no entry point reaches
-- **files loaded only through a dynamic load**: a glob or folder read pulls them in, but nothing
-  names them
-- **dangling references**: a path that is named but does not exist
-
-The graph is incomplete by construction (a glob's targets are resolved as of the review).
-
-### 4 What the text asks for
-
-Phrase patterns, in four groups:
-
-| Group | Covers |
+| Section | Holds |
 |---|---|
-| 4a Reaching out | sending data out, reading secrets, loading remote instructions |
-| 4b Taking the wheel | overriding instructions, claimed consent, redefined words, anti-review, conditionals |
-| 4c Changing the environment | permissions, persistence, installs, settings, prohibited actions |
-| 4d Talking to the human | telling the person to run something risky |
+| 1 What ships | entry points, the structural census, descriptions, tool grants, hooks, manifests |
+| 2 What the model actually reads | divergences (raw against rendered), lines changed by folding, non-Latin runs, metadata, unread files |
+| 3 What loads what | entry points used, orphans, load-only files, dynamic loads, dangling references, depth |
+| 4 What the text asks for | every hit, by group (4a to 4d) and check, then the tables: endpoints, guarded actions, conditionals, definitions, conflicts, safety words |
+| 5 What this touches | each trifecta leg with every citation, install grants with evidence, bytes in context at load, agent posture, pairs |
+| 6 Needs a human read | the stage 6 models used, the sweep's flagged passages, every question and every answer |
+| 7 Not examined | the same list as `data/07-limits.md` |
 
-Plus four tables:
+Every line in it has a file and line you can open.
 
-- **endpoints**: hosts named anywhere, and whether the docs name them
-- **confirm-first and prohibited actions**: and whether a confirmation step exists
-- **conditionals**: behavior that changes on the clock, the environment, the version, or the harness
-- **definitions**: and words defined more than one way, or safety words redefined
+## Stage 6 in the reports
 
-Each hit carries its **audience**, decided by path:
+Stage 6 is optional and experimental; with no model chosen, its section says "packet only". When
+models ran:
 
-| Audience | Files |
-|---|---|
-| model | skills, CLAUDE.md, agent prompts |
-| subagent | prompts for agents it dispatches |
-| tool | scripts, build files |
-| human | README, docs, changelog |
+- **Sweep passages** with no stage 4 hit come first, strongest first.
+- **"Do" reads** are listed at p >= 0.9; 0.7 to 0.9 is counted as near the line; lower reads are
+  counted only. For the sweep the bands are p >= 0.6 listed and 0.4 to 0.6 near the line.
+- **Why bands:** the same line read twice moves by up to about 0.1, so a single cutoff would put
+  lines in or out of the summary by chance.
+- **Evidence marks:** a confident read that a line is not an instruction marks it where stage 5
+  cites it as evidence, and never removes it.
 
-Human-facing hits are counted but kept out of the summary's points and never count as capability.
-
-### 5 What this touches
-
-The trifecta legs with their evidence, then **install grants**:
-
-| Grant | Meaning |
-|---|---|
-| exec-at-load | something runs when the artifact loads |
-| context-injection | text enters the session on its own |
-| persistence | changes that outlive the session |
-| network | reaches outside the machine |
-| elevated | widened permissions |
-
-Then **text in context at load**, in bytes per host, and **agent posture**: each agent's tools
-against its stated job, with least-privilege agents noted. Last come **pairs**: two findings on
-the same line that are worth more together, such as hidden text that also matches a pattern.
-
-### 6 Needs a human read
-
-Questions a pattern cannot settle. Stage 6 is optional and **experimental**. With no model
-chosen, it writes `06-packet.md` for a person to work through. With models, three kinds of
-answer appear:
-
-- **Labels** (`--label`): for each line a pattern flagged, is it an instruction to do the
-  matched action, not to do it, a description, a quote or example, or the words in another
-  sense? The summary lists a line as a real instruction only at **p >= 0.9**. Reads between 0.7
-  and 0.9 are **near the line**: the same line read twice moves by up to about 0.1, so those
-  could go either way. They are counted in the summary and tagged in `full.md`.
-- **Relational reads** (`--relational`): prose answers to questions that need context, such as
-  how the capabilities combine, or what a redefined safety word changes. The reader is told the
-  evidence came from pattern matching and may be wrong, and to say so when it is.
-- **Sweep** (`--sweep`): a model reads every prose passage, looking for instructions no pattern
-  matched. A passage is listed at **p >= 0.6**; 0.4 to 0.6 is near the line. Passages with **no
-  stage 4 hit inside** come first, because they are the only stage 6 points about text nothing
-  else located. Each says which kind of action it was read as asking for:
-
-  | Kind | The passage tells the reader to... |
-  |---|---|
-  | override | set aside its other instructions |
-  | send-out | send data out |
-  | secrets | gather secrets or private files |
-  | skip-user | act without asking the user, or keep something from them |
-  | remote-instructions | fetch outside text and follow it |
-  | persist | make lasting changes outside the task |
-
-Every stage 6 answer is a located observation. None changes a finding in sections 1 to 5. Their
-accuracy is measured and recorded in `pre-planning/soft/EVAL.md`.
-
-> Self-audit: the sweep read 1,506 passages. Outside the test fixtures it flagged one, a passage
-> in the red-team notes that quotes a permission flag.
-
-### 7 Not examined
-
-What the run was blind to: optional tools that were missing (Tesseract, Playwright), checks not
-built yet, files that could not be read, stages whose validation did not pass. A zero in a
-section is only as good as this list allows.
-
-## Validation stamps
-
-Before an audit, every stage runs against its fixtures, small repositories with known
-contents, and a grader scores it against an answer sheet the stage code never reads. `LOG.md`
-records the result per stage:
-
-| Stamp | Meaning |
-|---|---|
-| **PASS** | every required check found what it should, and nothing it shouldn't |
-| **INCOMPLETE** | nothing failed, but a check was skipped, usually for a missing optional tool. The self-audit's stage 2 is INCOMPLETE because Tesseract was not installed, so text inside images went unread. |
-| **FAIL** | the stage missed something it is required to catch, or flagged something it must not. Its findings in this run should not be trusted. |
-
-"Recall" numbers next to a stamp are measured and never required: they say how much a model
-backend got right on the labeled fixtures.
+Accuracy is measured in `pre-planning/soft/EVAL.md`.
 
 ## Worked example: Walkdown on itself
 
-Walkdown's own report lights up every stage. It has all three trifecta legs, five install
-grants, and over a thousand phrase hits.
+Walkdown is a security tool, so its repository is full of attack text: test fixtures with
+hidden exfiltration instructions and fake plugins with injecting hooks, and design documents that
+quote attacks to describe them.
 
-Almost all of it comes from two places:
-
-- **Test fixtures.** `Fixtures/` holds deliberately hostile samples: hidden exfiltration
-  instructions, fake plugins with injecting hooks, paraphrased payloads. Every hook and the
-  exec-at-load and context-injection grants come from there.
-- **Design docs and case reports.** They quote attacks in order to describe them. Stage 6 reads
-  most of those lines correctly as descriptions or quotes.
-
-This is a known limit, and the reason for this example. Walkdown has no notion of test data, so
-any security tool that ships attack samples will read as hostile. The report still shows you
-where everything is, and section 6 separates the quotes from the instructions.
+- **Test data.** About 950 findings sit in `Fixtures/` and the test folders. They are set aside,
+  counted in section 5, and kept off the summary. The "runs at load" grant disappears with them:
+  every hook in the repository is a fixture.
+- **What remains.** All three trifecta legs and many stage 4 points, almost all from the design
+  documents and stage specs, which describe attacks in detail. Stage 6 reads most of those lines
+  as descriptions or quotes, and the sweep flagged one passage across all the prose a model
+  reads outside the fixtures.
+- **The lesson.** The report shows where everything is. A repository whose documentation
+  discusses attacks will read as capable of them, and section 6 is where the quotes separate from
+  the instructions.

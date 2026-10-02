@@ -18,7 +18,7 @@ CHECKS = [
     "phrase.J.prohibited",
     "phrase.G.human",
 ]
-AUDIENCES = {"model", "subagent", "human", "tool"}
+AUDIENCES = {"model", "subagent", "human", "tool", "test-data"}
 REQUIRED = ("id", "check", "regex", "source")
 OPTIONAL = ("unless", "note", "audiences", "paths", "where")
 FLAGS = re.IGNORECASE

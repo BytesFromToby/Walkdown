@@ -96,11 +96,13 @@ def brief(run_dir: Path) -> str:
     """A plain summary of a finished run, from Walkdown's own words only: no quote, file name,
     or other text from the audited repository."""
     sys.path.insert(0, str(STAGE8))
+    import layout  # noqa: E402
     import render as R  # noqa: E402
     import summary_html  # noqa: E402
     reports = {}
+    data, out = layout.data_dir(run_dir), layout.report_dir(run_dir)
     for stage in STAGE_NAMES:
-        f = run_dir / f"{stage}.json"
+        f = data / f"{stage}.json"
         if f.is_file():
             reports[stage] = json.loads(f.read_text(encoding="utf-8"))
     st = stamps((run_dir / "LOG.md").read_text(encoding="utf-8"))
@@ -120,8 +122,8 @@ def brief(run_dir: Path) -> str:
     L += [f"  stage {s}: {t} ({n})" for (s, t), n in sorted(by_title.items())] or ["  none"]
     L += ["", "Validation (each stage against its fixtures):"]
     L += [f"  {stage} {STAGE_NAMES[stage]}: {st.get(stage, 'not run')}" for stage in STAGE_NAMES]
-    L += ["", f"Report: {run_dir / 'report' / 'summary.html'}",
-          f"Every finding with file and line: {run_dir / 'report' / 'full.md'}", "",
+    L += ["", f"Report: {out / 'summary.html'}",
+          f"Every finding with file and line: {out / 'full.md'}", "",
           'No verdict and no score. "Nothing found" means these stages found nothing; it does '
           "not mean the repository is safe."]
     return "\n".join(L)

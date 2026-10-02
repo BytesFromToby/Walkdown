@@ -171,6 +171,13 @@ and `evidence` citing both halves. A hit can be in more than one pair; emit one
 finding per pair kind. Entry points are never orphans or dynamic-only, so their
 visible lines never pair.
 
+## Test data (added 2026-10-02)
+
+Before anything is derived, findings in test data (folders such as tests/ and fixtures/,
+files such as test_*.py; stage 4 `audience.is_test_data`) are set aside and counted in one
+`cap.testdata` finding. A test-data file that a model-read file references directly is not
+set aside; it is reported as a `testdata+loaded` pair. `specs/testdata.SPEC.md`.
+
 ## Checks
 
 | Check | One finding per | Fields |

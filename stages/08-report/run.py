@@ -11,6 +11,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
+import layout  # noqa: E402
 import pipeline  # noqa: E402
 import render  # noqa: E402
 import summary_html  # noqa: E402
@@ -48,7 +49,7 @@ def main(argv=None) -> int:
     ap.add_argument("input_dir", nargs="?")
     ap.add_argument("--repo", help="name for RepoResults/<repo>/ (required unless --rerender)")
     ap.add_argument("--rerender", metavar="RUN_DIR",
-                    help="rebuild report/ from a finished run's saved stage outputs; runs no stage")
+                    help="rebuild the reports from a finished run's saved stage outputs; runs no stage")
     ap.add_argument("--results", default=str(ROOT / "RepoResults"))
     ap.add_argument("--date", default=dt.date.today().isoformat())
     ap.add_argument("--no-validate", action="store_true", help="skip the grader (tests only)")
@@ -80,7 +81,8 @@ def main(argv=None) -> int:
     py = sys.executable
     soft = {"label": a.label, "compare": a.compare, "relational": a.relational, "both": a.both,
             "sweep": a.sweep}
-    runs = pipeline.run_stages(inp, work, ROOT / "stages", py, soft)
+    (work / layout.DATA).mkdir()
+    runs = pipeline.run_stages(inp, work / layout.DATA, ROOT / "stages", py, soft)
     reports = {r.stage: r.report for r in runs if r.ok}
     notes = {r.stage: r.notes for r in runs}
     runs_ok = set(reports)
@@ -96,19 +98,14 @@ def main(argv=None) -> int:
             "hash": h, "hash_kind": pin.get("hash_kind", "?"), "channel": pin.get("channel", "directory"),
             "tool": tool_version(ROOT),
             "finished": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()}
-    cap_path = run_dir / "capability.json"
+    data = layout.data_dir(run_dir)
+    cap_path = data / "capability.json"
     cap_full = json.loads(cap_path.read_text(encoding="utf-8")) if cap_path.exists() else None
 
-    (run_dir / "report").mkdir(exist_ok=True)
     (run_dir / "LOG.md").write_text(render.log(meta, runs, stamps, reports), encoding="utf-8")
-    (run_dir / "07-limits.md").write_text(render.limits_doc(meta, reports, notes, stamps, runs_ok),
-                                          encoding="utf-8")
-    (run_dir / "report" / "summary.md").write_text(
-        render.summary(meta, reports, stamps, notes, runs_ok), encoding="utf-8")
-    (run_dir / "report" / "summary.html").write_text(
-        summary_html.render_page(meta, reports, stamps, notes, runs_ok), encoding="utf-8")
-    (run_dir / "report" / "full.md").write_text(
-        render.full(meta, reports, stamps, notes, runs_ok, cap_full), encoding="utf-8")
+    (data / "07-limits.md").write_text(render.limits_doc(meta, reports, notes, stamps, runs_ok),
+                                       encoding="utf-8")
+    write_reports(run_dir, meta, reports, stamps, notes, runs_ok, cap_full)
 
     print(str(run_dir))
     failed = [r for r in runs if not r.ok]
@@ -116,6 +113,18 @@ def main(argv=None) -> int:
         print(f"stage {failed[0].stage} failed: {failed[0].error}", file=sys.stderr)
         return 1
     return 0
+
+
+def write_reports(run_dir, meta, reports, stamps, notes, runs_ok, cap_full):
+    """summary.html, summary.md, full.md where this run's layout keeps them (layout.py)."""
+    out = layout.report_dir(run_dir)
+    out.mkdir(exist_ok=True)
+    (out / "summary.md").write_text(render.summary(meta, reports, stamps, notes, runs_ok),
+                                    encoding="utf-8")
+    (out / "summary.html").write_text(
+        summary_html.render_page(meta, reports, stamps, notes, runs_ok), encoding="utf-8")
+    (out / "full.md").write_text(render.full(meta, reports, stamps, notes, runs_ok, cap_full),
+                                 encoding="utf-8")
 
 
 def soft_grade_env(a) -> dict:
@@ -129,18 +138,19 @@ def soft_grade_env(a) -> dict:
 
 
 def rerender(run_dir: Path, a) -> int:
-    """Rebuild report/summary.md, summary.html, full.md from the stage outputs a finished run
+    """Rebuild summary.md, summary.html, full.md from the stage outputs a finished run
     saved. Runs no stage and calls no model; re-stamps with the grader unless --no-validate;
     appends one line to LOG.md saying when and with which Walkdown version (2026-09-30)."""
     if not (run_dir / "LOG.md").is_file():
         print(f"error: not a run folder (no LOG.md): {run_dir}", file=sys.stderr)
         return 2
     reports, notes = {}, {}
+    data = layout.data_dir(run_dir)
     for stage in pipeline.STAGES:
-        f = run_dir / f"{stage}.json"
+        f = data / f"{stage}.json"
         if f.is_file():
             reports[stage] = json.loads(f.read_text(encoding="utf-8"))
-        nf = run_dir / f"{stage}.notes.txt"
+        nf = data / f"{stage}.notes.txt"
         if nf.is_file():
             notes[stage] = pipeline.note_lines(nf.read_text(encoding="utf-8"))
     if "01-inventory" not in reports:
@@ -155,15 +165,9 @@ def rerender(run_dir: Path, a) -> int:
     meta = {"repo": repo, "run": run_dir.name, "date": run_dir.name.split("_")[0],
             "source": pin.get("source", ""), "hash": pin.get("hash", "nohash"),
             "hash_kind": pin.get("hash_kind", "?"), "tool": tool_version(ROOT)}
-    cap_path = run_dir / "capability.json"
+    cap_path = data / "capability.json"
     cap_full = json.loads(cap_path.read_text(encoding="utf-8")) if cap_path.exists() else None
-    (run_dir / "report").mkdir(exist_ok=True)
-    (run_dir / "report" / "summary.md").write_text(
-        render.summary(meta, reports, stamps, notes, runs_ok), encoding="utf-8")
-    (run_dir / "report" / "summary.html").write_text(
-        summary_html.render_page(meta, reports, stamps, notes, runs_ok), encoding="utf-8")
-    (run_dir / "report" / "full.md").write_text(
-        render.full(meta, reports, stamps, notes, runs_ok, cap_full), encoding="utf-8")
+    write_reports(run_dir, meta, reports, stamps, notes, runs_ok, cap_full)
     now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
     with open(run_dir / "LOG.md", "a", encoding="utf-8") as fh:
         fh.write(f"- Report re-rendered {now} by Walkdown {meta['tool']} from this run's saved "
