@@ -1,0 +1,4 @@
+{
+  "mcpServers": {
+    "familiar-extras": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/run-server.sh",

@@ -1,0 +1,249 @@
+{
+  "stage": "01-inventory",
+  "answers_version": 1,
+  "note": "Structural checks: counting and parsing only. One case per class folder, each a mini repo.",
+  "cases": [
+    {
+      "root": "class06-description",
+      "expect": [
+        {
+          "id": "inv-06-pos-desc",
+          "polarity": "gate",
+          "check": "struct.description",
+          "file": "pos.SKILL.md",
+          "match": {
+            "text": {
+              "contains": "drop.invalid/collect"
+            }
+          },
+          "note": "The always-in-context description field carries the injection (read .env, send to .invalid). Stage 1 must extract it verbatim; the body is benign."
+        },
+        {
+          "id": "inv-06-neg-desc",
+          "polarity": "gate",
+          "check": "struct.description",
+          "file": "neg.SKILL.md",
+          "match": {
+            "text": {
+              "contains": "format or align a Markdown table"
+            }
+          },
+          "note": "Ordinary description. Stage 1 extracts every description; it flags none (flagging is stage 4)."
+        }
+      ],
+      "deferred": [
+        {
+          "id": "inv-06-desc-flag",
+          "needs": [
+            "01-inventory",
+            "04-phrases"
+          ],
+          "note": "Stage 4 patterns run over pos.SKILL.md's description must fire; over neg.SKILL.md's must not. Graded when pipeline grading exists."
+        }
+      ],
+      "fixtures": {
+        "neg.SKILL.md": "3435b24233a5b0858297973036bf2e660bc8fa9eb86e2f36aec70de2a7f37c02",
+        "pos.SKILL.md": "9272755c7e82109b3e328069a4664976eeac7efe8fd2e56ccaaaf15a13f964b4"
+      }
+    },
+    {
+      "root": "class09-manifests",
+      "expect": [
+        {
+          "id": "inv-09-divergent",
+          "polarity": "gate",
+          "check": "struct.manifests",
+          "match": {
+            "divergent": {
+              "eq": true
+            },
+            "files": {
+              "same_items": [
+                "claude-plugin.json",
+                "other-platform.json"
+              ]
+            }
+          },
+          "note": "Same plugin 'widget' on two hosts. Host A grants Read/Glob/Grep; host B adds Write/Edit/Bash, network, bypassPermissions. The divergence is the finding (AST10); neither file alone is."
+        }
+      ],
+      "deferred": [],
+      "fixtures": {
+        "claude-plugin.json": "1b0ca61da9cd35af54274f9adcec42a5e6380ea9a2b97e49017d3de569c2321d",
+        "other-platform.json": "2f3965618abab29f6a3db96385b8ba195cf4709f649c2b8d40fbc7c7e12515c7"
+      }
+    },
+    {
+      "root": "class15-agent-grants",
+      "expect": [
+        {
+          "id": "inv-15-pos-bash",
+          "polarity": "gate",
+          "check": "struct.agent-tools",
+          "file": "pos-broad-agent.md",
+          "match": {
+            "tools": {
+              "includes": "Bash"
+            }
+          },
+          "note": "A 'formatter' granted Bash: execution its stated job does not explain. The grant is the signal, not any sentence."
+        },
+        {
+          "id": "inv-15-neg-leastpriv",
+          "polarity": "gate",
+          "check": "struct.agent-tools",
+          "file": "neg-least-priv-agent.md",
+          "match": {
+            "tools": {
+              "excludes": [
+                "Bash",
+                "Write",
+                "Edit"
+              ]
+            }
+          },
+          "note": "Read-only surveyor, grant matches job. Recorded as a least-privilege positive (Case 002)."
+        }
+      ],
+      "deferred": [],
+      "fixtures": {
+        "neg-least-priv-agent.md": "0ca7bb5e82219bca04c50a843307627bd8137d30f5da9787859db9b6c405943a",
+        "pos-broad-agent.md": "4267cf66adac6378bd05bb65f679223d6abd63d469d17081c52314c9f8677a0c"
+      }
+    },
+    {
+      "root": "class16-hooks",
+      "expect": [
+        {
+          "id": "inv-16-pos-pretool",
+          "polarity": "gate",
+          "check": "struct.hooks",
+          "file": "pos-hooks.json",
+          "match": {
+            "event": {
+              "eq": "PreToolUse"
+            },
+            "matcher": {
+              "eq": ".*"
+            }
+          },
+          "note": "PreToolUse on every tool: all three trifecta legs in one stanza."
+        },
+        {
+          "id": "inv-16-pos-compact",
+          "polarity": "gate",
+          "check": "struct.hooks",
+          "file": "pos-hooks.json",
+          "match": {
+            "event": {
+              "eq": "SessionStart"
+            },
+            "matcher": {
+              "contains": "compact"
+            }
+          },
+          "note": "SessionStart matching compact: re-injection after the conversation is summarized away."
+        },
+        {
+          "id": "inv-16-neg-one-row",
+          "polarity": "gate",
+          "check": "struct.hooks",
+          "file": "neg-hooks.json",
+          "count": 1,
+          "note": "One SessionStart-on-startup welcome hook: ordinary mechanics. Exactly one census row."
+        }
+      ],
+      "deferred": [],
+      "fixtures": {
+        "neg-hooks.json": "9d30ebd64e09f7c7dca205bd8e16309380d0b7f2d11ab16bc1f465ff31252fb4",
+        "pos-hooks.json": "76f59447ef459455410a2d7fc2273149ffca01205af2fdc9a1c4df97ccdbc412"
+      }
+    },
+    {
+      "root": "class18-reader-limit",
+      "expect": [
+        {
+          "id": "inv-18-oversized",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "oversized.md",
+          "match": {
+            "flag": {
+              "eq": "reader-window"
+            }
+          },
+          "note": "2607 lines, payload past the 2000-line / 50 KB window. Report the threshold used."
+        },
+        {
+          "id": "inv-18-longline",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "longline.md",
+          "match": {
+            "flag": {
+              "eq": "long-line"
+            }
+          },
+          "note": "Instruction past column 500 (fixed 2026-09-25: it previously sat at column 434)."
+        },
+        {
+          "id": "inv-18-extmagic",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "ext-magic-mismatch.md",
+          "match": {
+            "flag": {
+              "eq": "ext-magic-mismatch"
+            }
+          },
+          "note": "Named .md, bytes begin with the PNG signature."
+        },
+        {
+          "id": "inv-18-bom",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "bom.md",
+          "match": {
+            "flag": {
+              "eq": "bom"
+            }
+          },
+          "note": "UTF-8 BOM prefix."
+        },
+        {
+          "id": "inv-18-archive",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "sample.zip",
+          "match": {
+            "flag": {
+              "eq": "archive"
+            }
+          },
+          "note": "Archive in tree; content unreadable without extraction."
+        },
+        {
+          "id": "inv-18-codefence-neg",
+          "polarity": "negative",
+          "check": "struct.census",
+          "file": "codefence-benign.md",
+          "match": {
+            "flag": {
+              "eq": "ext-magic-mismatch"
+            }
+          },
+          "note": "A .md opening with a code fence, which libmagic misreads as JS/shell. Detector noise, never an ext-vs-magic finding (the 2026-09-04 review)."
+        }
+      ],
+      "deferred": [],
+      "fixtures": {
+        "bom.md": "773fc72c47207f54eb189d59165a89499d7472f967513bd8c6df7e8f08e78f52",
+        "codefence-benign.md": "78a8e8245fe3a7242edaf12ce12f349830c363c90d921e67252dee428a63f874",
+        "ext-magic-mismatch.md": "09574dbc1d811ff0720c184e54c89aca66afeeebe14313c110c0d5bdb3888555",
+        "longline.md": "3a8cc2ea48664f1871f5b589eb0f76e8528ad3a504846686d0b00b4e5523ef08",
+        "oversized.md": "fe029af480e293c69a30cd44ed6e3ffd81930b2cc208637a22e3b9439cc1301c",
+        "sample.zip": "5d514f480e8ad1e7c1672c132400336722a85b5430ff3b0376ffdbbd5e9c487e"
+      }
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+WALKDOWN FIXTURE :: benign orphan (NEGATIVE) :: inert.
+Reachable from nothing, but harmless dead weight. Orphan status ALONE must not be
+flagged as a problem — this is the negative that keeps "orphan" a locator, not a
+verdict. (Placeholder MIT-style license text.)

@@ -1,0 +1,682 @@
+{
+  "stage": "05-capability",
+  "answers_version": 1,
+  "note": "Five small repos with known answers: trifecta 0, 1, 2, 3 legs; install grants and injection paths; cross-stage pairs (the stage 3 deferred gr-pair-orphan-hit lands here); agent posture incl. least privilege. Written 2026-09-29 from the trifecta definition (THREATS frame, METHOD stage 5), before the stage 5 CONTEXT.",
+  "cases": [
+    {
+      "root": "legs0-formatter",
+      "expect": [
+        {
+          "id": "cap-legs0-leg-private-data-no",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "private-data"
+            },
+            "present": {
+              "eq": false
+            }
+          },
+          "note": "Works only on text pasted into the conversation; no tool grant, no credential, no network. The one shape that scores 0 of 3."
+        },
+        {
+          "id": "cap-legs0-leg-untrusted-content-no",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "untrusted-content"
+            },
+            "present": {
+              "eq": false
+            }
+          }
+        },
+        {
+          "id": "cap-legs0-leg-external-comms-no",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "external-comms"
+            },
+            "present": {
+              "eq": false
+            }
+          }
+        },
+        {
+          "id": "cap-legs0-grant-context-injection-yes",
+          "polarity": "gate",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "context-injection"
+            }
+          }
+        },
+        {
+          "id": "cap-legs0-grant-exec-at-load-no",
+          "polarity": "negative",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "exec-at-load"
+            }
+          }
+        },
+        {
+          "id": "cap-legs0-grant-persistence-no",
+          "polarity": "negative",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "persistence"
+            }
+          }
+        },
+        {
+          "id": "cap-legs0-grant-network-no",
+          "polarity": "negative",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "network"
+            }
+          }
+        },
+        {
+          "id": "cap-legs0-grant-elevated-no",
+          "polarity": "negative",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "elevated"
+            }
+          }
+        },
+        {
+          "id": "cap-legs0-injection-description",
+          "polarity": "gate",
+          "check": "cap.injection",
+          "file": "SKILL.md",
+          "match": {
+            "mechanism": {
+              "eq": "description"
+            }
+          }
+        },
+        {
+          "id": "cap-legs0-no-pairs",
+          "polarity": "negative",
+          "check": "cap.pair"
+        },
+        {
+          "id": "cap-legs0-no-posture",
+          "polarity": "negative",
+          "check": "cap.posture"
+        }
+      ],
+      "fixtures": {
+        "SKILL.md": "87ae374da3d25915fccfa481d386a99e9b362d15adabc54b417b6a49a617e7c2"
+      }
+    },
+    {
+      "root": "legs1-envcheck",
+      "expect": [
+        {
+          "id": "cap-legs1-leg-private-data-yes",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "private-data"
+            },
+            "present": {
+              "eq": true
+            }
+          },
+          "note": "Reads the project's .env (phrase.creds in SKILL.md and the script)."
+        },
+        {
+          "id": "cap-legs1-leg-untrusted-content-no",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "untrusted-content"
+            },
+            "present": {
+              "eq": false
+            }
+          },
+          "note": "Reads only the user's own files."
+        },
+        {
+          "id": "cap-legs1-leg-external-comms-no",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "external-comms"
+            },
+            "present": {
+              "eq": false
+            }
+          },
+          "note": "Prints to the reply; nothing leaves the machine."
+        },
+        {
+          "id": "cap-legs1-grant-network-no",
+          "polarity": "negative",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "network"
+            }
+          }
+        },
+        {
+          "id": "cap-legs1-grant-exec-at-load-no",
+          "polarity": "negative",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "exec-at-load"
+            }
+          }
+        }
+      ],
+      "fixtures": {
+        "scripts/compare_env.py": "3537575b68da495c2efcad4293fe34e86c90688ea4ddf6761335fcc260f03587",
+        "SKILL.md": "e763706e7d67614128865586f0fdb04c242b41508748b6a4807973042fb91940"
+      }
+    },
+    {
+      "root": "legs2-report",
+      "expect": [
+        {
+          "id": "cap-legs2-leg-private-data-yes",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "private-data"
+            },
+            "present": {
+              "eq": true
+            }
+          },
+          "note": "reporter agent holds Read and Bash."
+        },
+        {
+          "id": "cap-legs2-leg-untrusted-content-no",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "untrusted-content"
+            },
+            "present": {
+              "eq": false
+            }
+          },
+          "note": "Reads only local test output. 'Read the summary ... and run the post script' is procedure, not remote loading."
+        },
+        {
+          "id": "cap-legs2-leg-external-comms-yes",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "external-comms"
+            },
+            "present": {
+              "eq": true
+            }
+          },
+          "note": "scripts/post.sh POSTs to a chat webhook (phrase.K.exfil)."
+        },
+        {
+          "id": "cap-legs2-grant-network-yes",
+          "polarity": "gate",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "network"
+            }
+          }
+        },
+        {
+          "id": "cap-legs2-posture-reporter",
+          "polarity": "gate",
+          "check": "cap.posture",
+          "file": "agents/reporter.md",
+          "match": {
+            "least_privilege": {
+              "eq": false
+            },
+            "posture": {
+              "includes": "execute"
+            }
+          },
+          "note": "Bash is execution; not least privilege."
+        }
+      ],
+      "fixtures": {
+        "agents/reporter.md": "0370b01900697d78a0f1d6b9f8ec089372b31ea03ba027e3d397399edb4bcdc5",
+        "scripts/post.sh": "29e0a45019c724b2059807ad679bd5e8077baa9706261d798d24ed958a454950",
+        "SKILL.md": "40e7613bf6d74b16896cc65d335ec6194da067bb0a598881fa66f25fe6c811cc"
+      }
+    },
+    {
+      "root": "legs3-issue-bot",
+      "expect": [
+        {
+          "id": "cap-legs3-leg-private-data-yes",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "private-data"
+            },
+            "present": {
+              "eq": true
+            }
+          },
+          "note": "SKILL.md:10 reads the gh token file; triager holds Read."
+        },
+        {
+          "id": "cap-legs3-leg-untrusted-content-yes",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "untrusted-content"
+            },
+            "present": {
+              "eq": true
+            }
+          },
+          "note": "SKILL.md:11 fetch-and-follow from a remote host; triager holds WebFetch."
+        },
+        {
+          "id": "cap-legs3-leg-external-comms-yes",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "external-comms"
+            },
+            "present": {
+              "eq": true
+            }
+          },
+          "note": "Remote fetch and WebFetch are outbound; playbooks/stale.md sends data to a host."
+        },
+        {
+          "id": "cap-legs3-grant-exec-at-load-yes",
+          "polarity": "gate",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "exec-at-load"
+            }
+          }
+        },
+        {
+          "id": "cap-legs3-grant-context-injection-yes",
+          "polarity": "gate",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "context-injection"
+            }
+          }
+        },
+        {
+          "id": "cap-legs3-grant-persistence-yes",
+          "polarity": "gate",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "persistence"
+            }
+          }
+        },
+        {
+          "id": "cap-legs3-grant-network-yes",
+          "polarity": "gate",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "network"
+            }
+          }
+        },
+        {
+          "id": "cap-legs3-grant-elevated-yes",
+          "polarity": "gate",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "elevated"
+            }
+          }
+        },
+        {
+          "id": "cap-legs3-injection-hook",
+          "polarity": "gate",
+          "check": "cap.injection",
+          "file": "hooks/hooks.json",
+          "match": {
+            "mechanism": {
+              "eq": "hook"
+            }
+          },
+          "note": "SessionStart hook runs scripts/inject.sh, which cats SKILL.md into context before the first user input."
+        },
+        {
+          "id": "cap-legs3-pair-orphan",
+          "polarity": "gate",
+          "check": "cap.pair",
+          "file": "orphan-notes.md",
+          "line": 5,
+          "match": {
+            "pair": {
+              "eq": "orphan+phrase"
+            }
+          },
+          "note": "Referenced by nothing and carries an override phrase: the top pair for a human (THREATS 12)."
+        },
+        {
+          "id": "cap-legs3-pair-dynamic",
+          "polarity": "gate",
+          "check": "cap.pair",
+          "file": "playbooks/stale.md",
+          "line": 5,
+          "match": {
+            "pair": {
+              "eq": "dynamic+phrase"
+            }
+          },
+          "note": "Loaded only through the playbooks/*.md glob and carries an exfil phrase."
+        },
+        {
+          "id": "cap-legs3-pair-hidden",
+          "polarity": "gate",
+          "check": "cap.pair",
+          "file": "references/triage.md",
+          "line": 7,
+          "match": {
+            "pair": {
+              "eq": "hidden+phrase"
+            }
+          },
+          "note": "HTML comment, invisible when rendered, carrying override and exfil phrases."
+        },
+        {
+          "id": "cap-legs3-nopair-triage-orphan",
+          "polarity": "negative",
+          "check": "cap.pair",
+          "file": "references/triage.md",
+          "match": {
+            "pair": {
+              "eq": "orphan+phrase"
+            }
+          },
+          "note": "triage.md is referenced from SKILL.md; not an orphan."
+        },
+        {
+          "id": "cap-legs3-nopair-skill",
+          "polarity": "negative",
+          "check": "cap.pair",
+          "file": "SKILL.md",
+          "note": "SKILL.md is an entry point with visible text; its hits are plain phrase hits, not pairs."
+        },
+        {
+          "id": "cap-legs3-posture-triager",
+          "polarity": "gate",
+          "check": "cap.posture",
+          "file": "agents/triager.md",
+          "match": {
+            "least_privilege": {
+              "eq": false
+            },
+            "posture": {
+              "includes": "network"
+            }
+          }
+        }
+      ],
+      "fixtures": {
+        "agents/triager.md": "9a7c856a92360d7b3876df8b3faadd935eabad0d86f548b51322b2f066cef8d5",
+        "hooks/hooks.json": "7e6eeac93225c315be21b34efb810e939688129c877f6708aa9ecfe4040a24f8",
+        "orphan-notes.md": "5b51ef2f548036c01d16033606575d0e7b869f10ce4058eb38c52105c14f12ad",
+        "playbooks/stale.md": "6d2570dc7382b01cdb23039a02f722dec280243de3f04833a9105ed7836aab11",
+        "references/triage.md": "ff9c7081dc4c4d29efc3180d885da6df0181b77a96737ef3a974a06dd6875cf1",
+        "scripts/inject.sh": "e3a89a9e3e0125972e9e7359614e58c974c091742cfd470760984466cf08b36f",
+        "scripts/run-unattended.sh": "5690affa3e60a9fbb8dbf292a87b2e04eb7bd22ea4f6ebec0ba1b4173d1ad023",
+        "SKILL.md": "3f221d9166937e1a5ef9682dba247af8fd6de84f169ce062f3cfa1a17071e723"
+      }
+    },
+    {
+      "root": "posture",
+      "expect": [
+        {
+          "id": "cap-posture-reviewer",
+          "polarity": "gate",
+          "check": "cap.posture",
+          "file": "agents/reviewer.md",
+          "match": {
+            "least_privilege": {
+              "eq": true
+            },
+            "posture": {
+              "same_items": [
+                "read"
+              ]
+            }
+          },
+          "note": "Read, Grep, Glob for an agent that only reads: least privilege, reported as a positive (Case 002 surveyor)."
+        },
+        {
+          "id": "cap-posture-reviewer-neg",
+          "polarity": "negative",
+          "check": "cap.posture",
+          "file": "agents/reviewer.md",
+          "match": {
+            "least_privilege": {
+              "eq": false
+            }
+          }
+        },
+        {
+          "id": "cap-posture-builder",
+          "polarity": "gate",
+          "check": "cap.posture",
+          "file": "agents/builder.md",
+          "match": {
+            "least_privilege": {
+              "eq": false
+            },
+            "posture": {
+              "includes": "execute"
+            }
+          }
+        },
+        {
+          "id": "cap-posture-helper",
+          "polarity": "gate",
+          "check": "cap.posture",
+          "file": "agents/helper.md",
+          "match": {
+            "least_privilege": {
+              "eq": false
+            },
+            "posture": {
+              "includes": "all"
+            }
+          },
+          "note": "No tools field: the agent inherits every tool."
+        },
+        {
+          "id": "cap-posture-grant-elevated",
+          "polarity": "gate",
+          "check": "cap.grant",
+          "match": {
+            "grant": {
+              "eq": "elevated"
+            }
+          },
+          "note": "An agent with no tools list inherits every tool."
+        }
+      ],
+      "fixtures": {
+        "agents/builder.md": "97e233cabe6af0c1753573548dcf987695abe08e43ca6dede8d1d8cbebe4e126",
+        "agents/helper.md": "c5294cd0fea6d45fbb50d0365be0713b79cdc91fd8d73053550b970c794b29ca",
+        "agents/reviewer.md": "7cb8dffffe6fd8b77d21413f4a34e31318509f540f8eb41ef32a4f8d2906e7e9",
+        "SKILL.md": "a4dbd67ae9fb5b90bfd91d360431bf4cd37b54f8b8355724d7900ef3ea8d1281"
+      }
+    },
+    {
+      "root": "hook-emits",
+      "fixtures": {
+        "hooks/hooks.json": "465664b6ccc8555465336d0f9be74148bfd6f9161745cadbd4e651ac529e62b9",
+        "hooks/start.sh": "fdeb566a171ff6e094244ab9a7e06ded05db4d5a9a52a9cce6df82345ba90f28",
+        "scripts/release.sh": "ce7c2769ac38704837749e4ba4eceab20454fde21b5d4b8c7fc26760b24aefdb",
+        "SKILL.md": "d3ca2f142fc476f7c62d60ad778946bfdd01e220e0c52ffe307c20c8a98796d2",
+        "state.txt": "7ab7338fb0ab5ce3c9c7d134f0c3c6aab7315541472572dc8c70943693af7580"
+      },
+      "expect": [
+        {
+          "id": "cap-hook-pair",
+          "polarity": "gate",
+          "check": "cap.pair",
+          "file": "hooks/start.sh",
+          "line": 4,
+          "match": {
+            "pair": {
+              "eq": "hook+phrase"
+            }
+          },
+          "note": "The SessionStart hook's script builds a run instruction and prints it as additionalContext: the model receives it before the first user input (seen in a calibration audit)."
+        },
+        {
+          "id": "cap-hook-nopair-release",
+          "polarity": "negative",
+          "check": "cap.pair",
+          "file": "scripts/release.sh",
+          "match": {
+            "pair": {
+              "eq": "hook+phrase"
+            }
+          },
+          "note": "Same shape of string, but no hook runs this script."
+        },
+        {
+          "id": "cap-hook-injection",
+          "polarity": "gate",
+          "check": "cap.injection",
+          "file": "hooks/hooks.json",
+          "match": {
+            "mechanism": {
+              "eq": "hook"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "root": "outside-code",
+      "fixtures": {
+        "SKILL.md": "ba91d26c6b74768a3b520817469365039b13d2a95b269e3c53fca7570420866f"
+      },
+      "expect": [
+        {
+          "id": "cap-clone-leg2",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "untrusted-content"
+            },
+            "present": {
+              "eq": true
+            }
+          },
+          "note": "SKILL.md tells the model to git clone a third-party repository: Takes outside input."
+        }
+      ]
+    },
+    {
+      "root": "readme-clone-only",
+      "fixtures": {
+        "README.md": "e2bc2022f7074abe8b90ed63f901c1f6b2ffda7b1e7aedf60d0c3dc38089bd2a",
+        "SKILL.md": "8a99a3969b9d951d286e1eab34b46edc651bc6561334af66fda13358abf2e70e"
+      },
+      "expect": [
+        {
+          "id": "cap-readme-clone-no-leg2",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "untrusted-content"
+            },
+            "present": {
+              "eq": false
+            }
+          },
+          "note": "Only the README clones (a person installing the skill); human-facing text never counts."
+        }
+      ]
+    },
+    {
+      "root": "connector-phrase",
+      "fixtures": {
+        "SKILL.md": "151c5aa37e6e1c939937237d0840eb152cc5c019e6152bfcf1b693552d1a6978"
+      },
+      "expect": [
+        {
+          "id": "cap-connector-phrase-leg1",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "private-data"
+            },
+            "present": {
+              "eq": true
+            }
+          },
+          "note": "Connect your Gmail account: Reads your data (a connected account)."
+        }
+      ]
+    },
+    {
+      "root": "connector-tool",
+      "fixtures": {
+        "agents/filer.md": "18aaefa55d21cbf9f8e5de02607beb5ccab71f3a1a97837dc6eba5440c1984f1",
+        "SKILL.md": "8cf945f70e697dac2bede8c8a5a37741020cc3c812041b3efbddf564f992aeb4"
+      },
+      "expect": [
+        {
+          "id": "cap-connector-tool-leg1",
+          "polarity": "gate",
+          "check": "cap.leg",
+          "match": {
+            "leg": {
+              "eq": "private-data"
+            },
+            "present": {
+              "eq": true
+            }
+          },
+          "note": "An agent granted mcp__google-drive tools and nothing else: Reads your data."
+        }
+      ]
+    }
+  ]
+}

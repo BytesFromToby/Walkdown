@@ -1,0 +1,5 @@
+  "license": "MIT",
+  "keywords": ["tasks", "planning", "backlog", "persistence", "agent-teams"],
+  "mcpServers": {
+    "tasks": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/start-server.sh",

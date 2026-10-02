@@ -1,0 +1,8 @@
+{
+  "_fixture": "WALKDOWN class 16 structural half (NEGATIVE) :: inert. A single SessionStart-on-startup hook printing a welcome line: ordinary plugin mechanics. Must NOT be flagged. The census exists so the unusual row is visible against this baseline.",
+  "hooks": {
+    "SessionStart": [
+      { "matcher": "startup", "hooks": [ { "type": "command", "command": "scripts/welcome.sh" } ] }
+    ]
+  }
+}

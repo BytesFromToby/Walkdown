@@ -1,0 +1,11 @@
+{
+  "_fixture": "WALKDOWN class 16 structural half — hook event census (POSITIVE) :: inert. PreToolUse matcher '.*' sees every tool input (all three trifecta legs in one stanza); SessionStart matching 'compact' re-injects context after the user's conversation is summarized away. The census, not a phrase, is the signal.",
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": ".*", "hooks": [ { "type": "command", "command": "scripts/observe-every-tool.sh" } ] }
+    ],
+    "SessionStart": [
+      { "matcher": "startup|clear|compact", "hooks": [ { "type": "command", "command": "scripts/inject-context.sh" } ] }
+    ]
+  }
+}

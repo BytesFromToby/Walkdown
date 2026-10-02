@@ -1,0 +1,136 @@
+{
+  "stage": "03-graph",
+  "answers_version": 1,
+  "note": "One tree, sample-repo/, exercises every graph phenomenon. Entry points: SKILL.md, README.md.",
+  "cases": [
+    {
+      "root": "sample-repo",
+      "expect": [
+        {
+          "id": "gr-entry-skill",
+          "polarity": "gate",
+          "check": "graph.entry",
+          "file": "SKILL.md"
+        },
+        {
+          "id": "gr-entry-readme",
+          "polarity": "gate",
+          "check": "graph.entry",
+          "file": "README.md"
+        },
+        {
+          "id": "gr-orphan-staged",
+          "polarity": "gate",
+          "check": "graph.orphan",
+          "file": "orphan-staged.md",
+          "note": "Orphan carrying a payload. With a stage 4 hit it is the top pair (stage 5)."
+        },
+        {
+          "id": "gr-orphan-license",
+          "polarity": "gate",
+          "check": "graph.orphan",
+          "file": "LICENSE",
+          "note": "Benign orphan (dead weight). Listed as an orphan; orphan status alone is a locator, never a verdict."
+        },
+        {
+          "id": "gr-notorphan-helpers",
+          "polarity": "negative",
+          "check": "graph.orphan",
+          "file": "references/helpers.md",
+          "note": "Referenced and benign: the common case."
+        },
+        {
+          "id": "gr-notorphan-details",
+          "polarity": "negative",
+          "check": "graph.orphan",
+          "file": "references/details.md",
+          "note": "Referenced from SKILL.md."
+        },
+        {
+          "id": "gr-notorphan-scanonly",
+          "polarity": "negative",
+          "check": "graph.orphan",
+          "file": "extra/scan-only.md",
+          "note": "Reachable through the extra/*.md glob: live and unmentioned, not an orphan."
+        },
+        {
+          "id": "gr-notorphan-skill",
+          "polarity": "negative",
+          "check": "graph.orphan",
+          "file": "SKILL.md",
+          "note": "Entry point."
+        },
+        {
+          "id": "gr-dangling-missing",
+          "polarity": "gate",
+          "check": "graph.dangling",
+          "file": "SKILL.md",
+          "match": {
+            "target": {
+              "eq": "references/missing.md"
+            }
+          },
+          "note": "Named, does not exist: rot, or content that arrives at runtime."
+        },
+        {
+          "id": "gr-dangling-neg-helpers",
+          "polarity": "negative",
+          "check": "graph.dangling",
+          "match": {
+            "target": {
+              "eq": "references/helpers.md"
+            }
+          },
+          "note": "Exists; not dangling."
+        },
+        {
+          "id": "gr-dynamic-extra",
+          "polarity": "gate",
+          "check": "graph.dynamic",
+          "file": "SKILL.md",
+          "match": {
+            "pattern": {
+              "contains": "extra/"
+            },
+            "resolves": {
+              "includes": "extra/scan-only.md"
+            }
+          },
+          "note": "Glob whose targets are unknown at review time: the graph is incomplete by construction."
+        },
+        {
+          "id": "gr-depth-details",
+          "polarity": "gate",
+          "check": "graph.depth",
+          "file": "references/details.md",
+          "match": {
+            "depth": {
+              "eq": 1
+            }
+          },
+          "note": "Class 10: payload one hop from a clean entry point."
+        }
+      ],
+      "deferred": [
+        {
+          "id": "gr-pair-orphan-hit",
+          "needs": [
+            "03-graph",
+            "04-phrases",
+            "05-capability"
+          ],
+          "note": "orphan-staged.md (orphan) x its phrase hit is the top pair the report leads with."
+        }
+      ],
+      "fixtures": {
+        "LICENSE": "1ae9fd2d16a7c0764d747df54f03375c616d38a74aacf55f683c7362b9b65194",
+        "README.md": "3647739b7707b28050286c3bf1194c79799cd6894ec0d00d2a4f8fd364f69a9b",
+        "SKILL.md": "bf2126cd0c2080a98465e7500fd814bc07179094f259d1399f91719d837a8638",
+        "extra/scan-only.md": "0b7b9b67e45305d36a3b93627c01dc69f7062dd8ac2d53804a7b481442986568",
+        "orphan-staged.md": "a268ad0a0333040c270b450bf22b886973af9194238fa5545254d53a0b2f5de4",
+        "references/details.md": "d3e6f32b599ca13a8c4b293aff6ddcaf4909bb34b3414e6aa74c5e34b99c2116",
+        "references/helpers.md": "9e39c2670e9f897214aee6f72f6b36658353ed80b5f1b34ca84fa01c0c1f8cd8"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+.pytest_cache/
+
+# Third-party artifacts under audit, and audit outputs: kept on disk, never in the repo.
+# The folders stay (the tool points at them); only their READMEs are tracked.
+ReposToExamine/*
+!ReposToExamine/README.md
+RepoResults/*
+!RepoResults/README.md
+!RepoResults/CONTEXT.md
+
+# Regenerable stage 2 output inside runs (RUN-LAYOUT: excludable from backup)
+RepoResults/**/normalized/
+
+# Project virtualenv
+.venv/

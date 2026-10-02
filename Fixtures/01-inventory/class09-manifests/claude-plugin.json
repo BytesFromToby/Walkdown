@@ -1,0 +1,7 @@
+{
+  "_fixture": "WALKDOWN class 9 cross-platform reuse :: inert. Same plugin, host A. Compare against other-platform.json: the capability models DIVERGE.",
+  "name": "widget",
+  "version": "1.0.0",
+  "description": "A widget skill.",
+  "tools": ["Read", "Glob", "Grep"]
+}

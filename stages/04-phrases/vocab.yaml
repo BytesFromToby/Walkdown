@@ -1,0 +1,117 @@
+# Stage 4 part 2 word lists (CONTEXT-part2.md). Data only, one place.
+# Every list names the document it comes from in its `source`. Regexes run
+# case-insensitive on the folded line, like patterns.yaml.
+
+rubric:
+  source: 'CONTEXT-part2 section 1; PHRASES J preamble (harness tiers); THREATS 22'
+  # Tier of every phrase.J.prohibited row in patterns.yaml. A J row missing here
+  # is a load error, so a new J row cannot be silently untiered.
+  tiers:
+    J.enter-secret: prohibited        # entering credentials or payment details
+    J.saved-login: prohibited         # entering credentials (saved login)
+    J.irreversible: prohibited        # permanent deletion
+    J.prohibited-other: prohibited    # accounts, transfers, security settings, CAPTCHAs
+    J.confirm-first: confirm-first    # sending, posting, publishing, purchasing, submitting
+    J.cookie: confirm-first           # accepting terms / consent
+    J.confirm-first-other: confirm-first  # OAuth, account settings, standing rules, terms
+  # Confirm-first rows carry an `unless` that cancels the part 1 hit when an ask
+  # or confirm is on the same line: a same-line stand-in for the confirmation
+  # step. The rubric measures the step itself, so it runs these rows without
+  # their `unless`. Prohibited rows keep theirs (it hands the action to the
+  # user, a different reason).
+  ignore_unless_tier: confirm-first
+  confirmation:
+    source: 'CONTEXT-part2 section 1 (ask / asks the user, confirm / confirmation, approval / approve by the user, permission, wait for, check with, only after the user)'
+    regexes:
+      - '\bask(s|ed|ing)?\b(\s+(the|your|a))?\s+(user|human|operator|owner|them|me|first|before|for\s+(approval|permission|confirmation|consent|a\s+go-ahead))\b'
+      - '\bconfirm(s|ed|ing|ation|ations)?\b'
+      - '\b(user|human|owner|operator|their|your|explicit|written)(''s)?\s+approv(al|es|ed|e)\b|\bapprov(al|ed)\s+(from|of|by)\s+(the\s+)?(user|human|owner|operator)\b|\b(user|human)\s+(approves|approve|has\s+approved)\b|\bapprove[sd]?\b\s+by\s+the\s+(user|human)\b'
+      - '\bpermission\b'
+      - '\bwait(s|ing)?\s+(for|on|until)\s+(the\s+|an?\s+|their\s+|your\s+|explicit\s+)?(user|human|operator|owner|approval|confirmation|permission|go-ahead|reply|response|answer|sign-?off|ok|okay|yes)\b'
+      - '\bcheck(s|ing)?\s+with\b'
+      - '\bonly\s+after\s+(the\s+)?(user|human|owner|operator)\b'
+  negation:
+    source: 'CONTEXT-part2 section 1 (a confirmation clause that negates itself: without asking, no need to confirm, do not ask)'
+    before: '\b(without|no need to|needn''t|need not|never|don''t|do not|doesn''t|does not|skip|skipping|no)\s+(\S+\s+){0,2}$'
+    after: '^\S*\s+((is|are|was)\s+)?(not\s+(required|needed|necessary)|unnecessary|optional)\b'
+    # Negated forms that hold no positive confirmation match ("without asking").
+    forms: '\bwithout\s+(first\s+)?(asking|ask|confirm\w*|approval|permission|waiting|checking)\b|\bno\s+need\s+to\s+(ask|confirm|wait|check)\b|\b(do\s+not|don''t|never|needn''t|need\s+not)\s+(ask|confirm|wait\s+for|check\s+with|request\s+(approval|permission))\b'
+
+endpoints:
+  source: 'CONTEXT-part2 section 2; REPORTING 4.1; THREATS 1; tools/extract_urls.py (its lesson: script and file names are not domains)'
+  schemes: [http, https, ws, wss, ftp, ftps, sftp, ssh, git]
+  # Bare domains count only with one of these TLDs. File-extension collisions
+  # (md, sh, py, json, yaml, js, ts) are deliberately absent (extract_urls.py).
+  # The RFC 2606 reserved names are here so inert fixtures and docs examples count.
+  tlds: [com, net, org, edu, gov, mil, int, io, dev, ai, app, xyz, info, biz, co,
+         me, gg, us, uk, de, fr, ru, cn, jp, tk, cloud, site, online, tech,
+         invalid, test, example, localhost, local, internal]
+  registry:
+    source: 'CONTEXT-part2 section 2 (npm, PyPI, crates, GitHub release/raw hosts)'
+    hosts: [registry.npmjs.org, registry.npmjs.com, npmjs.com, npmjs.org, registry.yarnpkg.com,
+            pypi.org, pypi.python.org, test.pypi.org, files.pythonhosted.org,
+            crates.io, static.crates.io, index.crates.io,
+            raw.githubusercontent.com, objects.githubusercontent.com,
+            release-assets.githubusercontent.com, github-releases.githubusercontent.com,
+            codeload.github.com]
+  local:
+    source: 'CONTEXT-part2 section 2 (localhost, 127.0.0.0/8, ::1, 0.0.0.0, *.local, *.localhost)'
+    names: [localhost, '::1', 0.0.0.0]
+    suffixes: [.local, .localhost]
+    ipv4_prefix: '127.'
+
+conditionals:
+  source: 'CONTEXT-part2 section 3; REPORTING 4.2; THREATS 21; PHRASES I'
+  # Conditional words. `on` and `in` open a condition only at the start of a
+  # sentence, and only for the kinds in on_kinds / in_kinds (CONTEXT: `on` for
+  # harness and clock; `on error` is its error example; `in Cursor` is its
+  # harness example). Mid-sentence "works in Claude Code" is description.
+  words: '\b(if|when|whenever|unless|once|after|before|on|in case|in)\b'
+  on_kinds: [harness, clock, error]
+  in_kinds: [harness]
+  # A harness name followed by a file extension (CLAUDE.md, GEMINI.md) is a file, not the harness.
+  harness_names: '\b(claude code|claude|codex|cursor|gemini( cli)?|copilot|windsurf|cline|roo code|aider|opencode|hermes|antigravity|kiro)\b(?!\.\w)'
+  # Table order is the order of `kind` precedence.
+  kinds:
+    - kind: harness
+      source: 'CONTEXT-part2 table (the host or tool the model runs in); PHRASES I harness row'
+      regex: '\b(claude code|claude|codex|cursor|gemini( cli)?|copilot|windsurf|cline|roo code|aider|opencode|hermes|antigravity|kiro)\b(?!\.\w)|\byour harness\b|\bthe harness\b|\bharness\b|\bplatform\b|\b(running|run) (in|on|under|inside) (an? |the )?(ide|editor|agent|harness|cli)\b|\bsubagents? (are|is|aren''t|are not|isn''t|is not) (available|supported|unavailable)\b|\bsupports? subagents\b|\b(can|cannot|can''t) (spawn|dispatch|use) subagents\b|\btask tool\b|\b(have|has|lack|lacks|without) (the |a |an )?[\w-]+ tool\b|\btool (is|isn''t|is not) available\b|\byou are (an? )?(ai|agent|assistant|model|llm|language model)\b'
+    - kind: clock
+      source: 'CONTEXT-part2 table (a date, time, year, or weekday); THREATS 21 date literals'
+      regex: '\b\d{4}-\d{2}-\d{2}\b|\b(19|20)\d\d\b|\b(january|february|march|april|june|july|august|september|october|november|december)\b|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)\.?\s+\d{1,2}\b|\b(mon|tues|wednes|thurs|fri|satur|sun)days?\b|\b\d{1,2}:\d\d\b|\b\d{1,2}\s*(am|pm)\b|\b(midnight|noon|weekday|weekend|today|tomorrow|deadline|utc|timestamp|the date|the time)\b|\b(\d+|a|an|one|two|three|several) (minutes?|hours?|days?|weeks?|months?|years?)\b'
+    - kind: version
+      source: 'CONTEXT-part2 table (version >=, v2 or later, and above); PHRASES I version row'
+      regex: '\bversions?\b|\bv\d+\b|\b\d+\.\d+(\.\d+)?\b|\bor (later|newer|higher|above|greater)\b|\band (above|later|newer|up)\b|>=|<=|\bolder than v|\bnewer than v'
+    - kind: state
+      source: 'CONTEXT-part2 table (first run, first time, subsequent sessions, a counter or flag the skill keeps); PHRASES I state row'
+      regex: '\b(first|initial) (run|time|session|use|launch|invocation)\b|\bsubsequent\b|\b(previous|prior|last) (run|session|invocation)s?\b|\bnext (run|session|time)\b|\balready (been )?(run|ran|done|completed|initiali[sz]ed|installed|configured|set up|onboarded|seen|shown|asked|answered)\b|\b(counter|state file|marker file|flag file)\b|\bhas been (run|done|completed|initiali[sz]ed)\b|\b(run|session|use)s? count\b|\bnth time\b'
+    - kind: environment
+      source: 'CONTEXT-part2 table (the repository, org, hostname, account, filename pattern, OS); PHRASES I environment row'
+      # Narrowed after the first superpowers run: bare "project", "branch", "matches"
+      # named workflow steps ("the whole-branch review"), not the environment.
+      regex: '\b(repo|repository) (name|owner|url|path|slug)\b|\b(org|organi[sz]ation)( name| id)?\b|\bhost ?name\b|\bmachine( name)?\b|\b(cloud |aws |gcp |azure )?account( id| name)?\b|\buser ?name\b|\bdomain( name)? (is|matches|ends with)\b|\b(file ?name|file path|path)s? (is|matches|starts with|ends with|contains)\b|\bfile extension\b|\*\.\w+|\boperating system\b|\b(windows|macos|mac os|linux|ubuntu|wsl)\b|\bgit remote\b|\b(current )?branch (name )?(is|matches|starts with|ends with)\b|\benvironment variable\b|\benv var\b|\bin ci\b|\bci (environment|run|job)\b|\bgithub actions\b|\bcwd\b|\bworking directory (is|matches|contains)\b'
+    - kind: absence
+      source: 'CONTEXT-part2 table (if no X exists, if there is no, is not configured); THREATS 14 absence default'
+      regex: '\bno\b|\bnone\b|\bmissing\b|\babsent\b|\bunavailable\b|\bempty\b|\b(not|n''t) (exist|exists|found|present|configured|set|installed|available|defined|specified|provided|given|have|has|specify|provide|give|say|mention)\b|\b(isn''t|is not|aren''t|are not|wasn''t|was not) (there|set|configured|installed|available|present|defined|specified|provided|given)\b|\bthere (is|are) no\b|\blacks?\b'
+    - kind: error
+      source: 'CONTEXT-part2 table (if the command fails, on error, fallback, troubleshooting); THREATS 21 error and recovery paths'
+      regex: '\bfail(s|ed|ing|ure|ures)?\b|\berrors?\b|\bexceptions?\b|\bcrash(es|ed)?\b|\btime[sd]? out\b|\btimeout\b|\bnon-?zero\b|\bbroken\b|\b(doesn''t|does not|didn''t|did not|won''t|will not|can''t|cannot|can not) (work|run|succeed|pass|build|compile|start|connect|load)\b|\b(goes|went|go) wrong\b|\bfall ?back\b|\btroubleshoot\w*\b|\bproblems?\b|\bstuck\b'
+
+terms:
+  source: 'CONTEXT-part2 section 4; METHOD Stage 4 term table; THREATS 14; PHRASES B'
+  # explicit: X means / X is defined as / X refers to / by X we mean
+  explicit_keyword: '\b(means|is defined as|refers to)\b'
+  explicit_by: '\bby\s+(.+?)\s+we mean\b'
+  # mapping: when the user says X / if the user asks for X
+  mapping: '\b(?:when(?:ever)?|if)\s+the\s+user\s+(?:says|asks\s+for|asks\s+you\s+to|types|requests|writes)\s+'
+  glossary_heading: '\b(glossary|definitions?|terms|terminology|vocabulary)\b'
+  procedural_heading: '^\s*#{1,6}\s+(how\s+to|steps\s+to)\s+(.+?)\s*#*\s*$'
+  # A candidate term made only of these words is not a definition ("this
+  # means", "which means"); also "by no means", "by any means".
+  not_terms: [this, that, it, which, what, these, those, there, here, he, she, they,
+              we, you, i, all, both, each, either, neither, so, "yes", "no", doing so,
+              all of this, this step, that step, the above, the following, any, which also]
+  max_term_words: 4
+  safety:
+    source: 'CONTEXT-part2 section 4 and METHOD Stage 4 safety vocabulary (confirm, verify, done, safe, read-only, reversible, approve, permission, sandbox, allowed)'
+    regex: '^(confirm\w*|verif\w*|done|safe\w*|read-?only|reversib\w*|irreversib\w*|approv\w*|permission\w*|sandbox\w*|allow\w*)$'

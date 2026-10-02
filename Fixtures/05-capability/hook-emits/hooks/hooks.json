@@ -1,0 +1,8 @@
+{
+  "_fixture": "WALKDOWN FIXTURE :: stage 5 capability :: inert; hosts are .invalid; nothing runs. Expected results in Fixtures/ANSWERS/.",
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/start.sh\"" } ] }
+    ]
+  }
+}

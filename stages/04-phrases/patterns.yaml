@@ -1,0 +1,718 @@
+# Stage 4 pattern table (v1, 2026-09-29). Spec: specs/patterns.SPEC.md.
+#
+# Every row: id, check, regex (case-insensitive, run on the folded line), source.
+# Sources: PHRASES:<set> <row> or THREATS:<class> <bullet>. Rows whose source is
+# THREATS (not PHRASES) are the additions beyond PHRASES, to be folded back.
+#
+# Conventions:
+#  - "Sentence span" (?:[^.]|\.\S)*? stands in for PHRASES' [^.]*: it stops at a
+#    full stop followed by a space or line end, but crosses dots inside URLs,
+#    file names, and versions (https://x.invalid/a.sh), which [^.]* cannot.
+#  - (?-i:...) marks a case-sensitive part (identifier names, pseudo-tags).
+#  - Words get \b boundaries where PHRASES has none, so "run" does not hit
+#    "truncate". That is narrowing, never widening.
+#  - A hit is a locator, never a verdict (PHRASES rules).
+
+patterns:
+
+# ---------------------------------------------------------------- 4a reaching out
+# phrase.K.exfil (class 1): PHRASES K; THREATS 1 and its extensions.
+
+- id: K.dest-ref
+  check: phrase.K.exfil
+  regex: '\b(the|your) (usual|configured|team''?s|organization''?s|org''?s) (endpoint|webhook|channel|server|url)'
+  source: 'PHRASES:K destination by reference'
+
+- id: K.dest-stored
+  check: phrase.K.exfil
+  regex: '\b(send|post|upload|deliver|forward|transmit|report|email|submit|push)\w*\b(?:[^.]|\.\S)*?\b(address|endpoint|url|webhook|server|channel|host|destination|inbox)\b(?:[^.]|\.\S)*?\b(stored|saved|listed|named|given|found|kept|defined|specified|set)\b(?:[^.]|\.\S)*?\b(config\w*|settings|memory|environment|file|variable)\b'
+  source: 'THREATS:1 ext destination by reference (the model fills the destination from context, memory, or another file)'
+
+- id: K.assembly-code
+  check: phrase.K.exfil
+  regex: '"\s*\+\s*"|''\s*\+\s*''|\bchr\(|fromCharCode|fromhex|\[::-1\]|[''"]\.[''"]\s*\.join\('
+  source: 'PHRASES:K string assembly (" + " chains, chr(, fromCharCode, fromhex, [::-1], a "." join forming a host)'
+
+- id: K.assembly-prose
+  check: phrase.K.exfil
+  regex: '\b(build|construct|assemble|concatenate|join|combine|piece together)\w*\b(?:\s+\w+){0,3}?\s+(host|hostname|domain|url|endpoint|address|destination)s?\b(?:[^.]|\.\S)*?\b(from|out of|using)\b(?:[^.]|\.\S)*?\b(parts?|pieces?|fragments?|segments?|strings?|characters?)\b'
+  source: 'THREATS:1 ext string assembly (a host built from parts, pieces split across lines and files)'
+
+- id: K.telemetry
+  check: phrase.K.exfil
+  regex: '\btelemetry\b|\banalytics\b|\busage data\b|\bopt.?out\b|\bcheck for updates\b'
+  source: 'PHRASES:K telemetry|analytics|usage data|opt-out|check for updates'
+
+- id: K.telemetry-send
+  check: phrase.K.exfil
+  regex: '\b(send|sends|sending|collect|collects|collecting|report|reports|reporting|upload|uploads|transmit|transmits)\b(?:\s+\w+){0,3}?\s+(usage|crash|analytics|telemetry|diagnostics?|metrics|statistics|stats)\b'
+  unless: '\bopt(s|ed|ing)?[- ]in\b|\bif (the user|you) (consents?|agrees?|enables?|chooses?)\b'
+  note: 'An explicit opt-in clause beside the sending verb is consent, the opposite of the opt-out veneer THREATS 1 ext describes (CONTEXT gives this unless as its example).'
+  source: 'THREATS:1 ext telemetry, analytics, and update checks with an opt-out (consent veneer on leg 3)'
+
+- id: K.md-carrier
+  check: phrase.K.exfil
+  regex: '^\s{0,3}\[[^\]]+\]:\s*\S+|<details\b|<[a-z][^>]*\shidden\b|\balt=["''][^"'']{100,}'
+  note: 'PHRASES lists bare "hidden"; narrowed to the HTML hidden attribute, since the word alone is prose. "Long alt=" taken as 100 or more characters. Whether a link definition is unused is not decidable per line.'
+  source: 'PHRASES:K markdown carriers (link definitions, <details, hidden, long alt=)'
+
+- id: K.relay-host
+  check: phrase.K.exfil
+  regex: 'webhook\.site|requestbin|pipedream\.net|ngrok\.io|trycloudflare\.com|pastebin\.com|gist\.github\.com|transfer\.sh|\b0x0\.st\b|termbin\.com'
+  source: 'THREATS:1 paste/relay hosts'
+
+- id: K.chat-webhook
+  check: phrase.K.exfil
+  regex: 'hooks\.slack\.com|discord(app)?\.com/api/webhooks|api\.telegram\.org/bot'
+  source: 'THREATS:1 chat webhooks'
+
+- id: K.http-verb
+  check: phrase.K.exfil
+  regex: '\bcurl\b|\bwget\b|Invoke-WebRequest|\biwr\b|\bfetch\(|requests\.post|\bhttpx\b|urllib\.request|\baxios\b'
+  source: 'THREATS:1 HTTP verbs in code'
+
+- id: K.dns
+  check: phrase.K.exfil
+  regex: '\b(nslookup|dig)\s+\S*(\$|\{|\+|%s|`)'
+  source: 'THREATS:1 DNS exfiltration (nslookup/dig with an interpolated subdomain)'
+
+- id: K.encode-send
+  check: phrase.K.exfil
+  regex: '\b(base64|xxd|rot13)\b.*\|\s*(curl|wget|nc|ncat|iwr|Invoke-WebRequest)\b'
+  source: 'THREATS:1 encode-then-send (base64 piped into a network call)'
+
+- id: K.data-flow
+  check: phrase.K.exfil
+  regex: '(?=.*\b(send|sends|post|posts|upload|uploads|transmit|forward|deliver|attach|include|share|submit|pipe|beacon|exfiltrate|mail|email)\b)(?=.*(\.env\b|\benv\b|\benvironment\b|shell history|bash_history|\bhistory\b|credentials?\b|secrets?\b|\btokens?\b|api keys?|ssh keys?|private keys?|config(uration)? (files?|dump)|\bhostnames?\b|file listings?|directory listings?|contents of|user''s \w+|\b(their|your) (files|repositor(y|ies)|home|documents|emails?|contacts|data)\b|home directory|clipboard|cookies))(?=.*(https?://|\bbug report|\bissues?\b|\bpull request|\bpr (description|body)|\breport\b|\bwebhook|\bendpoint|\bserver\b|\bchannel\b|\bgist\b|\bpaste\b|\baddress\b|\binbox\b|\bremote\b|\bthere\b))'
+  source: 'THREATS:1 core shape (CONTEXT: a private data source, a sending verb, and a destination, in one sentence) and ext templates as the channel (env output, config dumps, hostnames, file listings into a bug report or PR)'
+
+# phrase.creds (class 2): THREATS 2 and its extensions.
+
+- id: creds.path
+  check: phrase.creds
+  regex: '~/\.ssh|\bid_(rsa|ed25519|ecdsa|dsa)\b|\.aws/credentials|~/\.aws\b|\.npmrc|\.netrc|\.git-credentials|\.config/gh\b|\.docker/config\.json|\bcredentials\.json|\btoken\.json|%APPDATA%|\bkeychain\b|gnome-keyring|\bsecretstorage\b'
+  source: 'THREATS:2 credential paths'
+
+- id: creds.dotenv
+  check: phrase.creds
+  regex: '\b(read|reads|reading|cat|open|load|loads|source|copy|scan|search|look|grep|collect|grab|dump|extract|parse|upload|send|include|print)\b(?:[^.]|\.\S)*?(^|[\s/''"`(])\.env\b'
+  note: 'THREATS 2 lists .env among credential paths. Narrowed to an access verb in the same sentence, because .env is also named in storage advice ("keep secrets in a gitignored .env"), which is not access.'
+  source: 'THREATS:2 credential paths (.env)'
+
+- id: creds.secret-name
+  check: phrase.creds
+  regex: '(?-i:\b[A-Z0-9_]*(API[_-]?KEY|SECRET|ACCESS[_-]?TOKEN|PRIVATE[_-]?KEY|PASSWORD)[A-Z0-9_]*\b)|(?-i:\bBEARER\b)|(?-i:\bBearer\s+[$A-Za-z0-9._{-])'
+  note: 'THREATS 2 name patterns are identifier forms; matched case-sensitively on upper-case names so the ordinary words "secret" and "password" in prose do not hit. One named variable is a locator under this id; enumeration has its own ids.'
+  source: 'THREATS:2 name patterns (API_KEY, SECRET, ACCESS_TOKEN, BEARER, PRIVATE_KEY, PASSWORD)'
+
+- id: creds.env-enum-code
+  check: phrase.creds
+  regex: '\bprintenv\b\s*($|[|;>&)`])|(^\s*([$>]\s*)?|[;&|]\s*|\$\(\s*)env\s*($|[|;>&)])|`env`|for\s+\w+(\s*,\s*\w+)?\s+in\s+os\.environ|os\.environ\.(items|keys|values|copy)\(|dict\(\s*os\.environ\s*\)|json\.dumps\(\s*(dict\()?os\.environ|Object\.(keys|entries|values)\(\s*process\.env\s*\)|JSON\.stringify\(\s*process\.env\s*\)|\.\.\.process\.env\b|\bload_dotenv\b|\bdotenv\b'
+  note: 'Bare env counts only in command position (line start, after ; & |, inside $( ), or as the whole code span `env`); a word "env" after a closing code span is prose. printenv with a named variable is one read, not harvesting.'
+  source: 'THREATS:2 bulk env harvesting (printenv, bare env, iteration over process.env or os.environ, dotenv loads)'
+
+- id: creds.enumerate
+  check: phrase.creds
+  regex: '\b(check|checks|scan|scans|search|searches|look|looks|grep|collect|collects|gather|gathers|harvest|find|finds|list|dump|dumps|enumerate|read|reads|extract|copy|grab|pull|retrieve)\b(?:[^.]|\.\S)*?(\b(any|all|every|each)\s+(\w+\s+){0,2}(secrets?|tokens?|keys?|passwords?|credentials?)\b|\b(api[ _-]?keys|tokens|secrets|passwords|credentials|private keys|ssh keys)\b)'
+  note: 'THREATS 2: distinguish one named variable (normal) from enumeration. The noun must be plural or quantified (any, all, every, each); "its own API key" is one named value and does not hit.'
+  source: 'THREATS:2 bulk harvesting, enumeration versus one named variable'
+
+- id: creds.desktop
+  check: phrase.creds
+  regex: '\b(read|reads|access|use|using|copy|dump|export|capture|grab|collect)\b(?:[^.]|\.\S)*?\b(clipboard|screen recording|saved (browser )?(sessions?|credentials|passwords|logins)|stored (credentials|passwords|logins)|browser (cookies|sessions?|profiles?)|cookie jar)\b'
+  source: 'THREATS:2 ext desktop and browser surfaces (clipboard, screen recording, saved browser sessions, saved credentials)'
+
+- id: creds.recon
+  check: phrase.creds
+  regex: '\b(list|enumerate|inventory|catalog|read|scan|collect|dump)\b(?:[^.]|\.\S)*?\b(installed (skills|plugins|extensions)|mcp servers|settings files|(the user''s|your|global) (claude\.md|agents\.md|settings))\b'
+  source: 'THREATS:2 ext reconnaissance as private data (enumerate installed skills, plugins, MCP servers, settings files, the user''s CLAUDE.md)'
+
+# phrase.remote-load (class 3): THREATS 3 and its extensions.
+
+- id: RL.fetch-follow
+  check: phrase.remote-load
+  regex: '\b(download|downloads|fetch|fetches|retrieve|retrieves|curl|wget|grab)\b(?:[^.]|\.\S)*?\b(and|then)\s+(run|execute|follow|obey|apply|do what|treat|use what|carry out)\b|\b(read|reads|get|load|loads|pull|pulls)\b(?:[^.]|\.\S)*?(https?://|\binstructions\b|\bsteps\b|/\*|\*\.)(?:[^.]|\.\S)*?\b(and|then)\s+(run|execute|follow|obey|apply|do what|treat|use what|carry out)\b|\bread the instructions (at|from)\b|\bfollow the (steps|instructions) (at|from|in) (https?://|the (url|link|page))|\bsee\s+https?://\S+\s+for (the )?(current|latest)'
+  source: 'THREATS:3 phrases (fetch and follow, read the instructions at, follow the steps at, download and run, see <url> for the current process)'
+  unless: '\bgit (fetch|pull)\b|\bfetch(es)? (the |a |an )?([\w-]+ )?(branch|branches|tag|tags|commit|commits|changes|remote|upstream|origin|pr|pull request)\b'
+  note: 'Narrowed 2026-09-29: the generic verbs read / get / load / pull count only when a URL, instructions or steps, or a glob sits between the verb and "and run / follow". "Read the test summary and run the post script" is procedure, not remote loading (found by the stage 5 fixtures). Unless: fetching git objects (a branch, tag, commit, remote) is version control, not remote instructions ("fetch the rebased branch, then run", superpowers plan doc).'
+
+- id: RL.raw-host
+  check: phrase.remote-load
+  regex: 'raw\.githubusercontent\.com|gist\.github(usercontent)?\.com'
+  source: 'THREATS:3 raw.githubusercontent.com, gist.github.com'
+
+- id: RL.pipe-shell
+  check: phrase.remote-load
+  regex: '\b(curl|wget)\b[^|]*\|\s*(sudo\s+)?(ba|z)?sh\b|\biwr\b[^|]*\|\s*iex\b|Invoke-WebRequest[^|]*\|\s*(iex|Invoke-Expression)\b|\b(ba)?sh\s+<\(\s*(curl|wget)'
+  source: 'THREATS:3 curl ... | bash, curl ... | sh, iwr ... | iex'
+
+- id: RL.branch-ref
+  check: phrase.remote-load
+  regex: 'refs/heads/|[\w/-]@(main|master|latest|head)\b|/(raw|blob|tree)/(main|master)/'
+  source: 'THREATS:3 branch refs rather than commit SHAs (refs/heads/main, @main, @latest)'
+
+- id: RL.cross-repo-skill
+  check: phrase.remote-load
+  regex: '\b(load|install|use|require|requires|fetch)\b(?:[^.]|\.\S)*?\bskills?\b(?:[^.]|\.\S)*?\bfrom\s+(https?://|(the |a |an )?(\w+ )?marketplace)'
+  source: 'THREATS:3 ext skill-to-skill requirements that cross a repository boundary (load skill X from <marketplace or URL>)'
+
+# ------------------------------------------------------------- 4b taking the wheel
+# phrase.L.override (class 5): PHRASES L, all nine families.
+
+- id: L.ignore
+  check: phrase.L.override
+  regex: '\b(ignore|disregard|set aside|put aside|abandon)\b (all|any|the|your|previous|prior|above|earlier)\b(?:[^.]|\.\S)*?(instruction|prompt|rule|direction|context|guidance)'
+  source: 'PHRASES:L ignore / disregard (verb widened to its synonyms set aside, put aside, abandon)'
+
+- id: L.forget
+  check: phrase.L.override
+  regex: '\b(forget|discard|erase) (everything|all|what|your|the previous)\b|\b(reset|clear|wipe) (your|the) (context|memory|instructions|history)\b|\bstart (over|fresh|anew)\b'
+  unless: '["''`]\s*start (over|fresh|anew)\s*[.!?]?\s*["''`]'
+  note: 'A quoted "start over" is a mention of words a user might type (use versus mention), not an instruction to the model to drop its context.'
+  source: 'PHRASES:L forget / reset'
+
+- id: L.override
+  check: phrase.L.override
+  regex: '\b(override|overrides|overriding|supersede|supersedes|replace|replaces)\b(?:[^.]|\.\S)*?(instruction|prompt|\brules?\b|\bsystem\b|directive|guardrail)|\b(this|the) (message|section|file|document)( below| above)? (wins|takes precedence|is authoritative)'
+  note: 'PHRASES L notes bare precedence/overrides alone is class 20 noise; this row needs an instruction-like object or an authority claim. "rule" and "system" given word boundaries.'
+  source: 'PHRASES:L override / supersede'
+
+- id: L.identity
+  check: phrase.L.override
+  regex: '\byou are now\b|\bfrom now on,? you\b|\byou will now (act|behave)\b|\bact as\b|\bpretend (to be|you are)\b|\broleplay as\b|\byou are no longer\b|\b(from (this point|here) on|henceforth|going forward),? (you|behave|act)\b'
+  source: 'PHRASES:L identity reassignment ("from now on" widened to from this point on, henceforth, going forward)'
+
+- id: L.new-instructions
+  check: phrase.L.override
+  regex: '\b(here are|these are|the following (are|is)) your (new|real|true|actual|updated) (instruction|task|rule)|\bnew instructions?:|\byour (real|true|actual) (instructions?|tasks?|rules?|directives?|configuration|orders|purpose)\b'
+  source: 'PHRASES:L new / true instructions (the authority reframe "your real/true/actual task" without its lead-in)'
+
+- id: L.system-frame
+  check: phrase.L.override
+  regex: '^\s*(system\s*:|<system>|\[system\]|<\|im_start\|>\s*system|###\s*instruction)'
+  note: 'PHRASES lists bare "system" at line start; narrowed to the delimiter form "system:" because a line that merely begins with the word System is prose.'
+  source: 'PHRASES:L fabricated system framing'
+
+- id: L.guardrail
+  check: phrase.L.override
+  regex: '\b(ignore|bypass|disable|turn off|drop) (your|all|any) (guideline|rule|policy|restriction|safeguard|filter|guardrail)|\bno (content|safety|ethical|moral) (restrictions|limits|filters?|guidelines|rules)\b|\b(with|have|has|there are|operate with|without any) no (restrictions|limits|filters)\b|\bno (restrictions|limits|filters) (at all|whatsoever|on what you)\b|\bjailbreak\b|\bunfiltered (assistant|mode|ai|model|responses?|answers?|output)\b|\b(be|respond|answer|reply|act|speak|write)\s+unfiltered\b|\bunrestricted (assistant|mode|ai|model)\b|\bdo anything now\b'
+  source: 'PHRASES:L rule / guardrail suspension ("no restrictions" allowing one qualifier; "unrestricted assistant/mode" beside "unfiltered")'
+  note: 'Narrowed 2026-09-29: bare "unfiltered" hit a test string about a logo image on superpowers; it now needs an assistant noun or a speaking verb.'
+
+- id: L.context-end
+  check: phrase.L.override
+  regex: '\bend of (the )?(system )?prompt\b|---+\s*(end|ignore)\b|</system>'
+  source: 'PHRASES:L context-end injection'
+
+- id: L.priority
+  check: phrase.L.override
+  regex: '\b(this is|treat this as) (the )?(most important|highest priority|top priority|above all)\b|\bIMPORTANT:?\s+ignore\b'
+  source: 'PHRASES:L priority hijack'
+
+- id: L.skip-confirm
+  check: phrase.L.override
+  regex: '\bwithout (asking|confirm\w*|approval|permission)\b|\b(no need|not need|never needs?|do not need|don''t need|needn''t) to (ask|confirm|check)\b|\b(do not|don''t) (ask|confirm)\b|\byou may skip\b'
+  source: 'THREATS:5 override bullet ("you may skip", "no need to ask", "without asking", "do not confirm")'
+
+# phrase.A.consent (class 13): PHRASES A.
+
+- id: A.prior-consent
+  check: phrase.A.consent
+  regex: '\b(user|human|owner|operator)(''s)? (has |have |had )?(already )?(approved|authorized|authorised|configured|consented|agreed|pre-?approved)\b'
+  source: 'PHRASES:A claimed prior consent ("has/have" made optional: "the user configured this" is the same claim, THREATS 13 claimed user preference or configuration)'
+
+- id: A.per-settings
+  check: phrase.A.consent
+  regex: '\bper (the )?user''s (settings|preferences|configuration|instructions)\b'
+  source: 'THREATS:13 claimed user preference or configuration ("per the user''s settings")'
+
+- id: A.install-consent
+  check: phrase.A.consent
+  regex: '\bconstitutes (your )?(approval|consent|agreement|authori[sz]ation)\b'
+  source: 'PHRASES:A install-as-consent'
+
+- id: A.standing
+  check: phrase.A.consent
+  regex: '\bstanding (approval|permission|authori[sz]ation)\b'
+  source: 'PHRASES:A standing approval'
+
+- id: A.persona-grant
+  check: phrase.A.consent
+  regex: '\byou (are|have been) (authorized|authorised|permitted|allowed|granted|approved)\b'
+  source: 'PHRASES:A persona grant'
+
+- id: A.role-authority
+  check: phrase.A.consent
+  regex: '\byou are (the|a|an) [a-z ]+ (and|with) (standing|full|admin)\b'
+  source: 'PHRASES:A role assertion carrying authority'
+
+- id: A.scope
+  check: phrase.A.consent
+  regex: '\bconfirm(ation)? once\b|\bcovers (all|subsequent)\b'
+  source: 'PHRASES:A consent scoping'
+
+- id: A.dialogue
+  check: phrase.A.consent
+  regex: '^\s*>?\s*(User|Human|Assistant|System)\s*:'
+  source: 'PHRASES:A fabricated dialogue at line start'
+
+- id: A.harness-mimicry
+  check: phrase.A.consent
+  regex: '</?system-reminder>|</?function_results>|\[Tool result\]|hookSpecificOutput'
+  source: 'PHRASES:A harness-format mimicry'
+
+- id: A.notify-proceed
+  check: phrase.A.consent
+  regex: '\b(inform|notify|tell|let) the user\b.*\b(then|and) (proceed|continue|run|execute)\b'
+  source: 'PHRASES:A notify-then-proceed'
+
+# phrase.B.defs (class 14): PHRASES B.
+
+- id: B.means
+  check: phrase.B.defs
+  regex: '\b(means|mean|refers to|is defined as|is shorthand for)\b(?:[^.]|\.\S)*?\b(run|delete|push|send|post|upload)\b'
+  source: 'PHRASES:B redefined verbs (\bmeans\b widened to mean, refers to, is defined as, is shorthand for; the verb set is PHRASES'' own)'
+
+- id: B.includes-verb
+  check: phrase.B.defs
+  regex: '\bincludes (deleting|pushing|sending|posting|uploading|running|removing|force-pushing)\b'
+  source: 'THREATS:14 redefined verbs ("cleanup includes deleting the remote branch", "commit here includes pushing")'
+
+- id: B.def-destination
+  check: phrase.B.defs
+  regex: '\b(means|mean|refers to|stands for|is defined as)\b(?:[^.]|\.\S)*?(https?://|~/)'
+  source: 'THREATS:14 defaults naming destinations, reached through a definition (a term defined as a URL or home path)'
+
+- id: B.when-says
+  check: phrase.B.defs
+  regex: '\bwhen(ever)? the user (says|asks for|types|requests)\s*["''`][^"''`]*["''`],?(?:[^.]|\.\S)*?\b(run|delete|push|send|post|upload)\b'
+  note: 'PHRASES B lists bare "when the user says" as request mapping. Narrowed to mappings whose branch body (after the quoted request) carries one of the redefined-verb row''s action verbs; a mapping onto the action the request already names is not a redefinition.'
+  source: 'PHRASES:B request mapping (when the user says)'
+
+- id: B.default-dest
+  check: phrase.B.defs
+  regex: '\b(by default|defaults? to|unless (otherwise|told))\b.*(https?://|~/|(^|\s)/[a-z])'
+  note: 'PHRASES /[a-z] narrowed to an absolute path at a word start, so "and/or" does not count as a destination.'
+  source: 'PHRASES:B default naming a destination'
+
+- id: B.absence
+  check: phrase.B.defs
+  regex: '\bif (no|there is no) (CLAUDE\.md|AGENTS\.md|config)\b|\bis not configured\b'
+  source: 'PHRASES:B absence-triggered default'
+
+- id: B.safety-exception
+  check: phrase.B.defs
+  regex: '\b(never|do not|don''t)\b(?:[^.]|\.\S)*?\b(except|other than|unless)\b'
+  source: 'PHRASES:B safety-exception clause'
+
+- id: B.safety-adjective
+  check: phrase.B.defs
+  regex: '(?=.*\b(read-only|idempotent|reversible|no side effects|sandboxed|harmless)\b)(?=.*(`|\bscripts?\b|\bcommands?\b|\.(sh|py|js|ps1|bash|cmd)\b))'
+  note: 'PHRASES says "near a command"; taken as a command marker (a code span, the word script or command, or a script file name) on the same line.'
+  source: 'PHRASES:B safety adjectives near a command'
+
+- id: B.lookalike
+  check: phrase.B.defs
+  regex: '(?-i:\bexa(rn|m)p(1|I)e\.(com|org|net)\b)|(?-i:\bexarnple\b)'
+  source: 'PHRASES:B example.com lookalikes (exarnple, examp1e, exampIe)'
+
+# phrase.H.anti-review (class 20): PHRASES H.
+
+- id: H.anti-inspect
+  check: phrase.H.anti-review
+  regex: '\bno need to (read|inspect|review|check|look at)\b|\balready (been )?(reviewed|audited|vetted)\b|\bdo not (inspect|modify|read) (the |this )?(script|helper)\b|\bis trusted\b|\bcan be trusted\b'
+  source: 'PHRASES:H anti-inspection ("already reviewed" allowing "already been reviewed")'
+
+- id: H.report-only
+  check: phrase.H.anti-review
+  regex: '\breport (back )?(with )?only\b|\bonly the (status|summary)\b|\b(under|at most|no more than|cap\w*(?: \w+){0,2} at|max(imum)?( of)?) (\d+|one|two|three|four|five|six|seven|eight|nine|ten|fifteen|twenty) lines\b'
+  source: 'PHRASES:H report whitelisting (line caps widened from "under N lines" to at most / no more than / capped at, digits or words, per RED-TEAM 11 "cap the report at ten lines")'
+
+- id: H.mandated-phrasing
+  check: phrase.H.anti-review
+  regex: '\bannounce "|\bsay exactly\b|\brespond with exactly\b|\boutput exactly\b|\breply with exactly\b'
+  source: 'PHRASES:H mandated phrasing'
+
+- id: H.preempt
+  check: phrase.H.anti-review
+  regex: '\byou might think\b|\b(you''re|you are|that''s|that is|this is|stop|are you) rationaliz|\bnot negotiable\b|\bdo not second.guess\b|\bit may seem\b'
+  note: 'PHRASES H: "rationaliz" is a house word in superpowers (96 hits); narrowed to the phrase forms that dismiss the model''s own reasoning ("that is rationalizing", "stop rationalizing"), as CONTEXT asks.'
+  source: 'PHRASES:H objection pre-emption'
+
+- id: H.consequence
+  check: phrase.H.anti-review
+  regex: '\b(failure to|if you (skip|don''t|do not))\b(?:[^.]|\.\S)*?\b(corrupt|lose|break|destroy)'
+  source: 'PHRASES:H consequence framing'
+
+- id: H.evidence
+  check: phrase.H.anti-review
+  regex: '\b(delete|remove|rm|erase|wipe|purge|shred)\b(?:[^.]|\.\S)*?\b(logs?|reports?|plans?|transcripts?|history)\b(?!\s+(steps?|sections?|items?|headings?|entry|entries|tasks?|templates?|format))'
+  note: 'PHRASES H notes the benign "remove the plan step"; the noun must name the artifact, not a part of a document (plan step, report section, log entry).'
+  source: 'PHRASES:H evidence handling'
+
+- id: H.sabotage
+  check: phrase.H.anti-review
+  regex: '\b(skip|ignore|disable)\b.*\b(skill|hook)s?\b|\bdeprecated\b|\bsupersedes\b'
+  source: 'PHRASES:H other-skill sabotage'
+
+- id: H.precedence
+  check: phrase.H.anti-review
+  regex: '\b(precedence over|overrides?|supersedes?)\b(?:[^.]|\.\S)*?\b(instructions?|prompts?|CLAUDE\.md|AGENTS\.md|GEMINI\.md|user''?s? (requests?|preferences|instructions)|system|guidelines|safety|skills?|hooks?|polic(y|ies)|rules)\b'
+  note: 'PHRASES H: bare precedence/overrides is 37 benign hits in superpowers; narrowed, as CONTEXT asks, to precedence claims over the model''s instructions, other skills, the user, or safety rules. The quote records the direction.'
+  source: 'PHRASES:H precedence claims'
+
+- id: H.self-attest
+  check: phrase.H.anti-review
+  regex: '\b(reviewed|audited|scanned) by\b|\bno telemetry\b|\bdoes not collect\b|\bcontains no\b'
+  source: 'PHRASES:H self-attestation'
+
+- id: H.unbounded
+  check: phrase.H.anti-review
+  regex: '\buntil (it|they|all|the)\b.*\b(pass|succeed|work)|\bkeep (retrying|trying)\b|\bdo not stop\b|\bnever give up\b'
+  source: 'PHRASES:H unbounded loop'
+
+- id: H.suppress
+  check: phrase.H.anti-review
+  regex: '\bdo not mention\b|\bdon''t tell\b|\bomit from\b|\b(do not|don''t|never|without) (mention(ing)?|tell(ing)?|inform(ing)?|disclos\w*|reveal\w*|notify(ing)?)\s+(\w+\s+){0,3}?(the )?(user|human|anyone|them)\b|\bsilently (do|run|execute|send|delete|remove|install|update|push|upload|modify|change|fix|proceed|continue|skip|apply|write|copy|add|overwrite|drop|discard|switch)\b|\b(do|run|proceed|continue|act|install|update|delete|apply|execute|it) silently\b'
+  note: 'PHRASES H: bare "silently" was the Case 002 false positive (48 hits); narrowed to the imperative forms (silently + action verb, action verb + silently). A thing that "breaks silently" is a description, not suppression.'
+  source: 'PHRASES:H suppression (do not mention, don''t tell, omit from, silently; with THREATS 5 "don''t tell the user")'
+
+# phrase.I.conditional (class 21): PHRASES I.
+
+- id: I.harness
+  check: phrase.I.conditional
+  regex: '\bif (you are|you''re|your harness|running (in|on|under)) |^\s*- (Codex|Cursor|Gemini|Copilot|Hermes|Pi|Antigravity|OpenCode):'
+  source: 'PHRASES:I harness conditionals'
+
+- id: I.clock
+  check: phrase.I.conditional
+  regex: '\b(after|before|since|until|from|on or after|starting)\s+((jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(\d{1,2}(st|nd|rd|th)?,?\s+)?)?20[2-3][0-9]\b'
+  source: 'PHRASES:I clock gate (widened to a month name before the year, THREATS 21 "date literals, after <date>")'
+
+- id: I.version
+  check: phrase.I.conditional
+  regex: '\bversion\s*>=|\bor later\b|\band above\b'
+  source: 'PHRASES:I version gate'
+
+- id: I.state
+  check: phrase.I.conditional
+  regex: '\b(first|initial) (run|time|session)\b|\bsubsequent (runs|sessions)\b'
+  source: 'PHRASES:I state gate'
+
+- id: I.environment
+  check: phrase.I.conditional
+  regex: '\bif (the )?(current )?(repo|repository|org|organization|hostname|host|account|cloud account|machine|domain|username|project)( name| id)? (is|matches|contains|equals|starts with|ends with|==)'
+  source: 'PHRASES:I environment gate (widened to "<thing> name/id is", THREATS 21 repository name, org name, hostname, cloud account)'
+
+- id: I.failure-path
+  check: phrase.I.conditional
+  regex: '(\b(if|when) (this|the|it|that) (fails?|errors?|breaks)\b|\bon (error|failure)\b|\bfallback\b|\btroubleshoot\w*|\bif (anything|something) (goes wrong|fails)\b)(?:[^.]|\.\S)*?(https?://|\btokens?\b|`|\b(curl|wget|run|execute|fetch|download)\b)'
+  source: 'PHRASES:I failure-path payload (error path followed by a URL, token, or command)'
+
+# ------------------------------------------------------ 4c changing the environment
+# phrase.E.perms (class 7): THREATS 7 and the permission-widening row of PHRASES E.
+
+- id: E.perm-flags
+  check: phrase.E.perms
+  regex: 'dangerously-skip-permissions|--yolo\b|trust-all-tools|bypassPermissions|permissions\.allow|allowedTools'
+  source: 'PHRASES:E permission widening'
+
+- id: E.exec-primitive
+  check: phrase.E.perms
+  regex: '\bsudo\b|\bchmod\s+(\+x|[ugoa]*\+[rwx]*[xs]|[0-7]{3,4})\b|\bos\.system\b|\bsubprocess\b|\bchild_process\b|\bexecFileSync\b|\bexecSync\b|(?<![\w.])eval\(|(?<![\w.])exec\(|(?-i:(?<![\w.])Function\()|\bpickle\.loads?\b|\byaml\.load\((?![^)]*SafeLoader)|\bshell\s*=\s*True\b'
+  source: 'THREATS:7 execution primitives (sudo, chmod +x, os.system, subprocess, child_process, execFileSync, eval(, exec(, Function(, pickle.loads, yaml.load)'
+
+- id: E.outlives-session
+  check: phrase.E.perms
+  regex: '\bnohup\b|\bdisown\b|\bdaemoni[sz]e\b|\bsystemctl (enable|start)\b|\bcrontab\b|\blaunchctl\b|\bschtasks\b|\.listen\(|socket\.socket\(|\bhttp\.server\b|--daemon\b|\bbackground (daemon|service|process)\b|\bon (each|every) (login|boot|startup|reboot)\b'
+  source: 'THREATS:7 listening sockets, background daemons, anything that outlives the session'
+
+- id: E.runtime-install
+  check: phrase.E.perms
+  audiences: [tool]
+  regex: '\b(npm|pnpm|yarn|bun)\s+(ci|install|i|add)\b|\bpip3?\s+install\b|\buv\s+(sync|pip\s+install|add)\b|\bpoetry\s+install\b|\bgo\s+get\b|\bcargo\s+install\b'
+  source: 'THREATS:7 package installation by instruction, and THREATS:8 supply chain: a script (a hook or MCP launcher) that installs dependencies from a registry when it runs'
+  note: 'Added 2026-09-29 (Case 004: backlog start-server.sh:14 runs npm ci --production --ignore-scripts when the MCP server starts). Scripts only. A locator for "code arrives at run time"; --ignore-scripts or a lockfile narrows it, which the report can state.'
+
+- id: E.write-then-exec
+  check: phrase.E.perms
+  regex: '(\bmktemp\b|/tmp/|%TEMP%|\$TMPDIR|\btempfile\b)(?:[^.]|\.\S)*?\b(chmod|bash|sh|exec|execute|source|run)\b'
+  source: 'THREATS:7 write-then-execute in temp directories'
+
+- id: E.allowlist
+  check: phrase.E.perms
+  regex: '\b(add|put|include|append)\w*\b(?:[^.]|\.\S)*?\b(allow ?list|allowlist|allowed tools|always-allow|auto-?approve(d)? list|permissions list)\b|Bash\(\*\)'
+  source: 'THREATS:7 broad permission or pre-approved tool declarations (and THREATS 19 "add Bash(*) to the allowlist")'
+
+- id: E.confirm-off
+  check: phrase.E.perms
+  regex: '\b(turn off|turns off|disable|disables|skip|bypass|suppress|remove)\b(?:\s+\w+){0,2}?\s+(confirmation|permission|approval|safety)\s+(prompts?|dialogs?|checks?|requests?)\b|\bauto-?(approve|accept)\b|\balways allow\b'
+  source: 'THREATS:7 ext permission widening in text (the harness''s own confirmation step turned off), THREATS 19 "lower defenses"'
+
+# phrase.C.second-order (class 15): PHRASES C (phrase rows).
+
+- id: C.frontmatter-grant
+  check: phrase.C.second-order
+  regex: '^\s*(allowed-tools|tools|model)\s*:'
+  where: frontmatter
+  source: 'PHRASES:C allowed-tools:, tools:, model: in frontmatter'
+
+- id: C.fan-out
+  check: phrase.C.second-order
+  regex: '\bdispatch(es|ing)? (a|one|an) (sub-?agent|agent) (per|for each|for every)\b(?:[^.]|\.\S)*?\b(apply|applies|modify|edit|write|change|changes|delete|commit|push|send|install|fix|update)\b'
+  note: 'PHRASES C fan-out, narrowed to fan-out whose delegated task writes or sends: THREATS 15 names the risk as permission spread, and a subagent per module that only runs tests and reports spreads no write permission.'
+  source: 'PHRASES:C fan-out (dispatch a subagent per / for each)'
+
+- id: C.note-to-ai
+  check: phrase.C.second-order
+  regex: '\b(NOTE|ATTENTION|INSTRUCTIONS?) (TO|FOR) (THE )?(AI|ASSISTANT|AGENT|MODEL|CLAUDE|LLM)\b'
+  source: 'PHRASES:C comment addressed to the model'
+
+- id: C.comment-ai
+  check: phrase.C.second-order
+  regex: '^\s*(#|//|/\*|\*|<!--|--)\s*(AI|Claude|assistant|agent)\s*:'
+  source: 'PHRASES:C code comment lines beginning AI:, Claude:, assistant:, agent:'
+
+- id: C.emit-instruction
+  check: phrase.C.second-order
+  regex: '\b(printf|echo|console\.(log|error|warn)|print)\b\s*\(?\s*[fr]?["''](?:[^"'']*(?-i:\bMUST\b)|[^"'']*(?-i:<[A-Z][A-Z_-]{2,}>)|[^"'']*\byou\b)'
+  source: 'PHRASES:C printf/echo/console.log/print( whose string contains MUST, a pseudo-tag, or "you "'
+  note: 'Pseudo-tag made case-sensitive uppercase 2026-09-29 (as set D): a usage placeholder like <new-version> is not a wrapper tag.'
+
+- id: C.script-instruction
+  check: phrase.C.second-order
+  audiences: [tool]
+  regex: '["''`][^"''`]*\b(run|execute|exec)\b\s*:?\s*`?(npx|npm|pnpm|yarn|bun|bunx|node|deno|python3?|pip3?|uv|uvx|bash|sh|zsh|curl|wget|go|cargo|make|brew|gh|git|claude)\b'
+  source: 'PHRASES:C string literals in scripts that carry instructions (error-message and emitted-text rows), THREATS:16 hook output reaching context: a runnable command handed over as an instruction inside a script string'
+  note: 'Added 2026-09-29 (a calibration audit: a run command emitted as additionalContext). Scripts only (audience tool); stage 5 pairs it with a context-injecting hook.'
+
+- id: C.error-instruction
+  check: phrase.C.second-order
+  regex: '\b(error|err|fail\w*|fatal|exit|die|throw|raise)\b.*["''][^"'']*(\bcurl\b|https?://|\brun |\binstall\b)'
+  source: 'PHRASES:C string literals containing curl, http, run, install in an error or exit path'
+
+- id: C.boilerplate
+  check: phrase.C.second-order
+  regex: '\b(include|add|append) (this|the following) (footer|line|badge|link|trailer)\b'
+  source: 'PHRASES:C second-hop boilerplate'
+
+- id: C.skills-author
+  check: phrase.C.second-order
+  regex: '\b(every|all|each|any) (skills?|agents?|hooks?|commands?|prompts?|claude\.md|rules?( files?)?|templates?) you (write|create|generate|author|make|produce) (must|should|shall|will) (include|contain|start|end|have)\b'
+  source: 'PHRASES:C skills that author skills (widened from skill to the THREATS 15 list: CLAUDE.md, hooks, rules, other skills; and from write/create to generate/author)'
+
+- id: C.guard-instruction
+  check: phrase.C.second-order
+  regex: '\b(tell|instruct|have|ask|direct)\b (the )?(sub-?agents?|reviewers?|verifiers?|implementers?|checkers?) to (approve|pass|accept|sign off|skip|ignore|not report)\b'
+  source: 'THREATS:15 subagent prompt templates (a payload in the reviewer or implementer prompt), RED-TEAM 11'
+
+- id: C.guard-routing
+  check: phrase.C.second-order
+  regex: '\b(reviewer|verifier|checker|judge|auditor)s?\b(?:[^.]|\.\S)*?\b(cheapest|smallest|weakest|haiku|fastest model|mini model)\b'
+  source: 'THREATS:15 model routing for guard roles (the reviewer or verifier sent to the cheapest model)'
+
+# phrase.D.trust (class 16): PHRASES D (phrase rows).
+
+- id: D.compact-matcher
+  check: phrase.D.trust
+  regex: '"matcher"\s*:\s*"[^"]*compact'
+  source: 'PHRASES:D "matcher" values containing compact'
+
+- id: D.match-all
+  check: phrase.D.trust
+  regex: '"matcher"\s*:\s*"(\.\*|\*|)"'
+  source: 'PHRASES:D "PreToolUse" with "matcher": ".*" or empty (the matcher line; the event sits on another line)'
+
+- id: D.additional-context
+  check: phrase.D.trust
+  regex: '\badditionalContext\b|\badditional_context\b|\b(emit|emits|inject|injects|output|outputs|return|returns|deliver|delivers|send|sends)\b(?:[^.]|\.\S)*?\badditional context\b'
+  source: 'PHRASES:D additionalContext / additional_context emitted (the prose form "emit ... as additional context" beside the key)'
+
+- id: D.pseudo-tag
+  check: phrase.D.trust
+  regex: '(?-i:</?[A-Z][A-Z_-]{5,}>)'
+  source: 'PHRASES:D pseudo-tag wrappers <[A-Z_-]{6,}> (case-sensitive, so <details> and <summary> do not count)'
+
+- id: D.current-version
+  check: phrase.D.trust
+  regex: '\bread (the )?current version\b|\bskills evolve\b'
+  source: 'PHRASES:D read the current version / skills evolve'
+
+- id: D.verify-run
+  check: phrase.D.trust
+  regex: '\bto verify\b[^.]*\brun\b|\bverify (the )?install'
+  source: 'PHRASES:D verification as execution'
+
+- id: D.hook-inject
+  check: phrase.D.trust
+  regex: '\b(emit|inject|re-?inject)\b(?:[^.]|\.\S)*?\b(hooks?|compact(ion)?|session[- ]?start)\b'
+  source: 'THREATS:16 file to hook to context (text emitted through a hook arrives as harness-delivered context), re-injection on compact'
+
+- id: D.authority
+  check: phrase.D.trust
+  regex: '\b(system|harness|admin|root)[- ]level (authority|trust|priority|context|instructions?)\b|\bas (a )?system (message|prompt|instruction)\b'
+  source: 'THREATS:16 text acquiring more authority than its source (harness-delivered context weighted like the system prompt)'
+
+# phrase.E.env (class 17): PHRASES E except the permission-widening row.
+
+- id: E.redirect-var
+  check: phrase.E.env
+  regex: '\bANTHROPIC_BASE_URL\b|\bOPENAI_BASE_URL\b|\bHTTPS?_PROXY\b|\bALL_PROXY\b|\bNPM_CONFIG_REGISTRY\b|\bPIP_INDEX_URL\b|\bNODE_EXTRA_CA_CERTS\b|\bSSL_CERT_FILE\b|\bREQUESTS_CA_BUNDLE\b'
+  source: 'PHRASES:E traffic redirection variables'
+
+- id: E.git-keys
+  check: phrase.E.env
+  regex: '\binsteadOf\b|\bcredential[._ ]helper\b|\bcore\.hooksPath\b|\bfilter\.[^.\s]+\.(clean|smudge)\b'
+  source: 'PHRASES:E git persistence keys (credential.helper also in its prose form "credential helper", THREATS 2 ext)'
+
+- id: E.mcp
+  check: phrase.E.env
+  regex: '\bmcp\.json\b|\bmcpServers\b|\b(register|add|install|configure)\w*\b(?:[^.]|\.\S)*?\bmcp servers?\b'
+  source: 'PHRASES:E MCP registration (with the prose form "register an MCP server", THREATS 3 ext)'
+
+- id: E.install
+  check: phrase.E.env
+  regex: '\bpip install\b|\bbrew install\b'
+  source: 'PHRASES:E install by instruction (project-local forms; global and plugin forms are E.install-global)'
+
+- id: E.install-global
+  check: phrase.E.perms
+  regex: '\bnpm install -g\b|\bnpm i -g\b|\bnpx -y\b|\bplugin install\b|\bmarketplace add\b'
+  source: 'THREATS:7 package installation by instruction (THREATS additions); PHRASES:E install row, global and plugin forms'
+  note: 'Moved from phrase.E.env 2026-09-29: THREATS assigns install-by-instruction to class 7. Installs that outlive the project (global packages, auto-confirmed npx, plugins, marketplaces) are the class 7 shape; plain pip install -r stays in E.env.'
+
+- id: E.self-install
+  check: phrase.E.env
+  regex: '~/\.claude/skills|~/\.agents/skills|\bglobal skills\b|\bcopy (this|the) skill\b'
+  source: 'PHRASES:E self-installation surface'
+
+- id: E.memory
+  check: phrase.E.env
+  regex: '\bMEMORY\.md\b|\bmemory/|\bCLAUDE\.local\.md\b|\bsettings\.local\.json\b'
+  source: 'PHRASES:E memory and local-settings persistence'
+
+- id: E.connector
+  check: phrase.E.env
+  regex: '\b(connect|link|authori[sz]e|grant (\w+ )?access to|sign in (with|to)|log ?in (with|to)|add) (your|the|a) (google |microsoft |personal |work )?(gmail|google drive|drive|google calendar|calendar|outlook|onedrive|sharepoint|dropbox|box|slack|teams|notion|github|gitlab|jira|linear|confluence|salesforce|hubspot|icloud|email|mail|inbox|contacts)( account| workspace| inbox)?\b'
+  source: 'PHRASES:E connector grant; THREATS trifecta leg 1 (Reads your data: connected accounts), widened 2026-09-30'
+  note: 'Widened 2026-09-30 from five services and three verbs, for the locked trifecta definition (leg 1 counts the user''s data wherever it lives). "drive" needs "your/the/a" before it, so "the drive folder of this repo" still needs the account words to read as a service.'
+
+- id: E.clone
+  check: phrase.E.env
+  regex: '\bgit\s+clone\b|\bgh\s+repo\s+clone\b|\bgit\s+submodule\s+add\b|\bdegit\b|\bsvn\s+(checkout|co)\s+\S*://|\bclone\s+(the|this|their|a|an)\s+(\w+\s+)?(repo|repository)\b'
+  source: 'THREATS:trifecta leg 2 (Takes outside input: cloned or installed third-party code), locked 2026-09-30'
+  note: 'Added 2026-09-30: bringing someone else''s code onto the machine. Stage 5 counts it toward Takes outside input; README install lines are human-facing and never count there.'
+
+- id: E.editor-autorun
+  check: phrase.E.env
+  regex: '\.vscode/tasks\.json|\brunOn\b.*folderOpen|\.idea/'
+  source: 'PHRASES:E editor auto-run'
+
+- id: E.export
+  check: phrase.E.env
+  regex: '(?-i:\bexport [A-Z_][A-Z0-9_]*=)'
+  audiences: [model, subagent, human]
+  note: 'PHRASES E says "in prose (not in a script)"; files tagged tool (scripts, hook configs) are skipped. Case-sensitive so JavaScript "export default" does not count.'
+  source: 'PHRASES:E export [A-Z_]+= in prose'
+
+- id: E.persist-target
+  check: phrase.E.env
+  regex: '\b(write|writes|append|appends|appending|add|adds|copy|save|put|insert|create|modify|edit|update|set)\b(?:[^.]|\.\S)*?(\.bashrc|\.zshrc|\.bash_profile|(^|[\s/`])\.profile\b|\bshell (profile|rc|startup)|\.envrc|\.git/hooks|\.git/config|\.gitattributes|\.cursorrules|\.cursor/rules|\.windsurfrules|\.clinerules|copilot-instructions\.md|~/\.claude/|~/\.codex|~/\.gemini|\bglobal (CLAUDE\.md|AGENTS\.md)|\.claude/settings|\bCLAUDE\.md\b|\bAGENTS\.md\b|\bGEMINI\.md\b)'
+  source: 'THREATS:5 persistence targets and ext list (a skill that writes to CLAUDE.md, AGENTS.md, shell profiles, .git/hooks, editor and agent config), THREATS 17 indicator (a target outside the repository)'
+
+- id: E.harness-binary
+  check: phrase.E.env
+  regex: '\bcodesign\b.*--force|\b(modif(y|ies|ying)|patch(es|ing)?|rewrit(e|es|ing)|replac(e|es|ing))\b(?:[^.]|\.\S)*?\b(claude code|claude|codex|cursor|gemini cli|copilot)\b(?:[^.]|\.\S)*?\b(binary|executable|cli bundle)\b'
+  source: 'THREATS:17 environment mutation, extended to the host agent itself: re-signing or patching the harness binary'
+  note: 'Added 2026-09-29 (a calibration audit: force re-signing the host agent''s binary). No class named changing the harness binary; filed under 17.'
+
+- id: E.persist-redirect
+  check: phrase.E.env
+  regex: '(>>?|\btee( -a)?)\s*["'']?(~|\$HOME|\$\{HOME\})?/?[\w./-]*(\.bashrc|\.zshrc|\.bash_profile|\.profile|\.envrc|\.git/hooks/[\w-]+|\.git/config)\b'
+  source: 'THREATS:5 persistence targets (shell profiles, .git/hooks, .git/config), shell-redirect form of E.persist-target'
+  note: 'Added 2026-09-29: scripts append with >> or tee, not a write verb; the stage 5 fixtures had a hook script appending to ~/.bashrc that E.persist-target missed.'
+
+# phrase.J.prohibited (class 22): PHRASES J, harness tiers from its preamble.
+
+- id: J.enter-secret
+  check: phrase.J.prohibited
+  regex: '\b(enter|type|paste|fill in)\b(?:\s+[\w''-]+){0,3}?\s+(passwords?|passcodes?|tokens?|api keys?|card( number| details)?|credentials|cvv|pin)\b'
+  unless: '\b(ask|asks|asking|tell|prompt|have|let|instruct|request|direct)\b (the )?(user|human|them|you)\b(?:\s+\w+){0,2}\s+to\b'
+  note: 'The harness''s own rule for this tier is to direct the user to act themselves; a line that hands the action to the user is that rule, not a model entering credentials (THREATS 22: record whether confirmation accompanies the hit).'
+  source: 'PHRASES:J prohibited tier (enter/type/paste/fill in your/the password, token, api key, card; widened to up to three words between, e.g. "the user''s saved password")'
+
+- id: J.confirm-first
+  check: phrase.J.prohibited
+  regex: '\b(publish|submit|purchase|buy)\b|\b(send|sends|sending|post|posts|posting)\b(?:\s+\S+){0,4}?\s+(an?\s+|the\s+|your\s+|their\s+)?(message|messages|email|emails|e-mail|dm|dms|text|sms|tweet|tweets|reply|replies|comment|comments|invite|invites|invitation|notification|newsletter|announcement|payment|payments|money|funds|invoice|pull\s+request|pr|issue|slack|discord|teams|channel|webhook|mailing\s+list|release\s+notes)\b|\b(send|post)\b[^.]*\bto\s+(https?://|the\s+(team|user|customer|client|channel|list|server|endpoint|webhook)s?\b|slack|discord|teams|#)|\baccept(s|ing)?\b(?:\s+\S+){0,3}?\s+(the\s+|all\s+|any\s+)?(terms|cookies?|consent|invitation|invite|agreement|license|licence|eula|offer|request|connection|friend\s+request)\b|\bapprov(e|es|ing)\b(?:\s+\S+){0,3}?\s+(the\s+|this\s+|a\s+|an\s+)?(pr|pull\s+request|payment|transaction|purchase|access|oauth|merge|deployment|deploy|request|charge|transfer)\b'
+  unless: '\b(ask|asks|asking|confirm\w*)\b'
+  note: 'PHRASES J row: the verb with no ask|confirm within the same step. The step is taken as the line. Narrowed 2026-09-29: send / post / accept / approve count only with an outward object (a message, email, comment, payment, PR, channel, terms, a PR or payment to approve) or a send to a URL, a person, or a channel; "send the batch to a subagent", "post one line", "approve unless there are gaps" do not. publish / submit / purchase / buy are outward on their own.'
+  source: 'PHRASES:J confirm-first tier with no confirmation'
+
+- id: J.saved-login
+  check: phrase.J.prohibited
+  regex: '\blog ?in (with|using) (the |your )?(saved|stored)\b'
+  source: 'PHRASES:J log in with saved credentials'
+
+- id: J.cookie
+  check: phrase.J.prohibited
+  regex: '\b(accept|dismiss) (the )?(cookie|consent)'
+  source: 'PHRASES:J accept or dismiss cookie/consent'
+
+- id: J.irreversible
+  check: phrase.J.prohibited
+  regex: '\b(empty|purge) (the )?trash\b|\bpermanently delete|--force\b.*\b(delete|push)\b'
+  source: 'PHRASES:J irreversible'
+
+- id: J.prohibited-other
+  check: phrase.J.prohibited
+  regex: '\b(create|sign up for|register) (an? |new )?accounts?\b|\b(solve|bypass|complete) (the |any )?captchas?\b|\b(transfer|wire|send) (money|funds|payments?|crypto)\b|\b(disable|turn off|modify|change) (the )?(firewall|antivirus|security settings|2fa|two-factor|mfa)\b'
+  unless: '\b(ask|asks|asking|tell|prompt|have|let|instruct|request|direct)\b (the )?(user|human|them|you)\b(?:\s+\w+){0,2}\s+to\b'
+  note: 'As J.enter-secret: a line that hands the action to the user is the harness rule itself.'
+  source: 'PHRASES:J harness prohibited tier from the preamble (creating accounts, financial transfers, modifying security settings, solving CAPTCHAs)'
+
+- id: J.confirm-first-other
+  check: phrase.J.prohibited
+  regex: '\b(grant|authorize|authorise) (oauth|sso)\b|\bchange (the |your )?account settings\b|\b(create|add) (a |an )?(forwarding|filter|auto-?reply|mail) rules?\b|\baccept (the |all |any )?terms\b'
+  unless: '\b(ask|asks|asking|confirm\w*)\b'
+  note: 'Confirm-first tier, as J.confirm-first: cancelled when an ask or confirm step is on the same line.'
+  source: 'PHRASES:J harness confirm-first tier from the preamble (granting OAuth, changing account settings, creating standing rules, accepting terms)'
+
+# ------------------------------------------------------- 4d talking to the human
+# phrase.G.human (class 19): PHRASES G.
+
+- id: G.perm-flags-docs
+  check: phrase.G.human
+  regex: 'dangerously-skip-permissions|--yolo\b|trust-all-tools|bypassPermissions|permissions\.allow|allowedTools'
+  audiences: [human]
+  source: 'PHRASES:G permission flags (section E) inside README*, INSTALL*, docs/'
+
+- id: G.launch-lowered
+  check: phrase.G.human
+  regex: '\b(run|launch|start|invoke|open|use)\b(?:[^.]|\.\S)*?(dangerously-skip-permissions|--yolo\b|trust-all-tools|bypassPermissions|--full-auto\b)'
+  source: 'THREATS:19 install steps that tell the human to lower defenses (run with --dangerously-skip-permissions), whatever file carries them'
+
+- id: G.pipe-shell
+  check: phrase.G.human
+  regex: '\b(curl|wget) [^|]*\| *(sudo +)?(ba|z)?sh\b|\biwr [^|]*\| *iex\b'
+  source: 'PHRASES:G curl | sh, iwr | iex (wget and zsh added: the same pipe-to-shell shape, THREATS 3 and 19)'
+
+- id: G.paste-terminal
+  check: phrase.G.human
+  regex: '\b(paste|copy|type)\b(?:[^.]|\.\S)*?\b(into|in) (your|a|the) (terminal|shell|console|command line)\b'
+  source: 'THREATS:19 README install steps that tell the human to run what they are handed (the curl | sh shape in words)'
+
+- id: G.trust-grant
+  check: phrase.G.human
+  regex: '\btrust (this|the) (folder|directory|workspace|repo|repository|plugin|author)\b|\b(add|put)\b(?:[^.]|\.\S)*?\b(trust(ed)? list|trusted (folders|workspaces|sources|plugins))\b'
+  source: 'THREATS:19 "trust this folder", allowlist additions told to the human'
+
+- id: G.agent-template
+  check: phrase.G.human
+  regex: '\bwe assume an agent (wrote|filed)\b|\bif you are an? (ai|agent|llm|language model|assistant|bot)\b|\b(to|for) (any )?(ai|llm|coding) agents? (reading|filing|opening|submitting)\b'
+  source: 'PHRASES:G we assume an agent wrote/filed (widened to templates addressed to visitors'' agents, THREATS 19 inbound)'
+
+- id: G.contrib-imperative
+  check: phrase.G.human
+  regex: '\byou (must|should|need to|have to)\b|^\s*(please )?(run|include|paste|attach|add|provide|describe|list|fill in)\b'
+  paths: '(^|/)(CONTRIBUTING|CODE_OF_CONDUCT)[^/]*$|(^|/)\.github/(ISSUE_TEMPLATE|PULL_REQUEST_TEMPLATE)'
+  source: 'PHRASES:G imperatives in CONTRIBUTING*, CODE_OF_CONDUCT*, .github/ISSUE_TEMPLATE/* addressed to "you"'
