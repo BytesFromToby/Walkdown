@@ -37,7 +37,8 @@ to look at first, and things not examined.
 
 ### What it can do: the trifecta checklist
 
-Three boxes, one per leg of the lethal trifecta:
+Three boxes, one per leg of the lethal trifecta
+([Simon Willison's term](https://simonw.substack.com/p/the-lethal-trifecta-for-ai-agents)):
 
 | Leg | Checked when the repository... |
 |---|---|

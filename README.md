@@ -60,7 +60,7 @@ How to read a report, section by section: [docs/READING-THE-REPORT.md](docs/READ
 | 2 | Reader | What does the model actually receive? Hidden text, invisible characters, rendered vs raw |
 | 3 | Graph | What loads what? Entry points, references, files nothing names |
 | 4 | Phrases | What does the text ask for? About 125 patterns for reaching out, taking the wheel, changing the environment, talking to the human |
-| 5 | Capability | What does installing it grant? The three legs of the lethal trifecta, install grants, pairs worth reading |
+| 5 | Capability | What does installing it grant? The three legs of Simon Willison's lethal trifecta, install grants, pairs worth reading |
 | 6 | Soft reads | What can a pattern not settle? Optional model reads (experimental) |
 | 7 | Not examined | What was this run blind to? |
 | 8 | Report | Assembles 1 to 7 |
@@ -190,6 +190,11 @@ docs/             reading the report
 ReposToExamine/   your copies of repositories to audit (not in git)
 RepoResults/      audit runs (not in git)
 ```
+
+## Credits
+
+Walkdown builds on prior research, tools, and Simon Willison's lethal trifecta: see
+[CREDITS.md](CREDITS.md).
 
 ## License
 
