@@ -85,8 +85,13 @@ def test_image_skip_and_unread(tmp_path):
     fs = report(tmp_path / "in")["findings"]
     img = [f for f in fs if f["file"] == "img.png"]
     checks = {f["check"] for f in img}
-    ocr_ran = any(f["check"] == "read.divergence" and f.get("method") == "ocr" for f in img)
-    if not ocr_ran:
+    # Ask the reader whether OCR can run here; inferring it from findings fails when OCR runs
+    # and the image hides nothing (2026-10-04: first CI run, Linux with Tesseract installed).
+    import read_image
+    ocr_ok, _ = read_image.ocr_available()
+    if ocr_ok:
+        assert not any(f["check"] == "read.divergence" and "skipped" in f for f in img)
+    else:
         assert "read.unread" in checks
         assert any(f["check"] == "read.divergence" and "skipped" in f for f in img)
     assert any(f["check"] == "read.unread" and f["file"] == "blob.dat" for f in fs)
