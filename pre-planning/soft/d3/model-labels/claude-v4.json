@@ -1,0 +1,1688 @@
+{
+ "source": "claude-v4.json",
+ "labels": [
+  {
+   "file": "backlog/.claude-plugin/plugin.L12.json",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "backlog/CLAUDE.L167.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.93
+   },
+   "confidence": 0.93,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "backlog/CLAUDE.L20.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "backlog/CLAUDE.L236.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "backlog/CLAUDE.L248.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "backlog/agents/task-planner.L4.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "backlog/skills/refine/SKILL.L16.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "backlog/skills/refine/SKILL.L30.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "claude-familiar/packages/familiar-extras/.mcp.L2.json",
+   "line": 2,
+   "label": "description",
+   "probabilities": {
+    "description": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "claude-familiar/packages/familiar-extras/skills/familiar-help/SKILL.L42.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/.kimi-plugin/plugin.L25.json",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/CLAUDE.L3.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.7
+   },
+   "confidence": 0.7,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/CLAUDE.L46.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/CLAUDE.L50.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/CLAUDE.L54.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/CLAUDE.L78.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/CLAUDE.L91.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L14.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L167.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.97
+   },
+   "confidence": 0.97,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L167.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L168.md",
+   "line": 2,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L168.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.93
+   },
+   "confidence": 0.93,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L20.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L237.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.6
+   },
+   "confidence": 0.6,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L240.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L96.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/visual-companion.L109.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/visual-companion.L46.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/finishing-a-development-branch/SKILL.L118.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/finishing-a-development-branch/SKILL.L138.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/finishing-a-development-branch/SKILL.L220.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/receiving-code-review/SKILL.L129.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/requesting-code-review/code-reviewer.L35.md",
+   "line": 3,
+   "label": "not-to",
+   "probabilities": {
+    "not-to": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L119.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.65
+   },
+   "confidence": 0.65,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L119.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L120.md",
+   "line": 2,
+   "label": "description",
+   "probabilities": {
+    "description": 0.7
+   },
+   "confidence": 0.7,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L120.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L30.md",
+   "line": 3,
+   "label": "not-to",
+   "probabilities": {
+    "not-to": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L337.md",
+   "line": 3,
+   "label": "not-to",
+   "probabilities": {
+    "not-to": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L377.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.55
+   },
+   "confidence": 0.55,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L483.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L565.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L90.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/implementer-prompt.L140.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.7
+   },
+   "confidence": 0.7,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/implementer-prompt.L53.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/systematic-debugging/SKILL.L95.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/systematic-debugging/SKILL.L98.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/systematic-debugging/test-pressure-1.L3.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.65
+   },
+   "confidence": 0.65,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/systematic-debugging/test-pressure-2.L3.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/systematic-debugging/test-pressure-3.L3.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L221.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L228.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L244.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L29.md",
+   "line": 3,
+   "label": "not-to",
+   "probabilities": {
+    "not-to": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L296.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L37.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.92
+   },
+   "confidence": 0.92,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L43.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-git-worktrees/SKILL.L100.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-git-worktrees/SKILL.L114.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-git-worktrees/SKILL.L163.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-git-worktrees/SKILL.L18.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-git-worktrees/SKILL.L45.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-git-worktrees/SKILL.L67.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L10.md",
+   "line": 1,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L10.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L15.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L15.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L16.md",
+   "line": 2,
+   "label": "do",
+   "probabilities": {
+    "do": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L16.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.6
+   },
+   "confidence": 0.6,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L24.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L35.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.65
+   },
+   "confidence": 0.65,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L45.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L54.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.7
+   },
+   "confidence": 0.7,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L54.md",
+   "line": 5,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L56.md",
+   "line": 1,
+   "label": "description",
+   "probabilities": {
+    "description": 0.7
+   },
+   "confidence": 0.7,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L56.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L56.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L56.md",
+   "line": 5,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L57.md",
+   "line": 2,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L57.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L57.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L58.md",
+   "line": 1,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L58.md",
+   "line": 2,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.93
+   },
+   "confidence": 0.93,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L58.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L6.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L6.md",
+   "line": 4,
+   "label": "do",
+   "probabilities": {
+    "do": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L6.md",
+   "line": 5,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L63.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.62
+   },
+   "confidence": 0.62,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L7.md",
+   "line": 2,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L7.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L7.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L8.md",
+   "line": 1,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L8.md",
+   "line": 2,
+   "label": "do",
+   "probabilities": {
+    "do": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L8.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L8.md",
+   "line": 5,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.62
+   },
+   "confidence": 0.62,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/references/antigravity-tools.L7.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/references/codex-tools.L3.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/references/codex-tools.L84.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/references/gemini-tools.L28.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/references/gemini-tools.L59.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L12.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L382.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L391.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L473.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.65
+   },
+   "confidence": 0.65,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L496.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L502.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L533.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L541.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L1046.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L1082.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L1099.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L1109.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L134.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.97
+   },
+   "confidence": 0.97,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L241.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L556.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L556.md",
+   "line": 4,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L557.md",
+   "line": 2,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L557.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L569.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L569.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.97
+   },
+   "confidence": 0.97,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L570.md",
+   "line": 2,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L570.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L836.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L853.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.95
+   },
+   "confidence": 0.95,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L107.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L122.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L122.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L123.md",
+   "line": 2,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L123.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L16.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L34.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L46.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.92
+   },
+   "confidence": 0.92,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L60.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L73.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L81.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L84.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L84.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L85.md",
+   "line": 2,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L85.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L92.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L92.md",
+   "line": 5,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L94.md",
+   "line": 1,
+   "label": "description",
+   "probabilities": {
+    "description": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L94.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L94.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.85
+   },
+   "confidence": 0.85,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L95.md",
+   "line": 2,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L95.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/persuasion-principles.L26.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L118.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L156.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L192.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L198.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L207.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.75
+   },
+   "confidence": 0.75,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L67.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.9
+   },
+   "confidence": 0.9,
+   "backend": "claude-cli",
+   "model": "claude-sonnet-5"
+  }
+ ]
+}

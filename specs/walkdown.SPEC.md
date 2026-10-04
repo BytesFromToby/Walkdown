@@ -27,6 +27,7 @@ The front door: one command from a folder or a git URL to a finished run and a b
   checkboxes and the install grants; the "look at these first" places counted by stage and
   headline, with stage 6 model reads on their own lines marked experimental (2026-10-03); each stage's validation stamp from LOG.md; the paths of `summary.html` and
   `full.md`; the no-verdict line.
+- After the brief, version drift against the previous run of the same name (`stages/08-report/specs/drift.SPEC.md`): counts only, plus the path of `changes.md`; one line when the version is the same; never fails the audit (2026-10-04). `walkdown.py diff <old> <new>` compares any two runs.
 - Exit code: the stage 8 runner's; 2 for a bad target or a failed clone.
 
 ## Must never

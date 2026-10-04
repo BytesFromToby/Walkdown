@@ -315,3 +315,22 @@ stays at 0.5.
 On superpowers: 9 listed (5 with no stage 4 hit), 7 near the line. The band handles drift,
 not accuracy: the two misreads (0.64, 0.73) sit above it.
 
+
+### D3 prep: the ordered (guided) label question (2026-10-04)
+
+The owner found the five flat label definitions unclear, so the D3 page asks them as an ordered
+decision (other sense, then example or quote, then do / not-to / description) with invented
+examples: the rule order the answer sheet was made with. Both models re-run on the 119 real
+lines with that question (`pre-planning/soft/d3/run_guided.py`; softreads.yaml swapped for the
+run and restored), scored against the answer sheet:
+
+| Run | Five labels | do / not | "do" answers right |
+|---|---|---|---|
+| Jev, flat | 44% (kappa 0.24) | 67% (0.30) | 25/46 |
+| Jev, ordered | 41% (0.18) | 72% (0.38) | 24/38 |
+| Claude, flat | 42% (0.27) | 65% (0.18) | 15/29 |
+| Claude, ordered | 62% (0.47) | 82% (0.56) | 23/25 |
+
+Caveat: the ordered question is the procedure the answer sheet was made with, so some of
+Claude's gain may be agreement with that procedure rather than with the truth. The owner's
+blind labels (D3) are the check: compare Claude-ordered against the owner as well as the sheet.

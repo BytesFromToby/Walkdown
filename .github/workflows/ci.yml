@@ -1,0 +1,35 @@
+name: tests
+
+# Every push and pull request: the spec tests, then every stage against its fixtures.
+# Tesseract is installed here so stage 2's image check runs (locally it is optional and
+# its absence gives INCOMPLETE). Stage 6 runs with no model backend: the packet gates only.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - name: Install Tesseract
+        run: sudo apt-get update -q && sudo apt-get install -y -q tesseract-ocr
+      - name: Install requirements
+        run: python -m pip install -r requirements.txt pytesseract==0.3.13
+      - name: Spec tests
+        run: python -m pytest -q
+      - name: Stage fixtures (grader)
+        run: python grader/grader.py all

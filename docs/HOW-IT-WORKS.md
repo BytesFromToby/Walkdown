@@ -300,6 +300,29 @@ is in `full.md`.
 
 ---
 
+## Version drift: comparing two runs
+
+**Why.** A repository can be harmless when you install it and change later (an update adds a
+hook, a new MCP server, an instruction to send data out). One audit sees one pinned version.
+
+When `walkdown.py` audits a repository it has audited before (same name), it compares the new
+run with the previous one and writes `changes.md` beside the reports. `walkdown.py diff <old>
+<new>` does the same for any two runs.
+
+| Compared | How |
+|---|---|
+| files | added, removed, changed, by each file's content hash (stage 1 records it since 2026-10-04) |
+| what ships | entry points, hooks, agent tool grants, MCP servers, descriptions |
+| what the text asks | phrase hits new and gone, matched by the line's text so a line that only moved is not new; network hosts |
+| what installing grants | trifecta legs that switched, install grants added or removed, new pairs |
+
+Model reads (stage 6) are not compared: the same line read twice already varies. The brief gets
+counts only; `changes.md` lists every change with file and quote, most consequential first.
+
+**Worth a closer look.** A trifecta leg that switched on, a new install grant (especially
+runs-at-load), a new hook or MCP server, a changed description, a new network host, and new
+phrase hits in text a model reads.
+
 ## Stage 7: Not examined
 
 **Why.** A zero is only as good as what was looked at.

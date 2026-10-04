@@ -13,6 +13,7 @@ RepoResults/<name>/<date>_<hash7>/          one run, e.g. RepoResults/backlog/20
   summary.html        the page for people: what to look at first, one sentence per stage
   summary.md          the same summary as text
   full.md             every finding, by stage, with file and line
+  changes.md          what changed since the previous run of the same repository (only when there is one)
   LOG.md              what ran, when, with which models, and each stage's validation stamp
   data/
     01-inventory.json     stage outputs, one per stage (the format is stages/CONTRACT.md)
@@ -111,6 +112,13 @@ python -c "import json; [print(x['file'], x['line'], x['quote']) for x in json.l
 | How often did each pattern hit? | `hits.json` `counts.per_pattern` |
 | What did a model say, and what was it shown? | `answers.jsonl` (request and response for every answer) |
 | What was not examined? | `07-limits.md`, and `skipped` findings in any stage output |
+
+## changes.md: version drift
+
+Written by `walkdown.py` when an earlier run of the same repository exists at a different
+version (or by `walkdown.py diff <old> <new>`). It compares the two runs' findings: files,
+hooks, tool grants, MCP servers, descriptions, phrase hits, hosts, and capability. How it
+compares is in [HOW-IT-WORKS.md](HOW-IT-WORKS.md#version-drift-comparing-two-runs).
 
 ## Rebuilding the reports
 

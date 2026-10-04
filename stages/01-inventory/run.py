@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -89,6 +90,7 @@ def build_report(input_dir: str | Path) -> dict:
             facts = census.symlink_facts(e.rel, e.target or "")
             flags = [census.symlink_flag(e.rel, e.target or "")]
             entry_kind = None
+            digest = None
         else:
             try:
                 data = (w.root / e.rel).read_bytes()
@@ -97,6 +99,9 @@ def build_report(input_dir: str | Path) -> dict:
                                   "skipped": f"unreadable: {exc}"})
                 continue
             facts = census.file_facts(e.rel, data, e.exec_bit)
+            # per-file content hash, so two runs can tell exactly which files changed
+            # (2026-10-04, version drift)
+            digest = hashlib.sha256(data).hexdigest()
             flags = census.census_flags(e.rel, facts)
             text = facts.text_value
             texts[e.rel] = text
@@ -142,7 +147,7 @@ def build_report(input_dir: str | Path) -> dict:
         row = {"check": "inv.file", "file": e.rel, "line": None, "ext": facts.ext,
                "bytes": facts.bytes, "lines": facts.lines, "exec": facts.exec,
                "encoding": facts.encoding, "bom": facts.bom, "type": facts.type,
-               "entry_point": entry_kind, "exec_source": e.exec_source}
+               "entry_point": entry_kind, "exec_source": e.exec_source, "sha256": digest}
         if e.kind == "symlink":
             row["target"] = e.target
         file_rows.append(row)

@@ -84,9 +84,11 @@ LIMIT_NOTE = re.compile(r"limit|absent|not installed|not scanned|not built|incom
 STANDING_LIMITS = [
     "Static examination only. Nothing in the artifact was executed, fetched, or installed.",
     "Stage 6 answers are located observations from the backends section 6 names; they "
-    "never change a stage 1 to 5 finding. Hit counts carry no benign share.",
-    "Version drift (class 8) is snapshot-blind: one pinned copy was examined; what the "
-    "artifact becomes after an update is not.",
+    "never change a stage 1 to 5 finding. Hit counts carry a benign share only when stage 6 "
+    "labels ran.",
+    "Version drift (class 8): each run examines one pinned copy. walkdown.py compares it with "
+    "the previous run of the same repository when there is one (changes.md next to this report); "
+    "what the artifact becomes after its next update is seen only by auditing it again.",
     "English-language scope: the phrase layer is blind to non-English text (stage 2 lists "
     "non-Latin runs).",
     "Stage 4 matches patterns; a payload phrased outside every pattern reads as no hit. "
@@ -752,7 +754,7 @@ def _limit_gist(reports, stamps) -> str:
     if not (reports.get("06-soft") or {}).get("backends"):
         bits.append("stage 6 ran packet only (no model)")
     bits += ["stage 4 position/repetition and gitleaks not built",
-             "version drift not examined"]
+             "version drift compared only against an earlier run"]
     return "; ".join(bits) + "."
 
 

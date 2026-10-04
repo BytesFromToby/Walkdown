@@ -1,6 +1,7 @@
 """Walkdown: audit the instruction layer of an AI skill or agent repository.
 
     python walkdown.py <path or git URL> [--name NAME] [--fresh | --keep]
+    python walkdown.py diff <old run folder> <new run folder>
                        [--label jev|laya|claude-cli] [--compare ...] [--relational claude-cli]
                        [--sweep jev] [--both]
 
@@ -169,7 +170,34 @@ def brief(run_dir: Path) -> str:
     return "\n".join(L)
 
 
+def drift_lines(run_dir: Path) -> list[str]:
+    """Version drift against the newest earlier run of the same repository (2026-10-04): writes
+    changes.md next to the reports and returns counts-only lines for the brief (no repository
+    text). Nothing when this is the first run; one line when the version is the same."""
+    sys.path.insert(0, str(STAGE8))
+    import drift  # noqa: E402
+    prev = drift.previous_run(run_dir)
+    if prev is None:
+        return []
+    a, b = drift.pin(drift.load(prev)), drift.pin(drift.load(run_dir))
+    if a.get("hash") and a.get("hash") == b.get("hash"):
+        return ["", f"Changes since {prev.name}: same version, nothing to compare."]
+    out, c = drift.write_report(prev, run_dir)
+    return (["", f"Changes since {prev.name} (version drift):"]
+            + [f"  {x}" for x in drift.summary_lines(c)] + [f"  Details: {out}"])
+
+
+def diff_main(args) -> int:
+    """walkdown.py diff <old run folder> <new run folder>"""
+    sys.path.insert(0, str(STAGE8))
+    import drift  # noqa: E402
+    return drift.main(args)
+
+
 def main(argv=None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] == ["diff"]:
+        return diff_main(argv[1:])
     ap = argparse.ArgumentParser(prog="walkdown.py", description=__doc__.split("\n\n")[0])
     ap.add_argument("target", help="a folder, or a git URL to clone into ReposToExamine/")
     ap.add_argument("--name", help="name for the run folder (default: the repository's name)")
@@ -207,6 +235,10 @@ def main(argv=None) -> int:
         print("error: the run did not finish; see the messages above", file=sys.stderr)
         return proc.returncode or 1
     print(brief(run_dir))
+    try:
+        print("\n".join(drift_lines(run_dir)))
+    except Exception as exc:  # drift is extra; it never fails the audit
+        print(f"note: version drift not computed: {exc}", file=sys.stderr)
     return proc.returncode
 
 

@@ -1,5 +1,7 @@
 # Walkdown
 
+[![tests](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml/badge.svg)](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml)
+
 **Status: alpha.** It runs end to end and produces a report you can read. Parts of it are
 experimental, and they are marked as such below.
 
@@ -108,6 +110,19 @@ latest commit; `--keep` audits it as it is); a folder is examined where it is. T
 `RepoResults/<repo>/`, and the command ends with a short brief: the trifecta legs, what to look
 at first, each stage's validation stamp, and the path to `summary.html`. Open that page.
 
+### Version drift
+
+Audit the same repository again later (same URL or `--name`) and Walkdown compares the new run
+with the previous one: files added and changed, new hooks, tool grants, MCP servers, changed
+descriptions, new phrase hits, new network hosts, and trifecta legs or install grants that
+switched on. The brief gives the counts; `changes.md` next to the new reports gives the details.
+A repository that is fine when you install it can change later; this is how you see what
+changed. To compare any two runs:
+
+```bash
+python walkdown.py diff RepoResults/<name>/<old run> RepoResults/<name>/<new run>
+```
+
 ### From a chat
 
 Open Claude Code in the Walkdown folder and ask in plain words, for example
@@ -155,7 +170,8 @@ stage against an answer sheet the stage code never reads:
 python grader/grader.py all
 ```
 
-Each audit runs the grader first, and the result is the stage's validation stamp in `LOG.md`. A
+The same tests and graders run on GitHub on every push (Linux, Python 3.12 and 3.13, with
+Tesseract), shown by the badge at the top. Each audit runs the grader first, and the result is the stage's validation stamp in `LOG.md`. A
 stage that fails its fixtures says so in the report. A stamp is reused while the code and
 fixtures are unchanged (LOG.md says when it was measured); `--revalidate` measures afresh.
 

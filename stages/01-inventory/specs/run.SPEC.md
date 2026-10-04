@@ -39,6 +39,11 @@ message on stderr for a missing or non-folder argument.
 A file whose bytes cannot be read gives an `inv.file` skip finding
 (`skipped`: the error) instead of failing the run.
 
+## Added 2026-10-04
+
+Each `inv.file` carries `sha256`, the hash of the file's bytes (null for a symlink), so two
+runs can tell exactly which files changed (`stages/08-report/specs/drift.SPEC.md`).
+
 ## Must never
 
 - Print anything but the report to stdout.

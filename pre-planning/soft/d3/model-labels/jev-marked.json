@@ -1,0 +1,2300 @@
+{
+ "source": "jev-d4.json",
+ "labels": [
+  {
+   "file": "backlog/.claude-plugin/plugin.L12.json",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "example-or-quote": 0.22,
+    "description": 0.19,
+    "not-to": 0.0,
+    "do": 0.05,
+    "other-sense": 0.54
+   },
+   "confidence": 0.43,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "backlog/CLAUDE.L167.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "other-sense": 0.33,
+    "do": 0.0,
+    "description": 0.67,
+    "example-or-quote": 0.0,
+    "not-to": 0.0
+   },
+   "confidence": 0.57,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "backlog/CLAUDE.L20.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "example-or-quote": 0.01,
+    "not-to": 0.0,
+    "other-sense": 0.2,
+    "do": 0.0,
+    "description": 0.79
+   },
+   "confidence": 0.74,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "backlog/CLAUDE.L236.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "description": 0.04,
+    "do": 0.03,
+    "example-or-quote": 0.72,
+    "other-sense": 0.21,
+    "not-to": 0.0
+   },
+   "confidence": 0.65,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "backlog/CLAUDE.L248.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "example-or-quote": 0.0,
+    "do": 0.01,
+    "description": 0.85,
+    "other-sense": 0.14,
+    "not-to": 0.0
+   },
+   "confidence": 0.81,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "backlog/agents/task-planner.L4.md",
+   "line": 4,
+   "label": "do",
+   "probabilities": {
+    "example-or-quote": 0.04,
+    "do": 0.38,
+    "description": 0.22,
+    "other-sense": 0.35,
+    "not-to": 0.01
+   },
+   "confidence": 0.23,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "backlog/skills/refine/SKILL.L16.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "not-to": 0.02,
+    "description": 0.77,
+    "do": 0.04,
+    "other-sense": 0.09,
+    "example-or-quote": 0.08
+   },
+   "confidence": 0.71,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "backlog/skills/refine/SKILL.L30.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "example-or-quote": 0.01,
+    "not-to": 0.01,
+    "do": 0.87,
+    "description": 0.01,
+    "other-sense": 0.1
+   },
+   "confidence": 0.85,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "claude-familiar/packages/familiar-extras/.mcp.L2.json",
+   "line": 2,
+   "label": "other-sense",
+   "probabilities": {
+    "example-or-quote": 0.22,
+    "not-to": 0.0,
+    "description": 0.19,
+    "other-sense": 0.53,
+    "do": 0.06
+   },
+   "confidence": 0.41,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "claude-familiar/packages/familiar-extras/skills/familiar-help/SKILL.L42.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "not-to": 0.0,
+    "do": 0.1,
+    "description": 0.01,
+    "example-or-quote": 0.89,
+    "other-sense": 0.0
+   },
+   "confidence": 0.87,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/.kimi-plugin/plugin.L25.json",
+   "line": 3,
+   "label": "not-to",
+   "probabilities": {
+    "not-to": 0.53,
+    "do": 0.46,
+    "example-or-quote": 0.01,
+    "other-sense": 0.0,
+    "description": 0.0
+   },
+   "confidence": 0.41,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/CLAUDE.L3.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "do": 0.08,
+    "example-or-quote": 0.33,
+    "other-sense": 0.34,
+    "not-to": 0.01,
+    "description": 0.24
+   },
+   "confidence": 0.18,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/CLAUDE.L46.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.01,
+    "not-to": 0.04,
+    "do": 0.6799999999999999,
+    "other-sense": 0.26,
+    "example-or-quote": 0.01
+   },
+   "confidence": 0.61,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/CLAUDE.L50.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "other-sense": 0.11,
+    "example-or-quote": 0.01,
+    "not-to": 0.03,
+    "do": 0.84,
+    "description": 0.01
+   },
+   "confidence": 0.8,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/CLAUDE.L54.md",
+   "line": 3,
+   "label": "not-to",
+   "probabilities": {
+    "description": 0.0,
+    "example-or-quote": 0.0,
+    "other-sense": 0.04,
+    "not-to": 0.88,
+    "do": 0.08
+   },
+   "confidence": 0.85,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/CLAUDE.L78.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.01,
+    "do": 0.88,
+    "example-or-quote": 0.08,
+    "other-sense": 0.03,
+    "not-to": 0.0
+   },
+   "confidence": 0.85,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/CLAUDE.L91.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "other-sense": 0.05,
+    "example-or-quote": 0.01,
+    "do": 0.03,
+    "description": 0.89,
+    "not-to": 0.02
+   },
+   "confidence": 0.85,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L14.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.19,
+    "do": 0.28,
+    "not-to": 0.16,
+    "example-or-quote": 0.23,
+    "other-sense": 0.14
+   },
+   "confidence": 0.1,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L167.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "not-to": 0.0,
+    "description": 0.0,
+    "do": 0.0,
+    "example-or-quote": 0.9,
+    "other-sense": 0.1
+   },
+   "confidence": 0.87,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L167.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "do": 0.16,
+    "description": 0.0,
+    "not-to": 0.01,
+    "example-or-quote": 0.0,
+    "other-sense": 0.83
+   },
+   "confidence": 0.79,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L168.md",
+   "line": 2,
+   "label": "example-or-quote",
+   "probabilities": {
+    "description": 0.0,
+    "do": 0.01,
+    "example-or-quote": 0.9,
+    "other-sense": 0.09,
+    "not-to": 0.0
+   },
+   "confidence": 0.88,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L168.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "not-to": 0.0,
+    "other-sense": 0.89,
+    "example-or-quote": 0.0,
+    "description": 0.0,
+    "do": 0.11
+   },
+   "confidence": 0.86,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L20.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.26,
+    "do": 0.35000000000000003,
+    "other-sense": 0.12,
+    "not-to": 0.02,
+    "example-or-quote": 0.25
+   },
+   "confidence": 0.18,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L237.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.03,
+    "do": 0.88,
+    "example-or-quote": 0.0,
+    "not-to": 0.02,
+    "other-sense": 0.07
+   },
+   "confidence": 0.84,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L240.md",
+   "line": 3,
+   "label": "not-to",
+   "probabilities": {
+    "description": 0.0,
+    "not-to": 0.55,
+    "other-sense": 0.02,
+    "do": 0.42,
+    "example-or-quote": 0.01
+   },
+   "confidence": 0.44,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/SKILL.L96.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "other-sense": 0.1,
+    "not-to": 0.02,
+    "do": 0.85,
+    "example-or-quote": 0.01,
+    "description": 0.02
+   },
+   "confidence": 0.81,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/visual-companion.L109.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.66,
+    "not-to": 0.05,
+    "example-or-quote": 0.0,
+    "do": 0.12,
+    "description": 0.17
+   },
+   "confidence": 0.57,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/brainstorming/visual-companion.L46.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.48,
+    "not-to": 0.19,
+    "other-sense": 0.01,
+    "description": 0.29,
+    "example-or-quote": 0.03
+   },
+   "confidence": 0.36,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/finishing-a-development-branch/SKILL.L118.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "description": 0.01,
+    "not-to": 0.0,
+    "other-sense": 0.02,
+    "do": 0.28,
+    "example-or-quote": 0.69
+   },
+   "confidence": 0.62,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/finishing-a-development-branch/SKILL.L138.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "not-to": 0.0,
+    "do": 0.01,
+    "other-sense": 0.0,
+    "example-or-quote": 0.2,
+    "description": 0.79
+   },
+   "confidence": 0.74,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/finishing-a-development-branch/SKILL.L220.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "other-sense": 0.33,
+    "example-or-quote": 0.01,
+    "not-to": 0.05,
+    "description": 0.55,
+    "do": 0.05
+   },
+   "confidence": 0.44,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/receiving-code-review/SKILL.L129.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.58,
+    "example-or-quote": 0.04,
+    "do": 0.34,
+    "description": 0.03,
+    "not-to": 0.01
+   },
+   "confidence": 0.47,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/requesting-code-review/code-reviewer.L35.md",
+   "line": 3,
+   "label": "not-to",
+   "probabilities": {
+    "description": 0.07,
+    "not-to": 0.72,
+    "do": 0.08,
+    "other-sense": 0.12,
+    "example-or-quote": 0.01
+   },
+   "confidence": 0.65,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L119.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "not-to": 0.02,
+    "do": 0.64,
+    "other-sense": 0.04,
+    "example-or-quote": 0.29,
+    "description": 0.01
+   },
+   "confidence": 0.54,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L119.md",
+   "line": 4,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.48,
+    "description": 0.01,
+    "not-to": 0.1,
+    "other-sense": 0.04,
+    "do": 0.37
+   },
+   "confidence": 0.36,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L120.md",
+   "line": 2,
+   "label": "do",
+   "probabilities": {
+    "other-sense": 0.03,
+    "do": 0.7,
+    "example-or-quote": 0.24,
+    "description": 0.01,
+    "not-to": 0.02
+   },
+   "confidence": 0.63,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L120.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "description": 0.01,
+    "do": 0.42,
+    "not-to": 0.06,
+    "other-sense": 0.04,
+    "example-or-quote": 0.47000000000000003
+   },
+   "confidence": 0.32,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L30.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "other-sense": 0.01,
+    "example-or-quote": 0.68,
+    "do": 0.05,
+    "description": 0.09,
+    "not-to": 0.17
+   },
+   "confidence": 0.6,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L337.md",
+   "line": 3,
+   "label": "not-to",
+   "probabilities": {
+    "not-to": 0.57,
+    "do": 0.42,
+    "description": 0.0,
+    "example-or-quote": 0.01,
+    "other-sense": 0.0
+   },
+   "confidence": 0.46,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L377.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "do": 0.23,
+    "not-to": 0.09,
+    "description": 0.55,
+    "example-or-quote": 0.05,
+    "other-sense": 0.08
+   },
+   "confidence": 0.44,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L483.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "example-or-quote": 0.06,
+    "not-to": 0.03,
+    "do": 0.87,
+    "other-sense": 0.03,
+    "description": 0.01
+   },
+   "confidence": 0.82,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L565.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "not-to": 0.02,
+    "other-sense": 0.04,
+    "do": 0.76,
+    "description": 0.03,
+    "example-or-quote": 0.15
+   },
+   "confidence": 0.7,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/SKILL.L90.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "other-sense": 0.07,
+    "description": 0.01,
+    "example-or-quote": 0.2,
+    "do": 0.68,
+    "not-to": 0.04
+   },
+   "confidence": 0.6,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/implementer-prompt.L140.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "not-to": 0.0,
+    "do": 0.93,
+    "example-or-quote": 0.06,
+    "other-sense": 0.01,
+    "description": 0.0
+   },
+   "confidence": 0.91,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/subagent-driven-development/implementer-prompt.L53.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.02,
+    "not-to": 0.32,
+    "other-sense": 0.22,
+    "example-or-quote": 0.01,
+    "do": 0.43
+   },
+   "confidence": 0.28,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/systematic-debugging/SKILL.L95.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.01,
+    "do": 0.58,
+    "not-to": 0.0,
+    "other-sense": 0.02,
+    "example-or-quote": 0.39
+   },
+   "confidence": 0.47,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/systematic-debugging/SKILL.L98.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "not-to": 0.0,
+    "description": 0.05,
+    "do": 0.21,
+    "other-sense": 0.3,
+    "example-or-quote": 0.44
+   },
+   "confidence": 0.29,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/systematic-debugging/test-pressure-1.L3.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.0,
+    "do": 0.82,
+    "not-to": 0.13,
+    "example-or-quote": 0.05,
+    "other-sense": 0.0
+   },
+   "confidence": 0.77,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/systematic-debugging/test-pressure-2.L3.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "not-to": 0.1,
+    "other-sense": 0.0,
+    "example-or-quote": 0.06,
+    "do": 0.84,
+    "description": 0.0
+   },
+   "confidence": 0.79,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/systematic-debugging/test-pressure-3.L3.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "example-or-quote": 0.06,
+    "not-to": 0.12,
+    "description": 0.0,
+    "other-sense": 0.0,
+    "do": 0.8200000000000001
+   },
+   "confidence": 0.77,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L221.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.29,
+    "do": 0.33999999999999997,
+    "not-to": 0.03,
+    "other-sense": 0.23,
+    "example-or-quote": 0.11
+   },
+   "confidence": 0.18,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L228.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.6,
+    "not-to": 0.07,
+    "description": 0.01,
+    "example-or-quote": 0.13,
+    "other-sense": 0.19
+   },
+   "confidence": 0.5,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L244.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.2,
+    "not-to": 0.0,
+    "example-or-quote": 0.03,
+    "do": 0.68,
+    "other-sense": 0.08
+   },
+   "confidence": 0.6,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L29.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "description": 0.18,
+    "do": 0.04,
+    "other-sense": 0.25,
+    "example-or-quote": 0.26,
+    "not-to": 0.27
+   },
+   "confidence": 0.08,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L296.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.01,
+    "do": 0.78,
+    "other-sense": 0.08,
+    "example-or-quote": 0.13,
+    "not-to": 0.0
+   },
+   "confidence": 0.73,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L37.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.0,
+    "do": 0.75,
+    "example-or-quote": 0.1,
+    "other-sense": 0.14,
+    "not-to": 0.01
+   },
+   "confidence": 0.7,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/test-driven-development/SKILL.L43.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "other-sense": 0.16,
+    "description": 0.43,
+    "example-or-quote": 0.02,
+    "do": 0.35,
+    "not-to": 0.04
+   },
+   "confidence": 0.29,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-git-worktrees/SKILL.L100.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.98,
+    "not-to": 0.0,
+    "description": 0.01,
+    "example-or-quote": 0.0,
+    "other-sense": 0.01
+   },
+   "confidence": 0.97,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-git-worktrees/SKILL.L114.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.0,
+    "do": 0.92,
+    "example-or-quote": 0.07,
+    "not-to": 0.0,
+    "other-sense": 0.01
+   },
+   "confidence": 0.9,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-git-worktrees/SKILL.L163.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "do": 0.02,
+    "example-or-quote": 0.96,
+    "other-sense": 0.0,
+    "not-to": 0.02,
+    "description": 0.0
+   },
+   "confidence": 0.95,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-git-worktrees/SKILL.L18.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.01,
+    "do": 0.8099999999999999,
+    "example-or-quote": 0.01,
+    "other-sense": 0.16,
+    "not-to": 0.01
+   },
+   "confidence": 0.77,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-git-worktrees/SKILL.L45.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.98,
+    "other-sense": 0.0,
+    "not-to": 0.02,
+    "description": 0.0,
+    "example-or-quote": 0.0
+   },
+   "confidence": 0.97,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-git-worktrees/SKILL.L67.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "example-or-quote": 0.0,
+    "not-to": 0.08,
+    "do": 0.92,
+    "description": 0.0,
+    "other-sense": 0.0
+   },
+   "confidence": 0.89,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L10.md",
+   "line": 1,
+   "label": "do",
+   "probabilities": {
+    "description": 0.03,
+    "do": 0.46,
+    "example-or-quote": 0.31,
+    "other-sense": 0.18,
+    "not-to": 0.02
+   },
+   "confidence": 0.32,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L10.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "description": 0.14,
+    "not-to": 0.01,
+    "other-sense": 0.12,
+    "do": 0.31,
+    "example-or-quote": 0.42
+   },
+   "confidence": 0.28,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L15.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "example-or-quote": 0.16,
+    "description": 0.09,
+    "do": 0.37,
+    "not-to": 0.23,
+    "other-sense": 0.15
+   },
+   "confidence": 0.22,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L15.md",
+   "line": 4,
+   "label": "example-or-quote",
+   "probabilities": {
+    "do": 0.21,
+    "not-to": 0.06,
+    "description": 0.1,
+    "example-or-quote": 0.51,
+    "other-sense": 0.12
+   },
+   "confidence": 0.4,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L16.md",
+   "line": 2,
+   "label": "do",
+   "probabilities": {
+    "description": 0.08,
+    "not-to": 0.25,
+    "example-or-quote": 0.18,
+    "do": 0.42,
+    "other-sense": 0.07
+   },
+   "confidence": 0.27,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L16.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "description": 0.1,
+    "not-to": 0.06,
+    "other-sense": 0.12,
+    "do": 0.16,
+    "example-or-quote": 0.56
+   },
+   "confidence": 0.45,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L24.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.0,
+    "other-sense": 0.02,
+    "example-or-quote": 0.07,
+    "do": 0.9,
+    "not-to": 0.01
+   },
+   "confidence": 0.87,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L35.md",
+   "line": 3,
+   "label": "not-to",
+   "probabilities": {
+    "not-to": 0.31,
+    "other-sense": 0.21,
+    "example-or-quote": 0.24,
+    "description": 0.14,
+    "do": 0.1
+   },
+   "confidence": 0.13,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L45.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.5,
+    "example-or-quote": 0.1,
+    "not-to": 0.0,
+    "other-sense": 0.03,
+    "do": 0.37
+   },
+   "confidence": 0.37,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L54.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.07,
+    "not-to": 0.0,
+    "do": 0.68,
+    "example-or-quote": 0.05,
+    "other-sense": 0.2
+   },
+   "confidence": 0.6,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L54.md",
+   "line": 5,
+   "label": "other-sense",
+   "probabilities": {
+    "example-or-quote": 0.21,
+    "do": 0.16,
+    "other-sense": 0.39,
+    "not-to": 0.0,
+    "description": 0.24
+   },
+   "confidence": 0.23,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L56.md",
+   "line": 1,
+   "label": "do",
+   "probabilities": {
+    "description": 0.08,
+    "do": 0.72,
+    "not-to": 0.0,
+    "other-sense": 0.15,
+    "example-or-quote": 0.05
+   },
+   "confidence": 0.65,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L56.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "do": 0.11,
+    "not-to": 0.0,
+    "example-or-quote": 0.19,
+    "other-sense": 0.43,
+    "description": 0.27
+   },
+   "confidence": 0.29,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L56.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "do": 0.1,
+    "other-sense": 0.54,
+    "not-to": 0.01,
+    "description": 0.25,
+    "example-or-quote": 0.1
+   },
+   "confidence": 0.44,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L56.md",
+   "line": 5,
+   "label": "other-sense",
+   "probabilities": {
+    "description": 0.38,
+    "not-to": 0.0,
+    "other-sense": 0.51,
+    "do": 0.05,
+    "example-or-quote": 0.06
+   },
+   "confidence": 0.38,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L57.md",
+   "line": 2,
+   "label": "other-sense",
+   "probabilities": {
+    "not-to": 0.01,
+    "other-sense": 0.43,
+    "example-or-quote": 0.18,
+    "description": 0.3,
+    "do": 0.08
+   },
+   "confidence": 0.29,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L57.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "description": 0.24,
+    "example-or-quote": 0.08,
+    "other-sense": 0.6,
+    "do": 0.08,
+    "not-to": 0.0
+   },
+   "confidence": 0.49,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L57.md",
+   "line": 4,
+   "label": "other-sense",
+   "probabilities": {
+    "description": 0.27,
+    "not-to": 0.0,
+    "other-sense": 0.61,
+    "do": 0.05,
+    "example-or-quote": 0.07
+   },
+   "confidence": 0.51,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L58.md",
+   "line": 1,
+   "label": "other-sense",
+   "probabilities": {
+    "not-to": 0.01,
+    "other-sense": 0.43,
+    "example-or-quote": 0.17,
+    "description": 0.3,
+    "do": 0.09
+   },
+   "confidence": 0.3,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L58.md",
+   "line": 2,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.59,
+    "do": 0.09,
+    "description": 0.24,
+    "not-to": 0.0,
+    "example-or-quote": 0.08
+   },
+   "confidence": 0.47,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L58.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "do": 0.05,
+    "example-or-quote": 0.04,
+    "not-to": 0.0,
+    "other-sense": 0.63,
+    "description": 0.28
+   },
+   "confidence": 0.52,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L6.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "not-to": 0.03,
+    "description": 0.17,
+    "do": 0.39,
+    "other-sense": 0.1,
+    "example-or-quote": 0.31
+   },
+   "confidence": 0.24,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L6.md",
+   "line": 4,
+   "label": "do",
+   "probabilities": {
+    "example-or-quote": 0.0,
+    "do": 0.97,
+    "description": 0.0,
+    "not-to": 0.02,
+    "other-sense": 0.01
+   },
+   "confidence": 0.95,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L6.md",
+   "line": 5,
+   "label": "example-or-quote",
+   "probabilities": {
+    "not-to": 0.04,
+    "example-or-quote": 0.4,
+    "description": 0.18,
+    "do": 0.18,
+    "other-sense": 0.2
+   },
+   "confidence": 0.25,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L63.md",
+   "line": 3,
+   "label": "not-to",
+   "probabilities": {
+    "other-sense": 0.02,
+    "example-or-quote": 0.01,
+    "description": 0.15,
+    "do": 0.24,
+    "not-to": 0.58
+   },
+   "confidence": 0.47,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L7.md",
+   "line": 2,
+   "label": "do",
+   "probabilities": {
+    "example-or-quote": 0.3,
+    "do": 0.46,
+    "other-sense": 0.06,
+    "not-to": 0.04,
+    "description": 0.14
+   },
+   "confidence": 0.32,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L7.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "example-or-quote": 0.0,
+    "do": 0.98,
+    "description": 0.0,
+    "other-sense": 0.01,
+    "not-to": 0.01
+   },
+   "confidence": 0.96,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L7.md",
+   "line": 4,
+   "label": "example-or-quote",
+   "probabilities": {
+    "other-sense": 0.22,
+    "example-or-quote": 0.46,
+    "not-to": 0.03,
+    "description": 0.17,
+    "do": 0.12
+   },
+   "confidence": 0.33,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L8.md",
+   "line": 1,
+   "label": "do",
+   "probabilities": {
+    "description": 0.13,
+    "do": 0.44,
+    "other-sense": 0.07,
+    "example-or-quote": 0.26,
+    "not-to": 0.1
+   },
+   "confidence": 0.3,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L8.md",
+   "line": 2,
+   "label": "do",
+   "probabilities": {
+    "not-to": 0.01,
+    "other-sense": 0.01,
+    "example-or-quote": 0.01,
+    "do": 0.97,
+    "description": 0.0
+   },
+   "confidence": 0.96,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L8.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "other-sense": 0.19,
+    "description": 0.14,
+    "example-or-quote": 0.45,
+    "do": 0.17,
+    "not-to": 0.05
+   },
+   "confidence": 0.32,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/SKILL.L8.md",
+   "line": 5,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.49,
+    "do": 0.15,
+    "description": 0.14,
+    "other-sense": 0.21,
+    "not-to": 0.01
+   },
+   "confidence": 0.36,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/references/antigravity-tools.L7.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.52,
+    "not-to": 0.01,
+    "other-sense": 0.3,
+    "do": 0.13,
+    "example-or-quote": 0.04
+   },
+   "confidence": 0.39,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/references/codex-tools.L3.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.8,
+    "other-sense": 0.15,
+    "not-to": 0.0,
+    "example-or-quote": 0.04,
+    "description": 0.01
+   },
+   "confidence": 0.76,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/references/codex-tools.L84.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "example-or-quote": 0.01,
+    "description": 0.11,
+    "do": 0.76,
+    "not-to": 0.08,
+    "other-sense": 0.04
+   },
+   "confidence": 0.7,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/references/gemini-tools.L28.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "example-or-quote": 0.0,
+    "description": 0.65,
+    "do": 0.0,
+    "not-to": 0.0,
+    "other-sense": 0.35
+   },
+   "confidence": 0.55,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/using-superpowers/references/gemini-tools.L59.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.88,
+    "not-to": 0.0,
+    "other-sense": 0.11,
+    "do": 0.01,
+    "example-or-quote": 0.0
+   },
+   "confidence": 0.85,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L12.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.6,
+    "not-to": 0.0,
+    "other-sense": 0.3,
+    "example-or-quote": 0.09,
+    "do": 0.01
+   },
+   "confidence": 0.5,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L382.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "not-to": 0.02,
+    "do": 0.82,
+    "other-sense": 0.05,
+    "example-or-quote": 0.11,
+    "description": 0.0
+   },
+   "confidence": 0.78,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L391.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "other-sense": 0.18,
+    "example-or-quote": 0.02,
+    "description": 0.5,
+    "do": 0.27,
+    "not-to": 0.03
+   },
+   "confidence": 0.38,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L473.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.9,
+    "do": 0.01,
+    "not-to": 0.09,
+    "description": 0.0,
+    "other-sense": 0.0
+   },
+   "confidence": 0.88,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L496.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.01,
+    "example-or-quote": 0.17,
+    "other-sense": 0.06,
+    "not-to": 0.01,
+    "do": 0.75
+   },
+   "confidence": 0.68,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L502.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.68,
+    "not-to": 0.03,
+    "other-sense": 0.09,
+    "example-or-quote": 0.02,
+    "do": 0.17
+   },
+   "confidence": 0.61,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L533.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "not-to": 0.03,
+    "description": 0.01,
+    "do": 0.65,
+    "other-sense": 0.1,
+    "example-or-quote": 0.21
+   },
+   "confidence": 0.55,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/SKILL.L541.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "other-sense": 0.06,
+    "do": 0.63,
+    "example-or-quote": 0.07,
+    "description": 0.24,
+    "not-to": 0.0
+   },
+   "confidence": 0.54,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L1046.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "other-sense": 0.07,
+    "do": 0.02,
+    "not-to": 0.01,
+    "description": 0.41,
+    "example-or-quote": 0.49
+   },
+   "confidence": 0.36,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L1082.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.59,
+    "do": 0.41,
+    "not-to": 0.0,
+    "other-sense": 0.0,
+    "description": 0.0
+   },
+   "confidence": 0.47,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L1099.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "description": 0.01,
+    "example-or-quote": 0.01,
+    "other-sense": 0.71,
+    "not-to": 0.11,
+    "do": 0.16
+   },
+   "confidence": 0.64,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L1109.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "not-to": 0.12,
+    "do": 0.25,
+    "example-or-quote": 0.06,
+    "other-sense": 0.51,
+    "description": 0.06
+   },
+   "confidence": 0.38,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L134.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "example-or-quote": 0.0,
+    "other-sense": 0.59,
+    "do": 0.01,
+    "description": 0.4,
+    "not-to": 0.0
+   },
+   "confidence": 0.48,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L241.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "description": 0.01,
+    "not-to": 0.12,
+    "other-sense": 0.69,
+    "do": 0.15,
+    "example-or-quote": 0.03
+   },
+   "confidence": 0.61,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L556.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.58,
+    "example-or-quote": 0.01,
+    "other-sense": 0.3,
+    "not-to": 0.05,
+    "description": 0.06
+   },
+   "confidence": 0.47,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L556.md",
+   "line": 4,
+   "label": "do",
+   "probabilities": {
+    "not-to": 0.01,
+    "other-sense": 0.35,
+    "do": 0.58,
+    "example-or-quote": 0.01,
+    "description": 0.05
+   },
+   "confidence": 0.47,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L557.md",
+   "line": 2,
+   "label": "do",
+   "probabilities": {
+    "not-to": 0.05,
+    "other-sense": 0.34,
+    "example-or-quote": 0.01,
+    "description": 0.07,
+    "do": 0.53
+   },
+   "confidence": 0.41,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L557.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "other-sense": 0.36,
+    "example-or-quote": 0.01,
+    "do": 0.58,
+    "description": 0.03,
+    "not-to": 0.02
+   },
+   "confidence": 0.49,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L569.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "description": 0.08,
+    "not-to": 0.01,
+    "other-sense": 0.45999999999999996,
+    "do": 0.05,
+    "example-or-quote": 0.4
+   },
+   "confidence": 0.34,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L569.md",
+   "line": 4,
+   "label": "description",
+   "probabilities": {
+    "example-or-quote": 0.16,
+    "do": 0.0,
+    "description": 0.5,
+    "not-to": 0.0,
+    "other-sense": 0.34
+   },
+   "confidence": 0.37,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L570.md",
+   "line": 2,
+   "label": "other-sense",
+   "probabilities": {
+    "do": 0.08,
+    "not-to": 0.01,
+    "other-sense": 0.54,
+    "description": 0.06,
+    "example-or-quote": 0.31
+   },
+   "confidence": 0.43,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L570.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "not-to": 0.0,
+    "do": 0.01,
+    "description": 0.5,
+    "other-sense": 0.34,
+    "example-or-quote": 0.15
+   },
+   "confidence": 0.38,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L836.md",
+   "line": 3,
+   "label": "not-to",
+   "probabilities": {
+    "description": 0.01,
+    "not-to": 0.6,
+    "other-sense": 0.06,
+    "do": 0.32,
+    "example-or-quote": 0.01
+   },
+   "confidence": 0.51,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/anthropic-best-practices.L853.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "example-or-quote": 0.01,
+    "not-to": 0.02,
+    "do": 0.59,
+    "other-sense": 0.37,
+    "description": 0.01
+   },
+   "confidence": 0.5,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L107.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "do": 0.28,
+    "example-or-quote": 0.5,
+    "other-sense": 0.2,
+    "not-to": 0.0,
+    "description": 0.02
+   },
+   "confidence": 0.37,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L122.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.52,
+    "description": 0.01,
+    "do": 0.29,
+    "not-to": 0.0,
+    "other-sense": 0.18
+   },
+   "confidence": 0.39,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L122.md",
+   "line": 4,
+   "label": "example-or-quote",
+   "probabilities": {
+    "do": 0.42,
+    "other-sense": 0.14,
+    "not-to": 0.0,
+    "description": 0.01,
+    "example-or-quote": 0.43
+   },
+   "confidence": 0.29,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L123.md",
+   "line": 2,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.56,
+    "do": 0.27,
+    "description": 0.01,
+    "not-to": 0.0,
+    "other-sense": 0.15
+   },
+   "confidence": 0.45,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L123.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "not-to": 0.0,
+    "other-sense": 0.21,
+    "do": 0.38,
+    "description": 0.01,
+    "example-or-quote": 0.39999999999999997
+   },
+   "confidence": 0.26,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L16.md",
+   "line": 3,
+   "label": "other-sense",
+   "probabilities": {
+    "other-sense": 0.47,
+    "example-or-quote": 0.07,
+    "do": 0.42,
+    "description": 0.03,
+    "not-to": 0.01
+   },
+   "confidence": 0.34,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L34.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "not-to": 0.01,
+    "other-sense": 0.26,
+    "example-or-quote": 0.07,
+    "do": 0.63,
+    "description": 0.03
+   },
+   "confidence": 0.53,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L46.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "example-or-quote": 0.03,
+    "not-to": 0.01,
+    "do": 0.59,
+    "other-sense": 0.35,
+    "description": 0.02
+   },
+   "confidence": 0.5,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L60.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.5,
+    "not-to": 0.03,
+    "example-or-quote": 0.09,
+    "other-sense": 0.35,
+    "description": 0.03
+   },
+   "confidence": 0.38,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L73.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "do": 0.08,
+    "example-or-quote": 0.05,
+    "description": 0.63,
+    "not-to": 0.0,
+    "other-sense": 0.24
+   },
+   "confidence": 0.53,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L81.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.62,
+    "description": 0.02,
+    "not-to": 0.0,
+    "other-sense": 0.34,
+    "example-or-quote": 0.02
+   },
+   "confidence": 0.51,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L84.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "description": 0.01,
+    "other-sense": 0.2,
+    "not-to": 0.0,
+    "example-or-quote": 0.51,
+    "do": 0.28
+   },
+   "confidence": 0.38,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L84.md",
+   "line": 4,
+   "label": "example-or-quote",
+   "probabilities": {
+    "not-to": 0.0,
+    "other-sense": 0.16,
+    "example-or-quote": 0.57,
+    "do": 0.26,
+    "description": 0.01
+   },
+   "confidence": 0.47,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L85.md",
+   "line": 2,
+   "label": "example-or-quote",
+   "probabilities": {
+    "description": 0.01,
+    "example-or-quote": 0.5,
+    "not-to": 0.0,
+    "other-sense": 0.18,
+    "do": 0.31
+   },
+   "confidence": 0.36,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L85.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "other-sense": 0.14,
+    "example-or-quote": 0.63,
+    "do": 0.23,
+    "description": 0.0,
+    "not-to": 0.0
+   },
+   "confidence": 0.53,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L92.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.72,
+    "do": 0.01,
+    "other-sense": 0.24,
+    "not-to": 0.0,
+    "example-or-quote": 0.03
+   },
+   "confidence": 0.65,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L92.md",
+   "line": 5,
+   "label": "example-or-quote",
+   "probabilities": {
+    "not-to": 0.0,
+    "do": 0.32,
+    "other-sense": 0.23,
+    "example-or-quote": 0.37,
+    "description": 0.08
+   },
+   "confidence": 0.22,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L94.md",
+   "line": 1,
+   "label": "description",
+   "probabilities": {
+    "other-sense": 0.23,
+    "not-to": 0.0,
+    "do": 0.01,
+    "description": 0.73,
+    "example-or-quote": 0.03
+   },
+   "confidence": 0.65,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L94.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "description": 0.04,
+    "do": 0.28,
+    "other-sense": 0.23,
+    "example-or-quote": 0.45,
+    "not-to": 0.0
+   },
+   "confidence": 0.31,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L94.md",
+   "line": 4,
+   "label": "example-or-quote",
+   "probabilities": {
+    "example-or-quote": 0.55,
+    "not-to": 0.0,
+    "description": 0.01,
+    "other-sense": 0.16,
+    "do": 0.27
+   },
+   "confidence": 0.44,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L95.md",
+   "line": 2,
+   "label": "example-or-quote",
+   "probabilities": {
+    "not-to": 0.0,
+    "do": 0.32,
+    "description": 0.01,
+    "other-sense": 0.21,
+    "example-or-quote": 0.46
+   },
+   "confidence": 0.32,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/examples/CLAUDE_MD_TESTING.L95.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "description": 0.01,
+    "do": 0.24,
+    "example-or-quote": 0.58,
+    "other-sense": 0.17,
+    "not-to": 0.0
+   },
+   "confidence": 0.47,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/persuasion-principles.L26.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "description": 0.01,
+    "do": 0.64,
+    "not-to": 0.03,
+    "example-or-quote": 0.25,
+    "other-sense": 0.07
+   },
+   "confidence": 0.54,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L118.md",
+   "line": 3,
+   "label": "example-or-quote",
+   "probabilities": {
+    "not-to": 0.02,
+    "do": 0.32,
+    "description": 0.01,
+    "example-or-quote": 0.43,
+    "other-sense": 0.22
+   },
+   "confidence": 0.3,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L156.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "do": 0.66,
+    "example-or-quote": 0.02,
+    "other-sense": 0.01,
+    "not-to": 0.31,
+    "description": 0.0
+   },
+   "confidence": 0.57,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L192.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "other-sense": 0.06,
+    "do": 0.81,
+    "example-or-quote": 0.11,
+    "description": 0.0,
+    "not-to": 0.02
+   },
+   "confidence": 0.77,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L198.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.59,
+    "other-sense": 0.14,
+    "example-or-quote": 0.02,
+    "not-to": 0.04,
+    "do": 0.21
+   },
+   "confidence": 0.48,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L207.md",
+   "line": 3,
+   "label": "description",
+   "probabilities": {
+    "description": 0.37,
+    "example-or-quote": 0.14,
+    "not-to": 0.02,
+    "other-sense": 0.13,
+    "do": 0.34
+   },
+   "confidence": 0.2,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  },
+  {
+   "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L67.md",
+   "line": 3,
+   "label": "do",
+   "probabilities": {
+    "other-sense": 0.26,
+    "do": 0.37,
+    "description": 0.01,
+    "not-to": 0.02,
+    "example-or-quote": 0.34
+   },
+   "confidence": 0.22,
+   "backend": "jev",
+   "model": "jev-1.13.0"
+  }
+ ]
+}
