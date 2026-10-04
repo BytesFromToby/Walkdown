@@ -21,12 +21,24 @@ ROOT = HERE.parent.parent
 
 
 def tool_version(root: Path) -> str:
+    """'0.1.0 (a5bf24e)': the VERSION file and the git commit; '+modified' when tracked files
+    have uncommitted changes, so a report always names the exact code that made it. Without
+    git (a downloaded zip) the version alone (2026-10-04)."""
     try:
-        out = subprocess.run(["git", "-C", str(root), "rev-parse", "--short", "HEAD"],
-                             capture_output=True, text=True, timeout=20)
-        return out.stdout.strip() or "unknown"
+        version = (Path(root) / "VERSION").read_text(encoding="utf-8").strip() or "unversioned"
+    except OSError:
+        version = "unversioned"
+    try:
+        head = subprocess.run(["git", "-C", str(root), "rev-parse", "--short", "HEAD"],
+                              capture_output=True, text=True, timeout=20).stdout.strip()
+        dirty = subprocess.run(["git", "-C", str(root), "status", "--porcelain",
+                                "--untracked-files=no"],
+                               capture_output=True, text=True, timeout=20).stdout.strip()
     except (OSError, subprocess.SubprocessError):
-        return "unknown"
+        head, dirty = "", ""
+    if not head:
+        return version
+    return f"{version} ({head}{'+modified' if dirty else ''})"
 
 
 def free_name(parent: Path, base: str) -> Path:

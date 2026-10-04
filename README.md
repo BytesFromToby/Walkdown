@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml/badge.svg)](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml)
 
-**Status: alpha.** It runs end to end and produces a report you can read. Parts of it are
+**Status: alpha, version 0.1.0** ([CHANGELOG](CHANGELOG.md)). It runs end to end and produces a report you can read. Parts of it are
 experimental, and they are marked as such below.
 
 Walkdown examines the instruction layer of AI skills and agents: the SKILL.md files, agent
@@ -191,8 +191,8 @@ fixtures are unchanged (LOG.md says when it was measured); `--revalidate` measur
   overall, and are far more reliable when confident. The report lists only confident reads,
   shows a "near the line" band where repeat reads drift, and never changes a stage 1 to 5
   finding. Measurements: `pre-planning/soft/EVAL.md`.
-- **Not built yet:** position and repetition checks, gitleaks secret scanning, version-to-version
-  drift.
+- **Secrets are found, never shown.** A line that looks like a committed secret is reported by
+  location; its value never appears in a report.
 
 ## What it is not
 

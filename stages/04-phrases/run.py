@@ -14,6 +14,8 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import conditionals  # noqa: E402
+import position  # noqa: E402
+import secret_scan  # noqa: E402
 import endpoints  # noqa: E402
 import rubric  # noqa: E402
 import terms  # noqa: E402
@@ -27,14 +29,12 @@ STAGE = "04-phrases"
 STAGE1_RUN = HERE.parent / "01-inventory" / "run.py"
 
 LIMITS = [
-    "limit: stage 4 is not complete: position and repetition (REPORTING 4.4, 4.5) "
-    "and the gitleaks secret scan are not built",
     "limit: files that do not decode as text (PDF, DOCX, images) are not scanned",
 ]
 MARKDOWN_EXTS = (".md", ".markdown", ".mdc")
 INSTRUCTION_AUDIENCES = ("model", "subagent")
 PART2_ORDER = ["rubric.action", "endpoint.host", "cond.branch", "term.def", "term.conflict",
-               "term.safety"]
+               "term.safety", "pos.density", "rep.sentence", "secret.found"]
 
 
 
@@ -103,6 +103,27 @@ def part2_counts(p2: list[dict]) -> dict:
     }
 
 
+SECRET_MASK = "[line not shown: it holds what looks like a secret; open the file to see it]"
+TEXT_FIELDS = ("quote", "definition", "condition", "body")
+
+
+def mask_secret_lines(findings: list[dict]) -> None:
+    """A report must not repeat a secret it found (2026-10-04): every text field of a finding
+    on a line where secret.found fired is replaced by SECRET_MASK, matched words included.
+    The location stays."""
+    lines = {(f["file"], f["line"]) for f in findings
+             if f.get("check") == "secret.found" and "skipped" not in f}
+    for f in findings:
+        if (f.get("file"), f.get("line")) not in lines or f.get("check") == "secret.found":
+            continue
+        for k in TEXT_FIELDS:
+            if isinstance(f.get(k), str):
+                f[k] = SECRET_MASK
+        for m in f.get("matches") or []:
+            m["text"] = SECRET_MASK
+        f["masked"] = True
+
+
 def build_report(input_dir: Path, inv: dict, rows, vocab=None) -> tuple[dict, dict]:
     if vocab is None:
         vocab = load_vocab(rows=rows)
@@ -122,6 +143,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None) -> tuple[dict, di
     not_scanned: list[dict] = []
     scanned = 0
     rb, cond, defs, occ = [], [], [], []
+    texts: dict[str, tuple] = {}  # rel -> (audience, raw lines, bytes): position and repetition
     for row in files:
         rel = row["file"]
         if "skipped" in row:
@@ -151,6 +173,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None) -> tuple[dict, di
         aud = audience(rel, scripts, hook_configs)
         findings.extend(scan_text(rel, text, rows, aud))
         raw = split_lines(text)
+        texts[rel] = (aud, raw, len(data))
         folded = [fold_line(x) for x in raw]
         instr = instruction_lines(rel, aud, raw)
         rb.extend(rubric.rubric_file(rel, raw, folded, instr, aud, rows, vocab))
@@ -168,8 +191,11 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None) -> tuple[dict, di
         for pid in f["patterns"]:
             per_pattern[pid] += 1
     p2 = (rb + endpoints.census(occ, vocab) + cond + defs + terms.conflicts(defs)
-          + terms.safety(defs, vocab))
+          + terms.safety(defs, vocab)
+          + position.density(texts, findings) + position.repetition(texts, findings)
+          + secret_scan.scan(input_dir, {rel: t[0] for rel, t in texts.items()}))
     p2.sort(key=lambda f: (PART2_ORDER.index(f["check"]), f["file"] or "", f["line"] or 0))
+    mask_secret_lines(findings + p2)
     findings = findings + p2
     report = {"stage": STAGE, "contract": 1, "findings": findings}
     hits = {"findings": findings,

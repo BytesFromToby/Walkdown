@@ -61,6 +61,7 @@ Required (`requirements.txt`):
 | regex | Apache-2.0 | the phrase patterns |
 | confusable_homoglyphs | MIT | finding look-alike characters |
 | pytest | MIT | the test suite |
+| detect-secrets | Apache-2.0 | finding committed secrets |
 
 Optional, used when installed:
 
@@ -68,6 +69,7 @@ Optional, used when installed:
 - [Poppler](https://poppler.freedesktop.org): rendering PDF pages for comparison.
 - [Playwright](https://playwright.dev): rendering HTML as a browser shows it.
 - [lingua](https://github.com/pemistahl/lingua-py): language detection.
+- [gitleaks](https://github.com/gitleaks/gitleaks): finding committed secrets (preferred over detect-secrets when installed).
 
 Stage 6 backends, chosen at run time (`requirements-soft.txt`):
 

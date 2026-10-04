@@ -991,7 +991,15 @@
         "part2-repo/README.md": "edc1129c857147888b767103151bdfee36f58d491ab4091b0483b5c134e8daf1",
         "part2-repo/references/style.md": "a79c0c83d7e8a99bf4a8170518819a0fef367162336b9b1521b3f705bb33f11b",
         "part2-repo/scripts/post.sh": "483f1559b935b0f47f46fc6fb7e61e24e8da213e27e015508d0628ede2c80ccd",
-        "part2-repo/SKILL.md": "9edaeb794fc940d1f411fc82e70e83d570665836f4b5e55c2f806985f8d87cf0"
+        "part2-repo/SKILL.md": "9edaeb794fc940d1f411fc82e70e83d570665836f4b5e55c2f806985f8d87cf0",
+        "position-repo/skills/a/meta.json": "a1bb0050f42a9940652e5b182d53e0fdf3c9c67acdf7d27cdfbdaeb025c61727",
+        "position-repo/skills/a/SKILL.md": "27b88ee5b18a42b3af6507f6723beed4a111f2ca4a0a4173ff0c1e706f0d9b6e",
+        "position-repo/skills/b/meta.json": "a1bb0050f42a9940652e5b182d53e0fdf3c9c67acdf7d27cdfbdaeb025c61727",
+        "position-repo/skills/b/SKILL.md": "3ae3dc4114f69f8e5f93e7adbc109e343cc1b2974c8ea9b836af920f62d5ef8a",
+        "position-repo/skills/long/SKILL.md": "d69dfafa94c0b4012db359821fcca4cc3c340251d16cea968d6372071011370f",
+        "secrets-repo/notes.md": "e0176ca0d9c22e171fd6cf05cfae5aafb976e9b4eadbfabf89a0cee16fbb9dd5",
+        "secrets-repo/package-lock.json": "a64daf7505864c82834460ddc8ce9eaa718f584e5d4cb97658e5b0fde52aedd9",
+        "secrets-repo/SKILL.md": "7c2f14b0c5eb6f4aab5c6f83a2bc66000640d3d3953989510bed24365ecbc0f6"
       }
     },
     {
@@ -1227,6 +1235,128 @@
           "check": "term.def",
           "file": "references/style.md",
           "line": 6
+        }
+      ]
+    },
+    {
+      "root": "position-repo",
+      "fixtures": {
+        "skills/a/meta.json": "a1bb0050f42a9940652e5b182d53e0fdf3c9c67acdf7d27cdfbdaeb025c61727",
+        "skills/a/SKILL.md": "27b88ee5b18a42b3af6507f6723beed4a111f2ca4a0a4173ff0c1e706f0d9b6e",
+        "skills/b/meta.json": "a1bb0050f42a9940652e5b182d53e0fdf3c9c67acdf7d27cdfbdaeb025c61727",
+        "skills/b/SKILL.md": "3ae3dc4114f69f8e5f93e7adbc109e343cc1b2974c8ea9b836af920f62d5ef8a",
+        "skills/long/SKILL.md": "d69dfafa94c0b4012db359821fcca4cc3c340251d16cea968d6372071011370f"
+      },
+      "note": "REPORTING 4.4 and 4.5 (built 2026-10-04): instruction position in a file over the reader window, and an instruction sentence repeated across model-read files.",
+      "expect": [
+        {
+          "id": "pos-long-tail",
+          "polarity": "gate",
+          "check": "pos.density",
+          "file": "skills/long/SKILL.md",
+          "match": {
+            "first10": {
+              "eq": 0
+            },
+            "last10": {
+              "eq": 1
+            },
+            "beyond_window": {
+              "eq": 1
+            }
+          },
+          "note": "The only flagged instruction sits at the end of a 2,310-line file, past the 50 KB reader window (line 690)."
+        },
+        {
+          "id": "rep-shared-override",
+          "polarity": "gate",
+          "check": "rep.sentence",
+          "file": "skills/a/SKILL.md",
+          "line": 10,
+          "match": {
+            "files": {
+              "eq": 2
+            },
+            "patterns": {
+              "includes": "L.ignore"
+            }
+          },
+          "note": "The same override sentence in two skills."
+        },
+        {
+          "id": "rep-no-config-lines",
+          "polarity": "negative",
+          "check": "rep.sentence",
+          "file": "skills/a/meta.json",
+          "note": "A JSON line repeated across files is configuration, not a sentence."
+        },
+        {
+          "id": "rep-no-fenced-code",
+          "polarity": "negative",
+          "check": "rep.sentence",
+          "match": {
+            "sentence": {
+              "contains": "fenced code block"
+            }
+          },
+          "note": "Sentences inside code fences are not counted."
+        },
+        {
+          "id": "rep-no-fixture-markers",
+          "polarity": "negative",
+          "check": "rep.sentence",
+          "match": {
+            "sentence": {
+              "contains": "WALKDOWN FIXTURE"
+            }
+          },
+          "note": "The two marker comments differ; nothing else repeats."
+        }
+      ]
+    },
+    {
+      "root": "secrets-repo",
+      "fixtures": {
+        "notes.md": "e0176ca0d9c22e171fd6cf05cfae5aafb976e9b4eadbfabf89a0cee16fbb9dd5",
+        "package-lock.json": "a64daf7505864c82834460ddc8ce9eaa718f584e5d4cb97658e5b0fde52aedd9",
+        "SKILL.md": "7c2f14b0c5eb6f4aab5c6f83a2bc66000640d3d3953989510bed24365ecbc0f6"
+      },
+      "note": "Committed secrets (built 2026-10-04): gitleaks when installed, detect-secrets otherwise. The key is made up.",
+      "expect": [
+        {
+          "id": "secret-api-key",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": "SKILL.md",
+          "line": 12,
+          "note": "A made-up API key in a config line inside a skill."
+        },
+        {
+          "id": "secret-not-in-notes",
+          "polarity": "negative",
+          "check": "secret.found",
+          "file": "notes.md",
+          "note": "A file with no secret."
+        },
+        {
+          "id": "secret-not-in-lockfile",
+          "polarity": "negative",
+          "check": "secret.found",
+          "file": "package-lock.json",
+          "note": "Lock-file integrity hashes look like secrets; build files are left out."
+        },
+        {
+          "id": "secret-value-never-shown",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "SKILL.md",
+          "line": 12,
+          "match": {
+            "quote": {
+              "contains": "q8Zr2vN7"
+            }
+          },
+          "note": "No finding repeats the value."
         }
       ]
     }

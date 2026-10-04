@@ -112,9 +112,8 @@ def test_binary_not_scanned_and_limits(tmp_path):
     build(tmp_path / "in")
     _, err = report(tmp_path / "in", "--patterns", table(tmp_path))
     assert "img.png" in err
-    for item in ("position and repetition", "gitleaks"):
-        assert item in err
-    for built in ("endpoint census", "term table", "conditional table", "harness-rubric"):
+    for built in ("endpoint census", "term table", "conditional table", "harness-rubric",
+                  "position and repetition", "gitleaks"):
         assert built not in err
 
 

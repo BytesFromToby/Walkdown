@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "notes": {
+      "command": "node",
+      "args": ["server.js", "--port", "7070"],
+      "env": {"NOTES_TOKEN": "made-up-value-never-shown"}
+    }
+  }
+}

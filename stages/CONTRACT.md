@@ -134,6 +134,9 @@ same report after the phrase findings:
 | `term.def` | definition in instruction text | `term` (normalized); `definition`; `source`: `explicit`, `mapping`, `glossary`, `procedural`; `quote` |
 | `term.conflict` | term with two or more different definitions (`file`, `line` null) | `term`; `definitions`: list of `{file, line, text}` |
 | `term.safety` | definition of a safety word | `term`; `quote` |
+| `pos.density` | model-read file over the reader window with phrase hits (`line` null; added 2026-10-04, REPORTING 4.4) | `lines`; `first10`, `middle80`, `last10`; `window_line`; `beyond_window`; `beyond_lines` |
+| `secret.found` | file and line that looks like a committed secret (added 2026-10-04) | `kinds`; `engine`: `gitleaks` or `detect-secrets`; `audience`. Never the value. Other stage 4 findings on that line carry `masked: true` and their text replaced |
+| `rep.sentence` | sentence repeated across two or more model-read prose files (first occurrence; added 2026-10-04, REPORTING 4.5) | `sentence`; `files`; `count`; `where`: list of `{file, line}`; `patterns` |
 
 Stage 4 findings also carry `patterns`: the stable ids of the rows in
 `stages/04-phrases/patterns.yaml` that hit the line (added 2026-09-29; stage 5
@@ -155,6 +158,34 @@ Derived from stages 1 to 4; no new detection. `evidence` is a list of
 | `cap.posture` | agent or command definition | `tools`; `posture`: list of `read`, `write`, `execute`, `network`, `delegate`, `all`, `other`; `least_privilege`: bool; `description` |
 | `cap.pair` | phrase hit on an orphan, a dynamic-only file, or hidden text; or test data a model-read file references | `pair`: `orphan+phrase`, `dynamic+phrase`, `hidden+phrase`, `hook+phrase` (added 2026-09-29), `testdata+loaded` (added 2026-10-02: `file` is the test-data file, `from` the model-read file referencing it; no `phrase_check` or `quote`); `phrase_check`; `patterns`; `quote`; `evidence` |
 | `cap.testdata` | run (`file`: null), only when test data was set aside (added 2026-10-02) | `stage1`, `stage4`: findings set aside from each stage; `top_folders`: up to five top-level folders they were in |
+
+### Additional fields (documented 2026-10-04)
+
+A spec audit found fields the stages emit that the tables above did not list. They are part of
+the contract from here on:
+
+| Check | Field | Meaning |
+|---|---|---|
+| `inv.pin` | `channel` | `git` or `directory`: how the file list was taken |
+| `inv.pin` | `untracked` | count of files in the folder that git does not track (git channel) |
+| `inv.pin` | `extensions` | `{extension: count}`, most common first |
+| `inv.pin` | `script_languages` | `{language: [files]}` for script files |
+| `inv.pin` | `channel_filters` | files that limit what a package ships (`.gitattributes` export-ignore, `.npmignore`, `package.json` `files`), each `{file, kind}` |
+| `inv.pin` | `magic_backend` | the content-type detector used (`python-magic` or the built-in fallback) |
+| `inv.pin` | `reader_window` | `{lines, bytes}`: the published reader-window thresholds |
+| `inv.pin` | `long_line_limit` | the long-line threshold in characters |
+| `inv.file` | `exec_source` | where the executable bit came from: `git-index`, `stat`, or `stat-windows` (which reflects the extension, not a mode bit) |
+| `struct.description` | `loader`, `loaders_disagree` | `yaml` or `first-colon`: how the description was read; true when the two readings differ |
+| `struct.agent-tools` | `field`, `kind` | the frontmatter key that granted tools; `agent` or `command` |
+| `struct.hooks` | `format`, `commands`, `types`, `async` | `nested` or `flat` hook config; each command, its type, and its async flag (nested format) |
+| `struct.manifests` | `name`, `grants` | the plugin name; `{manifest: [grants]}` per manifest |
+| `struct.census` | `length`, `detected` | a long line's length; the content type the bytes reveal (extension mismatch, archive) |
+| `read.divergence` | `chars`, `page`, `paragraph`, `text_line`, `used` | invisible code points found; PDF page; DOCX paragraph; line in the extracted text for formats without source lines; whether a Markdown reference definition is used |
+| `read.script` | `col` | the column where the non-Latin run starts |
+| `graph.dangling` | `form` | where the reference was found: `prose`, `config`, `script`, `fenced`, `comment` |
+| `cond.branch` | `word` | the conditional word that opened the branch |
+| `cap.injection` | `command` | the hook command (hook mechanism) |
+| `cap.load-bytes` | `parts` | how many injection paths were summed |
 
 ### Stage 6: soft reads (`06-soft`)
 

@@ -56,6 +56,11 @@ backend; otherwise exit 2 before anything runs. The Jev row in `backends` gains
 `ask.sweep_findings`; a `backends` row with role `sweep`; results in answers.jsonl with
 role `sweep`. With none: no `soft.sweep` finding.
 
+## Laya retired (2026-10-03)
+
+Choosing `laya` still works (its code is kept), but the runner prints a note that it is
+retired (13% on the real lines) and its answers are not relied on.
+
 ## Must never
 
 - Write inside `<input_dir>`, or anywhere but `--out` and its own temporary

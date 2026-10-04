@@ -363,6 +363,13 @@
             }
           },
           "note": "Instruction lives in PDF /Keywords; the visible page is benign. (Moved from structure to reader 2026-09-25.)"
+        },
+        {
+          "id": "rd-unread-archive",
+          "polarity": "gate",
+          "check": "read.unread",
+          "file": "class18-archive.zip",
+          "note": "An archive's contents are not extracted; the file is listed as unread, never as clean (added 2026-10-04 spec audit)."
         }
       ],
       "deferred": [
@@ -400,7 +407,8 @@
         "class11-html-hidden.html": "24d55e69a895cec40b5dd47fc1794c6046e3e8c7465c1e5874e8f43e2bf08084",
         "class11-image-text.png": "67b47dcc5ee4c756c3f694bff9d089fd59596af77db17b511ddeb469ea5d4cca",
         "class11-pdf-hidden.pdf": "f07862e634911a3517b081a65ae1478eeac5fd3dfa4b827d624855496d2c019d",
-        "class11-svg-text.svg": "1f72006f91c08720a9fe63baff40e2999a484961e7cfb5b2d8acce021731be93"
+        "class11-svg-text.svg": "1f72006f91c08720a9fe63baff40e2999a484961e7cfb5b2d8acce021731be93",
+        "class18-archive.zip": "fc7dbfb30c7c63de7fdbc1623b500c7ee01e22663cc6d7c615c7ffee87395426"
       }
     }
   ]

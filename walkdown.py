@@ -199,6 +199,8 @@ def main(argv=None) -> int:
     if argv[:1] == ["diff"]:
         return diff_main(argv[1:])
     ap = argparse.ArgumentParser(prog="walkdown.py", description=__doc__.split("\n\n")[0])
+    ap.add_argument("--version", action="version",
+                    version="walkdown " + (ROOT / "VERSION").read_text(encoding="utf-8").strip())
     ap.add_argument("target", help="a folder, or a git URL to clone into ReposToExamine/")
     ap.add_argument("--name", help="name for the run folder (default: the repository's name)")
     ap.add_argument("--fresh", action="store_true", help="delete an earlier clone and clone again")

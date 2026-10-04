@@ -458,6 +458,9 @@ with the count per sentence.
 appears five times is a stronger locator than one that appears once.
 **Not:** style guides and boilerplate repeat by design.
 
+**Built 2026-10-04:** 4.4 and 4.5 (`stages/04-phrases/position.py`; "instruction-shaped" = a
+line a phrase pattern flagged in a model-read file).
+
 **To come:** term-table products (conflicts, safety-vocabulary definitions,
 displaced-default count); harness-rubric hits with and without a confirmation
 step; secrets found (gitleaks).

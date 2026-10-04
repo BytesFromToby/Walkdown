@@ -15,7 +15,7 @@ Sources: `pre-planning/METHOD.md` Stage 4 ("Also produced here"),
 `stages/CONTRACT.md`. Nothing here comes from the answer sheet.
 
 Not in this part (named on stderr as not built, as today): position and
-repetition (REPORTING 4.4, 4.5), the gitleaks secret scan.
+repetition (REPORTING 4.4, 4.5), the gitleaks secret scan. (Both built 2026-10-04; see CONTEXT.md.)
 
 ---
 
@@ -67,7 +67,7 @@ This is what makes part 1's `J.confirm-first` usable: the part 1 hit stays
 ## 2. Endpoint census: `endpoint.host` (REPORTING 4.1, THREATS 1)
 
 One finding per distinct host, `file` and `line` null. Replaces
-`tools/extract_urls.py` (rebuilt, not ported).
+`tools/extract_urls.py` (removed 2026-10-03; in git history) (rebuilt, not ported).
 
 - Hosts from URLs (`scheme://host`, `git@host:`) and bare domains with a
   recognized TLD (the old extractor's lesson: do not read `script.sh` or

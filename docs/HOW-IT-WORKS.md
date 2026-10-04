@@ -67,7 +67,7 @@ structures a host loads on its own: skills, agents, hooks, manifests, MCP server
 | Check | What it records | Why it matters |
 |---|---|---|
 | `inv.pin` | the source, and its git commit or sha256 | every later finding is about exactly this version |
-| `inv.file` | each file: type, size, lines, encoding, executable bit, and whether it is an entry point (skill, agent, command, hook config, manifest, MCP config, readme, CI, project instructions such as CLAUDE.md) | entry points are where loading starts |
+| `inv.file` | each file: type, size, lines, encoding, executable bit, and whether it is an entry point (skill, agent, command, hook config, manifest, MCP config, readme, CI, project instructions such as CLAUDE.md) | entry points are where loading starts; a content hash per file lets two runs show exactly what changed |
 | `struct.description` | each frontmatter `description` | descriptions sit in the model's context all the time, before anything is invoked |
 | `struct.agent-tools` | the tools each agent or command is granted | the widest grants set what an agent can do |
 | `struct.hooks` | each hook: event, matcher, command | a hook runs whenever the host fires its event, without anyone asking |
@@ -181,6 +181,9 @@ Part 2 builds tables from instruction text (model and subagent files, plus front
 | `term.def` | definitions in instruction text |
 | `term.conflict` | a word defined differently in two or more places |
 | `term.safety` | a definition of a safety word (confirm, safe, approve, ...) |
+| `pos.density` | in a long file a model reads: where the flagged lines sit (first 10%, middle, last 10%) and how many are past the reader window (2,000 lines or 50 KB), where a reviewer's viewer may stop |
+| `secret.found` | a line that looks like a committed secret (an API key, a password), found by gitleaks when installed, otherwise detect-secrets; the value is never shown, and other findings on that line have their quote replaced |
+| `rep.sentence` | a sentence repeated across files a model reads; repetition adds weight, so a flagged sentence in several files is listed |
 
 **Signal levels.** Each summary point names its patterns with their **base rate**: how many of
 the other audited repositories that pattern turned up in (outside human-facing files and test

@@ -2,7 +2,7 @@
 
 The endpoint census (CONTEXT-part2 section 2, REPORTING 4.1, THREATS 1): every
 network host named anywhere in the scanned text, where it is named, and whether
-the documentation names it. Replaces `tools/extract_urls.py` (rebuilt from this
+the documentation names it. Replaces `tools/extract_urls.py` (removed 2026-10-03; in git history) (rebuilt from this
 spec, not ported). Text only: no lookup, no DNS, no HTTP.
 
 ## Inputs

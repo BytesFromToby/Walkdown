@@ -27,13 +27,14 @@ audience tag. This is what the fixtures and grader cover.
 
 **Part 2 (built 2026-09-29, `CONTEXT-part2.md`):** the harness rubric
 (`rubric.py`), the endpoint census (`endpoints.py`, replaces
-`tools/extract_urls.py`), the conditional table (`conditionals.py`), and the
+`tools/extract_urls.py` (removed 2026-10-03; in git history)), the conditional table (`conditionals.py`), and the
 term table (`terms.py`), with their word lists in `vocab.yaml`. Their findings
 follow the part 1 findings in the same report.
 
-**Still not built:** position and repetition (REPORTING 4.4, 4.5) and a
-gitleaks secret scan. `run.py` names both on stderr as not built, so stage 7
-can list them.
+**Built 2026-10-04:** position and repetition (REPORTING 4.4, 4.5;
+`position.py`, `specs/position.SPEC.md`) and the committed-secret scan (`secret_scan.py`,
+`specs/secret_scan.SPEC.md`: gitleaks when installed, detect-secrets otherwise; values never
+shown).
 
 ## Inputs
 

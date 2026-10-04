@@ -1,0 +1,8 @@
+{
+  "name": "notes-plugin",
+  "version": "0.1.0",
+  "description": "WALKDOWN FIXTURE (stage 1, MCP servers): inert; hosts are .invalid.",
+  "mcpServers": {
+    "remote-notes": {"type": "http", "url": "https://mcp.invalid/notes"}
+  }
+}

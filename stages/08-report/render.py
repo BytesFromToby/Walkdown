@@ -248,11 +248,17 @@ def part2_line(r) -> str:
     conds = collections.Counter(c.get("kind") for c in fnd(r, "04-phrases", "cond.branch"))
     cs = ", ".join(f"{v} {k}" for k, v in conds.most_common()) or "none"
     defs = fnd(r, "04-phrases", "term.def")
+    dens = fnd(r, "04-phrases", "pos.density")
+    reps = fnd(r, "04-phrases", "rep.sentence")
+    tail = (f" Long files with flagged lines: {len(dens)}, "
+            f"{sum(1 for d in dens if d.get('beyond_window'))} with some past the reader window. "
+            f"Sentences repeated across files: {len(reps)}, "
+            f"{sum(1 for x in reps if x.get('patterns'))} flagged. " + secrets_line(r))
     return (f"Hosts: {len(hosts)}, {len(undoc)} not named in the docs. Confirm-first or "
             f"prohibited actions in instruction text: {len(rub)}, {len(unconf)} with no "
             f"confirmation step. Conditionals: {cs}. Definitions: {len(defs)}, "
             f"{n(len(fnd(r, '04-phrases', 'term.conflict')), 'conflict')}, "
-            f"{n(len(fnd(r, '04-phrases', 'term.safety')), 'safety-word definition')}.")
+            f"{n(len(fnd(r, '04-phrases', 'term.safety')), 'safety-word definition')}." + tail)
 
 
 def not_instruction_reads(r) -> dict:
@@ -390,10 +396,32 @@ def _counted_line(counted, what) -> list[str]:
     return [f"  - {what}: " + " and ".join(parts) + ", in the full report"] if parts else []
 
 
+def secrets_line(r) -> str:
+    """Section 4's count of lines that look like committed secrets (2026-10-04)."""
+    allf = [x for x in (r.get("04-phrases") or {}).get("findings", []) if x.get("check") == "secret.found"]
+    if any("skipped" in x for x in allf):
+        return "Secret scan: skipped (no scanner installed)."
+    test = sum(1 for x in allf if x.get("audience") == "test-data")
+    engine = allf[0].get("engine") if allf else None
+    return (f"Lines that look like committed secrets: {len(allf) - test}"
+            + (f" (plus {test} in test data)" if test else "")
+            + (f", by {engine}." if engine else "."))
+
+
 def _part2_points(r) -> list[str]:
     """Rare, high-signal part 2 rows: a word defined two ways, a safety word defined,
     a prohibited-tier action with no confirmation step, a step whose confirmation is
-    a redefinition (THREATS 14, 22)."""
+    a redefinition (THREATS 14, 22); flagged lines past the reader window, and a flagged
+    sentence repeated across files (REPORTING 4.4, 4.5; 2026-10-04)."""
+    sec = [x for x in fnd(r, "04-phrases", "secret.found") if x.get("audience") != "test-data"]
+    pos = [f"{loc(x)}: looks like a committed secret ({', '.join(x.get('kinds') or [])}; "
+           f"value not shown)" for x in sec]
+    pos += [f"{d['file']}: {n(d['beyond_window'], 'flagged line')} past the reader window "
+           f"(after line {d['window_line']} of {d['lines']})"
+           for d in fnd(r, "04-phrases", "pos.density") if d.get("beyond_window")]
+    pos += [f"{loc(x)}: the same flagged sentence in {x['files']} files "
+            f"({', '.join(x['patterns'])}): {code(x['sentence'])}"
+            for x in fnd(r, "04-phrases", "rep.sentence") if x.get("patterns")]
     out = [f"{d['file']}:{d['line']}: \"{c['term']}\" is defined differently in "
            f"{n(len(c['definitions']), 'place')}" for c in fnd(r, "04-phrases", "term.conflict")
            for d in c["definitions"][:1]]
@@ -406,6 +434,7 @@ def _part2_points(r) -> list[str]:
         elif x.get("tier") == "prohibited" and not x.get("confirmation"):
             out.append(f"{loc(x)}: prohibited-tier action with no confirmation step: "
                        f"{code(x['quote'].strip())}")
+    out = pos + out
     return out
 
 
@@ -753,8 +782,7 @@ def _limit_gist(reports, stamps) -> str:
         bits.append("validation not PASS for " + ", ".join(bad))
     if not (reports.get("06-soft") or {}).get("backends"):
         bits.append("stage 6 ran packet only (no model)")
-    bits += ["stage 4 position/repetition and gitleaks not built",
-             "version drift compared only against an earlier run"]
+    bits += ["version drift compared only against an earlier run"]
     return "; ".join(bits) + "."
 
 
@@ -908,6 +936,19 @@ def _f4_part2(r):
                                                           for d in c.get("definitions", [])))
     L += _list("Safety words defined", fnd(r, "04-phrases", "term.safety"),
                lambda t: f"{loc(t)}: \"{t.get('term')}\"")
+    L += _list("Lines that look like committed secrets (values never shown)",
+               fnd(r, "04-phrases", "secret.found"),
+               lambda x: f"{loc(x)}: {', '.join(x.get('kinds') or [])} ({x.get('engine')}"
+                         + (", test data" if x.get("audience") == "test-data" else "") + ")")
+    L += _list("Position of flagged lines in long files (first 10% / middle 80% / last 10%)",
+               fnd(r, "04-phrases", "pos.density"),
+               lambda d: f"{d['file']} ({d['lines']} lines): {d['first10']} / {d['middle80']} / "
+                         f"{d['last10']}; {d['beyond_window']} past the reader window (after line "
+                         f"{d['window_line']})")
+    L += _list("Sentences repeated across files a model reads", fnd(r, "04-phrases", "rep.sentence"),
+               lambda x: f"{loc(x)}: in {x['files']} files ({x['count']} times)"
+                         + (f", flagged {', '.join(x['patterns'])}" if x.get("patterns") else "")
+                         + f": {code(x['sentence'])}")
     return L
 
 

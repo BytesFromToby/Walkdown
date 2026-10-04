@@ -73,6 +73,9 @@ sometimes a note. Places with the same headline share one card.
 | Nothing refers to this file / Loaded only by a folder or glob, named by nothing, and it reads like an instruction | 3 | a file a reviewer following references would not open, which also matches a phrase pattern |
 | Matches the wording of ... | 4 | the text matches a phrase pattern; the quote lets you judge, and the note gives the pattern's base rate |
 | A word is defined more than one way / Redefines a safety word / An irreversible or prohibited action with no confirmation step | 4 | from stage 4's tables of definitions and guarded actions |
+| Looks like a committed secret | 4 | a line that looks like an API key or password; the value is never shown, so open the file to check it |
+| Flagged text past the reader window | 4 | in a long file a model reads, flagged lines after the point where a reviewer's viewer may stop showing it |
+| The same flagged sentence in several files | 4 | an instruction a pattern flagged, repeated across files; repetition adds weight |
 | Test data that the model is pointed at | 5 | a file in a test or fixture folder that a model-read file references directly, so it is read like any other file |
 | An instruction the model sees before you type anything | 5 | text a context-injecting hook prints into the session |
 | No pattern matched, but a model read this as an instruction | 6 (model reads block) | the coverage sweep flagged a passage stage 4 had no hit in |

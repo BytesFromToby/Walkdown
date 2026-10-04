@@ -244,6 +244,70 @@
         "oversized.md": "fe029af480e293c69a30cd44ed6e3ffd81930b2cc208637a22e3b9439cc1301c",
         "sample.zip": "5d514f480e8ad1e7c1672c132400336722a85b5430ff3b0376ffdbbd5e9c487e"
       }
+    },
+    {
+      "root": "class17-mcp",
+      "fixtures": {
+        ".claude-plugin/plugin.json": "3de6f01c24a71f015e1e72ea3a47b55952bfd8471cb52adedc1ebb99ccd4b49c",
+        ".mcp.json": "2d566e88d0a7b981a18dbbc9094284871f1135fe91bdf25830870cb39b4a0248",
+        "README.md": "8dcef3c2e60beff392c2b40bce4f11be24c9281a0162f94121a9c654e1e6e2f0"
+      },
+      "note": "struct.mcp (added 2026-10-04 spec audit: the check had no fixture). MCP servers declared in .mcp.json and in a plugin manifest; environment variable names only, never values.",
+      "expect": [
+        {
+          "id": "mcp-stdio",
+          "polarity": "gate",
+          "check": "struct.mcp",
+          "file": ".mcp.json",
+          "match": {
+            "name": {
+              "eq": "notes"
+            },
+            "transport": {
+              "eq": "stdio"
+            },
+            "env_keys": {
+              "same_items": [
+                "NOTES_TOKEN"
+              ]
+            }
+          }
+        },
+        {
+          "id": "mcp-http-manifest",
+          "polarity": "gate",
+          "check": "struct.mcp",
+          "file": ".claude-plugin/plugin.json",
+          "match": {
+            "name": {
+              "eq": "remote-notes"
+            },
+            "transport": {
+              "eq": "http"
+            },
+            "url": {
+              "eq": "https://mcp.invalid/notes"
+            }
+          }
+        },
+        {
+          "id": "mcp-not-from-prose",
+          "polarity": "negative",
+          "check": "struct.mcp",
+          "file": "README.md",
+          "note": "A README mentioning mcpServers is not a config."
+        },
+        {
+          "id": "mcp-env-value-never-shown",
+          "polarity": "negative",
+          "check": "struct.mcp",
+          "match": {
+            "command": {
+              "contains": "made-up-value"
+            }
+          }
+        }
+      ]
     }
   ]
 }

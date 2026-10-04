@@ -145,5 +145,8 @@ Older runs keep their layout: stage outputs at the top of the run folder and the
   an assistant only the brief that `walkdown.py` prints, which contains no repository text.
 - **`RepoResults/` is kept out of git.** A report about someone else's repository is not
   published until its author has seen it.
+- **Committed secrets** are reported by location only; their values never appear in a report
+  or a stage output. `normalized/` holds each file's actual text, secrets included, so treat
+  it like the repository itself.
 - **`normalized/` can be deleted** to save space; it is rebuilt by re-running the audit, and the
   reports do not need it.

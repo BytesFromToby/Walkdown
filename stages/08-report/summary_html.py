@@ -79,6 +79,20 @@ def first_items(r) -> list[dict]:
                          f"{d['file']}:{d['line']}"))
     for t in R.fnd(r, "04-phrases", "term.safety"):
         out.append(_item(4, f"Redefines the safety word “{t['term']}”", R.loc(t), t.get("quote", "").strip()))
+    for x in R.fnd(r, "04-phrases", "secret.found"):
+        if x.get("audience") != "test-data":
+            out.append(_item(4, "Looks like a committed secret", R.loc(x),
+                             note=f"{', '.join(x.get('kinds') or [])}, found by {x.get('engine')}. "
+                                  "The value is not shown in this report; open the file to check it."))
+    for d in R.fnd(r, "04-phrases", "pos.density"):
+        if d.get("beyond_window"):
+            out.append(_item(4, "Flagged text past the reader window", d["file"],
+                             note=f"{d['beyond_window']} flagged line(s) after line {d['window_line']} "
+                                  f"of {d['lines']}: where a reviewer's viewer may stop showing the file."))
+    for x in R.fnd(r, "04-phrases", "rep.sentence"):
+        if x.get("patterns"):
+            out.append(_item(4, "The same flagged sentence in several files", R.loc(x), x["sentence"],
+                             f"In {x['files']} files ({', '.join(x['patterns'])}). Repetition adds weight."))
     for x in R.fnd(r, "04-phrases", "rubric.action"):
         if x.get("confirm_redefined"):
             out.append(_item(4, "An action whose confirmation step is a redefinition", R.loc(x), x["quote"].strip()))

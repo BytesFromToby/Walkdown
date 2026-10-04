@@ -5,13 +5,17 @@ The front door: one command from a folder or a git URL to a finished run and a b
 ## Inputs
 
 `python walkdown.py <target> [--name NAME] [--fresh | --keep] [--label B] [--compare B]
-[--relational B] [--sweep B] [--both]`
+[--relational B] [--sweep B] [--both] [--revalidate]`, `python walkdown.py --version`,
+`python walkdown.py diff <old run> <new run>`
 
 - `target`: a folder, or a git URL (`http(s)://`, `git@`, `ssh://`, or ending in `.git`,
   unless a folder by that name exists).
 - `--name`: the run folder name; default the URL's or folder's last part without `.git`,
   reduced to letters, digits, `.`, `_`, `-`.
 - Stage 6 flags pass through to `stages/08-report/run.py` unchanged.
+- `--revalidate` passes through too: re-run the fixture validation even when a stamp for the
+  same code is cached (2026-10-03).
+- `--version` prints `walkdown <VERSION>` and exits (2026-10-04).
 
 ## Outputs
 
