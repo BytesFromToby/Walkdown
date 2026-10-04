@@ -110,3 +110,16 @@ def test_sweep_near_the_line_card():
          "flagged": True, "covered": []})
     h = page(r)
     assert "Near the line: no pattern matched" in h and "SKILL.md:60-61 (p=0.55)" in h
+
+
+def test_model_reads_have_their_own_block():
+    h = page(_tr._sweep_reports())
+    first = h[h.index("<h2>Look at these first</h2>"):h.index("<h2>Stage by stage</h2>")]
+    main, models = first.split("<h2>Model reads (experimental)</h2>")
+    assert "No pattern matched, but a model read this as an instruction" in models
+    assert "Stage 6" not in main and "these never change the findings above" in models
+    assert "model reads below" in h
+
+
+def test_no_model_block_without_stage6_reads():
+    assert "Model reads (experimental)" not in page()

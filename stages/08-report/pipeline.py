@@ -1,4 +1,4 @@
-"""Run stages 1 to 5 once each into a run folder. Spec: specs/pipeline.SPEC.md."""
+"""Run stages 1 to 6 once each into a run folder. Spec: specs/pipeline.SPEC.md."""
 from __future__ import annotations
 
 import datetime as dt

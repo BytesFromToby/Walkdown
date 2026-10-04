@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "04-phrases"))
 import baserates  # noqa: E402
-from audience import is_test_data  # noqa: E402
+from audience import audience, is_test_data  # noqa: E402
 
 HEADINGS = {
     "01-inventory": "What ships",
@@ -74,8 +74,8 @@ LEG_DEFS = {
 TRIFECTA_ALL = ("All three legs of the lethal trifecta. That raises risk. "
                 "It is not an issue on its own.")
 NOT_WHAT = ('What this is not: static examination only. "Clean" means these stages found '
-            "nothing, not that the artifact is safe. This report offers possible issues with "
-            "evidence and reaches no verdict. What to do with it is yours to decide.")
+            "nothing; it does not mean the artifact is safe. This report offers possible issues "
+            "with evidence and reaches no verdict. What to do with it is yours to decide.")
 
 # Stage notes that name something the run did not examine (for 07-limits).
 LIMIT_NOTE = re.compile(r"limit|absent|not installed|not scanned|not built|incomplete|skipped|"
@@ -197,11 +197,44 @@ def phrase_hits(r):
     return [h for h in fnd(r, "04-phrases") if h["check"].startswith("phrase.")]
 
 
+LABEL_WORDS = (("do", "an instruction to do the matched action"), ("not-to", "an instruction not to"),
+               ("description", "a description"), ("example-or-quote", "a quote or example"),
+               ("other-sense", "the words in another sense"))
+
+
+def benign_share(r) -> str:
+    """REPORTING rule 2 (2026-10-03 review C15): when stage 6 labeled the lines a model reads,
+    say how many read as an instruction to do the matched action and how many as something
+    else. Without labels, say the share is not measured."""
+    labels = [x for x in fnd(r, "06-soft", "soft.label") if "skipped" not in x and x.get("label")]
+    if not labels:
+        return "benign share not measured (stage 6 labels did not run)."
+    c = collections.Counter(x["label"] for x in labels)
+    other = len(labels) - c["do"]
+    rest = ", ".join(f"{c[k]} {w}" for k, w in LABEL_WORDS[1:] if c[k])
+    return (f"of {len(labels)} lines a model reads, {labels[0].get('backend')} labels {c['do']} as "
+            f"an instruction to do the matched action and {other} as something else"
+            + (f" ({rest})" if rest else "") + "; model labels, measured accuracy in "
+            "pre-planning/soft/EVAL.md.")
+
+
+AUDIENCE_GROUP = {"model": "read by a model", "subagent": "read by a model", "tool": "in scripts",
+                  "human": "human-facing", "test-data": "test data"}
+AUDIENCE_ORDER = ("read by a model", "in scripts", "human-facing", "test data")
+
+
 def _s4(r):
     hits = phrase_hits(r)
     by = collections.Counter(h["check"] for h in hits)
     parts = [f"{g.split()[0]} {sum(by[c] for c in cs)}" for g, cs in SUBGROUPS.items()]
-    line = f"{' · '.join(parts)} hits ({len(hits)} lines); benign share not measured."
+    # where the lines are, by audience (2026-10-03 review A5): the totals include human-facing
+    # files and test data, which never reach a model on install
+    aud = {}
+    for h in hits:
+        aud.setdefault((h.get("file"), h.get("line")), h.get("audience"))
+    where = collections.Counter(AUDIENCE_GROUP.get(a, "read by a model") for a in aud.values())
+    split = ", ".join(f"{where[k]} {k}" for k in AUDIENCE_ORDER if where[k])
+    line = f"{' · '.join(parts)} hits on {len(aud)} lines ({split}); {benign_share(r)}"
     return line + "\n" + " " * COL + part2_line(r)
 
 
@@ -281,13 +314,17 @@ def points(reports, stage) -> list[str]:
         hooks = fnd(r, stage, "struct.hooks")
         items = [f"{h['file']}: {h.get('event')} hook runs {code(h.get('command'))}"
                  for h in hooks if not is_test_data(h.get("file"))]
-        items += [f"{c['file']}: over the reader window ({c.get('detail')})"
-                  for c in fnd(r, stage, "struct.census") if c.get("flag") == "reader-window"]
+        window = [c for c in fnd(r, stage, "struct.census") if c.get("flag") == "reader-window"]
+        read = [c for c in window if audience(c.get("file") or "") not in ("human", "test-data")]
+        items += [f"{c['file']}: over the reader window ({c.get('detail')})" for c in read]
         lines = _points(items, str)
         td = sum(1 for h in hooks if is_test_data(h.get("file")))
         if td:
             lines.append(f"  - {n(td, 'more hook')} in test data (never loaded on install), "
                          "in the full report")
+        if len(window) > len(read):
+            lines.append(f"  - {n(len(window) - len(read), 'more file')} over the reader window in "
+                         "human-facing files or test data, in the full report")
         return lines
     if stage == "02-reader":
         model, counted = _split_audience(r, pairs(r, "hidden+phrase"))
@@ -459,7 +496,7 @@ def _s6(r) -> str:
                      f"p >= {SWEEP_CLEAR_P} ({len(new)} with no stage 4 hit), "
                      f"{len(near_sw)} near the line")
         line += "."
-    return line + " Answers are observations, not verdicts."
+    return line + " Answers are located observations; they reach no verdict."
 
 
 def _points6(r) -> list[str]:
@@ -631,7 +668,7 @@ def recommendations(reports) -> list[str]:
                            "specific tools it uses (an allowlist) instead of skipping permission "
                            "checks.")
     for p in pairs(reports, "hook+phrase"):
-        out.append(f"{loc(p)}: If this message is meant for the user, not the model, write it to "
+        out.append(f"{loc(p)}: If this message is meant for the user, write it to "
                    "the terminal (stderr) or the README instead of the hook output that becomes "
                    "the model's context.")
     for p in fnd(reports, "05-capability", "cap.posture"):
@@ -724,7 +761,7 @@ def full(meta, reports, stamps, notes, runs_ok, capability_full=None) -> str:
          f"{meta['source']} | retrieved {meta['date']} | {meta['hash_kind']} {meta['hash']}",
          f"Run {meta['run']} | Walkdown {meta.get('tool', '?')}",
          "Static examination only. Nothing executed. Every finding below is a location to "
-         "look at, not a verdict. Stage order; nothing is ranked.", ""]
+         "look at; none is a verdict. Stage order; nothing is ranked.", ""]
     for i, stage in enumerate(ORDER, 1):
         L.append(f"## {i} {HEADINGS[stage]}")
         L.append("")
@@ -882,7 +919,7 @@ def _mark(e, reads) -> str:
     x = evidence_mark(e, reads or {})
     if not x:
         return ""
-    return (f" (stage 6: read as {x['label']}, not an instruction; {x.get('backend')} "
+    return (f" (stage 6 reads this line as {x['label']}, with no instruction; {x.get('backend')} "
             f"p={x['probabilities'][x['label']]:.2f})")
 
 
@@ -893,9 +930,10 @@ def _key(f):
 
 def _f5(r, capability_full):
     full_by_key = {_key(f): f for f in (capability_full or {}).get("findings", [])}
-    L = ["A map of capability, derived from stages 1 to 4, not a verdict. A clean, well-built "
+    L = ["A map of capability, derived from stages 1 to 4; it reaches no verdict. A clean, well-built "
          "repository usually has all three legs. A Bash grant is counted as private-data "
-         "access and execute posture, never as external communication.", "", "### Trifecta legs", ""]
+         "access and execute posture; on its own it does not count as external communication.", "",
+         "### Trifecta legs", ""]
     reads = not_instruction_reads(r)
     for f in fnd(r, "05-capability", "cap.leg"):
         ev = full_by_key.get(_key(f), f).get("evidence", [])
@@ -951,7 +989,7 @@ def log(meta, runs, stamps, reports) -> str:
     L = [f"# {meta['repo']} run {meta['run']}", "",
          f"Source: {meta['source']} | channel: {meta.get('channel', 'directory')} | "
          f"pinned: {meta['hash_kind']} {meta['hash']}",
-         f"Walkdown: {meta.get('tool', '?')} | optional deps: {meta.get('deps', 'see 07-limits.md')}",
+         f"Walkdown: {meta.get('tool', '?')} | optional deps: {meta.get('deps', 'see data/07-limits.md')}",
          _soft_models(reports), "",
          "| Stage | Started | Finished | Output | Result | Validation |",
          "|---|---|---|---|---|---|"]
@@ -965,11 +1003,10 @@ def log(meta, runs, stamps, reports) -> str:
         res = f"{len(x.report['findings'])} findings" if x.ok else f"FAILED: {x.error}"
         L.append(f"| {stage} | {x.started} | {x.finished or ''} | {'data/' + stage + '.json' if x.ok else ''} | "
                  f"{res} | {st.text if st else ''} |")
-    L += [f"| 07-limits | | {meta.get('finished', '')} | 07-limits.md | written | |",
-          f"| 08-report | | {meta.get('finished', '')} | report/summary.md, report/full.md | written | |",
-          "", "Awaiting human: whether to publish; whether coordinated disclosure is needed.", "",
-          "Factory feedback:", ""]
-    L += [f"- {x}" for x in meta.get("feedback", [])] or ["- (none recorded)"]
+    L += [f"| 07-limits | | {meta.get('finished', '')} | data/07-limits.md | written | |",
+          f"| 08-report | | {meta.get('finished', '')} | summary.html, summary.md, full.md | written | |",
+          "", "A report about someone else's repository is not published until its author has "
+          "seen it.", ""]
     return "\n".join(L) + "\n"
 
 

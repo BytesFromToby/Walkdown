@@ -73,6 +73,7 @@ Stage 6 backends, chosen at run time (`requirements-soft.txt`):
 
 - **Jev** by TypeSafe (`typesafe-sdk`, MIT): labeling and the coverage sweep.
   [docs.typesafe.ai](https://docs.typesafe.ai)
-- **Laya** by Convai Innovations (`laya`, Apache-2.0, with PyTorch): a small local labeler.
+- **Laya** by Convai Innovations (`laya`, Apache-2.0, with PyTorch): a small local labeler,
+  evaluated and retired (2026-10-03); its backend code remains.
   [convaiinnovations/laya](https://huggingface.co/convaiinnovations/laya)
 - **Claude Code CLI** by Anthropic: relational reads, run with no tools and no project context.

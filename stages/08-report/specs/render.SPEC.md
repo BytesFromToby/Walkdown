@@ -118,3 +118,11 @@ and section 7 states that test data is recognized by name.
    agreement, relational answers and skips; points list relational reads and `do`
    reads at p >= `DO_POINT_P` (0.8, provisional), counting weaker ones; the full
    report lists every question with each answer or skip.
+
+## Benign share (added 2026-10-03, review C15)
+
+`benign_share(r)`: when stage 6 labeled lines, section 4's status line ends with "of N lines a
+model reads, <backend> labels X as an instruction to do the matched action and Y as something
+else (... by label)", pointing to the measured accuracy; otherwise "benign share not measured
+(stage 6 labels did not run)". Section 4's line count is split by audience (read by a model,
+in scripts, human-facing, test data; review A5).

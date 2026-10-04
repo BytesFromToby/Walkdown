@@ -34,3 +34,42 @@ def test_long_skip_list_collapses():
                        "negative": {"passed": 1, "total": 1}, "recall": {"found": 0, "total": 5},
                        "not_ok": [{"id": f"r{i}", "status": "SKIPPED"} for i in range(5)]}]}
     assert parse(doc)["06-soft"].text.endswith("skipped: 5 rows)")
+
+
+def _root(tmp_path):
+    for d in ("stages/01-inventory", "grader", "Fixtures/01-inventory"):
+        (tmp_path / d).mkdir(parents=True)
+    (tmp_path / "stages/01-inventory/run.py").write_text("x = 1\n")
+    (tmp_path / "Fixtures/01-inventory/a.md").write_text("fixture\n")
+    return tmp_path
+
+
+def test_fingerprint_changes_with_code_fixtures_and_soft_choices(tmp_path):
+    import validate
+    root = _root(tmp_path)
+    a = validate.fingerprint(root)
+    assert a == validate.fingerprint(root, {"PATH": "x"})  # unrelated env ignored
+    assert a != validate.fingerprint(root, {"WALKDOWN_SOFT_LABEL": "jev"})
+    (root / "Fixtures/01-inventory/a.md").write_text("changed\n")
+    b = validate.fingerprint(root)
+    assert b != a
+    (root / "stages/01-inventory/run.py").write_text("x = 2\n")
+    assert validate.fingerprint(root) != b
+
+
+def test_cached_stamp_is_reused_and_says_so(tmp_path):
+    import json
+    import sys
+    import validate
+    root = _root(tmp_path)
+    fp = validate.fingerprint(root)
+    (root / ".cache").mkdir()
+    (root / ".cache/stamps.json").write_text(json.dumps({f"01-inventory|{fp}": {
+        "result": "PASS", "gate": "3/3", "negative": "1/1", "recall": None, "skipped": [],
+        "date": "2026-10-03"}}))
+    # no grader.py exists here: a cache miss would give ERROR
+    got = validate.stamps(root, sys.executable, ["01-inventory"])["01-inventory"]
+    assert got.result == "PASS" and got.cached == "2026-10-03"
+    assert "measured 2026-10-03, same code and fixtures" in got.text
+    fresh = validate.stamps(root, sys.executable, ["01-inventory"], cache=False)["01-inventory"]
+    assert fresh.result == "ERROR" and fresh.cached is None

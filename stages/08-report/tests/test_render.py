@@ -199,7 +199,7 @@ def test_part2_counts_points_and_tables():
     r = reports(extra_hits=part2_rows())
     s = doc(r)
     four = s[s.index("\n4 "):s.index("\n5 ")]
-    assert "(2 lines)" in four  # phrase hits only, part 2 rows not counted as hits
+    assert "hits on 2 lines (2 read by a model)" in four  # phrase hits only, part 2 rows not counted
     assert "Hosts: 1, 1 not named in the docs" in four and "1 with no confirmation step" in four
     assert "SKILL.md:30: prohibited-tier action with no confirmation step" in four
     assert '"ship" is defined differently in 2 places' in four
@@ -336,7 +336,7 @@ def test_confident_not_instruction_read_marks_evidence_but_keeps_the_leg():
     assert "Takes outside input: yes" in s and "every line cited for it was read in stage 6" in s
     f = full(META, r, PASS, {}, set(r))
     assert "(1 citation, 1 read in stage 6 as not an instruction)" in f
-    assert "(stage 6: read as description, not an instruction; jev p=0.85)" in f
+    assert "(stage 6 reads this line as description, with no instruction; jev p=0.85)" in f
 
 
 def test_weak_or_do_reads_mark_nothing():
@@ -423,3 +423,20 @@ def test_test_data_kept_out_of_summary_points():
     assert "tests/setup.md: sits in test data, but SKILL.md (read by the model) references it" in s
     lim = limits(r, {}, PASS, set(r))
     assert any("Test data is recognized by folder and file name" in x for x in lim)
+
+
+def test_benign_share_from_stage6_labels():
+    import render
+    r = reports()
+    assert "benign share not measured (stage 6 labels did not run)" in render.benign_share(r)
+    r["06-soft"] = soft_report()
+    r["06-soft"]["findings"] += [
+        {"check": "soft.label", "file": "SKILL.md", "line": 12, "qid": "label:SKILL.md:12",
+         "backend": "jev", "label": "description", "probabilities": {"description": 0.9}},
+        {"check": "soft.label", "file": "SKILL.md", "line": 13, "qid": "label:SKILL.md:13",
+         "backend": "jev", "label": "other-sense", "probabilities": {"other-sense": 0.7}}]
+    got = render.benign_share(r)
+    assert got.startswith("of 3 lines a model reads, jev labels 1 as an instruction to do the matched "
+                          "action and 2 as something else (1 a description, 1 the words in another sense)")
+    four = summary(META, r, PASS, {}, set(r))
+    assert "jev labels 1 as an instruction" in four[four.index("\n4 "):four.index("\n5 ")]

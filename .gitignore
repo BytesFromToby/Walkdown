@@ -15,3 +15,6 @@ RepoResults/**/normalized/
 
 # Project virtualenv
 .venv/
+
+# Validation stamps reused across runs with the same code and fixtures (validate.py)
+.cache/

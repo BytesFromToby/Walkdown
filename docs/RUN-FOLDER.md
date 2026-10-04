@@ -68,7 +68,7 @@ Soft models: label jev (remote, jev-1.13.0); sweep jev (remote, jev-1.13.0)
 | Walkdown | the commit of Walkdown that ran (so a finding can be traced to the rules of that day) |
 | Soft models | which stage 6 models ran, local or remote; "none" means the packet only |
 | Result | how many findings the stage emitted, or the error if it failed |
-| Validation | the grader's stamp for that stage, run before the audit against the stage's fixtures: PASS, INCOMPLETE (a check was skipped, usually a missing optional tool), or FAIL (do not trust that stage's findings in this run) |
+| Validation | the grader's stamp for that stage, run before the audit against the stage's fixtures: PASS, INCOMPLETE (a check was skipped, usually a missing optional tool), or FAIL (do not trust that stage's findings in this run). "measured <date>, same code and fixtures" means the stamp was reused from an earlier run with identical code, fixtures, and stage 6 choices (`.cache/stamps.json` in the Walkdown folder); `--revalidate` measures afresh |
 | Re-rendered lines | appended each time the reports are rebuilt from the saved data |
 
 ## The stage outputs

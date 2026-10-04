@@ -1,5 +1,13 @@
 # Walkdown — handover
 
+> **Current state lives elsewhere (2026-10-03).** This file's state sections ("Known gaps",
+> "Current state", "Next actions") are dated 2026-09-25 and describe the project before it
+> was built: everything they list as missing (stage 5 and 6 fixtures, reachability, the term
+> table, the folded reader, the two-tier report) now exists. For what the code does today read
+> `docs/HOW-IT-WORKS.md`; for the current state and plan read `pre-planning/REVIEW-2026-10-03.md`
+> and the Status section of `CLAUDE.md`. The rest of this file (the locked decisions, the
+> conclusions, the standing cautions) still holds.
+
 Last updated 2026-09-25 (renamed Load-Bearing → Walkdown; method restructured
 into seven stages, deterministic to soft; build rules set). Earlier: 2026-09-24
 (customer + recommendations decision, SkillSpector prior art). Read this first. Supersedes the 2026-08-30 handover; the locked decisions
@@ -49,8 +57,7 @@ the project's own rule it should not be until three cases exist.
 | `../RepoResults/plumbline/` | Case 002 outputs + `LOG.md`. 28295e9 instance: first run exercising agent tool-grants; found the `silently` house-word noise. |
 | `../RepoResults/CONTEXT.md` | What RepoResults is (Layer 4 product): `<repo>/<date>_<hash7>/` per run, one LOG.md per run. Points to RUN-LAYOUT for the spec. |
 | `notes.md` | Chronological working notes. Starts with a behavioral-testing framing the charter later excluded; read it as history. |
-| `../tools/extract_urls.py` | Outbound-reference extractor. |
-| `../tools/pass1_normalize.py` | Old Pass 1 (now stage 2 reader) as run on superpowers, to be rebuilt: format census, invisible characters, HTML comments, CSS hiding. Does none of the 2026-09-04 Pass 1 additions yet. |
+| `../tools/` (removed 2026-10-03) | Two early scripts (an outbound-reference extractor and the old Pass 1 reader), rebuilt as stage 4's endpoint census and stage 2; in git history. |
 
 *(Paths relative to `pre-planning/`. The factory — `Fixtures/`, `tools/` — and the per-run work — `ReposToExamine/`, `RepoResults/`, `cases/` — live at the repo root, one level up. The design corpus in this folder cross-references sibling files by bare name.)*
 
@@ -146,7 +153,7 @@ figure has collapsed a locator into a verdict somewhere in its stack.
 
 ---
 
-## Known gaps, ranked
+## Known gaps, ranked (as of 2026-09-25; history, see the note at the top)
 
 1. ~~**No Pass 5 rubric.**~~ **DISSOLVED 2026-09-13 by scope decision.** The tool
    renders no verdict; the report is the handoff and the customer judges. There
@@ -250,7 +257,7 @@ scanner on the same repo. That is also exactly what a builder report does.
 
 ---
 
-## Current state
+## Current state (as of 2026-09-25; history, see the note at the top)
 
 **Exists:** charter, method with dated additions, twenty-two-class threat
 register, phrase register with base rates, reporting standard, nineteen-entry
@@ -287,7 +294,7 @@ the next sitting builds stage 1.
 
 ---
 
-## Next actions, in order
+## Next actions, in order (as of 2026-09-25; history, see the note at the top)
 
 **Superseded 2026-09-25 by the stage order below.** The 2026-09-14 list is kept
 underneath as history (its item 1, fixtures, is done for stages 1 to 4).

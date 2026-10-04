@@ -1,6 +1,6 @@
 # pipeline.py: spec
 
-Runs stages 1 to 5 once each, in order, as subprocesses, and saves what they
+Runs stages 1 to 6 once each, in order, as subprocesses, and saves what they
 produce into the run folder.
 
 ## Inputs

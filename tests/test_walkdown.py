@@ -63,3 +63,29 @@ def test_brief_has_the_facts_and_none_of_the_repository_text(tmp_path):
     assert "A word is defined more than one way (1)" in b and "Redefines a safety word (1)" in b
     assert "01-inventory What ships: PASS" in b and "02-reader What the model actually reads: not run" in b
     assert "summary.html" in b and "full.md" in b and "No verdict and no score." in b
+
+
+def test_existing_folder_that_is_not_the_clone_is_never_touched(tmp_path, monkeypatch):
+    import pytest
+    monkeypatch.setattr(wd, "EXAMINE", tmp_path)
+    (tmp_path / "repo").mkdir()
+    (tmp_path / "repo" / "mine.txt").write_text("keep me")
+    with pytest.raises(RuntimeError, match="not a clone"):
+        wd.fetch("https://github.com/o/repo", "repo", fresh=False)
+    assert (tmp_path / "repo" / "mine.txt").read_text() == "keep me"
+    assert wd.fetch("https://github.com/o/repo", "repo", fresh=False, keep=True) == tmp_path / "repo"
+
+
+def test_same_url_ignores_dot_git_slash_and_case():
+    assert wd._same_url("https://github.com/O/Repo.git", "https://github.com/o/repo/")
+    assert not wd._same_url("https://github.com/o/other", "https://github.com/o/repo")
+
+
+def test_brief_reads_the_current_layout(tmp_path):
+    d = _run_dir(tmp_path)
+    (d / "data").mkdir()
+    for f in list(d.glob("*.json")):
+        f.rename(d / "data" / f.name)
+    b = wd.brief(d)
+    assert "[x] Reads your data" in b and str(d / "summary.html") in b
+    assert "Look at these first: " in b and "place" in b and "heading" in b

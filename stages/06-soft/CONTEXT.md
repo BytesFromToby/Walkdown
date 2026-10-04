@@ -159,6 +159,8 @@ answer: backend, model, the exact request sent, the raw response).
 - Print, log, or store an API key.
 - Contact any network service other than the backend the user named.
 - Import code from another stage.
+  Exception (2026-10-03): the shared path rule in `stages/04-phrases/audience.py`
+  (`audience`, `is_test_data`), so who a file is for is decided in one place.
 
 ## Done when
 

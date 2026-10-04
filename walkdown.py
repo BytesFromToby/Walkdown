@@ -1,10 +1,11 @@
 """Walkdown: audit the instruction layer of an AI skill or agent repository.
 
-    python walkdown.py <path or git URL> [--name NAME] [--fresh]
+    python walkdown.py <path or git URL> [--name NAME] [--fresh | --keep]
                        [--label jev|laya|claude-cli] [--compare ...] [--relational claude-cli]
                        [--sweep jev] [--both]
 
-A git URL is cloned (shallow) into ReposToExamine/<name>; a path is audited where it is. The
+A git URL is cloned (shallow) into ReposToExamine/<name>, or an earlier clone of it updated
+to the latest commit; a path is audited where it is. The
 run lands in RepoResults/<name>/<date>_<hash7>/, and the last thing printed is a brief:
 counts, trifecta legs, validation stamps, and the path to the report. The brief is written
 by Walkdown itself and quotes nothing from the audited repository, so it is safe to hand to
@@ -65,11 +66,42 @@ def python_exe() -> str:
     return sys.executable
 
 
-def fetch(url: str, name: str, fresh: bool) -> Path:
+def _git(dest: Path, *args) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", "-C", str(dest), *args], capture_output=True, text=True)
+
+
+def _origin(dest: Path) -> str | None:
+    p = _git(dest, "remote", "get-url", "origin")
+    return p.stdout.strip() if p.returncode == 0 else None
+
+
+def _same_url(a: str | None, b: str) -> bool:
+    norm = lambda u: (u or "").strip().rstrip("/").removesuffix(".git").lower()  # noqa: E731
+    return norm(a) == norm(b)
+
+
+def fetch(url: str, name: str, fresh: bool, keep: bool = False) -> Path:
+    """A shallow clone of `url` in ReposToExamine/<name>, at the remote's latest commit.
+    An existing clone of the same URL is updated (2026-10-03 review A7: re-running on a URL
+    used to audit the old copy silently); --keep audits it as it is; --fresh clones again.
+    A folder there that is not a clone of this URL is never touched."""
     dest = EXAMINE / name
     if dest.exists():
+        same = (dest / ".git").exists() and _same_url(_origin(dest), url)
+        if keep:
+            print(f"note: --keep: auditing the existing copy in {dest} as it is", file=sys.stderr)
+            return dest
+        if not same:
+            raise RuntimeError(f"{dest} exists and is not a clone of {url}; pass --name to use "
+                               "another folder, or --keep to audit what is there")
         if not fresh:
-            print(f"note: using the existing copy in {dest} (pass --fresh to clone again)",
+            for args in (("fetch", "--depth", "1", "origin"), ("reset", "--hard", "FETCH_HEAD"),
+                         ("clean", "-fdx")):
+                p = _git(dest, *args)
+                if p.returncode != 0:
+                    raise RuntimeError(f"updating {dest} failed at git {args[0]}: "
+                                       f"{p.stderr.strip()[-300:]}")
+            print(f"note: updated the existing clone in {dest} to the latest commit",
                   file=sys.stderr)
             return dest
         shutil.rmtree(dest)
@@ -108,8 +140,11 @@ def brief(run_dir: Path) -> str:
     st = stamps((run_dir / "LOG.md").read_text(encoding="utf-8"))
     legs = {x["leg"]: x["present"] for x in R.fnd(reports, "05-capability", "cap.leg")}
     grants = [x["grant"] for x in R.fnd(reports, "05-capability", "cap.grant")]
-    items = summary_html.first_items(reports)
+    every = summary_html.first_items(reports)
+    items = [it for it in every if it["stage"] != 6]
+    model = [it for it in every if it["stage"] == 6]
     by_title = collections.Counter((it["stage"], own_words(it["title"])) for it in items)
+    by_model = collections.Counter(own_words(it["title"]) for it in model)
     pin = (R.fnd(reports, "01-inventory", "inv.pin") or [{}])[0]
     L = [f"Walkdown brief: {run_dir.parent.name}",
          f"Files examined: {pin.get('files', '?')}. Pinned: {pin.get('hash_kind', '?')} "
@@ -118,8 +153,13 @@ def brief(run_dir: Path) -> str:
     for k, name in R.LEG_NAMES.items():
         L.append(f"  [{'x' if legs.get(k) else ' '}] {name}")
     L.append(f"  Install grants: {', '.join(grants) if grants else 'none'}.")
-    L += ["", f"Look at these first: {len(items)} item(s)."]
+    L += ["", f"Look at these first: {len(items)} place{'s' if len(items) != 1 else ''} "
+              f"under {len(by_title)} heading{'s' if len(by_title) != 1 else ''}."]
     L += [f"  stage {s}: {t} ({n})" for (s, t), n in sorted(by_title.items())] or ["  none"]
+    if model:
+        L += ["", f"Model reads (experimental, stage 6): {len(model)} place"
+                  f"{'s' if len(model) != 1 else ''}. A model's reading can be wrong."]
+        L += [f"  {t} ({n})" for t, n in sorted(by_model.items())]
     L += ["", "Validation (each stage against its fixtures):"]
     L += [f"  {stage} {STAGE_NAMES[stage]}: {st.get(stage, 'not run')}" for stage in STAGE_NAMES]
     L += ["", f"Report: {out / 'summary.html'}",
@@ -133,15 +173,19 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="walkdown.py", description=__doc__.split("\n\n")[0])
     ap.add_argument("target", help="a folder, or a git URL to clone into ReposToExamine/")
     ap.add_argument("--name", help="name for the run folder (default: the repository's name)")
-    ap.add_argument("--fresh", action="store_true", help="clone again even if a copy exists")
+    ap.add_argument("--fresh", action="store_true", help="delete an earlier clone and clone again")
+    ap.add_argument("--keep", action="store_true",
+                    help="audit an earlier clone as it is, without updating it")
     for k in ("label", "compare", "relational", "sweep"):
         ap.add_argument(f"--{k}")
     ap.add_argument("--both", action="store_true")
+    ap.add_argument("--revalidate", action="store_true",
+                    help="re-run the fixture validation even if a stamp for this code is cached")
     a = ap.parse_args(argv)
 
     name = a.name or repo_name(a.target)
     try:
-        target = fetch(a.target, name, a.fresh) if is_url(a.target) else Path(a.target)
+        target = fetch(a.target, name, a.fresh, a.keep) if is_url(a.target) else Path(a.target)
     except RuntimeError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -154,6 +198,8 @@ def main(argv=None) -> int:
             cmd += [f"--{k}", getattr(a, k)]
     if a.both:
         cmd.append("--both")
+    if a.revalidate:
+        cmd.append("--revalidate")
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, text=True, encoding="utf-8", cwd=ROOT)
     lines = [x for x in proc.stdout.splitlines() if x.strip()]
     run_dir = Path(lines[-1]) if lines else None

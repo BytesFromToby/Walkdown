@@ -24,35 +24,24 @@ makes language / script shift its own signal (CHARTER scope section).
 
 ---
 
-## Status (2026-09-13)
+## Status (2026-10-03)
 
-Early. The **method is deep**; the **tooling and cases are thin**. This is
-deliberate — the project's own rule is that the harness should not be built until
-enough cases exist to specify it. What exists:
+**Alpha, public:** https://github.com/BytesFromToby/Walkdown (released from a separate copy;
+see "Public repo" below). All eight stages run end to end from one command; every stage has
+fixtures, a grader stamp, specs, and tests (538+). Stage 6 (model reads) is optional and
+experimental. Four repositories audited (superpowers, Plumbline, claude-familiar, backlog) plus
+the self-audit.
 
-- A full design corpus in `pre-planning/` (charter, method, 22-class threat
-  register, phrase locators with base rates, reporting standard, red-team
-  analysis, incident map, customer model).
-- Two audit runs: `cases/001-obra-superpowers.md` (clean, reputable author) and
-  `RepoResults/plumbline/28295e9/` (Case 002 early self-audit, clean).
-- Two scripts in `tools/` (URL extractor, partial stage 2 reader; both to be rebuilt).
+Where things stand and what is next: `pre-planning/REVIEW-2026-10-03.md` (the latest review:
+fixed items, open design items C14 to C18, and the ordered plan). Stage 6 decisions:
+`pre-planning/soft/README.md` (D1, D2, D4, D5 settled; D3 waits on the owner's labeling).
 
-What does **not** exist yet: the two-tier report template (summary + full),
-stage 5 and 6 fixtures, a version-delta run, a packaged tool, any published writeup.
-The ranked gap list lives in `pre-planning/HANDOVER.md`.
+**Scope decision (2026-09-13, standing):** the tool renders **no verdict**. It reviews,
+surfaces possible issues, and shows its evidence; the customer decides what to do. The report
+is the handoff: a summary page for most readers and a full report with all the detail.
 
-**Scope decision (2026-09-13):** the tool renders **no verdict**. It reviews,
-surfaces possible issues, and shows its evidence; the customer decides what to do.
-No benign/concerning outcome, no score, no internal judgment pass. The report
-*is* the handoff, delivered as a summary page for most readers and a full report
-with all the detail.
-
-
-**Restructure (2026-09-25):** renamed from Load-Bearing to Walkdown, and the
-method rearranged into **seven stages, deterministic to soft**. The same stage
-numbering organizes the pipeline, fixtures, run outputs, and report sections, so
-new checks slot into a stage without reshaping the rest. Build starts with the
-deterministic stages (1 to 5). See `pre-planning/METHOD.md`.
+**History:** renamed from Load-Bearing on 2026-09-25 and arranged into numbered stages,
+deterministic to soft; built stage by stage from 2026-09-25 (see "Next" below for the record).
 
 ---
 
@@ -76,41 +65,34 @@ THREATS class numbers (1 to 22) are stable tags on findings, not the ordering.
 
 ## Layout
 
-Current:
-
 ```
 CLAUDE.md            you are here: what the project is, and the map
-pre-planning/        the design corpus: how the audit is meant to work (factory)
-Fixtures/            fixtures by stage (01-inventory/ … 04-phrases/) + grader-only ANSWERS/ (factory)
-tools/               two early scripts, to be rebuilt inside stages/ (factory)
-ReposToExamine/      copies of artifacts under audit, pinned by hash (inputs)
-RepoResults/         audit outputs: <repo>/<date>_<hash7>/ per run, LOG.md inside (product)
-cases/               published case reports (the finished deliverable)
-```
-
-Target (being built; ICM stages):
-
-```
+README.md            the public front page; CREDITS.md, LICENSE, NOTICE, THIRD-PARTY-NOTICES.md
+walkdown.py          the front door: a URL or folder in, a run folder and a brief out
+.claude/skills/      the walkdown skill (run it from Claude Code)
+docs/                public docs: READING-THE-REPORT, HOW-IT-WORKS, RUN-FOLDER
 stages/
-  01-inventory/      CONTEXT.md (stage contract) + scripts, each with specs/<name>.SPEC.md
-  02-reader/           and tests/test_<name>.py
+  01-inventory/      each stage: CONTEXT.md (contract), scripts, specs/<name>.SPEC.md, tests/
+  02-reader/
   03-graph/
   04-phrases/
   05-capability/
   06-soft/
-  07-limits/
-  08-report/
-Fixtures/
-  01-inventory/ 02-reader/ 03-graph/ 04-phrases/ ...   inputs, visible to the builder
-  ANSWERS/                                             grader-only, never read in a blind build
-grader/              grader.py + SPEC.md + tests: runs a stage on its fixtures, scores it (built 2026-09-25)
-stages/CONTRACT.md   the report format every stage runner emits (visible to builders)
+  08-report/         stage 8, which also assembles stage 7 (Not examined); there is no 07 folder
+  CONTRACT.md        the report format every stage emits
+specs/, tests/       spec and tests for walkdown.py
+grader/              runs a stage on its fixtures and scores it against Fixtures/ANSWERS/
+Fixtures/            fixtures by stage; ANSWERS/ is grader-only, never read in a blind build
+pre-planning/        the design corpus and history (charter, method, threats, measurements)
+cases/               case reports (held back until each author has seen theirs)
+ReposToExamine/      copies of repositories to audit (contents not in git)
+RepoResults/         audit runs (contents not in git): reports and LOG.md on top, data/ below
 ```
 
-The layers: `pre-planning/`, `stages/` (today `tools/`), and `Fixtures/` are the
-**factory** (stable across runs). `RepoResults/<repo>/` is the **product**
-(per-run). `cases/` is the **finished publication**. A run is evidence, never
-doctrine: flaws found in a run get fixed in the factory, not the run.
+The layers: `pre-planning/`, `stages/`, and `Fixtures/` are the **factory** (stable across
+runs). `RepoResults/<repo>/` is the **product** (per-run). `cases/` is the **finished
+publication**. A run is evidence, never doctrine: flaws found in a run get fixed in the
+factory, not the run.
 
 ---
 
@@ -129,14 +111,16 @@ doctrine: flaws found in a run get fixed in the factory, not the run.
   (recommend local; final decision deferred).
 - **Optional dependencies** (Tesseract, gitleaks) never fail a run and never pass
   silently: a skipped check is listed in stage 7.
-- The two early scripts in `tools/` are rebuilt against specs, not retrofitted.
+- The two early scripts once in `tools/` were rebuilt as stages 2 and 4 and removed (2026-10-03).
 
 ---
 
-## Read order (into pre-planning/)
+## Read order
 
-Start with `pre-planning/HANDOVER.md`: the living state doc, indexing everything
-else. Then, by concern:
+Start with `docs/` for what the code does today (HOW-IT-WORKS, READING-THE-REPORT,
+RUN-FOLDER), then `pre-planning/REVIEW-2026-10-03.md` for the current state and plan.
+`pre-planning/HANDOVER.md` indexes the design corpus and its history; its state sections are
+dated. Then, by concern:
 
 | To understand… | Read |
 |---|---|
@@ -172,20 +156,20 @@ else. Then, by concern:
 
 ---
 
-## Running an audit today (by hand, until stages/ exists)
+## Running an audit
 
-1. Copy the target into `ReposToExamine/`, record its `sha256` / git hash.
-2. Create `RepoResults/<repo>/<date>_<hash7>/` with a `LOG.md` per
-   `pre-planning/RUN-LAYOUT.md`.
-3. Work the stages in order, validating each stage's detectors against its
-   fixtures first. Write each stage's output file and its LOG row (with the
-   validation stamp) when it finishes. The next step is the first unmarked row.
-4. Build the summary + full report in stage order per `pre-planning/REPORTING.md`.
-5. If it graduates from calibration to a published case, promote it to
-   `cases/NNN-<name>.md`.
+```
+python walkdown.py <GitHub URL or folder> [--label jev] [--sweep jev] ...
+```
 
-Outputs never go inside the examined tree, and never share a name with a path
-in it.
+A URL is cloned into `ReposToExamine/<name>/` (an earlier clone of it is updated); the run lands
+in `RepoResults/<name>/<date>_<hash7>/` and the command prints a brief with no audited-repo
+text. Re-render a run's reports after changing the report code:
+`python stages/08-report/run.py --rerender RepoResults/<repo>/<run>`. Outputs never go inside
+the examined tree.
+
+**Public repo.** Published from a separate copy; case reports are held back until each
+audited repository's author has seen theirs.
 
 ---
 
@@ -247,7 +231,7 @@ in it.
    docs. Run folder layout changed (reports + LOG.md on top, rest under `data/`; layout.py).
    Docs: `docs/HOW-IT-WORKS.md`, `docs/RUN-FOLDER.md`, rewritten `docs/READING-THE-REPORT.md`.
 
-Stage 6 working notes and open decisions: `pre-planning/soft/` (README lists D1 to D4).
+Stage 6 working notes and open decisions: `pre-planning/soft/` (README lists D1 to D5).
 Reports: `summary.html` at the top of a run folder is the page for people (since
 2026-10-02 the reports and LOG.md sit at the top and everything else under `data/`;
 `docs/RUN-FOLDER.md`). Re-render with `python stages/08-report/run.py --rerender RepoResults/<repo>/<run>`.

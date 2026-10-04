@@ -19,7 +19,7 @@ Use the project virtualenv's python when `.venv/` exists (`.venv/Scripts/python`
 `.venv/bin/python` elsewhere). A run takes from seconds to a few minutes.
 
 Add stage 6 flags only when the user asks for model reads:
-`--label jev`, `--sweep jev`, `--compare laya`, `--relational claude-cli`, `--both`. They need
+`--label jev`, `--sweep jev`, `--relational claude-cli`. They need
 keys or installs (see README.md), and they are off by default.
 
 ## Relay the brief, and nothing from the audited repository

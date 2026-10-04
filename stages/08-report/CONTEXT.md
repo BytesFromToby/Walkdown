@@ -1,14 +1,14 @@
 # Stage 8: Report (v1)
 
 **Question:** none. Stage 8 assembles; it detects nothing and concludes nothing.
-**Output:** a run folder per RUN-LAYOUT, with the two reports REPORTING specifies:
-`report/summary.md` (one screen, stage order) and `report/full.md` (every
-finding, cited, stage order, then recommendations).
+**Output:** a run folder (`docs/RUN-FOLDER.md`; layout in `layout.py`): `summary.html`,
+`summary.md` (one screen, stage order), `full.md` (every finding, cited, stage order, then
+recommendations), and `LOG.md` at the top, everything else under `data/`.
 
-Built 2026-09-29, ahead of stages 6 and 7, so the stages that exist (1 to 5)
-produce a readable report. Stage 6 is reported as not built; stage 7's content
-is gathered here from what stages 1 to 5 say they skipped (their stderr notes and
-skip findings) plus the standing limits, and written as `07-limits.md`.
+Built 2026-09-29, ahead of stages 6 and 7; stage 6 joined the pipeline the same day. Stage 7
+has no folder of its own: its content is gathered here from what stages 1 to 6 say they
+skipped (their stderr notes and skip findings), the test data set aside, and the standing
+limits, and written as section 7 and `data/07-limits.md`.
 
 Sources: `pre-planning/REPORTING.md` (Part A layout, summary rules,
 recommendation rules), `pre-planning/RUN-LAYOUT.md` (run folder, LOG.md),
@@ -24,16 +24,17 @@ python stages/08-report/run.py <input_dir> --repo <name> [--results <dir>] [--da
 1. Creates `<results>/<repo>/<date>_<hash7>/` (default `<results>` is
    `RepoResults/`; `-2`, `-3` suffix when the folder exists). Refuses a run
    folder inside `<input_dir>`.
-2. Runs stages 1 to 5 once each as subprocesses, in order: stage 1 once, its
-   report passed to 3 and 4 with `--inventory`; stages 2, 3, 4, 5 with `--out`
-   the run folder (so `normalized/`, `graph.json`, `hits.json`,
-   `capability.json` land there); stage 5 with `--reports` the run folder. Each
-   report is saved as `NN-name.json`, each stage's stderr as `NN-name.notes.txt`.
-   A stage that fails stops the pipeline; LOG.md shows it unfinished and later
-   stages are not run.
-3. Runs the grader for stages 1 to 5 (`grader.py <stage> --json`) and records
-   each result as that stage's **validation stamp** (REPORTING principle 6).
-4. Writes `LOG.md`, `07-limits.md`, `report/summary.md`, `report/full.md`.
+2. Runs stages 1 to 6 once each as subprocesses, in order: stage 1 once, its
+   report passed to 3 and 4 with `--inventory`; stages 2 to 6 with `--out`
+   `data/` (so `normalized/`, `graph.json`, `hits.json`, `capability.json`, and
+   the stage 6 packet land there); stages 5 and 6 with `--reports` `data/`. Each
+   report is saved as `data/NN-name.json`, each stage's stderr as
+   `data/NN-name.notes.txt`. A stage that fails stops the pipeline; LOG.md shows it
+   unfinished and later stages are not run.
+3. Runs the grader for stages 1 to 6 (`grader.py <stage> --json`, with the run's stage 6
+   choices) and records each result as that stage's **validation stamp** (REPORTING
+   principle 6).
+4. Writes `LOG.md`, `data/07-limits.md`, `summary.html`, `summary.md`, `full.md`.
 
 ## Rules carried from REPORTING
 
@@ -75,32 +76,35 @@ python stages/08-report/run.py <input_dir> --repo <name> [--results <dir>] [--da
 ## Deviations from RUN-LAYOUT (v1)
 
 - Per-stage `NN-name.md` files are not written; each stage's JSON report is
-  kept as `NN-name.json`, and `report/full.md` carries every finding in readable
-  form. `04-terms.md` and `06-soft.md` do not exist yet.
+  kept as `data/NN-name.json`, and `full.md` carries every finding in readable
+  form. `04-terms.md` and `06-soft.md` do not exist; the term table is in section 4 and
+  stage 6's packet is `data/06-packet.md`.
 
 ## Must never
 
 - Detect: stage 8 reads stage reports, stage notes, and grader results only.
 - Conclude, score, rank, or advise on installing.
 - Write inside `<input_dir>`.
-- Import code from another stage.
+- Import code from another stage, with one exception (2026-10-03): the path rule in
+  `stages/04-phrases/audience.py` (`audience`, `is_test_data`) is shared by stages 5, 6,
+  and 8, so who a file is for is decided in one place. It decides nothing else.
 
 ## Stage 6 in the report (2026-09-29)
 
 Stage 6 runs in the pipeline after stage 5, with the backends the user passes
 (`--label`, `--compare`, `--relational`). Section 6 names every backend and whether
 it is remote, counts labels and agreement, and lists relational reads and confident
-`do` reads (p >= 0.8, provisional) as points of attention. Answers never change
-sections 1 to 5.
+`do` reads as points of attention (p >= 0.9 since 2026-10-01; 0.7 to 0.9 counted as
+near the line). Answers never change sections 1 to 5.
 
 ## The summary as HTML, and re-rendering (2026-09-30)
 
 The owner found `summary.md` busy and hard to read. Stage 8 also writes
-`report/summary.html` (`summary_html.py`): the same facts in plain language, what to
+`summary.html` (`summary_html.py`): the same facts in plain language, what to
 look at first as grouped cards (stage 4 headlines say what matched, never what the
 author meant), one plain sentence per stage with the technical line behind a
 disclosure, light and dark themes. `summary.md` stays for text tools.
 
-`run.py --rerender <run_dir>` rebuilds `report/` from a finished run's saved stage
+`run.py --rerender <run_dir>` rebuilds the reports from a finished run's saved stage
 outputs, runs no stage and calls no model (only the grader, for stamps), and appends
 a line to LOG.md. Report design changes no longer need a full re-run.

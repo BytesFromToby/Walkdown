@@ -204,6 +204,8 @@ Standard library only. No new packages without a note to the user.
 - Write inside `<input_dir>`.
 - Import code from another stage. Stages 1 to 4 are reached through their
   runners.
+  Exception (2026-10-03): the shared path rule in `stages/04-phrases/audience.py`
+  (`audience`, `is_test_data`), so who a file is for is decided in one place.
 
 ## Done when
 

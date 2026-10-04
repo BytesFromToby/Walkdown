@@ -89,7 +89,8 @@ That is all stages 1 to 5 and the report need. Optional extras:
 - **Stage 6 backends** (`requirements-soft.txt`):
   - `jev`: TypeSafe's Jev, a remote labeling model. Needs `TYPESAFE_API_KEY` in the environment
     (on Windows it is also read from the user environment in the registry).
-  - `laya`: a small local model (CPU torch; see the comment in `requirements-soft.txt`).
+  - `laya`: a small local model, **retired** (2026-10-03). It labeled 13% of the test lines
+    correctly; the code stays, but it is not recommended and not part of any plan.
   - `claude-cli`: relational reads through an installed, logged-in Claude Code CLI, run with no
     tools and no project context.
 
@@ -102,7 +103,8 @@ python walkdown.py https://github.com/<owner>/<repo>
 python walkdown.py path/to/a/folder
 ```
 
-A URL is cloned into `ReposToExamine/<repo>`; a folder is examined where it is. The run lands in
+A URL is cloned into `ReposToExamine/<repo>` (running it again updates that clone to the
+latest commit; `--keep` audits it as it is); a folder is examined where it is. The run lands in
 `RepoResults/<repo>/`, and the command ends with a short brief: the trifecta legs, what to look
 at first, each stage's validation stamp, and the path to `summary.html`. Open that page.
 
@@ -124,10 +126,10 @@ can work through):
 | Flag | What it adds |
 |---|---|
 | `--label jev` | labels each flagged line: an instruction to do it, not to do it, a description, a quote, or the words used in another sense |
-| `--compare laya` | a second labeler, for agreement |
+| `--compare <backend>` | a second labeler, for agreement (Laya, the local option, is retired) |
 | `--relational claude-cli` | prose reads of questions that need context (a redefined safety word, a hook that injects text, how the capabilities combine) |
 | `--sweep jev` | reads every prose passage a model reads, to find instructions no pattern matched |
-| `--both` | Jev reads each line twice (plain, and with the matched words marked) and averages |
+| `--both` | research option: Jev reads each line twice (plain, and with the matched words marked) and averages; tests were inconclusive |
 
 Re-render an existing run's report after a change to the report code (maintainers):
 
@@ -154,7 +156,8 @@ python grader/grader.py all
 ```
 
 Each audit runs the grader first, and the result is the stage's validation stamp in `LOG.md`. A
-stage that fails its fixtures says so in the report.
+stage that fails its fixtures says so in the report. A stamp is reused while the code and
+fixtures are unchanged (LOG.md says when it was measured); `--revalidate` measures afresh.
 
 ## Known limits
 

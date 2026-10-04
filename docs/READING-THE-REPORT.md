@@ -75,7 +75,7 @@ sometimes a note. Places with the same headline share one card.
 | A word is defined more than one way / Redefines a safety word / An irreversible or prohibited action with no confirmation step | 4 | from stage 4's tables of definitions and guarded actions |
 | Test data that the model is pointed at | 5 | a file in a test or fixture folder that a model-read file references directly, so it is read like any other file |
 | An instruction the model sees before you type anything | 5 | text a context-injecting hook prints into the session |
-| No pattern matched, but a model read this as an instruction | 6 | the coverage sweep flagged a passage stage 4 had no hit in |
+| No pattern matched, but a model read this as an instruction | 6 (model reads block) | the coverage sweep flagged a passage stage 4 had no hit in |
 | Read as a real instruction to do the flagged thing | 6 | a model's confident reading of a flagged line |
 | Near the line | 6 | a model reading close enough to the cutoff that a repeat read could flip it |
 
@@ -88,6 +88,14 @@ nothing about this one.
 data (tests, fixtures) are counted, never listed: installing the artifact does not put them in
 front of a model. They are all in `full.md`.
 
+### Model reads (experimental)
+
+When stage 6 ran with a model, its cards follow "Look at these first" in their own block: sweep
+passages no pattern matched, confident "do" reads, and reads near the line. A model's reading
+can be wrong and repeat reads vary, so these are kept apart from the findings the fixed rules
+produced, and they never change them. The tile counts only the rule-based places and says how
+many model reads follow.
+
 ### Stage by stage
 
 One plain sentence per stage, with a pill when the stage did not pass validation. "Technical
@@ -98,6 +106,15 @@ detail" opens the status line from `summary.md`.
 Suggestions for the builder, each tied to a file and line, each conditional ("if this skill does
 not need X, ..."), each naming a narrower way to do the same thing. Listed in stage order and
 never ranked: ranking by importance would be a score by another name.
+
+## Section 4's numbers
+
+The status line says how many lines have hits and where they are: read by a model, in scripts,
+human-facing, test data. On superpowers, 109 of 626 such lines are text a model reads. When
+stage 6 labels ran, it also gives the **benign share**: of the labeled lines a model reads, how
+many the model read as an instruction to do the matched action and how many as a description,
+quote, or other use. That is a model's reading, with measured accuracy; without labels the line
+says the share was not measured.
 
 ## summary.md
 

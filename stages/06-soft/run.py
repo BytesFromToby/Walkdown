@@ -174,6 +174,9 @@ def main(argv=None, environ=None, factories=None) -> int:
         name = choices[role]
         if name == "none":
             continue
+        if name == "laya":
+            eprint("note: laya is retired (2026-10-03): it labeled 13% of the test lines "
+                   "correctly; its answers are recorded but not relied on")
         eprint(f"note: {role} backend {name} ({'remote' if REMOTE[name] else 'local'}); "
                f"{len(rels if role == 'relational' else labels)} questions")
         with contextlib.redirect_stdout(sys.stderr):

@@ -53,13 +53,13 @@ limit in stage 7. Living doc: update the Fixture column as fixtures move and gro
 | | 17 Environment mutation | | patterns | E | `04-phrases/class17-env-mutation.md` |
 | | 22 Harness-prohibited actions | | harness rubric | J | `04-phrases/class22-harness-prohibited.md` |
 | **4d Talking to the human** | 19 Human-audience / inbound | | patterns + audience tag | G | `04-phrases/class19-human-inbound.md` |
-| **5 Capability** | (derived: trifecta, install grants, pairs) | | derivation from 1 to 4 | | none yet |
-| **6 Soft reads** | 14 Definitional hijacking (soft half: surprise) | | model read | | none yet (soft cases owed) |
+| **5 Capability** | (derived: trifecta, install grants, pairs, test data) | | derivation from 1 to 4 | | `05-capability/` (12 repos: legs 0 to 3, posture, hook-emits, outside code, connectors, test data) |
+| **6 Soft reads** | 14 Definitional hijacking (soft half: surprise) | | model read | | `06-soft/labels-repo/`, `06-soft/real-lines/` (119 hand-labeled real lines), `06-soft/sweep-repo/` (coverage sweep) |
 | | 20 Anti-review (soft half: the `silently` case) | | model label | | negatives inside `04-phrases/class20-anti-review.md` |
 | | 4 facet: what a shifted passage says | | model read | | `02-reader/class04-language-shift.md` (translation in ANSWERS) |
 | **7 Not examined** | 8 Supply chain / drift | AST02,07 | none: snapshot-blind | | version pair owed (future across-runs feature) |
 
-## Fixture status (2026-09-25)
+## Fixture status (updated 2026-10-03)
 
 Unchanged in content since 2026-09-14; marker renamed LOAD-BEARING to WALKDOWN
 on 2026-09-25 (binary fixtures regenerated from their generators).
@@ -73,10 +73,12 @@ on 2026-09-25 (binary fixtures regenerated from their generators).
   orphan, dangling ref, dynamic-load glob (12).
 - **Stage 4: complete.** Classes 1, 2, 3, 5, 7, 13, 14, 17, 19, 20, 21, 22, and
   the phrase halves of 15 and 16: gate, recall, and negative fixtures.
-- **Stage 5: none.** Needs small fixture repos with a known trifecta (0, 1, 2,
-  3 legs) and a least-privilege positive.
-- **Stage 6: none beyond the negatives above.** Hand-labeled soft cases owed;
-  waits on the model decision.
+- **Stage 5: complete (2026-09-29, extended to 2026-10-02).** Twelve fixture repos: trifecta 0
+  to 3 legs, posture with a least-privilege positive, hook-emitted instructions, outside code,
+  connectors, and test data set aside or loaded.
+- **Stage 6: built 2026-09-29.** Gates on the question packet; recall rows (measured, never
+  required) for a model labeler on `labels-repo` and the 119 real lines, and for the coverage
+  sweep on `sweep-repo`. Measurements: `pre-planning/soft/EVAL.md`.
 - **Stage 7:** nothing to fixture; its fixture is a run log with a failed stamp
   and a missing dependency, owed with the orchestrator.
 
@@ -98,6 +100,5 @@ not past 500 as claimed; now column 525.
    sheets (input plus expected normalized text), and a repo tree.
 4. **Soft halves (14, 20, the language-shift read) cannot be graded by the
    deterministic grader.** They need hand-labeled soft cases a human scores.
-5. **Stage 5 has no fixtures at all.** It derives rather than detects, so its
-   fixture is a set of small repos with known answers. Owed before stage 5 is
-   built.
+5. **Stage 5 derives rather than detects**, so its fixtures are small repos with known
+   answers (written 2026-09-29, before stage 5 was built).

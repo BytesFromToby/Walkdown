@@ -4,7 +4,7 @@ The front door: one command from a folder or a git URL to a finished run and a b
 
 ## Inputs
 
-`python walkdown.py <target> [--name NAME] [--fresh] [--label B] [--compare B]
+`python walkdown.py <target> [--name NAME] [--fresh | --keep] [--label B] [--compare B]
 [--relational B] [--sweep B] [--both]`
 
 - `target`: a folder, or a git URL (`http(s)://`, `git@`, `ssh://`, or ending in `.git`,
@@ -16,12 +16,16 @@ The front door: one command from a folder or a git URL to a finished run and a b
 ## Outputs
 
 - A URL is cloned shallow (`git clone --depth 1 -- <url>`) into `ReposToExamine/<name>`. An
-  existing copy is reused with a note, unless `--fresh` removes and re-clones it.
+  existing clone of the same URL (its `origin`, compared without `.git` or a trailing slash,
+  case-insensitive) is updated to the remote's latest commit (`fetch --depth 1`, `reset --hard
+  FETCH_HEAD`, `clean -fdx`; 2026-10-03). `--keep` audits whatever is there without updating;
+  `--fresh` deletes the clone and clones again. A folder there that is not a clone of this URL
+  is an error (exit 2) unless `--keep`.
 - Runs `stages/08-report/run.py <target> --repo <name> ...` with the project virtualenv's
   python when `.venv/` exists, else the current interpreter.
 - Prints the **brief** to stdout: files examined and the pin; the three trifecta legs as
-  checkboxes and the install grants; the "look at these first" items counted by stage and
-  headline; each stage's validation stamp from LOG.md; the paths of `summary.html` and
+  checkboxes and the install grants; the "look at these first" places counted by stage and
+  headline, with stage 6 model reads on their own lines marked experimental (2026-10-03); each stage's validation stamp from LOG.md; the paths of `summary.html` and
   `full.md`; the no-verdict line.
 - Exit code: the stage 8 runner's; 2 for a bad target or a failed clone.
 
@@ -31,7 +35,7 @@ The front door: one command from a folder or a git URL to a finished run and a b
   repository, or defined word. Headlines are Walkdown's own; the two that embed a defined word
   are replaced by fixed wording. The brief is what a chat assistant holding tools may read.
 - Run anything from the cloned repository.
-- Delete anything except a clone in `ReposToExamine/<name>` under `--fresh`.
+- Delete or overwrite anything except its own clone of the same URL in `ReposToExamine/<name>`.
 
 ## Done when (each backed by a test in `tests/test_walkdown.py`)
 

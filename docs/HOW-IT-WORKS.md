@@ -196,7 +196,11 @@ pushing). The benign share is the point of keeping every hit.
 docs never name; prohibited-tier actions with no confirmation step; a safety word redefined; a
 word defined two different ways.
 
-**In the report.** Section 4: counts per group in the status line, rare-pattern hits and the
+**Benign share.** When stage 6 labels ran, section 4 also reports how many of the labeled
+lines a model reads were read as instructions and how many as descriptions, quotes, or other
+uses (REPORTING rule 2: a count comes with its benign share).
+
+**In the report.** Section 4: counts per group in the status line, split by audience, rare-pattern hits and the
 part 2 highlights as points, every hit grouped by check in `full.md`.
 
 ---
@@ -269,7 +273,7 @@ person to work through. With models chosen at run time:
 | Read | Flag | What it answers |
 |---|---|---|
 | Labels | `--label jev` | for each flagged line a model reads: is it an instruction to do the matched action, an instruction not to, a description, a quote or example, or the words used in another sense? |
-| Comparison | `--compare laya` | the same question from a second model, for agreement |
+| Comparison | `--compare <backend>` | the same question from a second model, for agreement (Laya, the local option, is retired: 13% on the test lines) |
 | Relational reads | `--relational claude-cli` | prose answers to questions that need context: how the capabilities combine, what a redefined safety word changes, what a model would do at a guarded step |
 | Coverage sweep | `--sweep jev` | every prose passage a model reads: does it tell the reader to set aside its instructions, send data out, gather secrets, act without or hide from the user, follow fetched instructions, or make lasting changes? Reaches text no pattern matched. |
 
@@ -289,8 +293,10 @@ with a hand-labeled set about half the time, and are far more reliable when conf
 caught 11 of 12 paraphrased payloads with no false flags on 20 benign passages; that set was
 written by the same person who wrote the question, so it is a first check.
 
-**In the report.** Section 6: sweep passages with no stage 4 hit first, then confident "do"
-reads, then counts for near-the-line and weaker reads. Every answer is in `full.md`.
+**In the report.** On the summary page, model reads have their own block, "Model reads
+(experimental)", after the rule-based list. In section 6: sweep passages with no stage 4 hit
+first, then confident "do" reads, then counts for near-the-line and weaker reads. Every answer
+is in `full.md`.
 
 ---
 
@@ -320,7 +326,9 @@ against `Fixtures/ANSWERS/`, which the stage code never reads. Rows are **gates*
 found), **negatives** (must not be found), and **recall** (measured, never required, used for
 model backends). PASS means every gate and negative held; INCOMPLETE means nothing failed but a
 check was skipped; FAIL means a gate was missed or a negative was hit. Every audit runs the
-grader first and stamps the result in LOG.md.
+grader first and stamps the result in LOG.md. A stamp is reused while the code, fixtures, and
+stage 6 choices are unchanged (fingerprinted in `.cache/stamps.json`), and LOG.md says when it
+was measured; `--revalidate` measures afresh.
 
 ## Where the rules live
 

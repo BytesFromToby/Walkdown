@@ -57,7 +57,7 @@ def first_items(r) -> list[dict]:
     for h in [h for h in R.fnd(r, "01-inventory", "struct.hooks") if not R.is_test_data(h.get("file"))]:
         out.append(_item(1, "Runs commands on its own", h["file"],
                          f"{h.get('event')}: {h.get('command')}",
-                         "A hook runs when the harness fires the event, not when you ask."))
+                         "A hook runs whenever the harness fires its event, without anyone asking."))
     model, _ = R._split_audience(r, R.pairs(r, "hidden+phrase"))
     for p in model:
         out.append(_item(2, "Hidden when rendered, and reads like an instruction", R.loc(p), p["quote"].strip()))
@@ -171,8 +171,14 @@ def plain_status(r, stamps, stage) -> str:
         hits = R.phrase_hits(r)
         hosts = f("endpoint.host")
         undoc = [h for h in hosts if not h.get("documented") and not h.get("local")]
-        return (f"{len(hits):,} lines match a pattern (a location to read, not a finding). "
-                f"{R.n(len(hosts), 'network host')}, {len(undoc)} not named in the docs.")
+        labels = [x for x in R.fnd(r, "06-soft", "soft.label") if "skipped" not in x and x.get("label")]
+        share = ""
+        if labels:
+            do = sum(1 for x in labels if x["label"] == "do")
+            share = (f" A model read {len(labels)} of the matched lines a model reads: {do} as a real "
+                     f"instruction, {len(labels) - do} as a description, quote, or other use.")
+        return (f"{len(hits):,} lines match a pattern (each a location to read; none is a finding). "
+                f"{R.n(len(hosts), 'network host')}, {len(undoc)} not named in the docs.{share}")
     if stage == "05-capability":
         legs = {x["leg"]: x["present"] for x in f("cap.leg")}
         have = [R.LEG_NAMES[k].lower() for k in R.LEG_NAMES if legs.get(k)]
@@ -187,7 +193,7 @@ def plain_status(r, stamps, stage) -> str:
             return f"{R.n(len(s['questions']), 'question')} written for a person to read. No model was asked."
         names = ", ".join(sorted({b["backend"] for b in s["backends"]}))
         return (f"{R.n(len(s['questions']), 'question')} a pattern could not settle, answered by {names}. "
-                "Answers are readings, not verdicts.")
+                "Answers are readings; they reach no verdict.")
     return ""
 
 
@@ -218,8 +224,8 @@ def _trifecta(legs, marked=()) -> str:
     if n_on == 3:
         foot = "All three legs of the lethal trifecta. That raises risk. It is not an issue on its own."
     else:
-        foot = (f"{n_on} of the three legs of the lethal trifecta. Capability, not a verdict: the "
-                "danger is all three together.")
+        foot = (f"{n_on} of the three legs of the lethal trifecta. This maps capability and "
+                "reaches no verdict; the risk comes from all three together.")
     return (f'<section class="trifecta" aria-label="What it can do"><h2>What it can do</h2>'
             f'<ul class="legs">{"".join(rows)}</ul><p class="leg-foot">{esc(foot)}</p></section>')
 
@@ -229,18 +235,8 @@ def _tile(label, value, sub="") -> str:
             f'<div class="tile-l">{esc(label)}</div>{f"<div class=tile-s>{esc(sub)}</div>" if sub else ""}</div>')
 
 
-def render_page(meta, r, stamps, notes, runs_ok) -> str:
-    items = grouped(first_items(r))
-    lim = R.limits(r, notes, stamps, runs_ok)
-    recs = R.recommendations(r)
-    pin = (R.fnd(r, "01-inventory", "inv.pin") or [{}])[0]
-    legs = {x["leg"]: x["present"] for x in R.fnd(r, "05-capability", "cap.leg")}
-    total, unread = pin.get("files", 0), len(R.fnd(r, "02-reader", "read.unread"))
-    tiles = [_tile("files examined", f"{total:,}", f"{total - unread:,} read in full"),
-             _tile("things to look at first", len(items)),
-             _tile("things not examined", len(lim))]
-    trifecta = _trifecta(legs, R.all_marked_legs(r))
-    first = []
+def _cards(items, empty: str) -> list[str]:
+    out = []
     for it in items[:MAX_FIRST]:
         quotes = "\n".join(it["quotes"][:6])
         q = f'<pre class="quote">{esc(quotes)}</pre>' if quotes else ""
@@ -248,14 +244,48 @@ def render_page(meta, r, stamps, notes, runs_ok) -> str:
               if it.get("note") else "")
         places = len(it["wheres"])
         count = f' <span class="count">{places} places</span>' if places > 1 else ""
-        first.append(f'<li class="item"><div class="item-h"><span class="stage-tag">Stage {it["stage"]}</span>'
-                     f'<h3>{esc(it["title"])}{count}</h3></div>'
-                     f'<code class="where">{esc(_wheres(it["wheres"]))}</code>{q}{nt}</li>')
+        out.append(f'<li class="item"><div class="item-h"><span class="stage-tag">Stage {it["stage"]}</span>'
+                   f'<h3>{esc(it["title"])}{count}</h3></div>'
+                   f'<code class="where">{esc(_wheres(it["wheres"]))}</code>{q}{nt}</li>')
     more = len(items) - MAX_FIRST
     if more > 0:
-        first.append(f'<li class="more">{more} more in the full report.</li>')
+        out.append(f'<li class="more">{more} more in the full report.</li>')
     if not items:
-        first.append('<li class="more">Nothing on the attention list. See each stage below.</li>')
+        out.append(f'<li class="more">{empty}</li>')
+    return out
+
+
+def _models_section(r, items) -> str:
+    """Stage 6 reads in their own block (2026-10-03 review C14): model reads are optional and
+    experimental, so the deterministic findings lead and these follow, labeled as such."""
+    if not items:
+        return ""
+    names = ", ".join(sorted({b["backend"] for b in R._soft(r)["backends"]})) or "a model"
+    cards = "".join(_cards(items, ""))
+    return (f'<section><h2>Model reads (experimental)</h2><p class="lede">Optional stage 6 reads by '
+            f'{esc(names)}. A model\'s reading can be wrong, and repeat reads of one line vary; '
+            f'these never change the findings above. Measured accuracy: '
+            f'<code>pre-planning/soft/EVAL.md</code>.</p><ol class="first">{cards}</ol></section>')
+
+
+def render_page(meta, r, stamps, notes, runs_ok) -> str:
+    every = grouped(first_items(r))
+    items = [it for it in every if it["stage"] != 6]
+    model_items = [it for it in every if it["stage"] == 6]
+    lim = R.limits(r, notes, stamps, runs_ok)
+    recs = R.recommendations(r)
+    pin = (R.fnd(r, "01-inventory", "inv.pin") or [{}])[0]
+    legs = {x["leg"]: x["present"] for x in R.fnd(r, "05-capability", "cap.leg")}
+    total, unread = pin.get("files", 0), len(R.fnd(r, "02-reader", "read.unread"))
+    tiles = [_tile("files examined", f"{total:,}", f"{total - unread:,} read in full"),
+             _tile("places to look at first", sum(len(it["wheres"]) for it in items),
+                   f"under {len(items)} heading{'s' if len(items) != 1 else ''}"
+                   + (f"; {sum(len(it['wheres']) for it in model_items)} model reads below"
+                      if model_items else "")),
+             _tile("things not examined", len(lim))]
+    trifecta = _trifecta(legs, R.all_marked_legs(r))
+    first = _cards(items, "Nothing on the attention list. See each stage below.")
+    models = _models_section(r, model_items)
     stages = []
     for i, stage in enumerate(R.ORDER, 1):
         if stage == "07-limits":
@@ -280,7 +310,7 @@ def render_page(meta, r, stamps, notes, runs_ok) -> str:
     return PAGE.format(
         title=esc(f"Walkdown: {meta['repo']}"), repo=esc(meta["repo"]), source=esc(meta["source"]),
         hash=esc(f"{meta['hash_kind']} {meta['hash'][:12]}"), date=esc(meta["date"]), run=esc(meta["run"]),
-        tiles="".join(tiles), trifecta=trifecta, first="".join(first), stages="".join(stages), recs=recs_html,
+        tiles="".join(tiles), trifecta=trifecta, first="".join(first), models=models, stages="".join(stages), recs=recs_html,
         nrecs=len(recs), notwhat=esc(R.NOT_WHAT))
 
 
@@ -377,9 +407,10 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
   {trifecta}
   <section>
     <h2>Look at these first</h2>
-    <p class="lede">Locations picked by fixed rules, in stage order. Each is a place to read, not a finding against the author.</p>
+    <p class="lede">Locations picked by fixed rules, in stage order. Each is a place to read; none is a finding against the author.</p>
     <ol class="first">{first}</ol>
   </section>
+  {models}
   <section>
     <h2>Stage by stage</h2>
     <ol class="stages">{stages}</ol>

@@ -1,4 +1,4 @@
-"""Stage 8 entry point: run stages 1 to 5, stamp them, write the run folder. Spec: specs/run.SPEC.md."""
+"""Stage 8 entry point: run stages 1 to 6, stamp them, write the run folder. Spec: specs/run.SPEC.md."""
 from __future__ import annotations
 
 import argparse
@@ -45,7 +45,7 @@ def inside(child: Path, parent: Path) -> bool:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Walkdown stage 8: run stages 1 to 5 and write the report")
+    ap = argparse.ArgumentParser(description="Walkdown stage 8: run stages 1 to 6 and write the reports")
     ap.add_argument("input_dir", nargs="?")
     ap.add_argument("--repo", help="name for RepoResults/<repo>/ (required unless --rerender)")
     ap.add_argument("--rerender", metavar="RUN_DIR",
@@ -53,6 +53,8 @@ def main(argv=None) -> int:
     ap.add_argument("--results", default=str(ROOT / "RepoResults"))
     ap.add_argument("--date", default=dt.date.today().isoformat())
     ap.add_argument("--no-validate", action="store_true", help="skip the grader (tests only)")
+    ap.add_argument("--revalidate", action="store_true",
+                    help="run the grader even when a stamp for the same code and fixtures is cached")
     for k in ("label", "compare", "relational"):
         ap.add_argument(f"--{k}", default=None,
                         help=f"stage 6 {k} backend (none, jev, laya, claude-cli); default: stage 6's")
@@ -93,7 +95,8 @@ def main(argv=None) -> int:
     work.rename(run_dir)
 
     grade_env = soft_grade_env(a)
-    stamps = {} if a.no_validate else validate.stamps(ROOT, py, pipeline.STAGES, grade_env)
+    stamps = {} if a.no_validate else validate.stamps(ROOT, py, pipeline.STAGES, grade_env,
+                                                      cache=not a.revalidate)
     meta = {"repo": a.repo, "run": run_dir.name, "date": a.date, "source": pin.get("source", str(inp)),
             "hash": h, "hash_kind": pin.get("hash_kind", "?"), "channel": pin.get("channel", "directory"),
             "tool": tool_version(ROOT),
@@ -160,7 +163,8 @@ def rerender(run_dir: Path, a) -> int:
     pin = reports["01-inventory"]["findings"][0]
     grade_env = soft_grade_env(a)
     stamps = {} if a.no_validate else validate.stamps(ROOT, sys.executable,
-                                                      [s for s in pipeline.STAGES if s in reports], grade_env)
+                                                      [s for s in pipeline.STAGES if s in reports], grade_env,
+                                                      cache=not a.revalidate)
     repo = run_dir.parent.name
     meta = {"repo": repo, "run": run_dir.name, "date": run_dir.name.split("_")[0],
             "source": pin.get("source", ""), "hash": pin.get("hash", "nohash"),

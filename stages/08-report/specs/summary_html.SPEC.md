@@ -7,7 +7,7 @@ from the same fixed rules in `render.py`; nothing new is detected or judged.
 ## Output
 
 `render_page(meta, reports, stamps, notes, runs_ok) -> str`: one self-contained HTML
-document (`report/summary.html`):
+document (`summary.html`):
 
 - Header: artifact name, source, pin, retrieval date, run; "Static examination only".
 - Four counts: files examined (and read in full), things to look at first, trifecta
@@ -57,3 +57,11 @@ pattern matched, and a model may read this as an instruction", with the drift st
 4. Stage 4 headlines start "Matches the wording".
 5. A stage whose stamp is not PASS shows a pill.
 6. The trifecta qualifier is present and no verdict words appear.
+
+## Model reads in their own block (added 2026-10-03, review C14)
+
+Stage 6 cards are kept out of "Look at these first" and shown after it under "Model reads
+(experimental)", with a lede naming the backends and saying a model's reading can be wrong,
+repeat reads vary, and these never change the findings above. The tile counts deterministic
+places only and adds "N model reads below" when there are any. No model reads: no block.
+Section 4's plain sentence adds the stage 6 label split when labels ran (review C15).

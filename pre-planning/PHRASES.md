@@ -22,6 +22,10 @@ Rules for this file:
   stage 4 counts on the same superpowers copy are in "Stage 4 v1 measurement"
   at the end of this file; the per-row base rates below are the earlier hand
   counts, kept as history.
+- **The live base rates (2026-10-01) are `stages/08-report/baserates.json`**, rebuilt by
+  `stages/08-report/baserates.py` over every audited repository (outside human-facing files
+  and test data), and shown in reports as rare / uncommon / common. Where the per-row numbers
+  below disagree, that file is current.
 
 **Where the sets run (2026-09-25).** The lettered sets below are all stage 4
 (METHOD.md), by sub-group: **4a reaching out** K, E rollup (credentials, remote

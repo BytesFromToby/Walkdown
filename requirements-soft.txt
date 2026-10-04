@@ -1,5 +1,7 @@
 # Optional stage 6 (soft reads) backends. Not needed for stages 1-5 or 8; stage 6 without them writes the packet only.
 typesafe-sdk==0.7.2
+# torch is only for laya (retired, below). If you still install it, CPU torch first:
 # CPU torch first: pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cpu
 torch==2.14.0
+# laya is retired (2026-10-03): kept so its backend still imports; not needed for any current use
 laya==0.3.22

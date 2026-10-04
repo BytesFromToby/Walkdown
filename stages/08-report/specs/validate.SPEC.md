@@ -38,3 +38,16 @@ or `INCOMPLETE (gate 14/15, negative 12/12; skipped: rd-img-ocr)`.
   backend's recall on the labeled set.
 - More than three skipped ids collapse to `skipped: N rows`. Test:
   `test_long_skip_list_collapses`.
+
+## Cached stamps (added 2026-10-03, review C16)
+
+- `fingerprint(root, env)`: sha256 over every file under `stages/`, `grader/`, and
+  `Fixtures/` (path and bytes, `__pycache__` skipped), the Python major.minor, and the
+  `WALKDOWN_SOFT_*` variables in `env`. Any change to code, fixtures, answers, or stage 6
+  choices gives a new fingerprint.
+- `stamps(..., cache=True)` reuses `.cache/stamps.json` entries keyed `<stage>|<fingerprint>`
+  and runs the grader only for misses, saving each new PASS, INCOMPLETE, or FAIL with the date.
+  A reused stamp has `cached` set to that date, and its text says "measured <date>, same code
+  and fixtures". ERROR is never cached. `cache=False` (`--revalidate`) always runs the grader.
+- A stage 6 stamp with a remote model is measured once per fingerprint; the model can drift
+  between runs, which the cache does not see.
