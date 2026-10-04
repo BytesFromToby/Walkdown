@@ -46,3 +46,12 @@ def test_no_ocr_is_a_skip():
 def test_not_an_image():
     r = read_image.read_image(b"definitely not an image", ocr=False)
     assert r.unread
+
+
+def test_for_ocr_enlarges_small_images_and_keeps_large_ones():
+    from PIL import Image
+    import read_image
+    small = read_image.for_ocr(Image.new("RGB", (760, 120), "white"))
+    assert small.mode == "L" and small.size == (760 * read_image.OCR_SCALE, 120 * read_image.OCR_SCALE)
+    big = read_image.for_ocr(Image.new("RGB", (2400, 1000), "white"))
+    assert big.size == (2400, 1000)

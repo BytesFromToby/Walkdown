@@ -56,6 +56,23 @@ def _text(value) -> str | None:
     return None
 
 
+OCR_SMALL = 2000   # an image under this many pixels on its longer side is enlarged for OCR
+OCR_SCALE = 3
+
+
+def for_ocr(im):
+    """The image as Tesseract reads it best: grayscale, and small images enlarged OCR_SCALE
+    times. Tiny text is a way to hide an instruction in an image; at its natural size
+    Tesseract misses it (2026-10-04: the first CI run with Tesseract missed the class 11
+    fixture's 11-pixel text)."""
+    from PIL import Image
+    g = im.convert("L")
+    w, h = g.size
+    if max(w, h) < OCR_SMALL:
+        g = g.resize((w * OCR_SCALE, h * OCR_SCALE), Image.LANCZOS)
+    return g
+
+
 def read_image(data: bytes, ocr: bool = True) -> ImageReading:
     from PIL import ExifTags, Image
     out = ImageReading()
@@ -99,7 +116,7 @@ def read_image(data: bytes, ocr: bool = True) -> ImageReading:
         return out
     try:
         import pytesseract
-        out.ocr_text = pytesseract.image_to_string(im.convert("RGB"))
+        out.ocr_text = pytesseract.image_to_string(for_ocr(im))
     except Exception as exc:
         out.ocr_skipped = f"ocr failed: {type(exc).__name__}"
     return out

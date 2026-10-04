@@ -43,3 +43,10 @@ and a `read.unread` finding.
 3. A plain PNG reports no metadata.
 4. With OCR disabled or unavailable, `ocr_skipped` is set and `ocr_text` is None.
 5. Non-image bytes give `unread`.
+
+## OCR preprocessing (added 2026-10-04)
+
+Before OCR the image is converted to grayscale, and an image under `OCR_SMALL` (2000) pixels
+on its longer side is enlarged `OCR_SCALE` (3) times (`for_ocr`). Tiny text is a way to hide
+an instruction in an image; Tesseract misses it at its natural size (the first CI run with
+Tesseract missed the class 11 fixture's 11-pixel text).
