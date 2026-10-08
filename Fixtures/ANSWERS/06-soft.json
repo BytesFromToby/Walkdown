@@ -1510,15 +1510,11 @@
         },
         {
           "id": "real-q-47",
-          "polarity": "gate",
+          "polarity": "negative",
           "check": "soft.question",
           "file": "superpowers/skills/subagent-driven-development/implementer-prompt.L140.md",
           "line": 3,
-          "match": {
-            "kind": {
-              "eq": "label"
-            }
-          }
+          "note": "H.report-only retired 2026-10-08 (owner: response limits are not flagged); no other pattern hits this line, so no question."
         },
         {
           "id": "real-label-47",
@@ -2685,15 +2681,11 @@
         },
         {
           "id": "real-q-97",
-          "polarity": "gate",
+          "polarity": "negative",
           "check": "soft.question",
           "file": "superpowers/skills/writing-skills/anthropic-best-practices.L241.md",
           "line": 3,
-          "match": {
-            "kind": {
-              "eq": "label"
-            }
-          }
+          "note": "H.report-only retired 2026-10-08 (owner: response limits are not flagged); no other pattern hits this line, so no question."
         },
         {
           "id": "real-label-97",
@@ -2910,15 +2902,11 @@
         },
         {
           "id": "real-q-106",
-          "polarity": "gate",
+          "polarity": "negative",
           "check": "soft.question",
           "file": "superpowers/skills/writing-skills/anthropic-best-practices.L1099.md",
           "line": 3,
-          "match": {
-            "kind": {
-              "eq": "label"
-            }
-          }
+          "note": "H.report-only retired 2026-10-08 (owner: response limits are not flagged); no other pattern hits this line, so no question."
         },
         {
           "id": "real-label-106",
@@ -2935,15 +2923,11 @@
         },
         {
           "id": "real-q-107",
-          "polarity": "gate",
+          "polarity": "negative",
           "check": "soft.question",
           "file": "superpowers/skills/writing-skills/anthropic-best-practices.L1109.md",
           "line": 3,
-          "match": {
-            "kind": {
-              "eq": "label"
-            }
-          }
+          "note": "H.report-only retired 2026-10-08 (owner: response limits are not flagged); no other pattern hits this line, so no question."
         },
         {
           "id": "real-label-107",

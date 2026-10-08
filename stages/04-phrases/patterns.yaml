@@ -323,10 +323,9 @@ patterns:
   regex: '\bno need to (read|inspect|review|check|look at)\b|\balready (been )?(reviewed|audited|vetted)\b|\bdo not (inspect|modify|read) (the |this )?(script|helper)\b|\bis trusted\b|\bcan be trusted\b'
   source: 'PHRASES:H anti-inspection ("already reviewed" allowing "already been reviewed")'
 
-- id: H.report-only
-  check: phrase.H.anti-review
-  regex: '\breport (back )?(with )?only\b|\bonly the (status|summary)\b|\b(under|at most|no more than|cap\w*(?: \w+){0,2} at|max(imum)?( of)?) (\d+|one|two|three|four|five|six|seven|eight|nine|ten|fifteen|twenty) lines\b'
-  source: 'PHRASES:H report whitelisting (line caps widened from "under N lines" to at most / no more than / capped at, digits or words, per RED-TEAM 11 "cap the report at ten lines")'
+# H.report-only retired 2026-10-08 (owner): response limits ("report back with only",
+# "under 15 lines", "only the summary") are not flagged. Models are wordy and capping a
+# reply is ordinary (superpowers used it for cost, PHRASES H). See PHRASES H row.
 
 - id: H.mandated-phrasing
   check: phrase.H.anti-review

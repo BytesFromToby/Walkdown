@@ -11,6 +11,21 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 - Stage 4: committed-secret scan (gitleaks when installed, detect-secrets otherwise; new
   requirement). Reported by location only: the value never appears, and other findings on
   that line have their quote replaced.
+- Stage 5: images the model is pointed at. An image that a file the model reads references
+  or loads (not a README's image, not a manifest icon) is listed under "Things to check",
+  with whether this run could read its text. A model with vision reads text in images, so
+  the reference is the signal; OCR is extra detail.
+- Report wording (owner review 2026-10-07): "Look at these first" is now "Things to check",
+  and each card names its section in plain words instead of "Stage N". The "not examined"
+  count is now the checks this run skipped that apply to the repository (a missing tool for a
+  file type the repository does not ship shows as "not needed"); the full list is unchanged.
+  The trifecta is described in plain words on the page. The repeated-sentence card no longer
+  shows pattern IDs or "repetition adds weight".
+- Stage 4: response limits ("report back with only", "under 15 lines", "only the summary") are
+  no longer flagged (`H.report-only` retired).
+- Cached validation stamps now depend on which optional tools are installed (Tesseract,
+  gitleaks, pdf2image, Playwright): installing one re-measures the stages instead of reusing
+  a stamp taken without it.
 
 ## 0.1.0 (2026-10-04), first alpha
 

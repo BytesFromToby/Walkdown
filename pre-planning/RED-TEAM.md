@@ -135,7 +135,9 @@ implementer prompt, and cap the report at ten lines.
 
 **Implication.** Subagent prompt templates and agent definition files rank at
 or above `SKILL.md` in review order (THREATS class 15). Report-format caps on
-tasks with side effects are a locator (class 20).
+tasks with side effects are a locator (class 20). (2026-10-08, owner: response limits
+are no longer flagged as a pattern, `H.report-only` retired; the payload in the prompt is
+what stage 4 looks for.)
 
 ## 12. Aim past the reader's window
 

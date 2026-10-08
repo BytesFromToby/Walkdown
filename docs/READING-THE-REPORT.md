@@ -28,8 +28,8 @@ them, says whether each stage passed its validation; the data the reports were b
    skipped (usually an optional tool not installed); FAIL means do not trust that stage's
    findings in this run.
 2. **The trifecta checklist** at the top of `summary.html`: what the repository can do.
-3. **Look at these first**: the short list of points.
-4. **Section 7, Not examined**: what the run could not see.
+3. **Things to check**: the short list of places to read.
+4. **Section 7, Not examined**: what the run skipped that applies to this repository.
 5. **`full.md`** for any point you want to check.
 
 ## summary.html
@@ -37,12 +37,16 @@ them, says whether each stage passed its validation; the data the reports were b
 ### Header and tiles
 
 The header names the repository, where the copy came from, and the version it was pinned to.
-The tiles count files examined, things to look at first, and things not examined.
+The tiles count files examined, places to check, and checks skipped. The last counts only
+checks this run skipped that apply to this repository: a missing tool for a file type the
+repository does not ship is listed as "not needed", and the limits that apply to every run
+(static only, English only, patterns can miss) are in section 7's full list, not the count.
 
 ### What it can do: the trifecta checklist
 
-Three boxes, one per leg of the lethal trifecta
-([Simon Willison's term](https://simonw.substack.com/p/the-lethal-trifecta-for-ai-agents)):
+Three boxes, one per leg of what Simon Willison calls the
+[lethal trifecta](https://simonw.substack.com/p/the-lethal-trifecta-for-ai-agents). The page
+describes it in plain words rather than by that name:
 
 | Leg | Checked when the repository... |
 |---|---|
@@ -61,12 +65,13 @@ elevated permissions), explained in [HOW-IT-WORKS.md](HOW-IT-WORKS.md#install-gr
 If stage 6 read every line cited for a leg as not an instruction (a quote, a description), a note
 says so under the box. The box stays checked: a model's read never removes a finding.
 
-### Look at these first
+### Things to check
 
-Cards in stage order: a stage tag, a headline, the places it applies to, the quoted text, and
+Cards in the order of the sections below: a tag naming the section (click it to jump to that
+section's row), a headline, the places it applies to, the quoted text, and
 sometimes a note. Places with the same headline share one card.
 
-| Headline | Stage | What it means |
+| Headline | Section | What it means |
 |---|---|---|
 | Runs commands on its own | 1 | a hook that runs whenever the host fires its event, without anyone asking |
 | Hidden when rendered, and reads like an instruction | 2 | text the model receives that a person viewing the file does not see, which also matches a phrase pattern |
@@ -75,7 +80,8 @@ sometimes a note. Places with the same headline share one card.
 | A word is defined more than one way / Redefines a safety word / An irreversible or prohibited action with no confirmation step | 4 | from stage 4's tables of definitions and guarded actions |
 | Looks like a committed secret | 4 | a line that looks like an API key or password; the value is never shown, so open the file to check it |
 | Flagged text past the reader window | 4 | in a long file a model reads, flagged lines after the point where a reviewer's viewer may stop showing it |
-| The same flagged sentence in several files | 4 | an instruction a pattern flagged, repeated across files; repetition adds weight |
+| The same flagged sentence in several files | 4 | a sentence a pattern flagged, repeated across files; the note names the pattern family |
+| An image the model is pointed at | 5 | an image a file the model reads references or loads; a model with vision reads text in it, so the note says whether this run could read that text (OCR) or you should open it and look |
 | Test data that the model is pointed at | 5 | a file in a test or fixture folder that a model-read file references directly, so it is read like any other file |
 | An instruction the model sees before you type anything | 5 | text a context-injecting hook prints into the session |
 | No pattern matched, but a model read this as an instruction | 6 (model reads block) | the coverage sweep flagged a passage stage 4 had no hit in |
@@ -93,7 +99,7 @@ front of a model. They are all in `full.md`.
 
 ### Model reads (experimental)
 
-When stage 6 ran with a model, its cards follow "Look at these first" in their own block: sweep
+When stage 6 ran with a model, its cards follow "Things to check" in their own block: sweep
 passages no pattern matched, confident "do" reads, and reads near the line. A model's reading
 can be wrong and repeat reads vary, so these are kept apart from the findings the fixed rules
 produced, and they never change them. The tile counts only the rule-based places and says how

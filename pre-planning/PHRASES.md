@@ -131,7 +131,7 @@ Not phrases. Measurements. Listed here so the thresholds are published.
 | Pattern | Base rate | Note |
 |---|---|---|
 | `no need to (read\|inspect\|review\|check)\|already (reviewed\|audited\|vetted)\|do not (inspect\|modify\|read) (the \|this )?(script\|helper)\|is trusted\|can be trusted` | 4 | anti-inspection; all four benign |
-| `report (back )?(with )?only\|under [0-9]+ lines\|only the (status\|summary)` | 6 | report whitelisting; superpowers uses it for cost. Locator when the task has side effects |
+| `report (back )?(with )?only\|under [0-9]+ lines\|only the (status\|summary)` | 6 | report whitelisting; superpowers uses it for cost. **Retired 2026-10-08 (owner):** response limits are not flagged; models are wordy and capping a reply is ordinary |
 | `announce "\|say exactly\|respond with exactly\|output exactly` | 3 | mandated phrasing; benign |
 | `you might think\|rationaliz\|not negotiable\|do not second.guess\|it may seem` | 96 | objection pre-emption. **Mostly noise**: "rationaliz" is a house word in this repo. Narrow to the phrase forms before using |
 | `(failure to\|if you (skip\|don'?t)) [^.]*(corrupt\|lose\|break\|destroy)` | n/a | consequence framing |

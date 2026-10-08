@@ -334,3 +334,32 @@ run and restored), scored against the answer sheet:
 Caveat: the ordered question is the procedure the answer sheet was made with, so some of
 Claude's gain may be agreement with that procedure rather than with the truth. The owner's
 blind labels (D3) are the check: compare Claude-ordered against the owner as well as the sheet.
+
+
+### D3 owner labeling, stopped at 38 of 119 (2026-10-08)
+
+The owner labeled 38 lines blind (4 unsure; 34 compared), then stopped: the question needs
+rebuilding first. Scored with `pre-planning/soft/d3/score.py` (`RESULTS.md`, `owner-labels.json`).
+
+| Comparison | Agreement | Kappa |
+|---|---|---|
+| Owner vs sheet, five labels | 11/34 = 32% | 0.04 |
+| Owner vs sheet, do / not | 23/34 = 68% | 0.34 |
+| Best model vs owner, do / not (Jev flat) | 25/34 = 74% | 0.46 |
+| Jev runs on the 11 consensus lines, do / not | 9/11 | 0.62 |
+
+Two disagreements explain nearly all of it:
+
+1. **What "do" means (8 lines).** The owner read `do` as "this line instructs the model"; the
+   sheet reads it as "instructs the model to do *the flagged action*" (a `L.forget` hit on
+   "Delete it. Start over." instructs deleting code, not forgetting context: `other-sense` on
+   the sheet, `do` for the owner). The page's step 1 was meant to separate these and did not.
+2. **`other-sense` vs `example-or-quote` (5 lines)**, mostly answer options in pressure-test
+   scenarios. Both readers said "not an instruction"; the split does not reach the report bit.
+
+Findings: five labels do not hold between two careful human readings (kappa 0.04); the report's
+one bit is closer but only if the question names the action. Next version of the question:
+"Does this line tell the AI to <the flagged action, in plain words>? yes / no / unsure", with
+the action taken from the pattern's plain description (`d3/build.py` PLAIN). Model scores
+against the owner are not yet meaningful: they depend on which "do" is meant, and the consensus
+set is 11 lines.

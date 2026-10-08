@@ -57,6 +57,15 @@ def test_fingerprint_changes_with_code_fixtures_and_soft_choices(tmp_path):
     assert validate.fingerprint(root) != b
 
 
+def test_fingerprint_changes_when_an_optional_tool_appears(tmp_path, monkeypatch):
+    import validate
+    root = _root(tmp_path)
+    monkeypatch.setattr(validate, "optional_tools", lambda: "tesseract=0")
+    a = validate.fingerprint(root)
+    monkeypatch.setattr(validate, "optional_tools", lambda: "tesseract=1")
+    assert validate.fingerprint(root) != a
+
+
 def test_cached_stamp_is_reused_and_says_so(tmp_path):
     import json
     import sys

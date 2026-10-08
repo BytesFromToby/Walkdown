@@ -25,6 +25,50 @@ import softdata  # noqa: E402
 OUT = Path(__file__).resolve().parent / "label.html"
 SEED = 3
 
+# What each pattern looks for, in plain words (owner, 2026-10-08: the pattern notes, e.g.
+# "confirm-first tier with no confirmation", were jargon). Each says what the words are and
+# why a pattern would care, never which label fits. Patterns not listed fall back to the note.
+PLAIN = {
+    "A.notify-proceed": "Tell the user something, then carry on (\"let the user know, then run it\"). The worry: the user is informed but never gets to say no.",
+    "B.means": "Redefines a word so it includes an action (\"'clean up' means delete\", \"'sync' means push\"). The worry: an innocent-sounding word quietly carries a risky action.",
+    "B.safety-adjective": "A reassuring word next to a command or script (\"read-only\", \"harmless\", \"sandboxed\", \"no side effects\"). The worry: the label vouches for code the reader has not checked.",
+    "B.safety-exception": "A rule with a carve-out (\"never ... except\", \"do not ... unless\"). The worry: the exception is where the rule stops protecting.",
+    "C.error-instruction": "A command or web address inside an error message a script prints. The worry: the model reads error output and may follow what it says.",
+    "C.frontmatter-grant": "The settings block at the top of a skill or agent file that gives it tools or picks its model. The worry: it decides what the agent is allowed to do.",
+    "D.current-version": "\"Read the current version\" or \"skills evolve\". The worry: it tells the model to trust whatever text is there later, which can change after install.",
+    "D.pseudo-tag": "An all-caps tag like <IMPORTANT> or <SYSTEM-REMINDER> wrapped around text. The worry: it dresses ordinary text up as an official system message.",
+    "E.install": "Installing a package or tool (pip install, npm install, and the like). The worry: it runs code from outside the repository.",
+    "E.mcp": "Registering an MCP server (a connector that gives the model new tools). The worry: it adds tools and data access beyond the skill itself.",
+    "E.persist-target": "Writing to a file that loads in every future session (CLAUDE.md, AGENTS.md, shell profiles, git hooks, editor or agent settings). The worry: the change outlives the task.",
+    "E.self-install": "Copying a skill into the user's global skill folders (~/.claude/skills and the like). The worry: it spreads beyond this project.",
+    "G.agent-template": "Text addressed to an AI reading it (\"if you are an AI agent ...\", \"we assume an agent filed this\"). The worry: it speaks to the model directly, past the human.",
+    "H.anti-inspect": "\"Already reviewed\" or \"already checked\". The worry: it talks a reviewer out of looking.",
+    "H.evidence": "Deleting or removing logs, reports, plans, transcripts, or history. The worry: it removes the record of what happened.",
+    "H.mandated-phrasing": "Says exactly what to say (\"respond with exactly\", \"announce '...'\"). The worry: the model's report to the user is scripted.",
+    "H.precedence": "Claims to override something (\"takes precedence over your instructions\", \"supersedes CLAUDE.md\"). The worry: it ranks itself above the user or other rules.",
+    "H.preempt": "Heads off the model's own doubts (\"you might think ...\", \"not negotiable\", \"stop rationalizing\"). The worry: it discourages the model from pushing back.",
+    "H.report-only": "Limits what gets reported (\"report only the status\", \"no more than five lines\"). The worry: details the user would want are left out.",
+    "H.sabotage": "Calls something deprecated, superseded, or to be skipped (\"skip the review hook\", \"X is deprecated\"). The worry: it steers the model away from another skill or check.",
+    "H.unbounded": "Keep going with no stopping point (\"retry until it succeeds\", \"do not stop until\"). The worry: the model never stops to ask.",
+    "I.clock": "A date or time condition (\"after March 2026\", \"on the first of the month\"). The worry: behavior that switches on later, after review.",
+    "I.environment": "A condition on where it runs (\"if the repository name is ...\", \"if the hostname is ...\"). The worry: behavior that switches on only on certain machines.",
+    "I.failure-path": "What to do when something fails, followed by a command, web address, or token. The worry: the failure path is rarely read and can carry its own instructions.",
+    "I.harness": "A condition on which AI tool is running it (\"if you are running in Codex\", a bullet per tool). The worry: different tools can be given different instructions.",
+    "I.state": "First run versus later runs (\"on first run\", \"subsequent sessions\"). The worry: behavior that changes after the first time it is watched.",
+    "I.version": "A condition on a version (\"version >= 2\", \"or later\", \"and above\"). The worry: behavior that switches on in some versions only.",
+    "J.confirm-first": "An action that reaches outside the computer (send a message or email, post, publish, submit, buy, accept terms, approve a PR or payment) with no \"ask\" or \"confirm\" on the same line. The worry: Claude Code's rules say these need the user's OK first.",
+    "J.irreversible": "An action that cannot be undone (permanently delete, empty the trash, force push). The worry: there is no going back.",
+    "K.data-flow": "A source of private data, a sending verb, and a destination in one sentence (\"put your environment variables in the bug report\"). The worry: data leaves the machine.",
+    "K.md-carrier": "Markdown that hides text when rendered (a collapsed <details> section, unused link definitions, long image alt text). The worry: the model reads text a person viewing the page may not see.",
+    "K.telemetry": "Telemetry, analytics, usage data, opt-out, or update checks. The worry: something sends data home.",
+    "L.forget": "\"Forget everything\", \"reset your context\", \"start over\". The worry: it tells the model to drop what it was told before.",
+    "L.identity": "Gives the model a new identity (\"you are now ...\", \"act as ...\", \"from now on you ...\"). The worry: it replaces who the model is working for.",
+    "L.skip-confirm": "Permission to skip asking (\"no need to ask\", \"without asking\", \"you may skip confirmation\"). The worry: it removes the user's chance to say no.",
+    "RL.branch-ref": "Points at a moving branch (@main, @latest) instead of a fixed version. The worry: what loads can change after review.",
+    "creds.env-enum-code": "Code that reads all environment variables at once (printenv, looping over os.environ). The worry: environment variables often hold keys and passwords.",
+    "creds.path": "A path where credentials live (~/.ssh, SSH keys, ~/.aws, .npmrc, .git-credentials). The worry: it points the model at secrets.",
+}
+
 # The labels as an ordered decision (owner, 2026-10-04: flat definitions were not clear enough
 # to choose between). This is the rule order the answer sheet was made with (header of
 # Fixtures/ANSWERS/06-soft-real-lines-review.md), written out with examples. The examples are
@@ -95,7 +139,7 @@ def items() -> list[dict]:
             lines.pop()
         ids = pats.get(source, [])
         out.append({"id": e["id"], "source": source, "target": e["line"] - 1, "lines": lines,
-                    "patterns": [{"id": p, "what": notes.get(p, "")} for p in ids]})
+                    "patterns": [{"id": p, "what": PLAIN.get(p) or notes.get(p, "")} for p in ids]})
     random.Random(SEED).shuffle(out)
     return out
 
@@ -140,6 +184,7 @@ pre { margin:10px 0 0; padding:10px; border-radius:6px; background:var(--bg); ov
 .ln { display:block; } .ln.t { background:var(--hit); }
 .ln .n { color:var(--muted); display:inline-block; width:2.2em; user-select:none; }
 .pat { margin-top:10px; font-size:14px; } .pat code { font-size:13px; }
+.pat .pid { font-size:11px; color:var(--muted); }
 .q { font-weight:600; margin:0 0 10px; }
 .opts { display:grid; gap:8px; }
 button.opt { text-align:left; background:var(--card); color:var(--ink); border:1px solid var(--rule);
@@ -212,7 +257,7 @@ function render() {
   $("prog").textContent = `${i + 1} of ${ITEMS.length} · ${done} labeled`;
   $("fill").style.width = (100 * done / ITEMS.length) + "%";
   const lines = it.lines.map((l, k) => `<span class="ln${k === it.target ? " t" : ""}"><span class="n">${k === it.target ? "▶" : ""}</span>${esc(l) || " "}</span>`).join("");
-  const pats = it.patterns.map(p => `<div><code>${esc(p.id)}</code>: ${esc(p.what)}</div>`).join("");
+  const pats = it.patterns.map(p => `<div>${esc(p.what)} <code class="pid">${esc(p.id)}</code></div>`).join("");
   $("item").innerHTML = `<div class="src">${esc(it.source)}</div><pre>${lines}</pre>
     <div class="pat"><b>Flagged by</b> ${pats || "(pattern not recorded)"}</div>`;
   $("steps").innerHTML = GUIDE.map(g => `<div class="step"><h3>${g.step}. ${esc(g.ask)}</h3>

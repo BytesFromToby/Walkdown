@@ -24,7 +24,8 @@ the recommendation templates).
   - Stage 4's line carries hit counts by sub-group and "benign share not
     measured".
   - Stage 5's line states each leg yes / no; when all three are yes it adds the
-    fixed qualifier `TRIFECTA_ALL`. Bytes at load are listed per path, never
+    fixed qualifier `TRIFECTA_ALL`. The trifecta is described in plain words; the term "lethal
+    trifecta" appears in the docs with its credit, not in the report (2026-10-07). Bytes at load are listed per path, never
     summed across hook configs.
   - A stage whose stamp is not PASS adds "Validation <result>: see 7.".
   - A stage that did not run shows "Not run. See 7.".
@@ -38,6 +39,16 @@ the recommendation templates).
 - `limits(...)` / `limits_doc(...)`: stage 7: failed or unvalidated stages,
   skip findings, stage notes naming a limit, unread and unscanned files, then
   `STANDING_LIMITS`.
+- `glance(...)` -> `(skipped, not needed)` (added 2026-10-07; the owner read "58 things not
+  examined" as a hole): the summary's count. One plain item per check this run skipped that
+  applies to this repository: a stage that did not run, model reads (one item, not one per
+  file), a missing optional tool whose file kind stage 1 saw (`TOOL_NOTES`, `file_kinds`;
+  language detection applies to every run), other skip reasons grouped with a file count,
+  unread and unscanned files. A tool for a file kind the repository does not ship goes to
+  "not needed". Standing notes (`STANDING_NOTE`) and `STANDING_LIMITS` are not counted.
+  `limits` is unchanged and still lists every line.
+- Section 7 of `summary(...)` is `glance_line`: the skipped items by name, "Not needed here",
+  any stage whose validation is not PASS, and the length of the full list.
 - `log(...)`: LOG.md per RUN-LAYOUT: one row per stage with start, finish,
   output, finding count, and validation stamp; 06 as not built.
 - `code(s)`: an inline code span that survives backticks inside `s`.
@@ -126,3 +137,5 @@ model reads, <backend> labels X as an instruction to do the matched action and Y
 else (... by label)", pointing to the measured accuracy; otherwise "benign share not measured
 (stage 6 labels did not run)". Section 4's line count is split by audience (read by a model,
 in scripts, human-facing, test data; review A5).
+5. `glance` counts a missing tool only when the repository has that file kind, never counts a
+   standing note, and folds model-read skips into one item (`tests/test_summary_html.py`).

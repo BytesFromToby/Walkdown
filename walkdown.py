@@ -154,9 +154,10 @@ def brief(run_dir: Path) -> str:
     for k, name in R.LEG_NAMES.items():
         L.append(f"  [{'x' if legs.get(k) else ' '}] {name}")
     L.append(f"  Install grants: {', '.join(grants) if grants else 'none'}.")
-    L += ["", f"Look at these first: {len(items)} place{'s' if len(items) != 1 else ''} "
+    L += ["", f"Things to check: {len(items)} place{'s' if len(items) != 1 else ''} "
               f"under {len(by_title)} heading{'s' if len(by_title) != 1 else ''}."]
-    L += [f"  stage {s}: {t} ({n})" for (s, t), n in sorted(by_title.items())] or ["  none"]
+    L += [f"  {summary_html.PLAIN_STAGE[R.ORDER[s - 1]]}: {t} ({n})"
+          for (s, t), n in sorted(by_title.items())] or ["  none"]
     if model:
         L += ["", f"Model reads (experimental, stage 6): {len(model)} place"
                   f"{'s' if len(model) != 1 else ''}. A model's reading can be wrong."]

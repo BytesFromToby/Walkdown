@@ -29,6 +29,7 @@ FAMILY = [  # "Matches ..." states what the pattern found, never what the author
     ("E.memory", "Names a memory or local-settings file"),
     ("E.persist", "Writes to a shell profile or git hooks"),
     ("G.", "Matches the wording of telling a person to run something risky"),
+    ("creds.", "Matches the wording of gathering secrets or credentials"),
 ]
 MAX_FIRST = 12
 
@@ -92,7 +93,7 @@ def first_items(r) -> list[dict]:
     for x in R.fnd(r, "04-phrases", "rep.sentence"):
         if x.get("patterns"):
             out.append(_item(4, "The same flagged sentence in several files", R.loc(x), x["sentence"],
-                             f"In {x['files']} files ({', '.join(x['patterns'])}). Repetition adds weight."))
+                             f"In {x['files']} files. {_family(x['patterns'])}."))
     for x in R.fnd(r, "04-phrases", "rubric.action"):
         if x.get("confirm_redefined"):
             out.append(_item(4, "An action whose confirmation step is a redefinition", R.loc(x), x["quote"].strip()))
@@ -102,6 +103,8 @@ def first_items(r) -> list[dict]:
     for p in R.pairs(r, "testdata+loaded"):
         out.append(_item(5, "Test data that the model is pointed at", p["file"],
                          note=f"Referenced directly from {p.get('from')}, which the model reads."))
+    for p in R.pairs(r, "image+loaded"):
+        out.append(_item(5, "An image the model is pointed at", p["file"], note=R.image_note(p)))
     for p in R.pairs(r, "hook+phrase"):
         out.append(_item(5, "An instruction the model sees before you type anything", R.loc(p),
                          p["quote"].strip(), "A context-injecting hook runs this script."))
@@ -197,10 +200,11 @@ def plain_status(r, stamps, stage) -> str:
         legs = {x["leg"]: x["present"] for x in f("cap.leg")}
         have = [R.LEG_NAMES[k].lower() for k in R.LEG_NAMES if legs.get(k)]
         if len(have) == 3:
-            return ("It reads your data, takes outside input, and sends data out: all three legs of the "
-                    "lethal trifecta. That raises risk. It is not an issue on its own.")
-        return ("Of the three trifecta legs it " + (", ".join(have) if have else "shows none") + "."
-                if have else "It shows none of the three trifecta legs.")
+            return R.TRIFECTA_ALL
+        if not have:
+            return "None of the three: it does not read your data, take outside input, or send data out."
+        return (f"It {' and '.join(have)}: {len(have)} of the 3 that carry risk only when a tool "
+                "has all three at once.")
     if stage == "06-soft":
         s = R._soft(r)
         if not s["backends"]:
@@ -235,11 +239,7 @@ def _trifecta(legs, marked=()) -> str:
                     f'<div><div class="leg-name">{esc(name)}</div>'
                     f'<div class="leg-def">{esc(R.LEG_DEFS[k])}</div>{mk}</div></li>')
     n_on = sum(1 for k in R.LEG_NAMES if legs.get(k))
-    if n_on == 3:
-        foot = "All three legs of the lethal trifecta. That raises risk. It is not an issue on its own."
-    else:
-        foot = (f"{n_on} of the three legs of the lethal trifecta. This maps capability and "
-                "reaches no verdict; the risk comes from all three together.")
+    foot = R.TRIFECTA_ALL if n_on == 3 else R.TRIFECTA_SOME.format(n=n_on)
     return (f'<section class="trifecta" aria-label="What it can do"><h2>What it can do</h2>'
             f'<ul class="legs">{"".join(rows)}</ul><p class="leg-foot">{esc(foot)}</p></section>')
 
@@ -258,7 +258,9 @@ def _cards(items, empty: str) -> list[str]:
               if it.get("note") else "")
         places = len(it["wheres"])
         count = f' <span class="count">{places} places</span>' if places > 1 else ""
-        out.append(f'<li class="item"><div class="item-h"><span class="stage-tag">Stage {it["stage"]}</span>'
+        num = it["stage"]
+        out.append(f'<li class="item"><div class="item-h"><a class="stage-tag" href="#stage-{num}">'
+                   f'{esc(PLAIN_STAGE[R.ORDER[num - 1]])}</a>'
                    f'<h3>{esc(it["title"])}{count}</h3></div>'
                    f'<code class="where">{esc(_wheres(it["wheres"]))}</code>{q}{nt}</li>')
     more = len(items) - MAX_FIRST
@@ -287,25 +289,31 @@ def render_page(meta, r, stamps, notes, runs_ok) -> str:
     items = [it for it in every if it["stage"] != 6]
     model_items = [it for it in every if it["stage"] == 6]
     lim = R.limits(r, notes, stamps, runs_ok)
+    skipped, idle = R.glance(r, notes, stamps, runs_ok)
     recs = R.recommendations(r)
     pin = (R.fnd(r, "01-inventory", "inv.pin") or [{}])[0]
     legs = {x["leg"]: x["present"] for x in R.fnd(r, "05-capability", "cap.leg")}
     total, unread = pin.get("files", 0), len(R.fnd(r, "02-reader", "read.unread"))
     tiles = [_tile("files examined", f"{total:,}", f"{total - unread:,} read in full"),
-             _tile("places to look at first", sum(len(it["wheres"]) for it in items),
+             _tile("places to check", sum(len(it["wheres"]) for it in items),
                    f"under {len(items)} heading{'s' if len(items) != 1 else ''}"
                    + (f"; {sum(len(it['wheres']) for it in model_items)} model reads below"
                       if model_items else "")),
-             _tile("things not examined", len(lim))]
+             _tile("checks skipped", len(skipped), "that apply to this repository")]
     trifecta = _trifecta(legs, R.all_marked_legs(r))
-    first = _cards(items, "Nothing on the attention list. See each stage below.")
+    first = _cards(items, "Nothing to check: no location met the rules. See each stage below.")
     models = _models_section(r, model_items)
     stages = []
     for i, stage in enumerate(R.ORDER, 1):
         if stage == "07-limits":
-            plain = f"{R.n(len(lim), 'thing')} this run could not look at. A clean result says nothing about these."
+            plain = (f"This run skipped {R.n(len(skipped), 'check')} that apply to this repository"
+                     + (": " + "; ".join(skipped) if skipped else "") + ". A clean result says nothing "
+                     "about these.")
+            if idle:
+                plain += " Not needed here: " + "; ".join(idle) + "."
             detail = "".join(f"<li>{esc(x)}</li>" for x in lim)
-            detail = f"<ul>{detail}</ul>"
+            detail = (f"<p>Every line, including the limits of the method that apply to every run "
+                      f"({len(lim)} lines):</p><ul>{detail}</ul>")
         else:
             plain = plain_status(r, stamps, stage)
             tech = R.status(r, stamps, stage).replace("\n" + " " * R.COL, " ")
@@ -316,7 +324,7 @@ def render_page(meta, r, stamps, notes, runs_ok) -> str:
         st = stamps.get(stage)
         if st is not None and st.result != "PASS":
             warn = f'<span class="pill">validation {esc(st.result.lower())}</span>'
-        stages.append(f'<li class="stage"><span class="num">{i}</span><div class="stage-b">'
+        stages.append(f'<li class="stage" id="stage-{i}"><span class="num">{i}</span><div class="stage-b">'
                       f'<h3>{esc(PLAIN_STAGE[stage])} {warn}</h3><p class="plain">{esc(plain)}</p>'
                       f'<details><summary>Technical detail</summary>{detail}</details></div></li>')
     recs_html = ("".join(f"<li>{esc(x)}</li>" for x in recs) if recs
@@ -337,7 +345,7 @@ PAGE = """<!doctype html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
 <style>
-/* Layout: an inspection record. Header card, a strip of four counts, "look at these first" as the
+/* Layout: an inspection record. Header card, a strip of three counts, "things to check" as the
    main column, then the seven stages as a numbered checklist (the order is the method's order). */
 :root {{
   --paper: #f5f7f8; --sheet: #ffffff; --ink: #17222e; --muted: #5a6875; --rule: #d8dee4;
@@ -374,7 +382,8 @@ ol, ul {{ margin: 0; padding: 0; list-style: none; }}
 .item-h {{ display: flex; gap: .7rem; align-items: baseline; flex-wrap: wrap; }}
 .item h3 {{ margin: 0; font: 600 1.05rem/1.3 var(--body); }}
 .count {{ font: 400 .85rem var(--body); color: var(--muted); }}
-.stage-tag {{ font: 600 .72rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--flag); background: var(--flag-bg); padding: .3rem .5rem; border-radius: 3px; white-space: nowrap; }}
+.stage-tag {{ font: 600 .72rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--flag); background: var(--flag-bg); padding: .3rem .5rem; border-radius: 3px; white-space: nowrap; text-decoration: none; }}
+a.stage-tag:hover, a.stage-tag:focus-visible {{ text-decoration: underline; }}
 .where {{ display: block; margin-top: .4rem; font: .8rem/1.4 var(--mono); color: var(--accent); overflow-wrap: anywhere; }}
 .quote {{ margin: .6rem 0 0; padding: .6rem .8rem; background: var(--quote-bg); border-radius: 3px; font: .82rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 9rem; overflow: auto; }}
 .note {{ margin: .5rem 0 0; color: var(--muted); max-width: 70ch; }}
@@ -420,8 +429,8 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
   <section class="tiles" aria-label="At a glance">{tiles}</section>
   {trifecta}
   <section>
-    <h2>Look at these first</h2>
-    <p class="lede">Locations picked by fixed rules, in stage order. Each is a place to read; none is a finding against the author.</p>
+    <h2>Things to check</h2>
+    <p class="lede">Locations picked by fixed rules, in the order of the sections below. Each is a place to read; being listed does not mean something is wrong, and none is a finding against the author.</p>
     <ol class="first">{first}</ol>
   </section>
   {models}

@@ -849,6 +849,58 @@
      }
     }
    ]
+  },
+  {
+   "root": "image-loaded",
+   "fixtures": {
+    "assets/banner.png": "f3c73c1af9f8d19ce31d06fa46f1f5522cb712cd4356dacf6893c98dd7dfe2f8",
+    "assets/steps.png": "c0d3d68072214626a9c84b408bd5fdcedc80c1905ed681677a4e0d5dfae8fb1e",
+    "assets/unused.png": "df21f503359e9a8a311a43fff948d0ae20a6b181e58e9788f0a13e334f2ab233",
+    "README.md": "eb463c87b2816ef8b277e5ad233ebaf1e2e06b24426a79dd3ae2f57511f91fe1",
+    "SKILL.md": "6efbfe60d8563a7dc0e61a481139b45c9d1686516a5f176501d313c099cdcdde"
+   },
+   "expect": [
+    {
+     "id": "cap-img-skill-pair",
+     "polarity": "gate",
+     "check": "cap.pair",
+     "file": "assets/steps.png",
+     "match": {
+      "pair": {
+       "eq": "image+loaded"
+      },
+      "from": {
+       "eq": "SKILL.md"
+      }
+     },
+     "count": 1,
+     "note": "The skill tells the model to open the image; a model with vision reads its text, so it is pointed-at input (2026-10-07)."
+    },
+    {
+     "id": "cap-img-readme-no-pair",
+     "polarity": "negative",
+     "check": "cap.pair",
+     "file": "assets/banner.png",
+     "match": {
+      "pair": {
+       "eq": "image+loaded"
+      }
+     },
+     "note": "Only the README shows the banner; that is for people, not the model."
+    },
+    {
+     "id": "cap-img-unused-no-pair",
+     "polarity": "negative",
+     "check": "cap.pair",
+     "file": "assets/unused.png",
+     "match": {
+      "pair": {
+       "eq": "image+loaded"
+      }
+     },
+     "note": "Nothing references it."
+    }
+   ]
   }
  ]
 }

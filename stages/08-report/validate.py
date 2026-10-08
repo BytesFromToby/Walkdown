@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import importlib.util
 import json
 import os
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -52,10 +54,23 @@ FINGERPRINT_DIRS = ("stages", "grader", "Fixtures")
 SKIP_PARTS = {"__pycache__", ".pytest_cache"}
 
 
+def optional_tools() -> str:
+    """Which optional tools a grader run would find. Installing one changes what a stage can
+    measure (2026-10-08: Tesseract installed, the cached stage 2 INCOMPLETE was still reused)."""
+    have = {
+        "tesseract": bool(shutil.which("tesseract")) and importlib.util.find_spec("pytesseract") is not None,
+        "gitleaks": bool(shutil.which("gitleaks")),
+        "pdf2image": importlib.util.find_spec("pdf2image") is not None,
+        "playwright": importlib.util.find_spec("playwright") is not None,
+    }
+    return ",".join(f"{k}={int(v)}" for k, v in sorted(have.items()))
+
+
 def fingerprint(root, env: dict | None = None) -> str:
     """Everything a stamp depends on: the code under stages/ and grader/, the fixtures and
-    answers, the Python version, and the stage 6 choices (2026-10-03 review C16). Any change
-    to any of them gives a new fingerprint, so a cached stamp is never stale."""
+    answers, the Python version, the optional tools present, and the stage 6 choices
+    (2026-10-03 review C16). Any change to any of them gives a new fingerprint, so a cached
+    stamp is never stale."""
     root = Path(root)
     h = hashlib.sha256()
     for d in FINGERPRINT_DIRS:
@@ -64,6 +79,7 @@ def fingerprint(root, env: dict | None = None) -> str:
                 h.update(p.relative_to(root).as_posix().encode("utf-8") + b"\0")
                 h.update(p.read_bytes() + b"\0")
     h.update(f"python {sys.version_info.major}.{sys.version_info.minor}".encode())
+    h.update(f"tools {optional_tools()}".encode())
     for k in sorted(env or {}):
         if k.startswith("WALKDOWN_SOFT_"):
             h.update(f"{k}={env[k]}".encode())

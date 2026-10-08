@@ -22,6 +22,7 @@ from legs import grants, legs  # noqa: E402
 from pairs import pairs  # noqa: E402
 from posture import postures  # noqa: E402
 from rules import EVIDENCE_CAP, LIMITS  # noqa: E402
+from images import image_pairs  # noqa: E402
 from testdata import loaded_pairs, set_aside  # noqa: E402
 
 STAGE = "05-capability"
@@ -41,11 +42,12 @@ def _inside(child: Path, parent: Path) -> bool:
 
 def derive(reports: dict, graph: dict | None) -> list[dict]:
     loaded = loaded_pairs(reports)
+    shown = image_pairs(reports, graph)  # before the set-aside: an image in tests/ still counts
     reports, aside = set_aside(reports, {p["file"] for p in loaded})
     lg = legs(reports)
     inj = injections(reports, graph)
     findings = lg + grants(reports, lg) + inj + load_bytes(inj) + postures(reports) \
-        + pairs(reports, graph) + loaded + aside
+        + pairs(reports, graph) + loaded + shown + aside
     for f in findings:
         f["evidence_total"] = len(f.get("evidence", []))
     return findings

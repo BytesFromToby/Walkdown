@@ -178,6 +178,14 @@ files such as test_*.py; stage 4 `audience.is_test_data`) are set aside and coun
 `cap.testdata` finding. A test-data file that a model-read file references directly is not
 set aside; it is reported as a `testdata+loaded` pair. `specs/testdata.SPEC.md`.
 
+## Images the model is pointed at (added 2026-10-07)
+
+A model with vision reads text in an image. An image reaches the model only when a file it
+reads points at it, so stage 5 reports one `image+loaded` pair per image a model- or
+subagent-read file references or loads (not a README's image, not a manifest's icon, not a
+folder mention), with what stage 2 could read of its text. OCR is extra detail on top of this
+reference. `specs/images.SPEC.md`.
+
 ## Checks
 
 | Check | One finding per | Fields |

@@ -71,8 +71,13 @@ LEG_DEFS = {
     "untrusted-content": "Brings in text the user didn't write: the web, other people's issues or email, MCP tools, third-party code.",
     "external-comms": "Moves data off the machine or into shared places: web requests, webhooks, pushes, posts.",
 }
-TRIFECTA_ALL = ("All three legs of the lethal trifecta. That raises risk. "
-                "It is not an issue on its own.")
+# Plain words, no named term on the page (owner 2026-10-07); the docs credit Simon Willison's
+# "lethal trifecta".
+TRIFECTA_ALL = ("All three at once: it reads your data, takes outside input, and can send data "
+                "out. That combination is where the risk comes from. It is not an issue on its own.")
+TRIFECTA_SOME = ("{n} of 3. The risk comes from a tool that has all three at once: it reads your "
+                 "data, takes outside input, and can send data out. This maps capability and "
+                 "reaches no verdict.")
 NOT_WHAT = ('What this is not: static examination only. "Clean" means these stages found '
             "nothing; it does not mean the artifact is safe. This report offers possible issues "
             "with evidence and reaches no verdict. What to do with it is yours to decide.")
@@ -365,6 +370,7 @@ def points(reports, stage) -> list[str]:
         return lines
     if stage == "05-capability":
         items = [("testdata", p) for p in pairs(r, "testdata+loaded")]
+        items += [("image", p) for p in pairs(r, "image+loaded")]
         items += [("hook", p) for p in pairs(r, "hook+phrase")]
         items += [("inj", i) for i in fnd(r, stage, "cap.injection") if i.get("mechanism") == "hook"]
         return _points(items, _point5)
@@ -632,8 +638,23 @@ def _f6(r):
     return L + [""]
 
 
+IMAGE_READ = {  # what stage 2 got of a pointed-at image's text, in plain words
+    "unread": "this run could not read its text (no OCR), so open it and look",
+    "ocr-text": "OCR found text in it (section 2), so read what the model would",
+    "ocr-empty": "OCR found no text, but small or low-contrast text a model can read may still be there",
+    "svg": "its text was read from the SVG source (section 2)",
+}
+
+
+def image_note(x) -> str:
+    return (f"Referenced from {', '.join(x.get('froms') or [x.get('from')])}, which the model reads. "
+            f"A model with vision reads text in an image; {IMAGE_READ.get(x.get('read'), x.get('read'))}.")
+
+
 def _point5(item) -> str:
     kind, x = item
+    if kind == "image":
+        return f"{x['file']}: an image the model is pointed at. {image_note(x)}"
     if kind == "testdata":
         return (f"{x['file']}: sits in test data, but {x.get('from')} (read by the model) "
                 "references it directly, so it is read like any other file")
@@ -747,6 +768,85 @@ def limits(reports, notes, stamps, runs_ok) -> list[str]:
     return out + STANDING_LIMITS
 
 
+# The summary's count of what was not examined (owner 2026-10-07: 58 lines read as a hole).
+# Only checks this run skipped that apply to this repository, one item each. Standing limits of
+# the method, one-line-per-file repeats, and tools for file types the repository does not ship
+# are left to the full list (section 7, data/07-limits.md), which keeps every line.
+IMAGE_EXTS = {"png", "jpg", "jpeg", "gif", "webp", "bmp", "tif", "tiff", "ico"}
+HTML_EXTS = {"html", "htm", "xhtml"}
+TOOL_NOTES = [  # (stage 2 note start, what it covers, file kinds it serves; None = all text)
+    ("tesseract", "Text inside images (OCR)", ("image",)),
+    ("poppler", "PDF pages drawn as images", ("pdf",)),
+    ("playwright", "HTML as a browser draws it", ("html",)),
+    ("lingua", "Language detection in Latin-script text", None),
+]
+BINARY_NOTE = "limit: files that do not decode as text"
+STANDING_NOTE = re.compile(r"^(v1 limit|stage 5 limit|graph incomplete by construction"
+                           r"|not scanned: .*\(not instruction text\))")
+
+
+def file_kinds(reports) -> set[str]:
+    """The kinds of file stage 1 saw that need an optional tool: image, pdf, html, docx."""
+    kinds = set()
+    for f in fnd(reports, "01-inventory", "inv.file"):
+        ext, typ = (f.get("ext") or "").lower(), f.get("type") or ""
+        if ext in IMAGE_EXTS or typ.startswith("image/"):
+            kinds.add("image")
+        if ext == "pdf" or typ == "application/pdf":
+            kinds.add("pdf")
+        if ext in HTML_EXTS or typ == "text/html":
+            kinds.add("html")
+        if ext == "docx":
+            kinds.add("docx")
+    return kinds
+
+
+def glance(reports, notes, stamps, runs_ok) -> tuple[list[str], list[str]]:
+    """(skipped, not needed): plain items for the summary's count. `skipped` is what this run
+    could not look at in this repository; `not needed` names tools the repository has no use for."""
+    skipped, idle = [], []
+    for stage in ORDER[:6]:
+        if stage not in runs_ok:
+            skipped.append(f"{HEADINGS[stage]}: did not run to completion")
+    kinds = file_kinds(reports)
+    if "06-soft" in reports:
+        soft = [f for f in fnd(reports, "06-soft") if "skipped" in f
+                and f["check"] in ("soft.label", "soft.read")]
+        if not (reports.get("06-soft") or {}).get("backends"):
+            skipped.append("Model reads (optional): not run")
+        elif soft:
+            skipped.append(f"Model reads (optional): {n(len(soft), 'question')} skipped")
+    for line in notes.get("02-reader", []):
+        for start, what, serves in TOOL_NOTES:
+            if line.startswith(start):
+                if serves is None or kinds & set(serves):
+                    skipped.append(f"{what}: {start} not installed")
+                else:
+                    idle.append(f"{what}: none in this repository")
+    for stage in ORDER[:6]:
+        for line in notes.get(stage, []):
+            if stage == "02-reader" and any(line.startswith(t[0]) for t in TOOL_NOTES):
+                continue
+            if stage == "06-soft" or not LIMIT_NOTE.search(line) or STANDING_NOTE.search(line):
+                continue
+            if line.startswith(BINARY_NOTE):
+                if kinds & {"image", "pdf", "docx"}:
+                    skipped.append("Phrase patterns in PDF, DOCX, and image files")
+                continue
+            skipped.append(f"{HEADINGS[stage]}: {line}")
+    other = collections.Counter(
+        f["skipped"] for stage in ORDER[:5] for f in fnd(reports, stage)
+        if "skipped" in f and "tesseract" not in str(f["skipped"]))
+    skipped += [f"{n(c, 'file')}: {why}" for why, c in other.items()]
+    unread = fnd(reports, "02-reader", "read.unread")
+    if unread:
+        skipped.append(f"{n(len(unread), 'file')} could not be read")
+    unscanned = fnd(reports, "03-graph", "graph.unscanned")
+    if unscanned:
+        skipped.append(f"{n(len(unscanned), 'file')} not scanned for references")
+    return skipped, idle
+
+
 # ---------------------------------------------------------------- documents
 
 def summary(meta, reports, stamps, notes, runs_ok) -> str:
@@ -756,8 +856,7 @@ def summary(meta, reports, stamps, notes, runs_ok) -> str:
     for i, stage in enumerate(ORDER, 1):
         head = f"{i} {HEADINGS[stage]}".ljust(COL - 1) + " "
         if stage == "07-limits":
-            lim = limits(reports, notes, stamps, runs_ok)
-            L.append(f"{head}{n(len(lim), 'item')}, including: " + _limit_gist(reports, stamps))
+            L.append(f"{head}{glance_line(reports, notes, stamps, runs_ok)}")
             continue
         L.append(f"{head}{status(reports, stamps, stage)}")
         if stage == "05-capability" and stage in reports:
@@ -772,18 +871,18 @@ def summary(meta, reports, stamps, notes, runs_ok) -> str:
     return "\n".join(L)
 
 
-def _limit_gist(reports, stamps) -> str:
-    bits = []
-    unread = fnd(reports, "02-reader", "read.unread")
-    if unread:
-        bits.append(n(len(unread), "unread file"))
+def glance_line(reports, notes, stamps, runs_ok) -> str:
+    """Section 7 in one line: the skipped checks that apply here, by name; the rest by count."""
+    skipped, idle = glance(reports, notes, stamps, runs_ok)
+    out = (f"{n(len(skipped), 'check')} skipped that apply to this repository"
+           + (": " + "; ".join(skipped) if skipped else "") + ".")
+    if idle:
+        out += " Not needed here: " + "; ".join(idle) + "."
     bad = [s for s, st in stamps.items() if st.result != "PASS"]
     if bad:
-        bits.append("validation not PASS for " + ", ".join(bad))
-    if not (reports.get("06-soft") or {}).get("backends"):
-        bits.append("stage 6 ran packet only (no model)")
-    bits += ["version drift compared only against an earlier run"]
-    return "; ".join(bits) + "."
+        out += f" Validation not PASS for {', '.join(bad)}."
+    total = len(limits(reports, notes, stamps, runs_ok))
+    return out + f" Full list ({total} lines, with the standing limits of the method) in the full report."
 
 
 def full(meta, reports, stamps, notes, runs_ok, capability_full=None) -> str:
@@ -1004,6 +1103,9 @@ def _f5(r, capability_full):
     L += _list("Pairs: Test data a model-read file references directly",
                pairs(r, "testdata+loaded"),
                lambda p: f"{p['file']}: referenced from {p.get('from')}")
+    L += _list("Pairs: Image a model-read file points at", pairs(r, "image+loaded"),
+               lambda p: f"{p['file']}: referenced from {', '.join(p.get('froms') or [p.get('from')])}; "
+                         f"text: {p.get('read')}{' (' + p['reason'] + ')' if p.get('reason') else ''}")
     for kind, title in (("orphan+phrase", "Orphan with a phrase hit"),
                         ("hidden+phrase", "Hidden text with a phrase hit"),
                         ("dynamic+phrase", "Load-only file with a phrase hit"),

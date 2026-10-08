@@ -42,9 +42,11 @@ or `INCOMPLETE (gate 14/15, negative 12/12; skipped: rd-img-ocr)`.
 ## Cached stamps (added 2026-10-03, review C16)
 
 - `fingerprint(root, env)`: sha256 over every file under `stages/`, `grader/`, and
-  `Fixtures/` (path and bytes, `__pycache__` skipped), the Python major.minor, and the
-  `WALKDOWN_SOFT_*` variables in `env`. Any change to code, fixtures, answers, or stage 6
-  choices gives a new fingerprint.
+  `Fixtures/` (path and bytes, `__pycache__` skipped), the Python major.minor, which optional
+  tools are present (`optional_tools()`: Tesseract with pytesseract, gitleaks, pdf2image,
+  Playwright; added 2026-10-08), and the `WALKDOWN_SOFT_*` variables in `env`. Any change to
+  code, fixtures, answers, installed optional tools, or stage 6 choices gives a new
+  fingerprint, so installing Tesseract never reuses a stage 2 INCOMPLETE measured without it.
 - `stamps(..., cache=True)` reuses `.cache/stamps.json` entries keyed `<stage>|<fingerprint>`
   and runs the grader only for misses, saving each new PASS, INCOMPLETE, or FAIL with the date.
   A reused stamp has `cached` set to that date, and its text says "measured <date>, same code

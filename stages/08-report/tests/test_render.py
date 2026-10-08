@@ -65,8 +65,9 @@ def test_seven_stage_lines_in_order():
 
 
 def test_trifecta_qualifier_only_for_three():
-    assert "All three legs of the lethal trifecta" in doc(reports(legs=(True, True, True)))
-    assert "All three legs" not in doc(reports(legs=(True, False, True)))
+    assert "All three at once" in doc(reports(legs=(True, True, True)))
+    assert "All three at once" not in doc(reports(legs=(True, False, True)))
+    assert "lethal" not in doc(reports(legs=(True, True, True)))
 
 
 def test_incomplete_stamp_flagged_and_listed():
@@ -440,3 +441,18 @@ def test_benign_share_from_stage6_labels():
                           "action and 2 as something else (1 a description, 1 the words in another sense)")
     four = summary(META, r, PASS, {}, set(r))
     assert "jev labels 1 as an instruction" in four[four.index("\n4 "):four.index("\n5 ")]
+
+
+def test_image_pair_is_a_stage5_point_and_listed_in_full():
+    import render
+    r = reports()
+    r["05-capability"]["findings"].append(
+        {"check": "cap.pair", "file": "assets/steps.png", "line": None, "pair": "image+loaded",
+         "from": "SKILL.md", "froms": ["SKILL.md"], "read": "unread",
+         "reason": "OCR not run", "evidence": []})
+    s = summary(META, r, PASS, {}, set(r))
+    assert "assets/steps.png: an image the model is pointed at. Referenced from SKILL.md" in s
+    assert "this run could not read its text (no OCR)" in s
+    f = render.full(META, r, PASS, {}, set(r))
+    assert "### Pairs: Image a model-read file points at (1)" in f
+    assert "assets/steps.png: referenced from SKILL.md; text: unread (OCR not run)" in f

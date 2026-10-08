@@ -10,17 +10,24 @@ from the same fixed rules in `render.py`; nothing new is detected or judged.
 document (`summary.html`):
 
 - Header: artifact name, source, pin, retrieval date, run; "Static examination only".
-- Four counts: files examined (and read in full), things to look at first, trifecta
-  legs ("capability, not a verdict"), things not examined.
-- "Look at these first": the summary's points of attention as plain items in stage
-  order, each with a stage tag, a plain headline, the locations, and the quoted
-  line. Items with the same stage and headline are one card listing every place
+- Three counts: files examined (and read in full), places to check, and checks
+  skipped that apply to this repository (`render.glance`, 2026-10-07).
+- "Things to check" (renamed from "Look at these first", 2026-10-07): the summary's
+  points of attention as plain items in stage order, each with a tag naming its section
+  in plain words (a link to that row of "Stage by stage", never "Stage N"), a plain
+  headline, the locations, and the quoted line. The lede says being listed does not mean
+  something is wrong; with nothing listed it says "Nothing to check". Items with the same stage and headline are one card listing every place
   (`grouped`). At most `MAX_FIRST` cards, then a count.
 - Stage 4 headlines say what matched ("Matches the wording of ...", `FAMILY`),
   never what the author meant.
 - "Stage by stage": one plain sentence per stage (`plain_status`), a pill when a
   stage's validation is not PASS, and the technical status line behind a
-  disclosure.
+  disclosure. Row 7 names the skipped checks and the tools not needed; its disclosure
+  keeps every line of `render.limits`.
+- No pattern IDs and no weighting words in a card: the repeated-sentence card names
+  the pattern family in plain words (`FAMILY`).
+- The trifecta foot is in plain words (`render.TRIFECTA_ALL`, `TRIFECTA_SOME`); the
+  named term stays in the docs.
 - Recommendations, then "What this is not".
 - Theme tokens for light and dark (`prefers-color-scheme` and `data-theme`), phone
   width, every artifact string HTML-escaped.
@@ -57,6 +64,10 @@ pattern matched, and a model may read this as an instruction", with the drift st
 4. Stage 4 headlines start "Matches the wording".
 5. A stage whose stamp is not PASS shows a pill.
 6. The trifecta qualifier is present and no verdict words appear.
+7. Cards name their section in plain words and link to its row.
+8. The repeated-sentence card carries no pattern ID or "adds weight".
+9. The skipped tile counts only checks that apply; a tool for a missing file kind is
+   "not needed"; a standing limit is not counted.
 
 ## Model reads in their own block (added 2026-10-03, review C14)
 
