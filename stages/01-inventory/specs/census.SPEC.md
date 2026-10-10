@@ -25,7 +25,7 @@ Per-file facts and structural flags. Stage 1, checks `inv.file` (all fields but
 | `exec` | the exec bit as given (False when unknown) |
 | `text_value` | the decoded text (BOM removed), for other stage 1 parsers |
 
-**Decoding:** a BOM picks the codec. Otherwise bytes containing NUL are binary;
+**Decoding:** a BOM picks the codec. Otherwise bytes with NUL are binary when NUL is more than 1% of the bytes or the rest is not strict UTF-8; a few NULs in valid UTF-8 are text (2026-10-09: a literal `\0` sentinel in source made a file binary, so one NUL could hide any file);
 bytes that decode as UTF-8 are `utf-8`; else charset-normalizer's best guess, if
 installed and it finds one; else binary.
 
@@ -60,7 +60,7 @@ finding with the target as `detail`.
 ## Done when (each backed by a test in `tests/test_census.py`)
 
 1. Extension rule: `a.MD` gives `md`, `.gitignore` gives `gitignore`, `LICENSE` gives `""`, `x.tar.gz` gives `gz`.
-2. UTF-8, UTF-8 with BOM, and UTF-16 with BOM decode, report encoding and BOM; NUL bytes without BOM are binary.
+2. UTF-8, UTF-8 with BOM, and UTF-16 with BOM decode, report encoding and BOM; NUL bytes without BOM are binary, except a few NULs in valid UTF-8, which are text.
 3. Line count follows the rule, including a missing final newline and an empty file.
 4. PNG bytes in a `.md` give `ext-magic-mismatch`; the same bytes in a `.png` do not.
 5. A markdown file opening with a code fence gives no `ext-magic-mismatch` and type `text/plain`.

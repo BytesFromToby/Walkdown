@@ -119,6 +119,8 @@ and section 7 states that test data is recognized by name.
    or "malicious".
 10. Hidden-text pairs on human-audience lines (stage 4 `audience`) are counted
    under stage 2, not listed; model-audience ones are listed.
+   A pair whose only stage 2 evidence is a folded line reads "disguised with look-alike or
+   invisible characters", not "hidden when rendered" (`hidden_how`, 2026-10-09).
 11. `dynamic+phrase` pairs are listed under stage 3 beside `orphan+phrase`.
 12. Allow-list edits (`permissions.allow`) in one file give one recommendation
    with the settings template; a skip-permissions flag gives the other template.
@@ -139,3 +141,13 @@ else (... by label)", pointing to the measured accuracy; otherwise "benign share
 in scripts, human-facing, test data; review A5).
 5. `glance` counts a missing tool only when the repository has that file kind, never counts a
    standing note, and folds model-read skips into one item (`tests/test_summary_html.py`).
+
+Secret hits marked `likely_not_secret` by stage 4 (2026-10-09) are counted apart in section 4's
+secrets line ("plus N that look like hashes, variable names, plain words, or local test
+passwords"), are never summary points, and are listed with the reason in the full report.
+
+`glance` (2026-10-09): per-file skip notes ("not scanned: <file>: <why>") give one item per
+stage, "<N> files not scanned (<count> <why>, ...)", with files in test data counted after
+("plus N in test data"); when every such file is test data, the item moves to "not needed here"
+("<N> files not scanned, all in test data"). The full list keeps one line per file
+(`tests/test_render.py::test_per_file_skips_are_one_item_per_stage`).

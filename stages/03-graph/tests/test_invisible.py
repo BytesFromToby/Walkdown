@@ -26,3 +26,10 @@ def test_decode():
     assert decode(b"\xef\xbb\xbfhi\n") == "hi\n"
     assert decode("hi\n".encode("utf-16")) == "hi\n"
     assert decode(b"\x00\x01\x02binary") is None
+
+
+def test_nul_is_text_and_stripped():
+    from invisible import decode, strip_line
+    assert decode(b"see a\x00b.md" + b" " * 300) is not None
+    assert decode(b"\x00" * 50 + b"abc") is None
+    assert strip_line("ref\x00s.md") == "refs.md"

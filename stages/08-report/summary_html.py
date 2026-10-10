@@ -61,7 +61,8 @@ def first_items(r) -> list[dict]:
                          "A hook runs whenever the harness fires its event, without anyone asking."))
     model, _ = R._split_audience(r, R.pairs(r, "hidden+phrase"))
     for p in model:
-        out.append(_item(2, "Hidden when rendered, and reads like an instruction", R.loc(p), p["quote"].strip()))
+        out.append(_item(2, R.hidden_how(p).capitalize() + ", and reads like an instruction",
+                         R.loc(p), p["quote"].strip()))
     both = R.pairs(r, "orphan+phrase") + R.pairs(r, "dynamic+phrase")
     listed, _ = R._split_audience(r, both)
     for p in listed:
@@ -81,7 +82,7 @@ def first_items(r) -> list[dict]:
     for t in R.fnd(r, "04-phrases", "term.safety"):
         out.append(_item(4, f"Redefines the safety word “{t['term']}”", R.loc(t), t.get("quote", "").strip()))
     for x in R.fnd(r, "04-phrases", "secret.found"):
-        if x.get("audience") != "test-data":
+        if x.get("audience") != "test-data" and not x.get("likely_not_secret"):
             out.append(_item(4, "Looks like a committed secret", R.loc(x),
                              note=f"{', '.join(x.get('kinds') or [])}, found by {x.get('engine')}. "
                                   "The value is not shown in this report; open the file to check it."))

@@ -16,7 +16,7 @@ For every stage 4 finding (not skipped, `file` and `line` set):
 |---|---|---|
 | `orphan+phrase` | the file has a `graph.orphan` finding | stage 3 `graph.orphan` (`why` `orphan file`) |
 | `dynamic+phrase` | the file's `graph.depth` has `via` `dynamic` | stage 3 `graph.depth` (`why` `reached only by a dynamic load`) |
-| `hidden+phrase` | a `read.divergence` in the same file with `reading` `A-only` covers the line (from its `line` through `line` + the number of line breaks in its `text`), or a `read.fold` is on the same file and line | each covering stage 2 finding (`why` `hidden text: <carrier>` or `folded line`) |
+| `hidden+phrase` | a `read.divergence` in the same file with `reading` `A-only` covers the line (from its `line` through `line` + the number of line breaks in its `text`), or a `read.fold` is on the same file and line and the hit is `folded: true` (it matches only the folded text; 2026-10-09) | each covering stage 2 finding (`why` `hidden text: <carrier>` or `folded line`) |
 
 The first evidence entry is the phrase hit itself (`stage` `04`, its check,
 file, line, `why` `phrase hit`).
@@ -43,7 +43,8 @@ file, line, `why` `phrase hit`).
 3. A hit on line 7 inside an `A-only` divergence at line 7 gives
    `hidden+phrase`; a divergence at line 5 whose `text` spans three lines covers
    line 7; a `B-only` divergence or a hit on another line gives nothing; a
-   `read.fold` on the hit's line gives `hidden+phrase`.
+   `read.fold` on the hit's line gives `hidden+phrase` only when the hit is `folded: true`
+   (an en dash folds too; a hit that matches the raw line is not hidden by the fold).
 4. A hit that is both orphan and hidden gives two findings, one per kind.
 6. A hit whose patterns are all in `CARRIER_PATTERNS` (`K.md-carrier`: the
    stage 4 pattern that detects the markdown carrier itself) makes no

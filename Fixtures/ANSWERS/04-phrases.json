@@ -967,6 +967,21 @@
           "file": "class17-clone-connect.md",
           "line": 16,
           "note": "\"drive folder\" of a repo is not a Google Drive account."
+        },
+        {
+          "id": "ph-11-nul-gate-6",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-nul-split.md",
+          "line": 6,
+          "note": "A NUL inside a word; the file used to read as binary and was skipped whole (2026-10-09)."
+        },
+        {
+          "id": "ph-11-nul-negative-9",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class11-nul-split.md",
+          "line": 9
         }
       ],
       "deferred": [],
@@ -976,6 +991,7 @@
         "class03-remote-load.md": "92456ac6f7e89f387c0fabd56de42894b67942e6c860c5cd2c993656ec52e135",
         "class05-override.md": "5a1540c69f7ed16195e9ee4868d876bda83c0633cd162bb430b12904a4335785",
         "class07-execution-privilege.md": "3c6c5c5499029967dbba4e8284931a89d6c1c8bf5d52d7bcd5d5188ce20cb10c",
+        "class11-nul-split.md": "d83c80b271907b4f449e0d582a32545f7f5dea8931639712fc21bc140a5ba698",
         "class13-claimed-consent.md": "a700f94420c3d4650029146fc98d230d96d0bc0e69f73a206c9684a0c661a23b",
         "class14-definitional-hijacking.md": "09d9075c6828b07d6d74d65d0e9ee4668b40917628d5f0ffc14d4286686dfe29",
         "class15-script-instruction.sh": "dd67b303e969c4e7a1fe72789b41e4b60d5297cc01d729f48e234e086e76d8ad",

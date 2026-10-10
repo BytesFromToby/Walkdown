@@ -52,9 +52,20 @@ def test_hidden():
     assert kinds(reports(s2=[div("r.md", 7, "x", reading="B-only")], s4=[hit("r.md", 7)])) == []
     assert kinds(reports(s2=[div("other.md", 7, "x")], s4=[hit("r.md", 7)])) == []
     fold = {"check": "read.fold", "file": "r.md", "line": 7, "folded": "x", "removed": ["U+200B"]}
-    out = pairs.pairs(reports(s2=[fold], s4=[hit("r.md", 7)]))
+    folded_hit = dict(hit("r.md", 7), folded=True)
+    out = pairs.pairs(reports(s2=[fold], s4=[folded_hit]))
     assert [p["pair"] for p in out] == ["hidden+phrase"]
     assert out[0]["evidence"][1]["check"] == "read.fold"
+
+
+def test_fold_pairs_only_when_the_hit_needs_it():
+    """An en dash folds too; a hit that matches the raw line is not hidden (2026-10-09)."""
+    fold = {"check": "read.fold", "file": "r.md", "line": 7, "folded": "0-1", "removed": ["U+2013"]}
+    assert kinds(reports(s2=[fold], s4=[dict(hit("r.md", 7), folded=False)])) == []
+    assert kinds(reports(s2=[fold], s4=[hit("r.md", 7)])) == []
+    both = [fold, div("r.md", 7, "x")]
+    out = pairs.pairs(reports(s2=both, s4=[dict(hit("r.md", 7), folded=False)]))
+    assert [e["check"] for e in out[0]["evidence"][1:]] == ["read.divergence"]
 
 
 def test_two_kinds():

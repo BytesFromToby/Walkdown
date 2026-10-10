@@ -289,7 +289,7 @@ attack surface, so it is published.
 The metric names where a reviewer's coverage silently ends. It is not a payload.
 **superpowers:** 0 files over 2000 lines; 4 over 50 KB (docs and release notes);
 14 with a line over 500 characters, longest 2005. *Recounted 2026-09-25 by stage
-1: the earlier figures (7 over 50 KB, 15 long lines, in the 2026-09-04 review) do not
+1: the earlier figures (7 over 50 KB, 15 long lines, in REVIEW-2026-09-04) do not
 reproduce. 7 only appears at a ~48,000-byte threshold, and 15 counts bytes, not
 characters; one file crosses 500 only in bytes. The window is 50,000 bytes and
 the line limit is characters.*

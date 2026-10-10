@@ -317,7 +317,7 @@ Output: `report/summary.md` and `report/full.md`
 
 ## Old pass numbers (before 2026-09-25)
 
-Case 001, Case 002, the 2026-09-04 review, and other history docs cite the old passes.
+Case 001, Case 002, REVIEW-2026-09-04, and other history docs cite the old passes.
 
 | Old | Now |
 |---|---|

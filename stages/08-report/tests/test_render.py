@@ -3,6 +3,7 @@ import re
 
 import pytest
 
+import render as R
 from render import HEADINGS, code, full, limits, log, recommendations, summary
 from validate import Stamp
 
@@ -456,3 +457,37 @@ def test_image_pair_is_a_stage5_point_and_listed_in_full():
     f = render.full(META, r, PASS, {}, set(r))
     assert "### Pairs: Image a model-read file points at (1)" in f
     assert "assets/steps.png: referenced from SKILL.md; text: unread (OCR not run)" in f
+
+
+def test_fold_only_pair_is_not_called_hidden():
+    fold = {"pair": "hidden+phrase", "evidence": [{"stage": "04"}, {"stage": "02", "why": "folded line"}]}
+    hid = {"pair": "hidden+phrase", "evidence": [{"stage": "04"},
+                                                 {"stage": "02", "why": "hidden text: comment"}]}
+    assert R.hidden_how(fold) == "disguised with look-alike or invisible characters"
+    assert R.hidden_how(hid) == "hidden when rendered"
+
+
+def test_likely_not_secret_counted_apart():
+    sec = lambda **k: dict({"check": "secret.found", "file": "a.yml", "line": 3, "kinds": ["Secret Keyword"],  # noqa: E731
+                            "engine": "detect-secrets", "audience": "code"}, **k)
+    r = {"04-phrases": {"findings": [sec(), sec(line=4, likely_not_secret="a variable name, not a value"),
+                                     sec(line=5, audience="test-data")]}}
+    line = R.secrets_line(r)
+    assert line.startswith("Lines that look like committed secrets: 1 (plus 1 that look like hashes")
+    assert "plus 1 in test data" in line
+
+
+def test_per_file_skips_are_one_item_per_stage():
+    """2026-10-09: caveman's summary listed 67 unscanned files one by one."""
+    notes = {"04-phrases": ["not scanned: a.png: not text (image/png)",
+                            "not scanned: b.png: not text (image/png)",
+                            "not scanned: c.gz: not text (application/gzip)",
+                            "not scanned: tests/d.png: not text (image/png)"]}
+    skipped, idle = R.glance({}, notes, {}, set())
+    rows = [x for x in skipped if "not scanned" in x]
+    assert rows == ["What the text asks for: 3 files not scanned (2 not text (image/png), "
+                    "1 not text (application/gzip)), plus 1 in test data"]
+    skipped, idle = R.glance({}, {"04-phrases": ["not scanned: tests/d.png: not text (image/png)"]},
+                             {}, set())
+    assert not [x for x in skipped if "not scanned" in x]
+    assert "What the text asks for: 1 file not scanned, all in test data" in idle

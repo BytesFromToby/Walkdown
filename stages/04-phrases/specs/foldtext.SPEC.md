@@ -49,3 +49,7 @@ result is line `i + 1` of the file.
 5. Plain ASCII, an em-dash, and `café` are unchanged; ASCII `l`, `1`, `0` are never changed.
 6. `decode` reads UTF-8, UTF-8 with BOM (dropped), UTF-16 with BOM; returns None for bytes holding NUL.
 7. `split_lines("a\r\nb\n")` is `["a", "b"]`; `split_lines("a\n\nb")` is `["a", "", "b"]`.
+
+## NUL (2026-10-09)
+
+`decode`: bytes with NUL are binary when NUL is more than 1% of the bytes or the rest is not strict UTF-8; a few NULs in valid UTF-8 are text (2026-10-09: a literal `\0` sentinel in source made a file binary, so one NUL could hide any file). `fold_line` strips NUL (U+0000) like the other invisible characters, so a NUL inside a word does not split a phrase (fixture `class11-nul-split.md`).

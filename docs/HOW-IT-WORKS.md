@@ -49,7 +49,7 @@ Most checks care about who reads a file. Walkdown decides it from the path:
 | subagent | files under `agents/` or `commands/`, `*prompt*.md` | instructions a dispatched agent reads |
 | tool | scripts (`.py`, `.sh`, `.js`, ...), hook configs, build and lock files | code; counted, read by tools |
 | human | README, CHANGELOG, LICENSE, INSTALL, guides, anything under `docs/` or `.github/` | written for people; counted, kept out of capability |
-| test-data | anything under `tests/`, `fixtures/`, `__tests__/`, `testdata/`, `spec/` and the like, or named `test_*.py`, `*.test.*`, `*.spec.*`, `conftest.py` | never loaded on install; counted, kept out of capability and the summary |
+| test-data | anything under `tests/`, `fixtures/`, `__tests__/`, `testdata/`, `spec/` and the like, or named `test_*.py`, `*.test.*`, `*.spec.*`, `conftest.py`, `*.fixtures.*` | never loaded on install; counted, kept out of capability and the summary |
 
 Human-facing and test-data hits are still recorded and listed in the full report. They are
 kept out of the summary's points and out of stage 5's capability map, because installing the

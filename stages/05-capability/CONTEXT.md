@@ -158,7 +158,7 @@ the phrase hit's:
 |---|---|
 | `orphan+phrase` | a `graph.orphan` file |
 | `dynamic+phrase` | a file whose `graph.depth` is `via: dynamic` (reached only through a load: a folder a config names, a code scan, or an instruction-file glob; stage 3 marks folder and glob mentions elsewhere `via: mention`, and those do not pair, 2026-09-29) |
-| `hidden+phrase` | inside a `read.divergence` with `reading: A-only` (from its `line` through the lines its `text` spans), or on a `read.fold` line; except a hit made only of carrier patterns (`K.md-carrier`), which is the same fact as the divergence (2026-09-29) |
+| `hidden+phrase` | inside a `read.divergence` with `reading: A-only` (from its `line` through the lines its `text` spans), or on a `read.fold` line when the hit matches only the folded text (stage 4 `folded: true`, 2026-10-09); except a hit made only of carrier patterns (`K.md-carrier`), which is the same fact as the divergence (2026-09-29) |
 
 | `hook+phrase` | in a script a `SessionStart` or `UserPromptSubmit` hook runs (the hook's command script, plus files that script names directly), and the hit is an instruction-in-a-script pattern (`C.script-instruction`, `C.emit-instruction`): text that can reach the model through the hook's output (added 2026-09-29, Case 003) |
 

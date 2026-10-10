@@ -35,7 +35,7 @@ root-level `.git` folder is not walked.
 | `binary` | does not decode |
 
 `decode(data) -> (text, encoding) | None`: a UTF-8/16/32 BOM picks the codec
-and is removed; otherwise NUL bytes mean binary; otherwise strict UTF-8; otherwise
+and is removed; otherwise bytes with NUL are binary when NUL is more than 1% of the bytes or the rest is not strict UTF-8; a few NULs in valid UTF-8 are text (2026-10-09: a literal `\0` sentinel in source made a file binary, so one NUL could hide any file); otherwise strict UTF-8; otherwise
 charset-normalizer's best guess; otherwise None.
 
 `split_lines(text) -> list[str]`: split on `\n`, a trailing `\r` removed from
@@ -53,5 +53,5 @@ equals the line count an editor shows (an empty file has 0 lines).
 1. A folder lists every file sorted with forward-slash paths; a root `.git` folder is skipped.
 2. A symlink is listed as `symlink` with its target and not followed (skipped where the platform cannot create symlinks).
 3. `classify` names pdf, image (PNG), docx, office-other (XLSX), archive (plain ZIP, gzip), markdown, html, svg, text, and binary correctly from small inline bytes.
-4. `decode` handles UTF-8, UTF-8 with BOM (removed), UTF-16 with BOM; NUL bytes without a BOM are binary.
+4. `decode` handles UTF-8, UTF-8 with BOM (removed), UTF-16 with BOM; NUL bytes without a BOM are binary, except a few NULs in valid UTF-8, which are text.
 5. `split_lines` keeps line numbers: `"a\r\nb\n"` gives `["a", "b"]`, `"a\n\nb"` gives `["a", "", "b"]`, `""` gives `[]`.

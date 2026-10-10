@@ -40,7 +40,7 @@ sheet; a builder of this stage never opens `Fixtures/ANSWERS/`.
 |---|---|---|
 | `reader-window` | file over 2000 lines or over 50 KB (50,000 bytes); `detail` states the threshold | REPORTING 1.5 |
 | `long-line` | any line over 500 **characters** (not bytes: multi-byte text must not trip it early); `detail` gives the line and its length | REPORTING 1.5; decided 2026-09-25 |
-| `ext-magic-mismatch` | the content's magic bytes identify a non-text format that the extension does not name (a `.md` whose bytes are a PNG). Text-versus-text disagreements (libmagic calling fenced markdown "JavaScript") are detector noise and are **not** flagged | REPORTING 1.6; the 2026-09-04 review |
+| `ext-magic-mismatch` | the content's magic bytes identify a non-text format that the extension does not name (a `.md` whose bytes are a PNG). Text-versus-text disagreements (libmagic calling fenced markdown "JavaScript") are detector noise and are **not** flagged | REPORTING 1.6; REVIEW-2026-09-04 |
 | `bom` | text file starting with a byte-order mark | REPORTING 1.7 |
 | `archive` | archive in tree (zip, tar, gz, 7z, …), by magic bytes | REPORTING 1.7 |
 | `symlink` | symbolic link in tree; `detail` gives its target | REPORTING 1.7 |

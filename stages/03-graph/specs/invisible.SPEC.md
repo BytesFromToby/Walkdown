@@ -23,7 +23,7 @@ on disk, so it must not be made to match.
 
 `decode(data) -> str | None`: the text of a file, or None when it is not text.
 A BOM (UTF-8, UTF-16 LE/BE, UTF-32 LE/BE) picks the codec and is dropped; bytes
-holding NUL without a BOM are binary; then UTF-8; then the encoding
+holding NUL without a BOM: bytes with NUL are binary when NUL is more than 1% of the bytes or the rest is not strict UTF-8; a few NULs in valid UTF-8 are text (2026-10-09: a literal `\0` sentinel in source made a file binary, so one NUL could hide any file); then UTF-8; then the encoding
 `charset-normalizer` detects; else None.
 
 ## Must never
@@ -38,3 +38,5 @@ holding NUL without a BOM are binary; then UTF-8; then the encoding
 3. Fullwidth `ｄｏｃｓ／ａ.md` normalizes to `docs/a.md` (NFKC).
 4. A Cyrillic `о` is kept (no confusable folding).
 5. `decode` reads UTF-8, UTF-8 with BOM (BOM dropped), and UTF-16 with BOM; returns None for bytes holding NUL.
+
+NUL (U+0000) is stripped like the other invisible characters (2026-10-09).

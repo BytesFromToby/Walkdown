@@ -23,6 +23,26 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
   shows pattern IDs or "repetition adds weight".
 - Stage 4: response limits ("report back with only", "under 15 lines", "only the summary") are
   no longer flagged (`H.report-only` retired).
+- Fixes from the 2026-10-08 runs (caveman, a large repository, showed most of them):
+  - A line is called "hidden" only when rendering hides it. A phrase that matches only once
+    look-alike or invisible characters are folded reads "disguised with look-alike or invisible
+    characters"; a phrase that matches the raw line is no longer paired with an ordinary fold
+    such as an en dash (52 of 87 hidden pairs across the runs were these).
+  - A few NUL bytes in a UTF-8 file no longer make it binary (one NUL used to skip a whole file,
+    including an MCP server's source). NUL is folded like other invisible characters and shown
+    as hidden text.
+  - Secret hits that hold no secret (a hash under a `sha256` or `hash` key, a password in a URL
+    for localhost or a reserved test domain, an environment variable's name, a plain word) are
+    counted apart and listed with the reason in the full report only. Files named
+    `*.fixtures.*` are test data.
+  - The summary's "not examined" line groups unscanned files into one item per section
+    instead of naming each file.
+  - Stage 4 is fast on files with very long lines: two patterns opened with an unanchored
+    lookahead, which is quadratic in line length (caveman, with 96,000-character JSON lines:
+    stage 4 took 27 minutes, now under 2; the whole run 30 minutes, now 5½). A test keeps
+    any pattern from opening that way again.
+  - Stage 4 again catches "omit what you changed" (hiding the record of changes), lost when
+    response length limits stopped being flagged.
 - Cached validation stamps now depend on which optional tools are installed (Tesseract,
   gitleaks, pdf2image, Playwright): installing one re-measures the stages instead of reusing
   a stamp taken without it.

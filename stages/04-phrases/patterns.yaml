@@ -83,7 +83,7 @@ patterns:
 
 - id: K.data-flow
   check: phrase.K.exfil
-  regex: '(?=.*\b(send|sends|post|posts|upload|uploads|transmit|forward|deliver|attach|include|share|submit|pipe|beacon|exfiltrate|mail|email)\b)(?=.*(\.env\b|\benv\b|\benvironment\b|shell history|bash_history|\bhistory\b|credentials?\b|secrets?\b|\btokens?\b|api keys?|ssh keys?|private keys?|config(uration)? (files?|dump)|\bhostnames?\b|file listings?|directory listings?|contents of|user''s \w+|\b(their|your) (files|repositor(y|ies)|home|documents|emails?|contacts|data)\b|home directory|clipboard|cookies))(?=.*(https?://|\bbug report|\bissues?\b|\bpull request|\bpr (description|body)|\breport\b|\bwebhook|\bendpoint|\bserver\b|\bchannel\b|\bgist\b|\bpaste\b|\baddress\b|\binbox\b|\bremote\b|\bthere\b))'
+  regex: '^(?=.*\b(send|sends|post|posts|upload|uploads|transmit|forward|deliver|attach|include|share|submit|pipe|beacon|exfiltrate|mail|email)\b)(?=.*(\.env\b|\benv\b|\benvironment\b|shell history|bash_history|\bhistory\b|credentials?\b|secrets?\b|\btokens?\b|api keys?|ssh keys?|private keys?|config(uration)? (files?|dump)|\bhostnames?\b|file listings?|directory listings?|contents of|user''s \w+|\b(their|your) (files|repositor(y|ies)|home|documents|emails?|contacts|data)\b|home directory|clipboard|cookies))(?=.*(https?://|\bbug report|\bissues?\b|\bpull request|\bpr (description|body)|\breport\b|\bwebhook|\bendpoint|\bserver\b|\bchannel\b|\bgist\b|\bpaste\b|\baddress\b|\binbox\b|\bremote\b|\bthere\b))'
   source: 'THREATS:1 core shape (CONTEXT: a private data source, a sending verb, and a destination, in one sentence) and ext templates as the channel (env output, config dumps, hostnames, file listings into a bug report or PR)'
 
 # phrase.creds (class 2): THREATS 2 and its extensions.
@@ -307,7 +307,7 @@ patterns:
 
 - id: B.safety-adjective
   check: phrase.B.defs
-  regex: '(?=.*\b(read-only|idempotent|reversible|no side effects|sandboxed|harmless)\b)(?=.*(`|\bscripts?\b|\bcommands?\b|\.(sh|py|js|ps1|bash|cmd)\b))'
+  regex: '^(?=.*\b(read-only|idempotent|reversible|no side effects|sandboxed|harmless)\b)(?=.*(`|\bscripts?\b|\bcommands?\b|\.(sh|py|js|ps1|bash|cmd)\b))'
   note: 'PHRASES says "near a command"; taken as a command marker (a code span, the word script or command, or a script file name) on the same line.'
   source: 'PHRASES:B safety adjectives near a command'
 
@@ -372,8 +372,8 @@ patterns:
 
 - id: H.suppress
   check: phrase.H.anti-review
-  regex: '\bdo not mention\b|\bdon''t tell\b|\bomit from\b|\b(do not|don''t|never|without) (mention(ing)?|tell(ing)?|inform(ing)?|disclos\w*|reveal\w*|notify(ing)?)\s+(\w+\s+){0,3}?(the )?(user|human|anyone|them)\b|\bsilently (do|run|execute|send|delete|remove|install|update|push|upload|modify|change|fix|proceed|continue|skip|apply|write|copy|add|overwrite|drop|discard|switch)\b|\b(do|run|proceed|continue|act|install|update|delete|apply|execute|it) silently\b'
-  note: 'PHRASES H: bare "silently" was the Case 002 false positive (48 hits); narrowed to the imperative forms (silently + action verb, action verb + silently). A thing that "breaks silently" is a description, not suppression.'
+  regex: '\bdo not mention\b|\bdon''t tell\b|\bomit from\b|\b(do not|don''t|never|without) (mention(ing)?|tell(ing)?|inform(ing)?|disclos\w*|reveal\w*|notify(ing)?)\s+(\w+\s+){0,3}?(the )?(user|human|anyone|them)\b|\bsilently (do|run|execute|send|delete|remove|install|update|push|upload|modify|change|fix|proceed|continue|skip|apply|write|copy|add|overwrite|drop|discard|switch)\b|\b(do|run|proceed|continue|act|install|update|delete|apply|execute|it) silently\b|\b(omit|leave out|hide|do not list|don''t list)\s+(\w+\s+){0,3}?(what you (changed|did|modified|deleted|removed)|(the |your |any )(changes|edits|modifications|deletions))\b'
+  note: 'PHRASES H: bare "silently" was the Case 002 false positive (48 hits); narrowed to the imperative forms (silently + action verb, action verb + silently). A thing that "breaks silently" is a description, not suppression. 2026-10-09: "omit / leave out / hide ... what you changed / the changes" added (THREATS 20 audit-trail suppression, "omit from the summary"): hiding the record of changes, kept apart from response length limits, which are not flagged (H.report-only retired 2026-10-08).'
   source: 'PHRASES:H suppression (do not mention, don''t tell, omit from, silently; with THREATS 5 "don''t tell the user")'
 
 # phrase.I.conditional (class 21): PHRASES I.

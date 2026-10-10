@@ -120,8 +120,16 @@ def decode(data: bytes) -> tuple[str, str] | None:
                 return data[len(mark):].decode(codec), codec
             except UnicodeDecodeError:
                 return None
+    # A few NUL bytes in otherwise valid UTF-8 are text: a source file with a literal \0
+    # sentinel was skipped whole, and one NUL could hide any file (2026-10-09, caveman)
     if b"\x00" in data:
-        return None
+        if data.count(b"\x00") * 100 > len(data):
+            return None
+        try:
+            text = data.decode("utf-8")
+        except UnicodeDecodeError:
+            return None
+        return text, "utf-8"
     try:
         return data.decode("utf-8"), "utf-8"
     except UnicodeDecodeError:

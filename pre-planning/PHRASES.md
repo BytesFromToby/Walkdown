@@ -217,6 +217,11 @@ but lives in set H (class 20). The `silently` false positive (Case 002, 48 hits)
 is the standing warning for the whole set: narrow to explicit forms, always
 carry the benign share.
 
+2026-10-09: `H.suppress` also matches hiding the record of changes ("omit / leave out / hide
+... what you changed / the changes"; THREATS 20 "omit from the summary"). Retiring
+`H.report-only` had dropped the one recall line of this shape. Length limits stay unflagged.
+Hits on the seven audited repositories: 0 (only the fixture line).
+
 Every family's base rate is `n/a` until run against a clean corpus and validated
 against a `Fixtures/04-phrases/` positive — the near-zero families (guardrail
 suspension, context-end injection) are the ones to run first on an unknown repo.

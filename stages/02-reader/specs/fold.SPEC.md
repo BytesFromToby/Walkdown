@@ -68,3 +68,7 @@ zero-width, bidi, soft-hyphen, tag-chars, `method` `static-style`, and
 7. A line holding tag characters spelling ASCII (U+E0069 U+E0067 ...) folds with them stripped and each listed in `removed`; the visible text around them is kept.
 8. U+2028, U+2029, and U+0085 inside a line are each replaced by one space and listed in `removed`; the fold of a multi-line text keeps its line count.
 9. `hidden_chars` names zero-width, bidi, soft-hyphen, and tag characters; `invisible_finding` carries the raw line and the joined carrier.
+
+## NUL (2026-10-09)
+
+NUL (U+0000) is stripped by the fold and is its own hidden-character kind, `nul` (last in the carrier order), so a NUL in a text file gives a `read.divergence` (`A-only`) and a `read.fold`.

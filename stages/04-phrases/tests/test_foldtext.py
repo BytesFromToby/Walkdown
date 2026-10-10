@@ -39,3 +39,10 @@ def test_split_lines():
     assert split_lines("a\r\nb\n") == ["a", "b"]
     assert split_lines("a\n\nb") == ["a", "", "b"]
     assert split_lines("") == []
+
+
+def test_nul_is_text_and_folded():
+    from foldtext import decode, fold_line
+    assert decode(b"Ig\x00nore all" + b" " * 300) is not None
+    assert decode(b"\x00" * 50 + b"abc") is None
+    assert fold_line("Ig\x00nore all") == "Ignore all"

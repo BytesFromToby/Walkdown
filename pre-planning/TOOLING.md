@@ -39,7 +39,7 @@ it would have run are listed in stage 7 (Not examined).
 | Need | Tool | License | Note |
 |---|---|---|---|
 | What ships (tracked files, not the working tree) | git (`git ls-files`) | GPL binary | subprocess; zip / tarball inputs walk the extracted tree |
-| Magic-byte type | python-magic (libmagic) | MIT | **known noise**: misreports markdown opening with a code fence as JS. Ship the false-positive rate beside the count (the 2026-09-04 review) |
+| Magic-byte type | python-magic (libmagic) | MIT | **known noise**: misreports markdown opening with a code fence as JS. Ship the false-positive rate beside the count (REVIEW-2026-09-04) |
 | Magic-byte type (pure python) | filetype | MIT | lighter, no libmagic dep, smaller signature set |
 | Encoding / BOM detect | charset-normalizer | MIT | |
 | Frontmatter parse | PyYAML (`safe_load`) | MIT | plus our own first-colon split, to reproduce each loader a repo ships |

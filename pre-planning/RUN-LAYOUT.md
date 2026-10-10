@@ -108,7 +108,7 @@ Factory feedback:
   without a Finished mark. No separate plan doc; no "next" field to go stale.
 - **Validation stamp.** A stage may record a zero only if the same row records
   that its detectors matched their fixtures in this run. A zero with no stamp
-  reads as broken, never clean. This makes the 2026-09-04 review false zero (a silent
+  reads as broken, never clean. This makes the REVIEW-2026-09-04 false zero (a silent
   case-sensitive miss) structurally impossible to log as a clean result.
 - **Awaiting human** holds only decisions the tool cannot make: publish or not,
   whether coordinated disclosure is needed.

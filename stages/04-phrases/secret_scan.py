@@ -8,6 +8,7 @@ must not leak what it found, and a hash of a short password can be reversed by g
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -16,6 +17,35 @@ from pathlib import Path
 from audience import _build_file
 
 SKIPPED = "no secret scanner available (install gitleaks, or detect-secrets from requirements.txt)"
+
+# Lines a scanner flags that hold no secret (2026-10-09: on six real repositories every hit
+# checked was one of these). The hit is kept and marked, never dropped: benign hits are
+# recorded, and the report counts them apart from the lines that may hold a secret.
+ENTROPY = {"Hex High Entropy String", "Base64 High Entropy String", "generic-api-key"}
+HASH_KEY = re.compile(r"""["']?\b(?:[\w-]*[_-])?(sha(1|224|256|384|512)?|md5|hash|digest|checksum|integrity|etag|"""
+                      r"""commit|oid|fingerprint)\b["']?\s*[:=]""", re.I)
+LOCAL_URL = re.compile(r"://[^/\s:@]+:[^@\s]*@(localhost|127\.0\.0\.1|\[::1\]|"
+                       r"([\w.-]+\.)?example\.(com|net|org)|[\w.-]+\.(local|test|invalid|example|localhost))(?=[:/?#\s\"'`]|$)", re.I)
+URL_KINDS = {"Basic Auth Credentials", "Secret Keyword"}
+
+
+def likely_not_secret(line: str, kinds: list[str]) -> str | None:
+    """Why a flagged line holds no secret, or None. Only plain cases: a hash under a key named
+    for a hash, a password in a URL for a local or reserved test host, a keyword whose value is
+    a variable name, a plain lowercase word, or prose."""
+    ks = set(kinds)
+    if ks <= ENTROPY and HASH_KEY.search(line):
+        return "a hash under a key named for one"
+    if ks <= URL_KINDS and LOCAL_URL.search(line):
+        return "a password in a URL for a local test address"
+    if ks == {"Secret Keyword"}:
+        m = re.search(r"[:=]\s*(.*)$", line)
+        value = re.split(r"\s+#", m.group(1))[0].strip().strip("\"'`,;") if m else ""
+        if re.fullmatch(r"\$?\{?[A-Z][A-Z0-9_]*\}?", value):
+            return "a variable name, not a value"
+        if re.fullmatch(r"[a-z]+([-_][a-z]+)*", value) or " " in value:
+            return "a plain word or prose, not a value"
+    return None
 
 
 def _gitleaks(root: Path, rels: set[str]) -> list[dict] | None:
@@ -82,6 +112,7 @@ def scan(root, files: dict[str, str]) -> list[dict]:
     if hits is None:
         return [{"check": "secret.found", "file": None, "line": None, "skipped": SKIPPED}]
     merged: dict[tuple, dict] = {}
+    lines: dict[str, list[str]] = {}
     for h in hits:
         key = (h["file"], h["line"])
         m = merged.setdefault(key, {"check": "secret.found", "file": h["file"], "line": h["line"],
@@ -89,4 +120,14 @@ def scan(root, files: dict[str, str]) -> list[dict]:
                                     "audience": files.get(h["file"])})
         if h["kind"] not in m["kinds"]:
             m["kinds"].append(h["kind"])
+    for (rel, ln), m in merged.items():
+        if rel not in lines:
+            try:
+                lines[rel] = (root / rel).read_text(encoding="utf-8", errors="replace").splitlines()
+            except OSError:
+                lines[rel] = []
+        text = lines[rel][ln - 1] if isinstance(ln, int) and 0 < ln <= len(lines[rel]) else ""
+        why = likely_not_secret(text, m["kinds"])
+        if why:
+            m["likely_not_secret"] = why
     return [merged[k] for k in sorted(merged, key=lambda k: (k[0], k[1] or 0))]

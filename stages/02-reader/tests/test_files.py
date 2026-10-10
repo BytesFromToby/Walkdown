@@ -73,3 +73,12 @@ def test_split_lines():
     assert files.split_lines("a\r\nb\n") == ["a", "b"]
     assert files.split_lines("a\n\nb") == ["a", "", "b"]
     assert files.split_lines("") == []
+
+
+def test_few_nuls_in_utf8_are_text_and_fold_flags_them():
+    from files import decode
+    from fold import fold_line, invisible_finding
+    assert decode(b"a\x00b" + b"c" * 300)[0].startswith("a\x00b")
+    assert decode(b"\x00" * 50 + b"abc") is None
+    assert fold_line("Ig\x00nore")[0] == "Ignore"
+    assert invisible_finding("f.js", 1, "Ig\x00nore")["carrier"] == "nul"

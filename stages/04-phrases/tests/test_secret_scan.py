@@ -40,3 +40,32 @@ def test_quotes_on_secret_lines_are_masked():
     run4.mask_secret_lines(fs)
     assert FAKE not in repr(fs) and fs[1]["masked"] and fs[2]["definition"] == run4.SECRET_MASK
     assert fs[3]["quote"] == "other line" and "masked" not in fs[3]
+
+
+def test_likely_not_secret():
+    from secret_scan import likely_not_secret as why
+    hx = ["Hex High Entropy String"]
+    assert why('  "sha256": "' + "ab12" * 16 + '",', hx) == "a hash under a key named for one"
+    assert why('  "token": "' + "ab12" * 16 + '",', hx) is None
+    url = "DB_URL: postgres://app:pw@localhost:5432/app_test"
+    assert why(url, ["Basic Auth Credentials"]) == "a password in a URL for a local test address"
+    assert why(url.replace("localhost", "db.prod.acme.io"), ["Basic Auth Credentials"]) is None
+    kw = ["Secret Keyword"]
+    assert why('_API_KEY_VAR = "ANTHROPIC_API_KEY"', kw) == "a variable name, not a value"
+    assert why("POSTGRES_PASSWORD: caveman", kw) == "a plain word or prose, not a value"
+    assert why("  J.enter-secret: prohibited   # entering credentials", kw) == (
+        "a plain word or prose, not a value")
+    assert why('api_key = "q8Zr2vN7xYw3pLk9TbHs"', kw) is None
+
+
+def test_likely_not_secret_names_and_reserved_hosts():
+    from secret_scan import likely_not_secret as why
+    assert why('  "prefix_hash": "' + "ab12" * 16 + '",', ["Hex High Entropy String"])
+    assert why('"endpoint": "https://user:pw@gw.example.com",', ["Basic Auth Credentials"])
+    assert why("      secretName: caveman-gateway-tls", ["Secret Keyword"])
+    assert why("      secretName: sk-ant-api03-x1", ["Secret Keyword"]) is None
+
+
+def test_hash_key_needs_a_separator_before_the_hash_word():
+    from secret_scan import likely_not_secret as why
+    assert why('  "avoid": "' + "ab12" * 16 + '",', ["Hex High Entropy String"]) is None

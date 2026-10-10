@@ -96,3 +96,13 @@ def test_restrictions(tmp_path):
     assert not b.applies("README.md", "human", False)
     assert c.applies("SKILL.md", "model", True)
     assert not c.applies("SKILL.md", "model", False)
+
+
+def test_no_unanchored_leading_lookahead():
+    """(?=.*X) without ^ is retried at every offset and is quadratic in line length: two rows
+    took 26 of stage 4's 27 minutes on a repository with 96,000-character JSON lines
+    (2026-10-09). A row that opens with a lookahead must anchor it at ^."""
+    import re
+    from patterns import load_table
+    for row in load_table(None):
+        assert not re.match(r"\(\?=\.\*", row.rx.pattern), row.id

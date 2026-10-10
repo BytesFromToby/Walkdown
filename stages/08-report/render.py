@@ -341,7 +341,7 @@ def points(reports, stage) -> list[str]:
         return lines
     if stage == "02-reader":
         model, counted = _split_audience(r, pairs(r, "hidden+phrase"))
-        lines = _points(model, lambda p: f"{loc(p)}: hidden when rendered and matches "
+        lines = _points(model, lambda p: f"{loc(p)}: {hidden_how(p)} and matches "
                                          f"{p['phrase_check']}: {code(p['quote'].strip())}")
         return lines + _counted_line(counted, "More hidden-text hits")
     if stage == "03-graph":
@@ -379,6 +379,15 @@ def points(reports, stage) -> list[str]:
     return []
 
 
+def hidden_how(p) -> str:
+    """How a hidden+phrase pair hides its line: rendering hides it, or the phrase matches only
+    once look-alike or invisible characters are folded (2026-10-09)."""
+    whys = [str(e.get("why", "")) for e in p.get("evidence", []) if e.get("stage") == "02"]
+    if any(w.startswith("hidden text") for w in whys) or not whys:
+        return "hidden when rendered"
+    return "disguised with look-alike or invisible characters"
+
+
 def _split_audience(r, items):
     """Pairs on lines the model reads (model or subagent audience) are listed; pairs in
     scripts (tool) and human-facing files are counted. Stage 4 tags audience by path."""
@@ -408,9 +417,14 @@ def secrets_line(r) -> str:
     if any("skipped" in x for x in allf):
         return "Secret scan: skipped (no scanner installed)."
     test = sum(1 for x in allf if x.get("audience") == "test-data")
+    plain = sum(1 for x in allf if x.get("likely_not_secret") and x.get("audience") != "test-data")
     engine = allf[0].get("engine") if allf else None
-    return (f"Lines that look like committed secrets: {len(allf) - test}"
-            + (f" (plus {test} in test data)" if test else "")
+    extra = [f"{test} in test data"] if test else []
+    if plain:
+        extra.insert(0, f"{plain} that look like hashes, variable names, plain words, or local "
+                        "test passwords")
+    return (f"Lines that look like committed secrets: {len(allf) - test - plain}"
+            + (f" (plus {'; plus '.join(extra)})" if extra else "")
             + (f", by {engine}." if engine else "."))
 
 
@@ -419,7 +433,8 @@ def _part2_points(r) -> list[str]:
     a prohibited-tier action with no confirmation step, a step whose confirmation is
     a redefinition (THREATS 14, 22); flagged lines past the reader window, and a flagged
     sentence repeated across files (REPORTING 4.4, 4.5; 2026-10-04)."""
-    sec = [x for x in fnd(r, "04-phrases", "secret.found") if x.get("audience") != "test-data"]
+    sec = [x for x in fnd(r, "04-phrases", "secret.found")
+           if x.get("audience") != "test-data" and not x.get("likely_not_secret")]
     pos = [f"{loc(x)}: looks like a committed secret ({', '.join(x.get('kinds') or [])}; "
            f"value not shown)" for x in sec]
     pos += [f"{d['file']}: {n(d['beyond_window'], 'flagged line')} past the reader window "
@@ -781,6 +796,7 @@ TOOL_NOTES = [  # (stage 2 note start, what it covers, file kinds it serves; Non
     ("lingua", "Language detection in Latin-script text", None),
 ]
 BINARY_NOTE = "limit: files that do not decode as text"
+PER_FILE_NOTE = re.compile(r"^not scanned: (.+?): (.+)$")  # one file's skip line
 STANDING_NOTE = re.compile(r"^(v1 limit|stage 5 limit|graph incomplete by construction"
                            r"|not scanned: .*\(not instruction text\))")
 
@@ -824,6 +840,8 @@ def glance(reports, notes, stamps, runs_ok) -> tuple[list[str], list[str]]:
                 else:
                     idle.append(f"{what}: none in this repository")
     for stage in ORDER[:6]:
+        per_file: collections.Counter = collections.Counter()
+        in_tests = 0
         for line in notes.get(stage, []):
             if stage == "02-reader" and any(line.startswith(t[0]) for t in TOOL_NOTES):
                 continue
@@ -833,7 +851,20 @@ def glance(reports, notes, stamps, runs_ok) -> tuple[list[str], list[str]]:
                 if kinds & {"image", "pdf", "docx"}:
                     skipped.append("Phrase patterns in PDF, DOCX, and image files")
                 continue
+            m = PER_FILE_NOTE.match(line)
+            if m:  # one item per stage, not one per file (2026-10-09: 67 on caveman)
+                if is_test_data(m.group(1)):
+                    in_tests += 1
+                else:
+                    per_file[m.group(2)] += 1
+                continue
             skipped.append(f"{HEADINGS[stage]}: {line}")
+        if per_file:
+            kinds_txt = ", ".join(f"{c} {why}" for why, c in per_file.most_common())
+            skipped.append(f"{HEADINGS[stage]}: {n(sum(per_file.values()), 'file')} not scanned "
+                           f"({kinds_txt})" + (f", plus {in_tests} in test data" if in_tests else ""))
+        elif in_tests:
+            idle.append(f"{HEADINGS[stage]}: {n(in_tests, 'file')} not scanned, all in test data")
     other = collections.Counter(
         f["skipped"] for stage in ORDER[:5] for f in fnd(reports, stage)
         if "skipped" in f and "tesseract" not in str(f["skipped"]))
@@ -1038,7 +1069,9 @@ def _f4_part2(r):
     L += _list("Lines that look like committed secrets (values never shown)",
                fnd(r, "04-phrases", "secret.found"),
                lambda x: f"{loc(x)}: {', '.join(x.get('kinds') or [])} ({x.get('engine')}"
-                         + (", test data" if x.get("audience") == "test-data" else "") + ")")
+                         + (", test data" if x.get("audience") == "test-data" else "")
+                         + (f"; likely not a secret: {x['likely_not_secret']}"
+                            if x.get("likely_not_secret") else "") + ")")
     L += _list("Position of flagged lines in long files (first 10% / middle 80% / last 10%)",
                fnd(r, "04-phrases", "pos.density"),
                lambda d: f"{d['file']} ({d['lines']} lines): {d['first10']} / {d['middle80']} / "

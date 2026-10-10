@@ -58,7 +58,11 @@ def pairs(reports: dict, graph: dict | None = None) -> list[dict]:
         if file in dynamic:
             halves["dynamic+phrase"] = [entry("03", dynamic[file],
                                               "reached only by a dynamic load")]
-        cover = [entry("02", f, why) for lo, hi, f, why in hidden.get(file, []) if lo <= line <= hi]
+        # a folded line covers the hit only when the hit needs the fold (stage 4 `folded`):
+        # an en dash or a "×" folds too, and a hit that matches the raw line is not hidden
+        # by it (2026-10-09, caveman: 30 of 38 hidden pairs were typographic folds)
+        cover = [entry("02", f, why) for lo, hi, f, why in hidden.get(file, [])
+                 if lo <= line <= hi and (f.get("check") != "read.fold" or h.get("folded"))]
         carrier_only = set(h.get("patterns") or []) <= CARRIER_PATTERNS
         if cover and not carrier_only:
             halves["hidden+phrase"] = cover

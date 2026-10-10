@@ -59,3 +59,10 @@ def test_test_data_by_folder_and_file_name():
     for p in ["SKILL.md", "specs/run.SPEC.md", "examples/demo/SKILL.md", "contest.md",
               "skills/testing/SKILL.md", "latest.md"]:
         assert not is_test_data(p), p
+
+
+def test_fixture_files_by_name_are_test_data():
+    from audience import is_test_data
+    assert is_test_data("packages/sdk/parity/middleware-v1_1.fixtures.json")
+    assert is_test_data("parity/fixtures.json")
+    assert not is_test_data("parity/fixturesmith.md")

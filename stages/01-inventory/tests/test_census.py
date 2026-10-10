@@ -121,3 +121,12 @@ def test_builtin_signatures():
         t.addfile(info, io.BytesIO(b"hi"))
     assert census.builtin_magic(buf.getvalue()) == "application/x-tar"
     assert census.builtin_magic(b"# plain markdown\n") is None
+
+
+def test_few_nuls_in_utf8_are_text():
+    """2026-10-09: a literal \\0 sentinel in source made the whole file binary."""
+    from census import _decode
+    src = b"const s = `\x00${i}\x00`;\n" + b"x" * 400
+    assert _decode(src)[0].startswith("const s")
+    assert _decode(b"\x00" * 50 + b"abc") is None
+    assert _decode(b"\x00\xff\xfe" + b"a" * 400) is None

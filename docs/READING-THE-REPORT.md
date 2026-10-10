@@ -75,6 +75,7 @@ sometimes a note. Places with the same headline share one card.
 |---|---|---|
 | Runs commands on its own | 1 | a hook that runs whenever the host fires its event, without anyone asking |
 | Hidden when rendered, and reads like an instruction | 2 | text the model receives that a person viewing the file does not see, which also matches a phrase pattern |
+| Disguised with look-alike or invisible characters, and reads like an instruction | 2 | a line that matches a phrase pattern only once look-alike or invisible characters are folded away, so a reader skimming the raw text may not see what the model reads |
 | Nothing refers to this file / Loaded only by a folder or glob, named by nothing, and it reads like an instruction | 3 | a file a reviewer following references would not open, which also matches a phrase pattern |
 | Matches the wording of ... | 4 | the text matches a phrase pattern; the quote lets you judge, and the note gives the pattern's base rate |
 | A word is defined more than one way / Redefines a safety word / An irreversible or prohibited action with no confirmation step | 4 | from stage 4's tables of definitions and guarded actions |

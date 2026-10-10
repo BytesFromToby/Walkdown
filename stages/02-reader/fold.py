@@ -8,10 +8,11 @@ ZERO_WIDTH = {chr(c) for c in list(range(0x200B, 0x2010)) + list(range(0x2060, 0
 BIDI = {chr(c) for c in list(range(0x202A, 0x202F)) + list(range(0x2066, 0x206A))}
 SOFT_HYPHEN = {"­"}
 TAGS = {chr(c) for c in range(0xE0000, 0xE0080)}
-STRIP = ZERO_WIDTH | BIDI | SOFT_HYPHEN | TAGS
+NUL = {"\x00"}  # a NUL byte in a text file (2026-10-09)
+STRIP = ZERO_WIDTH | BIDI | SOFT_HYPHEN | TAGS | NUL
 SEPARATORS = {" ", " ", "\u0085"}  # replaced by a space, never a new line
 
-KIND_ORDER = ["zero-width", "bidi", "soft-hyphen", "tag-chars"]
+KIND_ORDER = ["zero-width", "bidi", "soft-hyphen", "tag-chars", "nul"]
 
 
 def cp(ch: str) -> str:
@@ -75,6 +76,8 @@ def _kind(ch: str) -> str | None:
         return "bidi"
     if ch in SOFT_HYPHEN:
         return "soft-hyphen"
+    if ch in NUL:
+        return "nul"
     o = ord(ch)
     if 0xE0000 <= o <= 0xE007F or o == 0x180E:
         return "tag-chars"

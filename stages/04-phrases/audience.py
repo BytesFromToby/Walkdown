@@ -42,7 +42,8 @@ def _build_file(low: str) -> bool:
 TEST_DIRS = {"test", "tests", "__tests__", "testdata", "test-data", "test_data", "fixture",
              "fixtures", "__fixtures__", "__snapshots__", "spec"}
 TEST_FILE_GLOBS = ("test_*.py", "*_test.py", "*_test.go", "*.test.*", "*.spec.js",
-                   "*.spec.ts", "*.spec.mjs", "*.spec.tsx", "*.spec.jsx", "conftest.py")
+                   "*.spec.ts", "*.spec.mjs", "*.spec.tsx", "*.spec.jsx", "conftest.py",
+                   "fixtures.*", "*.fixtures.*", "*.fixture.*")  # 2026-10-09
 
 
 def is_test_data(rel: str) -> bool:
