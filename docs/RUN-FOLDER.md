@@ -11,6 +11,8 @@ reports were built from, for anyone who wants to check a finding or build on the
 ```
 RepoResults/<name>/<date>_<hash7>/          one run, e.g. RepoResults/backlog/2026-10-02_b449d9f
   summary.html        the page for people: what to look at first, one sentence per stage
+  review.html         each place to check, one at a time, to mark Concerned, Not concerned, or Not sure
+  marks.json          your marks from review.html, once you save them here (Walkdown never writes it)
   summary.md          the same summary as text
   full.md             every finding, by stage, with file and line
   changes.md          what changed since the previous run of the same repository (only when there is one)
@@ -129,8 +131,9 @@ running any stage or model:
 python stages/08-report/run.py --rerender RepoResults/<name>/<run>
 ```
 
-It rewrites `summary.html`, `summary.md`, and `full.md`, re-stamps validation with the current
-grader, and appends a line to LOG.md.
+It rewrites `summary.html`, `review.html`, `summary.md`, and `full.md`, re-stamps validation with
+the current grader, and appends a line to LOG.md. `review.html` reads back a `marks.json` saved
+next to it, so your marks return with the page.
 
 ## Runs made before 2026-10-02
 
@@ -140,7 +143,7 @@ Older runs keep their layout: stage outputs at the top of the run folder and the
 ## Handling a run folder
 
 - **The data quotes the audited repository.** Quotes, file names, and model answers in `data/`
-  and in `full.md` are text from the repository under review. If that repository is hostile,
+  and in `full.md` and `review.html` are text from the repository under review. If that repository is hostile,
   the text may be written to steer an AI assistant that reads it. Read reports yourself, or give
   an assistant only the brief that `walkdown.py` prints, which contains no repository text.
 - **`RepoResults/` is kept out of git.** A report about someone else's repository is not

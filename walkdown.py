@@ -165,6 +165,7 @@ def brief(run_dir: Path) -> str:
     L += ["", "Validation (each stage against its fixtures):"]
     L += [f"  {stage} {STAGE_NAMES[stage]}: {st.get(stage, 'not run')}" for stage in STAGE_NAMES]
     L += ["", f"Report: {out / 'summary.html'}",
+          f"Walk through each place and mark it: {out / 'review.html'}",
           f"Every finding with file and line: {out / 'full.md'}", "",
           'No verdict and no score. "Nothing found" means these stages found nothing; it does '
           "not mean the repository is safe."]

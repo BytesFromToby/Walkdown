@@ -160,6 +160,25 @@ def test_not_examined_counts_only_what_applies_here():
     assert "Not needed here: Text inside images (OCR): none in this repository." in h
 
 
+def test_not_built_is_told_apart_from_a_missing_tool():
+    """A check with no code is "not built yet"; only a missing tool that code would use is "not
+    installed" (2026-10-12). Runs made before then named the tool; they now say not built too."""
+    r = reports()
+    r["01-inventory"]["findings"] += [{"check": "inv.file", "file": f, "line": None, "ext": f.split(".")[-1]}
+                                      for f in ("assets/a.png", "docs/page.html")]
+    R = __import__("render")
+    for lang, html_note in (("not built: language detection: language within Latin script",
+                             "not built: HTML render: HTML as a browser draws it"),
+                            ("lingua absent: language detection within Latin script not done",
+                             "playwright absent: HTML reading B uses static style")):
+        notes = {"02-reader": ["tesseract not installed (no binary): images are skipped", lang, html_note]}
+        skipped, _ = R.glance(r, notes, PASS, set(r))
+        assert "Text inside images (OCR): Tesseract not installed" in skipped
+        assert "Language detection in Latin-script text: not built yet" in skipped
+        assert "HTML as a browser draws it: not built yet" in skipped
+        assert not any("lingua" in x or "playwright" in x for x in skipped)
+
+
 def test_image_the_model_is_pointed_at_card():
     r = reports()
     r["05-capability"]["findings"].append(

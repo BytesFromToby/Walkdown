@@ -211,7 +211,8 @@ patterns:
 
 - id: L.skip-confirm
   check: phrase.L.override
-  regex: '\bwithout (asking|confirm\w*|approval|permission)\b|\b(no need|not need|never needs?|do not need|don''t need|needn''t) to (ask|confirm|check)\b|\b(do not|don''t) (ask|confirm)\b|\byou may skip\b'
+  regex: '\bwithout (asking|confirm\w*|approval|permission)\b|\b(no need|not need|never needs?|do not need|don''t need|needn''t) to (ask|confirm|check)\b(?!\s+(hypothetical|rhetorical|leading)\s+questions?\b)|\b(do not|don''t) (ask|confirm)\b(?!\s+(hypothetical|rhetorical|leading)\s+questions?\b)|\byou may skip\b'
+  note: 'Narrowed 2026-10-12 (owner): "don''t ask hypothetical / rhetorical / leading questions" asks for a style of question and skips no confirmation (superpowers pressure-test prompts, 4 lines; rhetorical and leading added the same day, common in interviewing and writing skills). The lookahead drops only that phrase, so another "don''t ask" on the same line still hits, which an unless would not. Add other question styles to the same list.'
   source: 'THREATS:5 override bullet ("you may skip", "no need to ask", "without asking", "do not confirm")'
 
 # phrase.A.consent (class 13): PHRASES A.

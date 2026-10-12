@@ -789,11 +789,19 @@ def limits(reports, notes, stamps, runs_ok) -> list[str]:
 # are left to the full list (section 7, data/07-limits.md), which keeps every line.
 IMAGE_EXTS = {"png", "jpg", "jpeg", "gif", "webp", "bmp", "tif", "tiff", "ico"}
 HTML_EXTS = {"html", "htm", "xhtml"}
-TOOL_NOTES = [  # (stage 2 note start, what it covers, file kinds it serves; None = all text)
-    ("tesseract", "Text inside images (OCR)", ("image",)),
-    ("poppler", "PDF pages drawn as images", ("pdf",)),
-    ("playwright", "HTML as a browser draws it", ("html",)),
-    ("lingua", "Language detection in Latin-script text", None),
+# (stage 2 note start, what it covers, file kinds it serves (None = all text), why it was not
+# done). A check with no code is "not built yet", apart from one waiting on a missing tool
+# (2026-10-12, an outside audit: these three once read "<tool> not installed", though no code
+# used the tools).
+TOOL_NOTES = [
+    ("tesseract", "Text inside images (OCR)", ("image",), "Tesseract not installed"),
+    ("not built: PDF render", "PDF pages drawn and read as images", ("pdf",), "not built yet"),
+    ("not built: HTML render", "HTML as a browser draws it", ("html",), "not built yet"),
+    ("not built: language detection", "Language detection in Latin-script text", None, "not built yet"),
+    # the same three as runs before 2026-10-12 noted them
+    ("poppler", "PDF pages drawn and read as images", ("pdf",), "not built yet"),
+    ("playwright", "HTML as a browser draws it", ("html",), "not built yet"),
+    ("lingua", "Language detection in Latin-script text", None, "not built yet"),
 ]
 BINARY_NOTE = "limit: files that do not decode as text"
 PER_FILE_NOTE = re.compile(r"^not scanned: (.+?): (.+)$")  # one file's skip line
@@ -833,10 +841,10 @@ def glance(reports, notes, stamps, runs_ok) -> tuple[list[str], list[str]]:
         elif soft:
             skipped.append(f"Model reads (optional): {n(len(soft), 'question')} skipped")
     for line in notes.get("02-reader", []):
-        for start, what, serves in TOOL_NOTES:
+        for start, what, serves, why in TOOL_NOTES:
             if line.startswith(start):
                 if serves is None or kinds & set(serves):
-                    skipped.append(f"{what}: {start} not installed")
+                    skipped.append(f"{what}: {why}")
                 else:
                     idle.append(f"{what}: none in this repository")
     for stage in ORDER[:6]:
@@ -1182,7 +1190,7 @@ def log(meta, runs, stamps, reports) -> str:
         L.append(f"| {stage} | {x.started} | {x.finished or ''} | {'data/' + stage + '.json' if x.ok else ''} | "
                  f"{res} | {st.text if st else ''} |")
     L += [f"| 07-limits | | {meta.get('finished', '')} | data/07-limits.md | written | |",
-          f"| 08-report | | {meta.get('finished', '')} | summary.html, summary.md, full.md | written | |",
+          f"| 08-report | | {meta.get('finished', '')} | summary.html, review.html, summary.md, full.md | written | |",
           "", "A report about someone else's repository is not published until its author has "
           "seen it.", ""]
     return "\n".join(L) + "\n"

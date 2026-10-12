@@ -1,11 +1,12 @@
 # Reading a Walkdown report
 
-A run produces three reports, at the top of its run folder
+A run produces four reports, at the top of its run folder
 (`RepoResults/<name>/<date>_<hash7>/`):
 
 | File | For | What it holds |
 |---|---|---|
 | `summary.html` | most readers | what to look at first, the trifecta checklist, one plain sentence per stage |
+| `review.html` | walking through the places | each place to check, one at a time, with the lines around it, for you to mark |
 | `summary.md` | the same, as text | one status line per stage and up to five points under each |
 | `full.md` | checking a point | every finding, by stage, with file and line |
 
@@ -28,7 +29,8 @@ them, says whether each stage passed its validation; the data the reports were b
    skipped (usually an optional tool not installed); FAIL means do not trust that stage's
    findings in this run.
 2. **The trifecta checklist** at the top of `summary.html`: what the repository can do.
-3. **Things to check**: the short list of places to read.
+3. **Things to check**: the short list of places to read. `review.html` walks through them one
+   at a time.
 4. **Section 7, Not examined**: what the run skipped that applies to this repository.
 5. **`full.md`** for any point you want to check.
 
@@ -125,6 +127,25 @@ stage 6 labels ran, it also gives the **benign share**: of the labeled lines a m
 many the model read as an instruction to do the matched action and how many as a description,
 quote, or other use. That is a model's reading, with measured accuracy; without labels the line
 says the share was not measured.
+
+## review.html
+
+The same places as "Things to check" (and the model reads, when stage 6 ran), one card at a
+time. Each card shows the place's file and line, the line with three lines either side (from
+the text this run read, kept in `data/normalized/text/`), the matched words highlighted, and
+what was flagged in plain words: what the pattern looks for, and why a pattern would care.
+Invisible characters show as `U+XXXX`. In a file where the run found what looks like a secret,
+no lines around the place are shown.
+
+You mark each place **Concerned** (you want to look into it, or change it), **Not concerned**
+(you read it, and it is fine for what the skill is for), or **Not sure**, with an optional note.
+Walkdown makes no call on any place. The marks are yours, and they change nothing in the other
+reports.
+
+Marks are kept in your browser as you go. To keep them with the run, use "Download marks.json"
+at the end and save the file in the run folder, next to the page. Re-rendering the reports
+(`python stages/08-report/run.py --rerender <run folder>`) reads it back into the page. Marks
+do not carry over to a new run of the same repository.
 
 ## summary.md
 

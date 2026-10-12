@@ -232,7 +232,8 @@ audited repository's author has seen theirs.
    Docs: `docs/HOW-IT-WORKS.md`, `docs/RUN-FOLDER.md`, rewritten `docs/READING-THE-REPORT.md`.
 
 Stage 6 working notes and open decisions: `pre-planning/soft/` (README lists D1 to D5).
-Reports: `summary.html` at the top of a run folder is the page for people (since
+Reports: `summary.html` at the top of a run folder is the page for people, and `review.html`
+walks its places one at a time for the reader to mark (2026-10-12, review C21; since
 2026-10-02 the reports and LOG.md sit at the top and everything else under `data/`;
 `docs/RUN-FOLDER.md`). Re-render with `python stages/08-report/run.py --rerender RepoResults/<repo>/<run>`.
 Public docs: `docs/READING-THE-REPORT.md`, `docs/HOW-IT-WORKS.md`, `docs/RUN-FOLDER.md`.

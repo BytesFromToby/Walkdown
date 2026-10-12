@@ -1581,15 +1581,11 @@
         },
         {
           "id": "real-q-50",
-          "polarity": "gate",
+          "polarity": "negative",
           "check": "soft.question",
           "file": "superpowers/skills/systematic-debugging/test-pressure-1.L3.md",
           "line": 3,
-          "match": {
-            "kind": {
-              "eq": "label"
-            }
-          }
+          "note": "L.skip-confirm narrowed 2026-10-12 (owner: \"don't ask hypothetical questions\" asks for a style of question and skips no confirmation); no other pattern hits this line, so no question."
         },
         {
           "id": "real-label-50",
@@ -1606,15 +1602,11 @@
         },
         {
           "id": "real-q-51",
-          "polarity": "gate",
+          "polarity": "negative",
           "check": "soft.question",
           "file": "superpowers/skills/systematic-debugging/test-pressure-2.L3.md",
           "line": 3,
-          "match": {
-            "kind": {
-              "eq": "label"
-            }
-          }
+          "note": "L.skip-confirm narrowed 2026-10-12 (owner: \"don't ask hypothetical questions\" asks for a style of question and skips no confirmation); no other pattern hits this line, so no question."
         },
         {
           "id": "real-label-51",
@@ -1631,15 +1623,11 @@
         },
         {
           "id": "real-q-52",
-          "polarity": "gate",
+          "polarity": "negative",
           "check": "soft.question",
           "file": "superpowers/skills/systematic-debugging/test-pressure-3.L3.md",
           "line": 3,
-          "match": {
-            "kind": {
-              "eq": "label"
-            }
-          }
+          "note": "L.skip-confirm narrowed 2026-10-12 (owner: \"don't ask hypothetical questions\" asks for a style of question and skips no confirmation); no other pattern hits this line, so no question."
         },
         {
           "id": "real-label-52",
@@ -3369,15 +3357,11 @@
         },
         {
           "id": "real-q-125",
-          "polarity": "gate",
+          "polarity": "negative",
           "check": "soft.question",
           "file": "superpowers/skills/writing-skills/testing-skills-with-subagents.L156.md",
           "line": 3,
-          "match": {
-            "kind": {
-              "eq": "label"
-            }
-          }
+          "note": "L.skip-confirm narrowed 2026-10-12 (owner: \"don't ask hypothetical questions\" asks for a style of question and skips no confirmation); no other pattern hits this line, so no question."
         },
         {
           "id": "real-label-125",

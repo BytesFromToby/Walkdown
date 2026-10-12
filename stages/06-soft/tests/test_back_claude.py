@@ -45,9 +45,10 @@ def test_command_flags_and_stdin():
     res = make(r).read([q(1)])
     call = r.calls[0]
     cmd = call["cmd"]
-    for flag in ("-p", "--strict-mcp-config", "--no-session-persistence"):
+    for flag in ("-p", "--strict-mcp-config", "--no-session-persistence", "--safe-mode"):
         assert flag in cmd
     assert cmd[cmd.index("--tools") + 1] == ""
+    assert cmd[cmd.index("--setting-sources") + 1] == ""
     assert cmd[cmd.index("--output-format") + 1] == "json"
     assert cmd[cmd.index("--model") + 1] == "sonnet"
     assert cmd[cmd.index("--system-prompt") + 1] == DATA["claude_system_prompt"]["text"]

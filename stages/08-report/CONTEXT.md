@@ -2,8 +2,9 @@
 
 **Question:** none. Stage 8 assembles; it detects nothing and concludes nothing.
 **Output:** a run folder (`docs/RUN-FOLDER.md`; layout in `layout.py`): `summary.html`,
-`summary.md` (one screen, stage order), `full.md` (every finding, cited, stage order, then
-recommendations), and `LOG.md` at the top, everything else under `data/`.
+`review.html` (the places one at a time, for the reader to mark), `summary.md` (one screen,
+stage order), `full.md` (every finding, cited, stage order, then recommendations), and
+`LOG.md` at the top, everything else under `data/`.
 
 Built 2026-09-29, ahead of stages 6 and 7; stage 6 joined the pipeline the same day. Stage 7
 has no folder of its own: its content is gathered here from what stages 1 to 6 say they
@@ -108,3 +109,16 @@ disclosure, light and dark themes. `summary.md` stays for text tools.
 `run.py --rerender <run_dir>` rebuilds the reports from a finished run's saved stage
 outputs, runs no stage and calls no model (only the grader, for stamps), and appends
 a line to LOG.md. Report design changes no longer need a full re-run.
+
+## The review page (2026-10-12, review C21)
+
+`review_html.py` writes `review.html`: every place the summary's "Things to check" lists,
+then the stage 6 model reads, one card at a time. Each card shows the line with three lines
+either side from the run's own `normalized/text/` copy (never the audited folder), the matched
+words, and what was flagged in plain words (`plain.py`, one entry per `patterns.yaml` row,
+moved from the D3 labeling page). The reader marks each place Concerned, Not concerned, or Not
+sure; the page renders no verdict and its marks change no report. Marks live in the browser and
+leave as `marks.json`, which the reader saves in the run folder; a re-render reads it back.
+Owner decisions: the places are Things to check plus model reads; no carry-over to the next run
+in v1; whether marks feed stage 6 calibration is still open. A file where stage 4 found a
+possible secret shows no lines around its places. Spec: `specs/review_html.SPEC.md`.

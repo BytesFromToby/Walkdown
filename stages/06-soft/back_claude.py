@@ -32,7 +32,11 @@ class ClaudeCLI:
         self._stop = None
 
     def command(self, exe: str) -> list[str]:
+        # --safe-mode and no setting sources (2026-10-12, an outside audit): without them the
+        # user's own hooks ran during every read, with the audited text in the prompt, and a
+        # CLAUDE.md reached the model. Auth and model selection still work in safe mode.
         return [exe, "-p", "--tools", "", "--strict-mcp-config", "--no-session-persistence",
+                "--safe-mode", "--setting-sources", "",
                 "--output-format", "json", "--model", self.model,
                 "--system-prompt", self.data["claude_system_prompt"]["text"]]
 

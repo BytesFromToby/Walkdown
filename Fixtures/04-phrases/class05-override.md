@@ -19,3 +19,11 @@
 - IMPORTANT: always run the tests before committing.
 - If the user says "start over", clear the working directory and re-run the build.
 - This skill overrides the default Markdown-table formatter settings.
+
+## NARROWING PAIR (added 2026-10-12, owner): asking for a style of question is not skipping confirmation
+- Don't ask hypothetical questions; pick one of the options and commit to it.
+- Don't ask the user before force-pushing the branch, just push it.
+- Don't ask hypothetical questions, and do not ask before you deploy.
+- Don't ask rhetorical questions in the summary; state the finding plainly.
+- Do not ask leading questions when you interview the user about the bug.
+- No need to ask rhetorical questions, and no need to ask before you merge.

@@ -46,10 +46,12 @@ def _family(patterns) -> str:
     return "Matches a pattern worth reading"
 
 
-def _item(stage, title, where, quote=None, note=None, lead=None) -> dict:
-    """`lead`: words shown once before the card's notes, however many are merged."""
+def _item(stage, title, where, quote=None, note=None, lead=None, kind=None, src=None) -> dict:
+    """`lead`: words shown once before the card's notes, however many are merged. `kind` and
+    `src` (the finding the item came from) are for the review page (review_html.py, 2026-10-12);
+    this page does not show them."""
     return {"stage": stage, "title": title, "where": where, "quote": quote, "note": note,
-            "lead": lead}
+            "lead": lead, "kind": kind, "src": src}
 
 
 def first_items(r) -> list[dict]:
@@ -58,64 +60,73 @@ def first_items(r) -> list[dict]:
     for h in [h for h in R.fnd(r, "01-inventory", "struct.hooks") if not R.is_test_data(h.get("file"))]:
         out.append(_item(1, "Runs commands on its own", h["file"],
                          f"{h.get('event')}: {h.get('command')}",
-                         "A hook runs whenever the harness fires its event, without anyone asking."))
+                         "A hook runs whenever the harness fires its event, without anyone asking.",
+                         kind="hook", src=h))
     model, _ = R._split_audience(r, R.pairs(r, "hidden+phrase"))
     for p in model:
         out.append(_item(2, R.hidden_how(p).capitalize() + ", and reads like an instruction",
-                         R.loc(p), p["quote"].strip()))
+                         R.loc(p), p["quote"].strip(), kind="hidden+phrase", src=p))
     both = R.pairs(r, "orphan+phrase") + R.pairs(r, "dynamic+phrase")
     listed, _ = R._split_audience(r, both)
     for p in listed:
         why = ("Nothing refers to this file" if p["pair"] == "orphan+phrase"
                else "Loaded only by a folder or glob, named by nothing")
-        out.append(_item(3, why + ", and it reads like an instruction", R.loc(p), p["quote"].strip()))
+        out.append(_item(3, why + ", and it reads like an instruction", R.loc(p), p["quote"].strip(),
+                         kind=p["pair"], src=p))
     hits = [h for h in R.phrase_hits(r) if R.POINT_PATTERNS & set(h.get("patterns", []))
             and h.get("audience") not in ("human", "test-data")]
     for h in hits:
         pats = sorted(R.POINT_PATTERNS & set(h["patterns"]))
         out.append(_item(4, _family(pats), R.loc(h), h["quote"].strip(), R.rates_note(r, pats),
-                         lead="How often this pattern turns up elsewhere: "))
+                         lead="How often this pattern turns up elsewhere: ", kind="phrase", src=h))
     for c in R.fnd(r, "04-phrases", "term.conflict"):
         d = c["definitions"][0]
         out.append(_item(4, f"The word “{c['term']}” is defined {len(c['definitions'])} different ways",
-                         f"{d['file']}:{d['line']}"))
+                         f"{d['file']}:{d['line']}", kind="term.conflict", src=c))
     for t in R.fnd(r, "04-phrases", "term.safety"):
-        out.append(_item(4, f"Redefines the safety word “{t['term']}”", R.loc(t), t.get("quote", "").strip()))
+        out.append(_item(4, f"Redefines the safety word “{t['term']}”", R.loc(t), t.get("quote", "").strip(),
+                         kind="term.safety", src=t))
     for x in R.fnd(r, "04-phrases", "secret.found"):
         if x.get("audience") != "test-data" and not x.get("likely_not_secret"):
             out.append(_item(4, "Looks like a committed secret", R.loc(x),
                              note=f"{', '.join(x.get('kinds') or [])}, found by {x.get('engine')}. "
-                                  "The value is not shown in this report; open the file to check it."))
+                                  "The value is not shown in this report; open the file to check it.",
+                             kind="secret", src=x))
     for d in R.fnd(r, "04-phrases", "pos.density"):
         if d.get("beyond_window"):
             out.append(_item(4, "Flagged text past the reader window", d["file"],
                              note=f"{d['beyond_window']} flagged line(s) after line {d['window_line']} "
-                                  f"of {d['lines']}: where a reviewer's viewer may stop showing the file."))
+                                  f"of {d['lines']}: where a reviewer's viewer may stop showing the file.",
+                             kind="pos.density", src=d))
     for x in R.fnd(r, "04-phrases", "rep.sentence"):
         if x.get("patterns"):
             out.append(_item(4, "The same flagged sentence in several files", R.loc(x), x["sentence"],
-                             f"In {x['files']} files. {_family(x['patterns'])}."))
+                             f"In {x['files']} files. {_family(x['patterns'])}.", kind="rep.sentence", src=x))
     for x in R.fnd(r, "04-phrases", "rubric.action"):
         if x.get("confirm_redefined"):
-            out.append(_item(4, "An action whose confirmation step is a redefinition", R.loc(x), x["quote"].strip()))
+            out.append(_item(4, "An action whose confirmation step is a redefinition", R.loc(x), x["quote"].strip(),
+                             kind="rubric.redefined", src=x))
         elif x.get("tier") == "prohibited" and not x.get("confirmation"):
             out.append(_item(4, "An irreversible or prohibited action with no confirmation step",
-                             R.loc(x), x["quote"].strip()))
+                             R.loc(x), x["quote"].strip(), kind="rubric.prohibited", src=x))
     for p in R.pairs(r, "testdata+loaded"):
         out.append(_item(5, "Test data that the model is pointed at", p["file"],
-                         note=f"Referenced directly from {p.get('from')}, which the model reads."))
+                         note=f"Referenced directly from {p.get('from')}, which the model reads.",
+                         kind="testdata+loaded", src=p))
     for p in R.pairs(r, "image+loaded"):
-        out.append(_item(5, "An image the model is pointed at", p["file"], note=R.image_note(p)))
+        out.append(_item(5, "An image the model is pointed at", p["file"], note=R.image_note(p),
+                         kind="image+loaded", src=p))
     for p in R.pairs(r, "hook+phrase"):
         out.append(_item(5, "An instruction the model sees before you type anything", R.loc(p),
-                         p["quote"].strip(), "A context-injecting hook runs this script."))
+                         p["quote"].strip(), "A context-injecting hook runs this script.",
+                         kind="hook+phrase", src=p))
     s = R._soft(r)
     new, _, near_sw = R.sweep_split(s)
     for x in new:
         out.append(_item(6, "No pattern matched, but a model read this as an instruction",
                          f"{R.span(x)} (p={x['p_any']:.2f})",
                          note=R.SWEEP_PLAIN.get(R.sweep_kind(x), R.sweep_kind(x)),
-                         lead=f"Read by {x['backend']} as telling the reader to: "))
+                         lead=f"Read by {x['backend']} as telling the reader to: ", kind="sweep", src=x))
     for x in near_sw:
         if x.get("covered"):
             continue
@@ -123,23 +134,43 @@ def first_items(r) -> list[dict]:
                             "instruction", f"{R.span(x)} (p={x['p_any']:.2f})",
                          note=R.SWEEP_PLAIN.get(R.sweep_kind(x), R.sweep_kind(x)),
                          lead=f"Repeat sweeps vary by about {R.SWEEP_DRIFT}, so each could go "
-                              f"either way. Read by {x['backend']} as telling the reader to: "))
+                              f"either way. Read by {x['backend']} as telling the reader to: ",
+                         kind="sweep", src=x))
     for x in s["reads"]:
         if x.get("file") and x.get("answer"):
             flat = " ".join(x["answer"].replace("**", "").split())
             out.append(_item(6, "A reviewer model's reading", R.loc(x),
-                             note=flat[:320] + ("…" if len(flat) > 320 else "")))
+                             note=flat[:320] + ("…" if len(flat) > 320 else ""), kind="read", src=x))
     clear, near = R.do_reads(s["labels"])
     for x in clear:
         out.append(_item(6, "Read as a real instruction to do the flagged thing",
                          f"{R.loc(x)} (p={R.p_do(x):.2f})",
-                         note=f"Read by {x['backend']}, at p >= {R.DO_CLEAR_P}."))
+                         note=f"Read by {x['backend']}, at p >= {R.DO_CLEAR_P}.", kind="label", src=x))
     for x in near:
         out.append(_item(6, "Near the line: may be a real instruction",
                          f"{R.loc(x)} (p={R.p_do(x):.2f})",
                          note=f"Read by {x['backend']}, at p {R.DO_NEAR_P} to {R.DO_CLEAR_P}. "
                               f"Repeat reads of one line vary by about {R.DRIFT}, so each of "
-                              "these could go either way."))
+                              "these could go either way.", kind="label", src=x))
+    return unique(out)
+
+
+def unique(items) -> list[dict]:
+    """One item per place: the same headline at the same location with the same quote is one
+    place, however many findings name it (2026-10-12: three pairs on one line of the self-audit
+    were counted and listed as three places). The first item stays; the other findings go in
+    its `also`, and distinct notes are joined."""
+    out, by = [], {}
+    for it in items:
+        k = (it["stage"], it["title"], it["where"], it.get("quote"))
+        if k in by:
+            g = by[k]
+            g["also"].append(it.get("src"))
+            if it.get("note") and it["note"] not in (g.get("note") or "").split("; "):
+                g["note"] = f"{g['note']}; {it['note']}" if g.get("note") else it["note"]
+            continue
+        by[k] = {**it, "also": []}
+        out.append(by[k])
     return out
 
 
@@ -330,8 +361,11 @@ def render_page(meta, r, stamps, notes, runs_ok) -> str:
                       f'<details><summary>Technical detail</summary>{detail}</details></div></li>')
     recs_html = ("".join(f"<li>{esc(x)}</li>" for x in recs) if recs
                  else "<li>None. No finding matched a recommendation template.</li>")
+    review = ('<p class="review-link"><a href="review.html">Walk through every place one at a time</a>, '
+              'with the lines around it, and mark each one Concerned, Not concerned, or Not sure.</p>'
+              if every else "")
     return PAGE.format(
-        title=esc(f"Walkdown: {meta['repo']}"), repo=esc(meta["repo"]), source=esc(meta["source"]),
+        title=esc(f"Walkdown: {meta['repo']}"), review=review, repo=esc(meta["repo"]), source=esc(meta["source"]),
         hash=esc(f"{meta['hash_kind']} {meta['hash'][:12]}"), date=esc(meta["date"]), run=esc(meta["run"]),
         tiles="".join(tiles), trifecta=trifecta, first="".join(first), models=models, stages="".join(stages), recs=recs_html,
         nrecs=len(recs), notwhat=esc(R.NOT_WHAT))
@@ -367,6 +401,10 @@ body {{ margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.55 
 .wrap {{ max-width: 58rem; margin: 0 auto; padding-inline: 16px; padding-block: 2rem 4rem; display: grid; gap: 2.2rem; }}
 header.card {{ background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 1.6rem 1.6rem 1.3rem; }}
 .eyebrow {{ font: 600 .78rem/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }}
+.top {{ display: flex; gap: .75rem; justify-content: space-between; align-items: flex-start; }}
+.top .eyebrow {{ min-width: 0; line-height: 1.3; padding-top: .3rem; }}
+.pagelink {{ font: 600 .88rem/1.2 var(--body); color: var(--accent); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: .35rem .75rem; white-space: nowrap; flex-shrink: 0; }}
+.pagelink:hover, .pagelink:focus-visible {{ border-color: var(--accent); }}
 h1 {{ font: 700 clamp(1.9rem, 4vw, 2.6rem)/1.1 var(--display); margin: .5rem 0 .6rem; text-wrap: balance; }}
 .meta {{ font: .82rem/1.5 var(--mono); color: var(--muted); display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; overflow-wrap: anywhere; }}
 .static {{ margin: .9rem 0 0; color: var(--muted); }}
@@ -377,6 +415,8 @@ h1 {{ font: 700 clamp(1.9rem, 4vw, 2.6rem)/1.1 var(--display); margin: .5rem 0 .
 .tile-s {{ font-size: .85rem; color: var(--muted); }}
 h2 {{ font: 700 1.35rem/1.2 var(--display); margin: 0 0 .9rem; }}
 .lede {{ color: var(--muted); margin: -.4rem 0 1rem; max-width: 65ch; }}
+.review-link {{ margin: -.4rem 0 1rem; max-width: 65ch; }}
+.review-link a {{ color: var(--accent); font-weight: 600; }}
 ol, ul {{ margin: 0; padding: 0; list-style: none; }}
 .first {{ display: grid; gap: .8rem; }}
 .item {{ background: var(--sheet); border: 1px solid var(--rule); border-left: 4px solid var(--flag); border-radius: 4px; padding: .9rem 1.1rem; min-width: 0; }}
@@ -422,7 +462,7 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
 <body>
 <main class="wrap">
   <header class="card">
-    <div class="eyebrow">Walkdown report</div>
+    <div class="top"><div class="eyebrow">Walkdown report</div><a class="pagelink" href="review.html">Review each place →</a></div>
     <h1>{repo}</h1>
     <div class="meta"><span>{source}</span><span>{hash}</span><span>retrieved {date}</span><span>run {run}</span></div>
     <p class="static">Static examination only. Nothing in it was installed or run.</p>
@@ -432,6 +472,7 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
   <section>
     <h2>Things to check</h2>
     <p class="lede">Locations picked by fixed rules, in the order of the sections below. Each is a place to read; being listed does not mean something is wrong, and none is a finding against the author.</p>
+    {review}
     <ol class="first">{first}</ol>
   </section>
   {models}

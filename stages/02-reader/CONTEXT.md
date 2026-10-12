@@ -73,10 +73,10 @@ metadata), `regex` (Unicode script property), `confusable_homoglyphs`
 (confusables; check its license at pin time, TOOLING), `charset-normalizer`
 (encodings), `PyYAML`.
 
-Optional, never required: Tesseract via `pytesseract` (image OCR; PDF OCR),
-poppler via `pdf2image` (PDF render), Playwright (true HTML render), `lingua`
-(language within Latin script). Missing optional tools are reported on stderr and
-as skips.
+Optional, never required: Tesseract via `pytesseract` (image OCR). A missing Tesseract is
+reported on stderr and as skips. Planned and **not built** (2026-10-12): PDF render + OCR
+(poppler via `pdf2image`), true HTML render (Playwright), language within Latin script
+(`lingua`). Each run reports them as not built; installing those libraries changes nothing.
 
 All development and runs use the project virtualenv: `.venv/` (gitignored),
 created with `python -m venv .venv` and `.venv/Scripts/pip install -r requirements.txt`.

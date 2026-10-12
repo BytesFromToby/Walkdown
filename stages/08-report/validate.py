@@ -60,9 +60,7 @@ def optional_tools() -> str:
     have = {
         "tesseract": bool(shutil.which("tesseract")) and importlib.util.find_spec("pytesseract") is not None,
         "gitleaks": bool(shutil.which("gitleaks")),
-        "pdf2image": importlib.util.find_spec("pdf2image") is not None,
-        "playwright": importlib.util.find_spec("playwright") is not None,
-    }
+    }  # pdf2image and Playwright left out 2026-10-12: no stage uses them (not built)
     return ",".join(f"{k}={int(v)}" for k, v in sorted(have.items()))
 
 

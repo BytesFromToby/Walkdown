@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -14,6 +15,7 @@ sys.path.insert(0, str(HERE))
 import layout  # noqa: E402
 import pipeline  # noqa: E402
 import render  # noqa: E402
+import review_html  # noqa: E402
 import summary_html  # noqa: E402
 import validate  # noqa: E402
 
@@ -131,7 +133,8 @@ def main(argv=None) -> int:
 
 
 def write_reports(run_dir, meta, reports, stamps, notes, runs_ok, cap_full):
-    """summary.html, summary.md, full.md where this run's layout keeps them (layout.py)."""
+    """summary.html, review.html, summary.md, full.md where this run's layout keeps them
+    (layout.py). review.html reads back a marks.json the reader saved beside it (2026-10-12)."""
     out = layout.report_dir(run_dir)
     out.mkdir(exist_ok=True)
     (out / "summary.md").write_text(render.summary(meta, reports, stamps, notes, runs_ok),
@@ -140,6 +143,11 @@ def write_reports(run_dir, meta, reports, stamps, notes, runs_ok, cap_full):
         summary_html.render_page(meta, reports, stamps, notes, runs_ok), encoding="utf-8")
     (out / "full.md").write_text(render.full(meta, reports, stamps, notes, runs_ok, cap_full),
                                  encoding="utf-8")
+    text_dir = layout.data_dir(run_dir) / "normalized" / "text"
+    marks, err = review_html.load_marks(out / review_html.MARKS_FILE)
+    (out / "review.html").write_text(
+        review_html.render_page(meta, reports, text_dir, os.path.relpath(text_dir, out).replace(os.sep, "/"),
+                                marks, err), encoding="utf-8")
 
 
 def soft_grade_env(a) -> dict:

@@ -6,6 +6,25 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Stage 6, Claude backend: reads now run with `--safe-mode` and no setting sources. Before, the
+  user's own hooks ran during every read with the audited text in the prompt, and a CLAUDE.md could
+  reach the model (found by an outside audit; a live probe confirmed both, and confirms the fix).
+- Section 7 tells "not built yet" apart from "tool not installed". PDF page rendering, HTML as a
+  browser draws it, and language detection within Latin script have no code; they were reported as
+  missing tools, so installing the library would have hidden the gap. A PDF with no text layer is
+  always listed as unread.
+- Review page (`review.html`, next to `summary.html`): walk through every place to check, one at
+  a time, with the lines around it, the matched words highlighted, and what was flagged in plain
+  words. Mark each Concerned, Not concerned, or Not sure, with an optional note. Walkdown makes
+  no call; the marks are yours. They are kept in the browser, and "Download marks.json" saves
+  them; put the file in the run folder and a re-render brings them back. Every search pattern now
+  has a plain description. The summary and the review page link to each other at the top right.
+- A place named by several findings (three pairs on one line) is one place: one card, counted
+  once.
+- Stage 4: "don't ask hypothetical questions" (also rhetorical or leading questions, and "no need
+  to ask ...") is no longer flagged as skipping confirmation; another "don't ask" on the same line still is
+  (owner, 2026-10-12). Superpowers loses 4 hits, and with them its three "loaded only by a folder
+  or glob" places (the pressure-test prompts), whose only flagged line this was.
 - Stage 4: instruction position in long files (flagged lines past the reader window) and
   sentences repeated across files (REPORTING 4.4, 4.5).
 - Stage 4: committed-secret scan (gitleaks when installed, detect-secrets otherwise; new

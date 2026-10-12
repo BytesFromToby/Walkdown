@@ -112,9 +112,11 @@ bidirectional characters, nothing unread.
 as "Hidden when rendered, and reads like an instruction"); zero-width characters inside words;
 white-on-white or `display:none` text.
 
-**In the report.** Section 2, with hidden-plus-phrase pairs on the summary page. Optional tools
-(Tesseract for images, Playwright for true HTML rendering, Poppler for PDF pages) widen
-reading B; when one is missing, section 7 says what went unread.
+**In the report.** Section 2, with hidden-plus-phrase pairs on the summary page. Tesseract, when
+installed, reads text inside images; when it is missing, section 7 says so. Three checks the
+method calls for are not built yet: PDF pages drawn and read as images, HTML as a browser draws
+it, and language detection within Latin script. Section 7 lists them as "not built" on every
+run, apart from a missing tool, because installing a library would not add them.
 
 ---
 

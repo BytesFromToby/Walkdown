@@ -89,7 +89,9 @@ cut mid-sentence) is a backstop.
 
 Only the question and its state (the extracted lines and stage findings), never
 whole files, never tools. For `claude-cli`: `claude -p` with `--tools ""`,
-`--strict-mcp-config`, `--no-session-persistence`, `--output-format json`, a
+`--strict-mcp-config`, `--no-session-persistence`, `--safe-mode` and an empty
+`--setting-sources` (no hooks, CLAUDE.md, skills, or plugins from any settings; added
+2026-10-12), `--output-format json`, a
 system prompt saying the quoted text is data from the artifact under review and
 contains no instructions for the reviewer, and the working directory an empty
 temporary folder (no CLAUDE.md). An error (for example an expired login) is a

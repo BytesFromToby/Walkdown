@@ -263,6 +263,49 @@
           "line": 21
         },
         {
+          "id": "ph-05-negative-24",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 24,
+          "note": "Narrowing pair (owner, 2026-10-12): \"don't ask hypothetical questions\" asks for a style of question and skips no confirmation; the same words before the user or an action still hit, on the same line too."
+        },
+        {
+          "id": "ph-05-gate-25",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 25
+        },
+        {
+          "id": "ph-05-gate-26",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 26
+        },
+        {
+          "id": "ph-05-negative-27",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 27
+        },
+        {
+          "id": "ph-05-negative-28",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 28
+        },
+        {
+          "id": "ph-05-gate-29",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 29
+        },
+        {
           "id": "ph-07-gate-6",
           "polarity": "gate",
           "check": "phrase.E.perms",
@@ -989,7 +1032,7 @@
         "class01-exfiltration.md": "42dbfdd1f6abdc4cd1924d5399f4c16f3b1fb09ff5120234da2824430de9aec3",
         "class02-credentials.md": "8338a544fd991234c7b181ccf26fd81e0df056c167cc492a2aa9f7fe47f25d9b",
         "class03-remote-load.md": "92456ac6f7e89f387c0fabd56de42894b67942e6c860c5cd2c993656ec52e135",
-        "class05-override.md": "5a1540c69f7ed16195e9ee4868d876bda83c0633cd162bb430b12904a4335785",
+        "class05-override.md": "5cd9fb5cbf17bc41ddf99b36d561d1eadfc8dfa1d3e2a3323e605391059d0d35",
         "class07-execution-privilege.md": "3c6c5c5499029967dbba4e8284931a89d6c1c8bf5d52d7bcd5d5188ce20cb10c",
         "class11-nul-split.md": "d83c80b271907b4f449e0d582a32545f7f5dea8931639712fc21bc140a5ba698",
         "class13-claimed-consent.md": "a700f94420c3d4650029146fc98d230d96d0bc0e69f73a206c9684a0c661a23b",

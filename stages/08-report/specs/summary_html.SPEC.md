@@ -18,6 +18,10 @@ document (`summary.html`):
   headline, the locations, and the quoted line. The lede says being listed does not mean
   something is wrong; with nothing listed it says "Nothing to check". Items with the same stage and headline are one card listing every place
   (`grouped`). At most `MAX_FIRST` cards, then a count.
+- One item per place (`unique`, 2026-10-12): the same headline at the same location with the
+  same quote is one place however many findings name it (three pairs on one line were three).
+- A link to `review.html` at the top right of the header, always, and a line above the cards
+  when any place is listed (2026-10-12, review C21).
 - Stage 4 headlines say what matched ("Matches the wording of ...", `FAMILY`),
   never what the author meant.
 - "Stage by stage": one plain sentence per stage (`plain_status`), a pill when a

@@ -2,7 +2,7 @@
 
 The stage 8 entry point: runs stages 1 to 6 once, stamps them with the grader,
 and writes the run folder (RUN-LAYOUT) with LOG.md, 07-limits.md, and
-summary.html, summary.md, full.md (layout: specs/layout.SPEC.md).
+summary.html, review.html, summary.md, full.md (layout: specs/layout.SPEC.md).
 
 ## Inputs
 
@@ -20,7 +20,7 @@ python stages/08-report/run.py <input_dir> --repo <name> [--results <dir>] [--da
    there, then renames the folder to `<date>_<hash7>` (hash from stage 1's
    `inv.pin`), or `<date>_failed` when stage 1 failed; `-2`, `-3` when taken.
 2. Runs `validate.stamps` for stages 1 to 6 unless `--no-validate`.
-3. Writes `LOG.md`, `data/07-limits.md`, `summary.html`, `summary.md`, `full.md` (since 2026-10-02; an older run's `--rerender` keeps `report/`).
+3. Writes `LOG.md`, `data/07-limits.md`, `summary.html`, `review.html`, `summary.md`, `full.md` (since 2026-10-02; an older run's `--rerender` keeps `report/`). `review.html` (2026-10-12, `specs/review_html.SPEC.md`) reads back a `marks.json` the reader saved beside it; nothing else reads that file.
 4. Prints the run folder path on stdout.
 
 Exit 0 when every stage ran; 1 when a stage failed (documents are still written,

@@ -35,20 +35,23 @@ def eprint(*a):
     print(*a, file=sys.stderr)
 
 
-def _module_present(name: str) -> bool:
-    try:
-        __import__(name)
-        return True
-    except Exception:
-        return False
-
-
 def optional_tools() -> dict:
     ocr_ok, ocr_why = read_image.ocr_available()
-    return {"tesseract": ocr_ok, "tesseract_detail": ocr_why,
-            "pdf2image": _module_present("pdf2image"),
-            "playwright": _module_present("playwright"),
-            "lingua": _module_present("lingua")}
+    return {"tesseract": ocr_ok, "tesseract_detail": ocr_why}
+
+
+# Checks the method calls for that have no code yet (2026-10-12, an outside audit): stage 2
+# once looked for pdf2image, Playwright, and lingua and called each missing tool the reason, but
+# nothing here uses them, so installing one would have hidden the gap. Reported as not built,
+# always, apart from a missing tool, until the code exists.
+NOT_BUILT = [
+    ("PDF render + OCR", "image-only text in PDFs (text painted but missing from the text layer); "
+                         "PDF reading B is static (color, render mode, page box)"),
+    ("HTML render", "HTML as a browser draws it; HTML reading B uses static style (inline and "
+                    "<style> rules)"),
+    ("language detection", "language within Latin script; read.script covers non-Latin scripts "
+                           "only"),
+]
 
 
 def div(file, line, text, carrier, method="static-style", reading="A-only", **extra):
@@ -115,9 +118,9 @@ def read_one(rel, data, kind, tools, state):
         for d in r.divergences:
             extra = {k: v for k, v in d.items() if k not in ("text", "carrier")}
             out.append(div(rel, None, d["text"], d["carrier"], **extra))
-        if kind == "pdf" and not any(ln.strip() for ln in r.lines) and not tools["tesseract"]:
-            out.insert(0, unread(rel, "pdf has no text layer; OCR of the rendered page needs "
-                                      "poppler + tesseract (not installed)"))
+        if kind == "pdf" and not any(ln.strip() for ln in r.lines):
+            out.insert(0, unread(rel, "pdf has no text layer; rendering and OCR of PDF pages "
+                                      "is not built"))
         meta = [{"check": "read.metadata", "file": rel, "line": None, **m} for m in r.metadata]
         return out + fs + meta, (r.lines, folded)
 
@@ -145,16 +148,8 @@ def build_report(input_dir: Path, out_dir: Path | None = None) -> dict:
     if not tools["tesseract"]:
         eprint(f"note: {tools['tesseract_detail']}: images are skipped for OCR "
                "(read.divergence skip) and listed as read.unread")
-    if not (tools["pdf2image"] and tools["tesseract"]):
-        eprint("note: poppler/pdf2image + tesseract absent: PDF reading B is static "
-               "(color, render mode, page box); text painted but missing from the text "
-               "layer (image-only content) is not examined")
-    if not tools["playwright"]:
-        eprint("note: playwright absent: HTML reading B uses static style "
-               "(inline and <style> rules), not a true render")
-    if not tools["lingua"]:
-        eprint("note: lingua absent: language detection within Latin script not done "
-               "(read.script covers non-Latin scripts only)")
+    for what, covers in NOT_BUILT:
+        eprint(f"note: not built: {what}: {covers}")
 
     state = Counter()
     findings, normalized = [], {}
@@ -195,13 +190,8 @@ def build_report(input_dir: Path, out_dir: Path | None = None) -> dict:
                        if f["check"] == "read.divergence" and "carrier" in f)
     not_examined = []
     if not tools["tesseract"]:
-        not_examined.append("image OCR (tesseract)")
-    if not (tools["pdf2image"] and tools["tesseract"]):
-        not_examined.append("PDF render + OCR: image-only text in PDFs")
-    if not tools["playwright"]:
-        not_examined.append("HTML true render (static style used)")
-    if not tools["lingua"]:
-        not_examined.append("language detection within Latin script (lingua)")
+        not_examined.append("image OCR (tesseract not installed)")
+    not_examined += [f"{what} (not built)" for what, _ in NOT_BUILT]
     coverage = {
         "files": len(entries), "files_read": read_files,
         "bytes": total_bytes, "bytes_read": read_bytes,

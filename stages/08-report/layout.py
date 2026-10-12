@@ -4,7 +4,7 @@ Since 2026-10-02 a run folder puts what people read at the top and everything el
 data/:
 
     RepoResults/<repo>/<date>_<hash7>/
-      summary.html  summary.md  full.md  LOG.md
+      summary.html  review.html  summary.md  full.md  LOG.md   (marks.json once the reader saves it)
       data/   stage outputs (0N-*.json, notes), capability.json, graph.json, 07-limits.md,
               stage 6 packet and answers, normalized/ copies
 
@@ -16,7 +16,7 @@ from __future__ import annotations
 from pathlib import Path
 
 DATA = "data"
-REPORTS = ("summary.html", "summary.md", "full.md")
+REPORTS = ("summary.html", "review.html", "summary.md", "full.md")
 
 
 def is_new(run_dir) -> bool:

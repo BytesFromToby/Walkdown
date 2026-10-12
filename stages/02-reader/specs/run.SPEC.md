@@ -41,10 +41,15 @@ Within a file, findings are ordered: `read.unread`, `read.divergence`,
 
 `coverage`: `files`, `files_read`, `bytes`, `bytes_read`, `unread` (list of
 paths), `carriers` (count of divergences per carrier), `markdown_files`,
-`markdown_comments`, `optional_tools` (present or absent), and
-`not_examined` (what the missing tools left unchecked).
+`markdown_comments`, `optional_tools` (Tesseract present or absent), and
+`not_examined`: what this run left unchecked, each item saying why, "(tesseract not
+installed)" or "(not built)".
 
-stderr: notes, including each missing optional tool and what it skips.
+stderr: notes, including a missing Tesseract and what it skips, and one `note: not built:`
+line for each check in `NOT_BUILT` (PDF render + OCR, HTML render, language detection within
+Latin script), on every run (2026-10-12: these were once reported as missing tools, though no
+code uses those tools, so installing one hid the gap). A PDF with no text layer is
+`read.unread` whether or not Tesseract is installed.
 
 `--out <dir>` also writes `<dir>/normalized/text/<rel>.txt` (reading A) and
 `<dir>/normalized/folded/<rel>.txt` (each line folded), one per file with
@@ -59,8 +64,9 @@ missing or non-folder argument or a bad `--out`.
 - Print anything but the report to stdout.
 - Write inside the input folder.
 - Run anything from the input, follow a symlink, or fetch a URL.
-- Emit a skip for a check that did run (a missing lingua is a stderr note, not
-  a `read.script` skip).
+- Emit a skip for a check that did run (language detection, not built, is a stderr note,
+  not a `read.script` skip).
+- Report a check as waiting on a tool when no code would use the tool.
 
 ## Done when (each backed by a test in `tests/test_run.py`)
 
