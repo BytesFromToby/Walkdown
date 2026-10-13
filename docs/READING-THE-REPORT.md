@@ -61,15 +61,31 @@ A box is checked when at least one piece of evidence supports it, and the eviden
 that reads files, uses the web, and pushes commits has all three. The combination raises risk.
 It is not an issue on its own.
 
+Checked boxes come first, then unchecked ones. The checked boxes are colored by how many there
+are: the first green, the second yellow, the third red. Red means all three at once, the
+combination the trifecta warns about. The color never says one leg is worse than another.
+
 Under the boxes: the install grants (runs at load, injects context, persists, uses the network,
 elevated permissions), explained in [HOW-IT-WORKS.md](HOW-IT-WORKS.md#install-grants-capgrant).
 
 If stage 6 read every line cited for a leg as not an instruction (a quote, a description), a note
 says so under the box. The box stays checked: a model's read never removes a finding.
 
+### Walkdown Results Breakdown
+
+One row per stage, numbered in the method's order. Each row asks the stage's question ("What
+ships?"), says in one line what the step does, gives its result in a plain sentence, and then its
+numbers in plain words, with each term explained where it appears (the report says "folder or use
+of wildcards" for what tools call a glob): for stage 1, the count of every
+file type and script language; for stage 3, what loading by a folder or use of wildcards and a dangling reference mean. Numbers shorter than about
+500 characters are shown in the open; longer ones (usually stage 4) sit behind "More detail".
+Stage 7 splits what was not examined into not built yet, skipped in this run, and not needed here;
+the full list, with the limits that apply to every run, is behind its own toggle. A pill marks a stage that did not pass validation, and each row
+ends with its validation result.
+
 ### Things to check
 
-Cards in the order of the sections below: a tag naming the section (click it to jump to that
+Cards in the order of the breakdown above: a tag naming the section (click it to jump to that
 section's row), a headline, the places it applies to, the quoted text, and
 sometimes a note. Places with the same headline share one card.
 
@@ -78,7 +94,7 @@ sometimes a note. Places with the same headline share one card.
 | Runs commands on its own | 1 | a hook that runs whenever the host fires its event, without anyone asking |
 | Hidden when rendered, and reads like an instruction | 2 | text the model receives that a person viewing the file does not see, which also matches a phrase pattern |
 | Disguised with look-alike or invisible characters, and reads like an instruction | 2 | a line that matches a phrase pattern only once look-alike or invisible characters are folded away, so a reader skimming the raw text may not see what the model reads |
-| Nothing refers to this file / Loaded only by a folder or glob, named by nothing, and it reads like an instruction | 3 | a file a reviewer following references would not open, which also matches a phrase pattern |
+| Nothing refers to this file / Loaded only by a folder or use of wildcards, named by nothing, and it reads like an instruction | 3 | a file a reviewer following references would not open, which also matches a phrase pattern |
 | Matches the wording of ... | 4 | the text matches a phrase pattern; the quote lets you judge, and the note gives the pattern's base rate |
 | A word is defined more than one way / Redefines a safety word / An irreversible or prohibited action with no confirmation step | 4 | from stage 4's tables of definitions and guarded actions |
 | Looks like a committed secret | 4 | a line that looks like an API key or password; the value is never shown, so open the file to check it |
@@ -100,24 +116,20 @@ nothing about this one.
 data (tests, fixtures) are counted, never listed: installing the artifact does not put them in
 front of a model. They are all in `full.md`.
 
-### Model reads (experimental)
-
-When stage 6 ran with a model, its cards follow "Things to check" in their own block: sweep
-passages no pattern matched, confident "do" reads, and reads near the line. A model's reading
-can be wrong and repeat reads vary, so these are kept apart from the findings the fixed rules
-produced, and they never change them. The tile counts only the rule-based places and says how
-many model reads follow.
-
-### Stage by stage
-
-One plain sentence per stage, with a pill when the stage did not pass validation. "Technical
-detail" opens the status line from `summary.md`.
-
 ### Recommendations
 
 Suggestions for the builder, each tied to a file and line, each conditional ("if this skill does
 not need X, ..."), each naming a narrower way to do the same thing. Listed in stage order and
 never ranked: ranking by importance would be a score by another name.
+
+### Model reads (experimental)
+
+When stage 6 ran with a model, its cards come last, after the recommendations, in a section
+that starts closed; its toggle shows how many places it holds. Inside: sweep passages no pattern
+matched, confident "do" reads, and reads near the line. A model's reading can be wrong and repeat
+reads vary, so these sit apart from the findings the fixed rules produced, and they never change
+them. The tile counts only the rule-based places and says how many model reads are at the end.
+How accurate these reads measured: [MODEL-ACCURACY.md](MODEL-ACCURACY.md).
 
 ## Section 4's numbers
 
@@ -182,7 +194,7 @@ models ran:
 - **Evidence marks:** a confident read that a line is not an instruction marks it where stage 5
   cites it as evidence, and never removes it.
 
-Accuracy is measured in `pre-planning/soft/EVAL.md`.
+How accurate these reads are, and what that was measured on: [MODEL-ACCURACY.md](MODEL-ACCURACY.md).
 
 ## Worked example: Walkdown on itself
 

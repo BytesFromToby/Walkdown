@@ -45,7 +45,7 @@ WHY = {
                      "page, and the line matches the wording of an instruction.",
     "orphan+phrase": "No file in the repository refers to this one, so a reviewer following links "
                      "never reaches it. It still ships, and it matches the wording of an instruction.",
-    "dynamic+phrase": "No file names this one. It loads only because a folder or a glob pulls it in, "
+    "dynamic+phrase": "No file names this one. It loads only because a folder or use of wildcards pulls it in, "
                       "so a reviewer following links never reaches it, and it matches the wording of "
                       "an instruction.",
     "hook+phrase": "A hook runs this script when a session starts or a prompt is sent, and its output "

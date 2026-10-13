@@ -122,8 +122,8 @@ run, apart from a missing tool, because installing a library would not add them.
 
 ## Stage 3: Graph, "What loads what"
 
-**Why.** Reviewers follow references. A file that nothing names, or that only a glob pulls in,
-is a file a reviewer following references never opens.
+**Why.** Reviewers follow references. A file that nothing names, or that only a folder or use of wildcards
+(a file-name pattern like `skills/*/SKILL.md`) pulls in, is a file a reviewer following references never opens.
 
 | Check | What it records | Why it matters |
 |---|---|---|
@@ -140,8 +140,8 @@ resolve) and a handful in prose.
 **Worth a closer look.** An orphan or a file loaded only dynamically that also matches a phrase
 pattern (the summary lists these); dangling references in prose instructions.
 
-**In the report.** Section 3. The graph is incomplete by construction (a glob's targets are
-resolved as of the review), and the report says so.
+**In the report.** Section 3. The graph is incomplete by construction (what a wildcard pattern
+matches is resolved as of the review), and the report says so.
 
 ---
 
@@ -293,7 +293,7 @@ up to about 0.1 in measured repeats), so the report uses bands:
 A confident read that a line is **not** an instruction (any other label at p >= 0.8) marks that
 line where stage 5 cites it as evidence. The mark never removes the evidence or unchecks a leg.
 
-**Accuracy.** Measured, and recorded in `pre-planning/soft/EVAL.md`. Five-way labels agree
+**Accuracy.** Measured, in [MODEL-ACCURACY.md](MODEL-ACCURACY.md). Five-way labels agree
 with a hand-labeled set about half the time, and are far more reliable when confident. The sweep
 caught 11 of 12 paraphrased payloads with no false flags on 20 benign passages; that set was
 written by the same person who wrote the question, so it is a first check.
@@ -368,5 +368,5 @@ was measured; `--revalidate` measures afresh.
 | the phrase patterns | `stages/04-phrases/patterns.yaml` |
 | the trifecta and grant rules | `stages/05-capability/rules.py` |
 | what stage 6 asks a model | `stages/06-soft/softreads.yaml` |
-| the threat classes and their sources | `pre-planning/THREATS.md` |
-| stage 6 measurements | `pre-planning/soft/EVAL.md` |
+| the threat classes and their sources | `pre-planning/THREATS.md` (kept private) |
+| stage 6 measurements | [MODEL-ACCURACY.md](MODEL-ACCURACY.md) |

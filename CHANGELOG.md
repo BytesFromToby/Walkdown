@@ -6,6 +6,21 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Summary page: "Stage by stage" is now "Walkdown Results Breakdown". Each row asks its stage's
+  question, says what the step does, and shows its numbers in the open (stage 1: every file type and
+  script language); only numbers over 500 characters sit behind "Technical detail". The numbers are
+  in plain words, with no repeat of the row's sentence and each term explained (a glob, a dangling
+  reference, how text was hidden, what each install grant does). Stage 4 counts lines and says who
+  reads them; stage 7 splits not built yet, skipped, and not needed. Reports say "folder or use of
+  wildcards" instead of "glob".
+- Summary page: "Things to check" now follows "Stage by stage"; the page reads capability,
+  stage by stage, things to check, recommendations, model reads.
+- Summary page, "What it can do": checked legs first, then unchecked; the checked boxes are
+  green, yellow, red in that order, so the third check (all three at once) is the red one.
+- Summary page: model reads moved to the end, after the recommendations, in a section closed by
+  default that shows how many places it holds.
+- Model-read accuracy now has a public page, `docs/MODEL-ACCURACY.md`; the summary page and the
+  docs point there.
 - Stage 6, Claude backend: reads now run with `--safe-mode` and no setting sources. Before, the
   user's own hooks ran during every read with the audited text in the prompt, and a CLAUDE.md could
   reach the model (found by an outside audit; a live probe confirmed both, and confirms the fix).

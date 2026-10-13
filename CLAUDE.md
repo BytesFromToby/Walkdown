@@ -216,7 +216,7 @@ audited repository's author has seen theirs.
    Laya 8/14. The Claude CLI login had expired, so no relational read has run yet.
    Real-lines labeled set (119 lines from the three audited repos, 2026-09-29): Jev 44%
    overall, 11/12 at confidence >= 0.8; Laya 13%. A fifth label, `other-sense`, added.
-   See `pre-planning/soft/EVAL.md`.
+   See `docs/MODEL-ACCURACY.md` (the dated record: `pre-planning/soft/EVAL.md`).
 13. ~~Run Walkdown on Walkdown before publishing it.~~ Done 2026-10-02
    (`RepoResults/walkdown/2026-10-02_749e736`, label + sweep): every stage PASS except
    stage 2 INCOMPLETE (no Tesseract). The report is dominated by `Fixtures/` (hostile

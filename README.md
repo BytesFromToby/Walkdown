@@ -59,6 +59,7 @@ The documentation:
 | [docs/READING-THE-REPORT.md](docs/READING-THE-REPORT.md) | how to read the reports, part by part |
 | [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) | every stage and check: what it looks for, why, what to expect, where it shows |
 | [docs/RUN-FOLDER.md](docs/RUN-FOLDER.md) | every file a run leaves, LOG.md, and the raw data |
+| [docs/MODEL-ACCURACY.md](docs/MODEL-ACCURACY.md) | how accurate the optional model reads measured, and how far to trust them |
 
 ## The stages
 
@@ -191,7 +192,7 @@ fixtures are unchanged (LOG.md says when it was measured); `--revalidate` measur
 - **Stage 6 is experimental.** Model labels agree with a hand-labeled set about half the time
   overall, and are far more reliable when confident. The report lists only confident reads,
   shows a "near the line" band where repeat reads drift, and never changes a stage 1 to 5
-  finding. Measurements: `pre-planning/soft/EVAL.md`.
+  finding. Measurements: [docs/MODEL-ACCURACY.md](docs/MODEL-ACCURACY.md).
 - **Secrets are found, never shown.** A line that looks like a committed secret is reported by
   location; its value never appears in a report.
 

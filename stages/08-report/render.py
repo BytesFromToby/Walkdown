@@ -196,7 +196,7 @@ def _s3(r):
     return (f"{n(entries, 'entry point')}. {n(orph, 'orphan')}. "
             f"{n(len(dang), 'dangling reference')}{' (' + cs + ')' if cs else ''}. "
             f"{n(dyn, 'dynamic load')}: {n(loaded, 'file')} loaded only through one (named by "
-            f"nothing), {n(mentioned, 'file')} reached only through a folder or glob mention."
+            f"nothing), {n(mentioned, 'file')} reached only through a mention of a folder or wildcards."
             f"{tail}")
 
 
@@ -222,7 +222,7 @@ def benign_share(r) -> str:
     return (f"of {len(labels)} lines a model reads, {labels[0].get('backend')} labels {c['do']} as "
             f"an instruction to do the matched action and {other} as something else"
             + (f" ({rest})" if rest else "") + "; model labels, measured accuracy in "
-            "pre-planning/soft/EVAL.md.")
+            "docs/MODEL-ACCURACY.md.")
 
 
 AUDIENCE_GROUP = {"model": "read by a model", "subagent": "read by a model", "tool": "in scripts",
@@ -1001,8 +1001,8 @@ def _f3(r, _):
     hist = collections.Counter((d["via"], d["depth"]) for d in depth)
     hs = "; ".join(f"{via} depth {k}: {v}" for (via, k), v in sorted(hist.items()))
     L = [f"Depth histogram (static = reached by direct references; dynamic = only through a "
-         f"load: a folder a config names, a code scan, an instruction-file glob; mention = only "
-         f"through a folder or glob named elsewhere): {hs or 'none'}.", ""]
+         f"load: a folder a config names, a code scan, wildcards in an instruction file; mention = only "
+         f"through a folder or wildcards named elsewhere): {hs or 'none'}.", ""]
     L += _list("Entry points used", fnd(r, "03-graph", "graph.entry"),
                lambda f: f"{f['file']} ({f.get('kind')})")
     L += _list("Orphans (reachable from no entry point)", fnd(r, "03-graph", "graph.orphan"),
@@ -1010,7 +1010,7 @@ def _f3(r, _):
     L += _list("Files loaded only through a dynamic load (named by nothing)",
                [d for d in depth if d.get("via") == "dynamic"],
                lambda d: f"{d['file']} (depth {d['depth']}, from {d.get('from')})")
-    L += _list("Files reached only through a folder or glob mention (not a load)",
+    L += _list("Files reached only through a mention of a folder or wildcards (not a load)",
                [d for d in depth if d.get("via") == "mention"],
                lambda d: f"{d['file']} (depth {d['depth']}, from {d.get('from')})")
     L += _list("Dynamic loads", fnd(r, "03-graph", "graph.dynamic"),

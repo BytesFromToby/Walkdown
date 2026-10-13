@@ -24,7 +24,7 @@ def test_page_structure_and_theme_tokens():
     assert h.startswith("<!doctype html>") and "<title>Walkdown: demo</title>" in h
     assert h.count('<li class="stage" id="stage-') == 7
     assert '@media (prefers-color-scheme: dark)' in h and ':root[data-theme="dark"]' in h
-    assert "Things to check" in h and "Stage by stage" in h
+    assert "Things to check" in h and "Walkdown Results Breakdown" in h
 
 
 def test_text_is_escaped():
@@ -91,6 +91,103 @@ def test_base_rates_and_near_the_line_cards(monkeypatch):
     assert "Read as a real instruction to do the flagged thing" not in h
 
 
+def test_page_order():
+    """Owner, 2026-10-12: capability, stage by stage, things to check, recommendations, model reads."""
+    h = page(_tr._sweep_reports())
+    marks = ['<section class="trifecta"', "<h2>Walkdown Results Breakdown</h2>", "<h2>Things to check</h2>",
+             "<h2>Recommendations", '<section class="models">']
+    assert [h.index(m) for m in marks] == sorted(h.index(m) for m in marks)
+    assert "in the order of the stages above" in h
+
+
+def test_breakdown_rows_question_description_and_open_numbers():
+    """Owner, 2026-10-12: each row is a question, what the step does, its result, and its numbers
+    in the open; numbers over OPEN_LIMIT characters sit behind a toggle."""
+    import re
+    r = reports()
+    r["01-inventory"]["findings"][0]["extensions"] = {"md": 3, "sh": 2, "": 1}
+    r["01-inventory"]["findings"][0]["script_languages"] = {"bash": ["a.sh", "b.sh"]}
+    h = page(r)
+    rows = re.findall(r'<li class="stage" id="stage-\d">.*?</li>(?=<li class="stage"|</ol>)', h, re.S)
+    assert len(rows) == 7
+    one = rows[0]
+    assert "<h3>What ships? </h3>" in one and summary_html.STAGE_DESC["01-inventory"] in one
+    assert '<div class="facts">' in one and "Technical detail" not in one
+    assert "File types: md 3, sh 2, no extension 1. Scripts: bash 2." in one
+    assert "Checked against its test fixtures" in one
+    seven = rows[6]
+    assert "What was not examined?" in seven
+    long_rows = [x for x in rows if "<details><summary>" in x]
+    open_rows = [x for x in rows if '<div class="facts">' in x]
+    assert long_rows and open_rows  # a row with nothing past its sentence shows no numbers block
+    for x in open_rows:
+        facts = re.search(r'<div class="facts">(.*?)</div>', x, re.S).group(1)
+        assert len(re.sub(r"<[^>]+>", "", facts)) < summary_html.OPEN_LIMIT + 50  # escaped text, roughly
+
+
+def test_open_numbers_in_plain_words():
+    """Owner, 2026-10-12: the open numbers repeat nothing and explain their terms ("What is a
+    glob? What is a dangling reference?"); internal names stay out of them."""
+    import re
+    r = reports()
+    r["02-reader"]["findings"].append({"check": "read.divergence", "file": "a.md", "line": 3,
+                                       "reading": "A-only", "text": "x", "carrier": "comment",
+                                       "method": "static-style"})
+    r["03-graph"]["findings"] += [
+        {"check": "graph.dangling", "file": "a.md", "line": 2, "target": "docs/x.md", "context": "prose"},
+        {"check": "graph.dynamic", "file": "a.md", "line": 4, "pattern": "skills/*", "resolves": [],
+         "source": "glob", "load": True}]
+    r["05-capability"]["findings"].append({"check": "cap.grant", "file": None, "line": None,
+                                           "grant": "exec-at-load", "evidence": []})
+    h = page(r)
+    breakdown = h[h.index("Walkdown Results Breakdown"):h.index("<h2>Things to check</h2>")]
+    open_text = " ".join(re.findall(r'<div class="facts">(.*?)</div>', breakdown, re.S))
+    assert "Where they differ: hidden comments 1." in open_text
+    assert ("1 dangling reference: file paths written in the repository that point at files not "
+            "in it (1 in prose).") in open_text
+    assert "runs commands as soon as it loads" in open_text
+    assert "a file-name pattern, like skills/*/SKILL.md" in breakdown
+    for jargon in ("orphan", "divergence", "exec-at-load", "folding", "Graph incomplete"):
+        assert jargon not in open_text
+
+
+def test_rows_4_and_7_in_plain_words():
+    """Owner, 2026-10-12: row 4 counts lines and says who reads them; row 7 splits not built,
+    skipped, and not needed, with the full list behind a toggle; "glob" reads "folder or use of
+    wildcards"."""
+    r = reports()
+    r["01-inventory"]["findings"].append({"check": "inv.file", "file": "docs/a.html", "line": None, "ext": "html"})
+    r["04-phrases"]["findings"].append({"check": "cond.branch", "file": "SKILL.md", "line": 20,
+                                        "kind": "harness", "kinds": ["harness"], "condition": "if Codex",
+                                        "body": "run x", "quote": "If you are in Codex, run x."})
+    notes = {"02-reader": ["not built: HTML render: HTML as a browser draws it; HTML reading B uses static style"]}
+    h = summary_html.render_page(META, r, PASS, notes, set(r))
+    four = h[h.index('id="stage-4"'):h.index('id="stage-5"')]
+    assert "2 lines match the wording of a risky instruction." in four
+    assert "Matches by kind: reaching out" in four and "Who reads those lines: a model 2." in four
+    assert "Conditions that change what it does: 1 by which AI tool runs it." in four
+    seven = h[h.index('id="stage-7"'):h.index("<h2>Things to check</h2>")]
+    assert "Not built yet: HTML as a browser draws it." in seven
+    assert "<details><summary>Every limit, including those of every run (" in seven
+    assert " glob" not in h.lower()
+
+
+def test_checked_legs_first_colored_by_position():
+    """Owner, 2026-10-12: checked legs before unchecked; the first, second, and third checked
+    box are green, yellow, red, whichever legs they are."""
+    import re
+    h = summary_html._trifecta({"private-data": False, "untrusted-content": True, "external-comms": True})
+    rows = re.findall(r'<li class="leg (on|off)"(?: data-n="(\d)")?>.*?leg-name">([^<]+)', h)
+    assert rows == [("on", "1", "Takes outside input"), ("on", "2", "Sends data out"),
+                    ("off", "", "Reads your data")]
+    all3 = summary_html._trifecta({k: True for k in ("private-data", "untrusted-content", "external-comms")})
+    assert [n for _, n, _ in re.findall(r'<li class="leg (on)" data-n="(\d)">.*?leg-name">([^<]+)', all3)] == ["1", "2", "3"]
+    p = page(reports(legs=(True, True, True)))
+    for token in ("--leg-1:", "--leg-2:", "--leg-3:"):
+        assert p.count(token) == 3  # light, dark by system setting, dark by toggle
+    assert '.leg.on[data-n="3"] .box svg rect' in p
+
+
 def test_marked_leg_note_keeps_the_box_checked():
     h = summary_html._trifecta({"untrusted-content": True}, ["untrusted-content"])
     assert "The box stays checked" in h and 'aria-label="yes"' in h
@@ -114,12 +211,16 @@ def test_sweep_near_the_line_card():
 
 
 def test_model_reads_have_their_own_block():
+    """Last on the page, after the recommendations, closed by default (owner, 2026-10-12)."""
     h = page(_tr._sweep_reports())
-    first = h[h.index("<h2>Things to check</h2>"):h.index("<h2>Stage by stage</h2>")]
-    main, models = first.split("<h2>Model reads (experimental)</h2>")
+    main = h[h.index("<h2>Things to check</h2>"):h.index("<h2>Recommendations")]
+    models = h[h.index('<section class="models">'):h.index("<footer>")]
+    assert h.index("<h2>Recommendations") < h.index('<section class="models">')
+    assert "<details><summary><h2>Model reads (experimental)</h2>" in models  # no `open`
+    assert '<span class="count">2 places</span>' in models  # a sweep passage and a "do" read
     assert "No pattern matched, but a model read this as an instruction" in models
-    assert "Stage 6" not in main and "these never change the findings above" in models
-    assert "model reads below" in h
+    assert "No pattern matched" not in main and "these never change the findings above" in models
+    assert "model reads at the end" in h
 
 
 def test_no_model_block_without_stage6_reads():
