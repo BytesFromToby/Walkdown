@@ -81,6 +81,10 @@ def load(path=DEFAULT) -> dict:
     sp = doc.get("claude_system_prompt")
     _need(sp, "claude_system_prompt", "text")
 
+    pin = doc.get("pinpoint")
+    if pin is not None:
+        _need(pin, "pinpoint", "system", "question")
+
     return {
         "answer_cap": cap,
         "label": {"question": label["question"].strip(), "source": label["source"],
@@ -97,4 +101,7 @@ def load(path=DEFAULT) -> dict:
             "options": {k: {"what": v["what"].strip(), "not_for": v["not_for"].strip(),
                             "examples": list(v["examples"]), "source": v["source"]}
                         for k, v in sweep["options"].items()}},
+        "pinpoint": None if pin is None else {
+            "system": pin["system"].strip(), "question": pin["question"].strip(),
+            "source": pin["source"]},
     }

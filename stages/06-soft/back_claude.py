@@ -31,14 +31,14 @@ class ClaudeCLI:
         self.cost_usd = 0.0
         self._stop = None
 
-    def command(self, exe: str) -> list[str]:
+    def command(self, exe: str, system: str | None = None) -> list[str]:
         # --safe-mode and no setting sources (2026-10-12, an outside audit): without them the
         # user's own hooks ran during every read, with the audited text in the prompt, and a
         # CLAUDE.md reached the model. Auth and model selection still work in safe mode.
         return [exe, "-p", "--tools", "", "--strict-mcp-config", "--no-session-persistence",
                 "--safe-mode", "--setting-sources", "",
                 "--output-format", "json", "--model", self.model,
-                "--system-prompt", self.data["claude_system_prompt"]["text"]]
+                "--system-prompt", system or self.data["claude_system_prompt"]["text"]]
 
     def prompt(self, q) -> str:
         return (f"QUESTION: {q['question']}\n\n"
@@ -48,9 +48,10 @@ class ClaudeCLI:
                 f"Answer in plain prose, at most {self.data['answer_cap']} characters.\n")
 
     def _one(self, exe, q) -> dict:
-        cmd = self.command(exe)
+        cmd = self.command(exe, q.get("_system"))
         prompt = q.get("_prompt") or self.prompt(q)
-        shown = cmd[:cmd.index("--system-prompt") + 1] + ["<softreads.yaml claude_system_prompt>"]
+        shown = cmd[:cmd.index("--system-prompt") + 1] + [
+            "<softreads.yaml pinpoint.system>" if q.get("_system") else "<softreads.yaml claude_system_prompt>"]
         request = {"command": shown, "stdin": prompt}
         base = {"qid": q["qid"], "backend": NAME}
         if self._stop:
@@ -148,3 +149,18 @@ class ClaudeCLI:
             return [{"qid": q["qid"], "backend": NAME, "skipped": "claude-cli: not installed"}
                     for q in questions]
         return [self._one(exe, q) for q in questions]
+
+    def pinpoint(self, questions) -> list[dict]:
+        """Raw answers to pinpoint questions (pinpoint.py builds them, with `_prompt` and
+        `_system`, and parses the answers). Same isolation as every read; 4 in parallel."""
+        questions = list(questions)
+        if not questions:
+            return []
+        exe = self.which("claude")
+        if not exe:
+            return [{"qid": q["qid"], "backend": NAME, "skipped": "claude-cli: not installed"}
+                    for q in questions]
+        from concurrent.futures import ThreadPoolExecutor
+        workers = max(1, int(os.environ.get("WALKDOWN_SOFT_CLAUDE_WORKERS", "4")))
+        with ThreadPoolExecutor(workers) as ex:
+            return list(ex.map(lambda q: self._one(exe, q), questions))

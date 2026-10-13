@@ -3,7 +3,7 @@
     python walkdown.py <path or git URL> [--name NAME] [--fresh | --keep]
     python walkdown.py diff <old run folder> <new run folder>
                        [--label jev|laya|claude-cli] [--compare ...] [--relational claude-cli]
-                       [--sweep jev] [--both]
+                       [--sweep jev] [--pinpoint claude-cli] [--both]
 
 A git URL is cloned (shallow) into ReposToExamine/<name>, or an earlier clone of it updated
 to the latest commit; a path is audited where it is. The
@@ -208,7 +208,7 @@ def main(argv=None) -> int:
     ap.add_argument("--fresh", action="store_true", help="delete an earlier clone and clone again")
     ap.add_argument("--keep", action="store_true",
                     help="audit an earlier clone as it is, without updating it")
-    for k in ("label", "compare", "relational", "sweep"):
+    for k in ("label", "compare", "relational", "sweep", "pinpoint"):
         ap.add_argument(f"--{k}")
     ap.add_argument("--both", action="store_true")
     ap.add_argument("--revalidate", action="store_true",
@@ -225,7 +225,7 @@ def main(argv=None) -> int:
         print(f"error: not a folder or a git URL: {a.target}", file=sys.stderr)
         return 2
     cmd = [python_exe(), str(STAGE8 / "run.py"), str(target), "--repo", name]
-    for k in ("label", "compare", "relational", "sweep"):
+    for k in ("label", "compare", "relational", "sweep", "pinpoint"):
         if getattr(a, k):
             cmd += [f"--{k}", getattr(a, k)]
     if a.both:

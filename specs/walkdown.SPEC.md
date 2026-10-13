@@ -5,7 +5,7 @@ The front door: one command from a folder or a git URL to a finished run and a b
 ## Inputs
 
 `python walkdown.py <target> [--name NAME] [--fresh | --keep] [--label B] [--compare B]
-[--relational B] [--sweep B] [--both] [--revalidate]`, `python walkdown.py --version`,
+[--relational B] [--sweep B] [--pinpoint B] [--both] [--revalidate]`, `python walkdown.py --version`,
 `python walkdown.py diff <old run> <new run>`
 
 - `target`: a folder, or a git URL (`http(s)://`, `git@`, `ssh://`, or ending in `.git`,

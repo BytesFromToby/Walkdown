@@ -211,3 +211,86 @@ def test_one_card_for_one_place_named_by_several_findings():
     assert len(ps[0]["also"]) == 1
     h = summary_html.render_page(META, r, {}, {}, set(r))
     assert '<div class="tile-v">1</div><div class="tile-l">places to check</div>' in h
+
+
+def test_model_read_card_says_what_the_model_said_first_in_plain_words(tmp_path):
+    """Owner, 2026-10-13: a model-read card opens with what the model said and how sure it was,
+    then how far to trust it; no "stage 6", and the caveat is not filed under "What was flagged"."""
+    d = skill_text(tmp_path, numbered(60))
+    h = page(with_sweep(reports(), 30, 50), text_dir=d)
+    card = next(c for c in cards(h) if "SKILL.md:30-50" in c)
+    said = card.index("What the model said:")
+    assert said < card.index('<pre class="ctx">')
+    assert ("Read by jev as telling the reader to: act without asking the user, or keep something "
+            "from them, with a <b>0.90</b> score.") in card
+    assert "you are the check" in card and "stage 6" not in card.lower()
+    where = card[card.index('<div class="where">'):card.index("What the model said:")]
+    assert "original" not in where and "(p=" not in where
+    flagged = card[card.index("What was flagged"):] if "What was flagged" in card else ""
+    assert "you are the check" not in flagged and "act without asking" not in flagged
+
+
+def test_what_was_flagged_sits_above_the_text_on_every_card(tmp_path):
+    d = skill_text(tmp_path, numbered(20, {12: IGNORE["quote"]}))
+    for card in cards(page(text_dir=d)):
+        if "What was flagged" in card and '<pre class="ctx">' in card:
+            assert card.index("What was flagged") < card.index('<pre class="ctx">')
+
+
+
+def _pinned(r, line=33, end=None, also=(), verified=True):
+    r["06-soft"]["findings"].append({
+        "check": "soft.pinpoint", "file": "SKILL.md", "line": 30, "end_line": 50,
+        "qid": "pin:sweep:SKILL.md:30", "sweep_qid": "sweep:SKILL.md:30", "backend": "claude-cli",
+        "verified": verified, "pin_line": line, "pin_end": end or line, "quote": "line 33 text",
+        "plain": "It tells the agent to go on without asking.", "also": list(also)})
+    return r
+
+
+def _sweep_card(h, where="SKILL.md:30-50"):
+    return next(c for c in cards(h) if where in c)
+
+
+def test_pinpoint_names_the_line_and_only_it_is_shaded(tmp_path):
+    import re
+    d = skill_text(tmp_path, numbered(60))
+    r = _pinned(with_sweep(reports(), 30, 50), also=[{"line": 38, "line_end": 38, "quote": "x"}])
+    card = _sweep_card(page(r, text_dir=d))
+    assert "Where in the passage:" in card and "Line 33: “line 33 text”" in card
+    assert "It tells the agent to go on without asking." in card and "two models" in card
+    shaded = [int(x) for x in re.findall(r'<span class="ln t"><span class="n">(\d+)</span>', card)]
+    assert shaded == [33, 38]
+    far = _sweep_card(page(_pinned(with_sweep(reports(), 30, 50), also=[{"line": 49, "line_end": 49, "quote": "far"}]), text_dir=d))
+    assert "line 49: " in far and '<span class="n">49</span>' not in far  # listed, beyond the view
+    assert '<span class="n">30</span>' in card and "above in this passage" not in card
+
+
+def test_pinpoint_far_down_opens_the_view_there(tmp_path):
+    d = skill_text(tmp_path, numbered(60))
+    card = _sweep_card(page(_pinned(with_sweep(reports(), 30, 50), line=46, end=47), text_dir=d))
+    assert "13 lines above in this passage." in card and "Lines 46-47" in card
+    assert '<span class="n">43</span>' in card and '<span class="n">42</span>' not in card
+
+
+def test_unverified_pinpoint_is_not_shown(tmp_path):
+    d = skill_text(tmp_path, numbered(60))
+    card = _sweep_card(page(_pinned(with_sweep(reports(), 30, 50), verified=False), text_dir=d))
+    assert "Where in the passage" not in card and "its quote was" in card
+    assert "one model&#x27;s reading" in card
+
+
+def test_one_more_line_is_singular(tmp_path):
+    d = skill_text(tmp_path, numbered(60))
+    end = 30 + RV.MAX_SPAN
+    card = _sweep_card(page(with_sweep(reports(), 30, end), text_dir=d), f"SKILL.md:30-{end}")
+    assert "1 more line in this passage; open the file to read it." in card
+
+
+def test_pinpoint_floor_matches_the_report_band():
+    import importlib.util
+    from pathlib import Path as _P
+    spec = importlib.util.spec_from_file_location(
+        "walkdown_pinpoint", _P(__file__).resolve().parents[2] / "06-soft" / "pinpoint.py")
+    pp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(pp)
+    assert pp.MIN_P == RV.R.SWEEP_NEAR_P

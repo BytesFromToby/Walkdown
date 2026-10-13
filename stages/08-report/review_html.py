@@ -61,8 +61,11 @@ WHY = {
                          "same step.",
 }
 WHY_SAYS_NOTE = {"hook+phrase"}  # kinds whose WHY already says what the summary's note says
-MODEL_NOTE = ("A model's reading, from the optional stage 6. A model can be wrong, and repeat "
-              "reads of one line vary; this never changes the findings.")
+PIN_NOTE = ("These are two models' readings (one flagged the passage, a second pointed at the "
+            "line), not a pattern match.")
+MODEL_NOTE = ("This is one model's reading, not a pattern match. Models can be wrong, and reading "
+              "the same passage again can give a different answer. Nothing checks it after the "
+              "model: you are the check. It does not change any other finding.")
 
 
 def esc(s) -> str:
@@ -126,6 +129,7 @@ def places(r) -> list[dict]:
     """One place per summary item, in its order: deterministic places, then model reads."""
     qpats = _question_patterns(r)
     hits = _hit_index(r)
+    pins = {f.get("sweep_qid"): f for f in R.fnd(r, "06-soft", "soft.pinpoint") if "skipped" not in f}
     out = []
     for it in S.first_items(r):  # one item per place already (summary_html.unique)
         f, line, end = _file_line(it)
@@ -134,7 +138,8 @@ def places(r) -> list[dict]:
         for h in hits.get((f, line), []):
             matches += [m for m in h.get("matches") or [] if not pats or m.get("pattern") in pats]
         out.append({**it, "id": place_id(it), "file": f, "line": line, "end_line": end,
-                    "patterns": pats, "matches": matches, "model": it["stage"] == 6})
+                    "patterns": pats, "matches": matches, "model": it["stage"] == 6,
+                    "pin": pins.get((it.get("src") or {}).get("qid")) if it.get("kind") == "sweep" else None})
     return out
 
 
@@ -227,18 +232,33 @@ def context_html(p, lines, secret: bool) -> str:
             return ""
         return f'<pre class="ctx">{_row("▶", render_line(quote, _spans(quote, p["matches"]), FOCUS_CAP), True)}</pre>'
     end = min(end or line, len(lines))
-    shown = min(end, line + MAX_SPAN - 1)  # a long passage shows its first MAX_SPAN lines
-    lo, hi = max(1, line - CONTEXT), min(len(lines), shown + (CONTEXT if shown == end else 0))
-    rows = []
+    pin = p.get("pin") or {}
+    spans = ([(pin["pin_line"], pin.get("pin_end") or pin["pin_line"])]
+             + [(a["line"], a.get("line_end") or a["line"]) for a in pin.get("also") or []]
+             if pin.get("verified") and pin.get("pin_line") is not None else [])
+    if spans:  # a pinpointed passage opens around the named lines, and only they are shaded
+        first = max(line, min(s for s, _ in spans) - CONTEXT)
+        last = min(end, max(e for _, e in spans) + CONTEXT, first + MAX_SPAN - 1)
+        lo, hi, shown = first, last, last
+        if first > line:
+            rows = [_row("", f'<span class="cut">{esc(R.n(first - line, "line"))} above in this '
+                             f'passage.</span>', False)]
+        else:
+            rows = []
+    else:
+        shown = min(end, line + MAX_SPAN - 1)  # a long passage shows its first MAX_SPAN lines
+        lo, hi = max(1, line - CONTEXT), min(len(lines), shown + (CONTEXT if shown == end else 0))
+        rows = []
     for n in range(lo, hi + 1):
         text = lines[n - 1].rstrip("\r")
-        target = line <= n <= shown
+        target = (any(s <= n <= e for s, e in spans) if spans else line <= n <= shown)
         body = (render_line(text, _spans(text, p["matches"]) if n == line else (), FOCUS_CAP)
                 if target else render_line(text))
         rows.append(_row(str(n), body, target))
     if shown < end:
-        rows.append(_row("", f'<span class="cut">{end - shown} more lines in this passage; '
-                             f'open the file to read them.</span>', False))
+        rows.append(_row("", f'<span class="cut">{esc(R.n(end - shown, "more line"))} in this '
+                             f'passage; open the file to read {"it" if end - shown == 1 else "them"}.</span>',
+                         False))
     return f'<pre class="ctx">{"".join(rows)}</pre>'
 
 
@@ -251,7 +271,9 @@ def _row(num: str, body: str, target: bool) -> str:
 # ---------------------------------------------------------------------------- the page
 
 
-def _links(p, text_href, source) -> str:
+def _links(p, text_href) -> str:
+    """The location, linked to the run's own copy of the text. No link to the original file and,
+    on a model read, no "(p=...)": the score is in "What the model said" (owner, 2026-10-13)."""
     f = p.get("file")
     if not f:
         return ""
@@ -259,19 +281,14 @@ def _links(p, text_href, source) -> str:
     if p.get("end_line") and p.get("line") is not None and p["end_line"] != p["line"]:
         where += f"-{p['end_line']}"
     extra = p["where"][len(where):].strip() if p["where"].startswith(where) else ""
+    if p["model"]:
+        extra = ""
     out = []
     if text_href:
         out.append(f'<a href="{esc(text_href.rstrip("/") + "/" + urlquote(f) + ".txt")}" '
                    f'title="The text this run read, kept in the run folder">{esc(where)}</a>')
     else:
         out.append(f"<span>{esc(where)}</span>")
-    try:
-        if source and Path(source).is_absolute():
-            uri = Path(source).as_uri().rstrip("/") + "/" + urlquote(f)
-            out.append(f'<a class="orig" href="{esc(uri)}" title="The file in {esc(source)}; it may '
-                       f'have changed since this run">original</a>')
-    except ValueError:
-        pass
     tail = f' <span class="muted">{esc(extra)}</span>' if extra else ""
     return f'<div class="where">{" · ".join(out)}{tail}</div>'
 
@@ -282,20 +299,55 @@ def _flagged(p) -> str:
     why = WHY.get(p.get("kind"))
     if why:
         rows.insert(0, f"<li>{esc(why)}</li>")
-    if p.get("note") and p.get("kind") not in WHY_SAYS_NOTE:
+    if p.get("note") and p.get("kind") not in WHY_SAYS_NOTE and not p["model"]:
         rows.append(f'<li class="muted">{esc((p.get("lead") or "") + p["note"])}</li>')
     if p.get("kind") == "term.conflict":
         defs = (p.get("src") or {}).get("definitions") or []
         rows += [f'<li class="muted">Defined at {esc(d.get("file"))}:{esc(d.get("line"))}: '
                  f'“{esc(str(d.get("text", "")).strip())}”</li>' for d in defs]
-    if p["model"]:
-        rows.append(f'<li class="muted">{esc(MODEL_NOTE)}</li>')
     if not rows:
         return ""
-    return f'<div class="flagged"><h3>What was flagged</h3><ul>{"".join(rows)}</ul></div>'
+    return f'<div class="flagged"><h3>What was flagged:</h3><ul>{"".join(rows)}</ul></div>'
 
 
-def _card(p, k, n, lines, secret, text_href, source) -> str:
+def _sure(p):
+    """How sure the model was, 0 to 1, when the read carries a number."""
+    src = p.get("src") or {}
+    if p.get("kind") == "sweep" and src.get("p_any") is not None:
+        return src["p_any"]
+    if p.get("kind") == "label":
+        return R.p_do(src)
+    return None
+
+
+def _model_said(p) -> str:
+    """Top of a model-read card (owner, 2026-10-13): what the model said comes first, then how
+    far to trust it, in plain words; the stage number means nothing to a reader."""
+    said = ((p.get("lead") or "") + (p.get("note") or "")).rstrip(". ")
+    sure = _sure(p)
+    score = f", with a <b>{sure:.2f}</b> score" if sure is not None else ""
+    note = esc(MODEL_NOTE)
+    pin, add = p.get("pin"), ""
+    if pin and pin.get("verified") and pin.get("pin_line") is not None:
+        span = (f"Line {pin['pin_line']}" if pin.get("pin_end") in (None, pin["pin_line"])
+                else f"Lines {pin['pin_line']}-{pin['pin_end']}")
+        also = "".join(f'<li>line {esc(a["line"])}: “{esc(a["quote"])}”</li>' for a in pin.get("also") or [])
+        add = (f'<h3>Where in the passage:</h3><p>{span}: “{esc(pin["quote"])}”</p>'
+               f'<h3>In plain words:</h3><p>{esc(pin.get("plain"))}</p>'
+               + (f'<p class="muted">Also close:</p><ul class="muted">{also}</ul>' if also else ""))
+        note = esc(PIN_NOTE + MODEL_NOTE[len("This is one model's reading, not a pattern match."):])
+    elif pin and pin.get("verified"):
+        add = (f'<h3>Second read:</h3><p>{esc(pin.get("plain"))}</p>'
+               '<p class="muted">The second model found no line that does this. The place stays '
+               'listed; you are still the check.</p>')
+    elif pin:
+        add = ('<p class="muted">A second model was asked which line does this, but its quote was '
+               'not found in the file, so its answer is not shown.</p>')
+    return (f'<div class="said"><h3>What the model said:</h3><p>{esc(said)}{score}.</p>{add}'
+            f'<p class="muted">{note}</p></div>')
+
+
+def _card(p, k, n, lines, secret, text_href) -> str:
     tag = esc(S.PLAIN_STAGE[R.ORDER[p["stage"] - 1]])
     model = '<span class="tag model">Model read · experimental</span>' if p["model"] else ""
     marks = "".join(f'<button type="button" class="mark" data-mark="{key}" aria-pressed="false">'
@@ -307,8 +359,9 @@ def _card(p, k, n, lines, secret, text_href, source) -> str:
             f'<div class="place-h"><span class="tag">{tag}</span>{model}'
             f'<span class="num">Place {k} of {n}</span></div>'
             f'<h2>{esc(p["title"])}</h2>'
-            f'{_links(p, text_href, source) or plain_where}'
-            f'{context_html(p, lines, secret)}{_flagged(p)}'
+            f'{_links(p, text_href) or plain_where}'
+            f'{_model_said(p) if p["model"] else ""}'
+            f'{_flagged(p)}{context_html(p, lines, secret)}'  # what was flagged above the text (owner, 2026-10-13)
             f'<div class="marks" role="group" aria-label="Your mark">{marks}</div>'
             f'<label class="note-l">Note (optional)<textarea class="note" rows="2"></textarea></label>'
             f'</article>')
@@ -362,7 +415,7 @@ def render_page(meta, r, text_dir=None, text_href=None, marks=None, marks_error=
         if p.get("file") not in cache:
             cache[p.get("file")] = read_lines(text_dir, p.get("file"))
         cards.append(_card(p, k, len(ps), cache[p.get("file")], p.get("file") in secret,
-                           text_href, source))
+                           text_href))
     n_det = sum(1 for p in ps if not p["model"])
     n_mod = len(ps) - n_det
     lede = (f"Walkdown flagged {R.n(n_det, 'place')} in this repository"
@@ -466,7 +519,6 @@ details.index code {{ font-size: .75rem; color: var(--muted); }}
 .place h2 {{ font: 600 1.15rem/1.3 var(--body); margin: .6rem 0 .2rem; }}
 .where {{ font: .82rem/1.5 var(--mono); color: var(--muted); overflow-wrap: anywhere; }}
 .where a {{ color: var(--accent); }}
-.where a.orig {{ color: var(--muted); }}
 pre.ctx {{ margin: .7rem 0 0; padding: .6rem 0; background: var(--quote-bg); border-radius: 4px; font: .8rem/1.6 var(--mono); white-space: pre-wrap; }}
 .ln {{ display: grid; grid-template-columns: max-content minmax(0, 1fr); padding: 0 .8rem 0 0; }}
 .ln .tx {{ overflow-wrap: anywhere; }}
@@ -475,7 +527,9 @@ pre.ctx {{ margin: .7rem 0 0; padding: .6rem 0; background: var(--quote-bg); bor
 mark {{ background: var(--hit); color: inherit; border-radius: 2px; padding: 0 1px; }}
 .inv {{ font-size: .7rem; border: 1px solid var(--flag); color: var(--flag); border-radius: 3px; padding: 0 2px; margin: 0 1px; }}
 .cut {{ color: var(--muted); font-style: italic; }}
-.flagged h3 {{ font: 600 .95rem/1.3 var(--body); margin: .9rem 0 .3rem; }}
+.flagged h3, .said h3 {{ font: 600 .95rem/1.3 var(--body); margin: .9rem 0 .3rem; }}
+.said p {{ margin: .2rem 0; max-width: 72ch; }}
+.said h3, .flagged h3 {{ text-decoration: underline; text-underline-offset: .2em; }}
 .flagged ul {{ margin: 0; padding-left: 1.2rem; display: grid; gap: .3rem; max-width: 72ch; }}
 .pid {{ font: .72rem var(--mono); color: var(--muted); }}
 .marks {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: 1rem; }}

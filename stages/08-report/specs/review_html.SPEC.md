@@ -43,15 +43,23 @@ an old run) says the pattern no longer exists.
   (experimental)"), the three marks with one line each, an index of every place with its mark,
   and whether a saved `marks.json` was loaded (with how many saved marks match no place).
 - One card per place, in the summary's order: section tag in plain words, "Place k of N", the
-  summary's headline, the location linked to the run's own copy of the text (and the original
-  file, which may have changed since), the flagged line with `CONTEXT` lines either side,
+  summary's headline, the location linked to the run's own copy of the text (no link to the
+  original file; on a model read no "(p=...)", since the score is in "What the model said";
+  owner, 2026-10-13), "What was flagged:" (above the text, underlined like "What the model said:", owner 2026-10-13), the flagged line with `CONTEXT` lines either side,
   numbered, the flagged line marked and the matched words in `<mark>`. A passage longer than
   `MAX_SPAN` lines shows its first lines and counts the rest. With no text for the file or no
   line, the quote; with neither, nothing.
 - "What was flagged": why a place of its kind is listed (`WHY`, for kinds the pattern words do
   not explain), each pattern's plain words with its id, the summary's note (base rate, the
-  model's reading), every definition of a conflicting term, and for model reads that a
-  model's reading can be wrong and never changes the findings.
+  model's reading), every definition of a conflicting term.
+- A model read opens with "What the model said:" (the model's reading, its score in the same
+  sentence) and, in plain words, how far to trust it (owner, 2026-10-13). With a verified
+  `soft.pinpoint` for a sweep card: "Where in the passage:" (the line or lines and the quote),
+  "In plain words:", up to two "Also close" lines, and the note says two models read it; the
+  text view opens around the pinpointed lines (`CONTEXT` either side, at most `MAX_SPAN`,
+  counting the passage lines above and below) and only those lines are shaded. A pinpoint
+  that named no line shows its sentence and that the place stays listed; an unverified one
+  is not shown, only that its quote was not found.
 - Three marks per card (Concerned, Not concerned, Not sure; pressing the chosen one again
   clears it) and an optional note.
 - One place at a time with Back, Next, Next unmarked, and Show all; keys 1 to 3, arrows, N.

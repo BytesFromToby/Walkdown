@@ -73,9 +73,9 @@ cited for it was read in stage 6 as not an instruction; see 5 in the full report
 ## Sweep card (added 2026-10-01, soft D2)
 
 Uncovered flagged passages get the first stage 6 card, "No pattern matched, but a model
-read this as an instruction", each place with its p, and the plain kinds as notes.
+read this as asking for a risky action", each place with its p, and the plain kinds as notes.
 Uncovered passages near the line (p_any 0.4 to 0.6) get their own card, "Near the line: no
-pattern matched, and a model may read this as an instruction", with the drift stated once.
+pattern matched, and a model may read this as asking for a risky action", with the drift stated once.
 
 ## Must never
 

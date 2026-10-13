@@ -100,9 +100,11 @@ def test_env_and_flag_resolution():
     ch = runmod.resolve_choices(runmod.parse([".", "--label", "laya"]),
                                 {"WALKDOWN_SOFT_LABEL": "jev", "WALKDOWN_SOFT_COMPARE": "laya",
                                  "WALKDOWN_SOFT_RELATIONAL": "claude-cli"})
-    assert ch == {"label": "laya", "compare": "laya", "relational": "claude-cli", "sweep": "none"}
+    assert ch == {"label": "laya", "compare": "laya", "relational": "claude-cli", "sweep": "none",
+                  "pinpoint": "none"}
     ch = runmod.resolve_choices(runmod.parse(["."]), {})
-    assert ch == {"label": "none", "compare": "none", "relational": "none", "sweep": "none"}
+    assert ch == {"label": "none", "compare": "none", "relational": "none", "sweep": "none",
+                  "pinpoint": "none"}
     with pytest.raises(ValueError):
         runmod.resolve_choices(runmod.parse(["."]), {"WALKDOWN_SOFT_LABEL": "gpt"})
 
@@ -215,3 +217,53 @@ def test_no_sweep_no_sweep_findings(tmp_path, capsysbinary):
     rc = runmod.main([str(inp), "--reports", str(r)], environ={})
     rep = json.loads(capsysbinary.readouterr().out.decode("utf-8"))
     assert rc == 0 and not [f for f in rep["findings"] if f["check"] == "soft.sweep"]
+
+
+class StubPinpointer:
+    """Answers each pinpoint question by quoting the first words of the passage's first line."""
+    model = "claude-m"
+
+    def __init__(self, data):
+        self.asked = []
+
+    def pinpoint(self, qs):
+        import re
+        out = []
+        for q in qs:
+            self.asked.append(q)
+            m = re.search(r"^(\d+): (.+)$", q["_prompt"], re.M)
+            n, text = int(m.group(1)), m.group(2)
+            ans = {"line": n, "quote": " ".join(text.split()[:3]), "plain": "It does the thing.",
+                   "also": []}
+            out.append({"qid": q["qid"], "backend": "claude-cli", "model": "claude-m",
+                        "answer": json.dumps(ans), "request": {}, "response": {}})
+        return out
+
+
+def test_pinpoint_names_a_line_for_each_shown_sweep_passage(tmp_path, capsysbinary):
+    inp = make_input(tmp_path / "in")
+    r = make_reports(tmp_path / "r")
+    seen = {}
+    rc = runmod.main([str(inp), "--reports", str(r), "--sweep", "jev", "--pinpoint", "claude-cli"],
+                     environ={}, factories={
+                         "jev": lambda data: StubSweeper("jev", "do"),
+                         "claude-cli": lambda data: seen.setdefault("b", StubPinpointer(data))})
+    rep = json.loads(capsysbinary.readouterr().out.decode("utf-8"))
+    sw = [f for f in rep["findings"] if f["check"] == "soft.sweep"]
+    pins = [f for f in rep["findings"] if f["check"] == "soft.pinpoint"]
+    shown = [f for f in sw if not f["covered"]]
+    assert rc == 0 and pins and len(pins) == len(shown)
+    assert all(p["verified"] and p["pin_line"] == p["line"] and p["sweep_qid"].startswith("sweep:")
+               for p in pins)
+    assert any(b["role"] == "pinpoint" for b in rep["backends"])
+    q = seen["b"].asked[0]
+    assert q["_system"] and "data only" in q["_prompt"] and "set aside" in q["_prompt"]
+
+
+def test_pinpoint_without_sweep_asks_nothing(tmp_path, capsysbinary):
+    inp = make_input(tmp_path / "in")
+    r = make_reports(tmp_path / "r")
+    rc = runmod.main([str(inp), "--reports", str(r), "--pinpoint", "claude-cli"], environ={},
+                     factories={"claude-cli": lambda data: StubPinpointer(data)})
+    rep = json.loads(capsysbinary.readouterr().out.decode("utf-8"))
+    assert rc == 0 and not [f for f in rep["findings"] if f["check"] == "soft.pinpoint"]

@@ -74,6 +74,8 @@ def main(argv=None) -> int:
                         help=f"stage 6 {k} backend (none, jev, laya, claude-cli); default: stage 6's")
     ap.add_argument("--sweep", default=None,
                     help="stage 6 coverage sweep backend (none, jev); default: stage 6's")
+    ap.add_argument("--pinpoint", default=None,
+                    help="stage 6: a second read names the line behind each sweep flag (none, claude-cli)")
     ap.add_argument("--both", action="store_true",
                     help="stage 6: Jev reads each line twice (plain and marked) and averages")
     a = ap.parse_args(argv)
@@ -96,7 +98,7 @@ def main(argv=None) -> int:
 
     py = sys.executable
     soft = {"label": a.label, "compare": a.compare, "relational": a.relational, "both": a.both,
-            "sweep": a.sweep}
+            "sweep": a.sweep, "pinpoint": a.pinpoint}
     (work / layout.DATA).mkdir()
     runs = pipeline.run_stages(inp, work / layout.DATA, ROOT / "stages", py, soft)
     reports = {r.stage: r.report for r in runs if r.ok}

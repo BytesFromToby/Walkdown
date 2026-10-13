@@ -2,7 +2,7 @@
 
     python stages/06-soft/run.py <input_dir> [--reports <dir>] [--out <dir>]
         [--label none|jev|laya|claude-cli] [--compare none|jev|laya|claude-cli] [--relational none|claude-cli]
-        [--both] [--sweep none|jev]
+        [--both] [--sweep none|jev] [--pinpoint none|claude-cli]
 
 --both (or WALKDOWN_SOFT_BOTH=1): Jev reads each line twice, plain and with the matched
 words marked, and the two label distributions are averaged (soft D4). Jev only.
@@ -27,6 +27,7 @@ sys.path.insert(0, str(HERE))
 import ask  # noqa: E402
 import chunks as chunkmod  # noqa: E402
 import packet  # noqa: E402
+import pinpoint  # noqa: E402
 import softdata  # noqa: E402
 import upstream  # noqa: E402
 
@@ -34,10 +35,12 @@ STAGE = "06-soft"
 LABEL_CHOICES = ("none", "jev", "laya", "claude-cli")
 REL_CHOICES = ("none", "claude-cli")
 SWEEP_CHOICES = ("none", "jev")
+PIN_CHOICES = ("none", "claude-cli")
 ENV = {"label": "WALKDOWN_SOFT_LABEL", "compare": "WALKDOWN_SOFT_COMPARE",
-       "relational": "WALKDOWN_SOFT_RELATIONAL", "sweep": "WALKDOWN_SOFT_SWEEP"}
+       "relational": "WALKDOWN_SOFT_RELATIONAL", "sweep": "WALKDOWN_SOFT_SWEEP",
+       "pinpoint": "WALKDOWN_SOFT_PINPOINT"}
 ALLOWED = {"label": LABEL_CHOICES, "compare": LABEL_CHOICES, "relational": REL_CHOICES,
-           "sweep": SWEEP_CHOICES}
+           "sweep": SWEEP_CHOICES, "pinpoint": PIN_CHOICES}
 
 
 def eprint(*a):
@@ -62,6 +65,7 @@ def parse(argv):
     ap.add_argument("--relational")
     ap.add_argument("--both", action="store_true")
     ap.add_argument("--sweep")
+    ap.add_argument("--pinpoint")
     return ap.parse_args(argv)
 
 
@@ -208,6 +212,25 @@ def main(argv=None, environ=None, factories=None) -> int:
     fs = ask.findings(questions, results["label"], results["compare"], results["relational"])
     fs += ask.sweep_findings(chunk_list, sweep_results,
                              (reports.get("04") or {}).get("findings", []))
+    pin_answers = None
+    if choices["pinpoint"] != "none":
+        if sweep_results is None:
+            eprint("note: --pinpoint needs --sweep; no pinpoint questions asked")
+        else:
+            name = choices["pinpoint"]
+            tg = pinpoint.targets(fs)
+            lines_of = (lambda f: {n: (reader.lines(f["file"]) or [""] * f["end_line"])[n - 1]
+                                   for n in range(f["line"], f["end_line"] + 1)})
+            qs = [pinpoint.question(f, lines_of(f), data) for f in tg]
+            eprint(f"note: pinpoint backend {name} ({'remote' if REMOTE[name] else 'local'}); "
+                   f"{len(qs)} sweep passages")
+            with contextlib.redirect_stdout(sys.stderr):
+                b = backend(name)
+                pin_answers = b.pinpoint(qs)
+            got = [x for x in pin_answers if "skipped" not in x]
+            used.append({"role": "pinpoint", "backend": name, "remote": REMOTE[name],
+                         "model": got[0].get("model") if got else getattr(b, "model", None)})
+            fs += pinpoint.findings(tg, qs, pin_answers, lines_of)
     for line in ask.summary(questions, fs):
         eprint("note:", line)
     for name, b in made.items():
@@ -235,6 +258,8 @@ def main(argv=None, environ=None, factories=None) -> int:
                     fh.write(json.dumps(ask.record(role, r), ensure_ascii=False) + "\n")
             for r in sweep_results or []:
                 fh.write(json.dumps(ask.record("sweep", r), ensure_ascii=False) + "\n")
+            for r in pin_answers or []:
+                fh.write(json.dumps(ask.record("pinpoint", r), ensure_ascii=False) + "\n")
     real_stdout.write(json.dumps(report, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
     real_stdout.flush()
     return 0

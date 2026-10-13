@@ -134,6 +134,14 @@ validation fixtures were written. Measured: fixtures 11/12 payloads flagged, 0/2
 (soft/EVAL.md). A flagged passage is a location; `covered` says whether stage 4 already
 hits inside it.
 
+### Pinpoint (added 2026-10-13, owner)
+
+Opt-in (`--pinpoint claude-cli`, with `--sweep`). For each passage the report shows, a
+second model names the line that does the flagged kind, quotes it, and says it in one
+plain sentence. The quote must be found word for word in the passage, in this run's text,
+or the answer is not used; it is shown at the line it really starts on. It marks, never demotes: the sweep finding stays.
+`specs/pinpoint.SPEC.md`.
+
 ## Findings (added to CONTRACT)
 
 | Check | One finding per | Fields |

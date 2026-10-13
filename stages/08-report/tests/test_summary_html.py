@@ -196,7 +196,7 @@ def test_marked_leg_note_keeps_the_box_checked():
 
 def test_sweep_card_for_uncovered_passages():
     h = page(_tr._sweep_reports())
-    assert "No pattern matched, but a model read this as an instruction" in h
+    assert "No pattern matched, but a model read this as asking for a risky action" in h
     assert "SKILL.md:20-26 (p=0.97)" in h and "SKILL.md:30-32" not in h
 
 
@@ -218,7 +218,7 @@ def test_model_reads_have_their_own_block():
     assert h.index("<h2>Recommendations") < h.index('<section class="models">')
     assert "<details><summary><h2>Model reads (experimental)</h2>" in models  # no `open`
     assert '<span class="count">2 places</span>' in models  # a sweep passage and a "do" read
-    assert "No pattern matched, but a model read this as an instruction" in models
+    assert "No pattern matched, but a model read this as asking for a risky action" in models
     assert "No pattern matched" not in main and "these never change the findings above" in models
     assert "model reads at the end" in h
 

@@ -148,15 +148,15 @@ def first_items(r) -> list[dict]:
     s = R._soft(r)
     new, _, near_sw = R.sweep_split(s)
     for x in new:
-        out.append(_item(6, "No pattern matched, but a model read this as an instruction",
+        out.append(_item(6, "No pattern matched, but a model read this as asking for a risky action",
                          f"{R.span(x)} (p={x['p_any']:.2f})",
                          note=R.SWEEP_PLAIN.get(R.sweep_kind(x), R.sweep_kind(x)),
                          lead=f"Read by {x['backend']} as telling the reader to: ", kind="sweep", src=x))
     for x in near_sw:
         if x.get("covered"):
             continue
-        out.append(_item(6, "Near the line: no pattern matched, and a model may read this as an "
-                            "instruction", f"{R.span(x)} (p={x['p_any']:.2f})",
+        out.append(_item(6, "Near the line: no pattern matched, and a model may read this as "
+                            "asking for a risky action", f"{R.span(x)} (p={x['p_any']:.2f})",
                          note=R.SWEEP_PLAIN.get(R.sweep_kind(x), R.sweep_kind(x)),
                          lead=f"Repeat sweeps vary by about {R.SWEEP_DRIFT}, so each could go "
                               f"either way. Read by {x['backend']} as telling the reader to: ",

@@ -103,7 +103,7 @@ sometimes a note. Places with the same headline share one card.
 | An image the model is pointed at | 5 | an image a file the model reads references or loads; a model with vision reads text in it, so the note says whether this run could read that text (OCR) or you should open it and look |
 | Test data that the model is pointed at | 5 | a file in a test or fixture folder that a model-read file references directly, so it is read like any other file |
 | An instruction the model sees before you type anything | 5 | text a context-injecting hook prints into the session |
-| No pattern matched, but a model read this as an instruction | 6 (model reads block) | the coverage sweep flagged a passage stage 4 had no hit in |
+| No pattern matched, but a model read this as asking for a risky action | 6 (model reads block) | the coverage sweep flagged a passage stage 4 had no hit in |
 | Read as a real instruction to do the flagged thing | 6 | a model's confident reading of a flagged line |
 | Near the line | 6 | a model reading close enough to the cutoff that a repeat read could flip it |
 

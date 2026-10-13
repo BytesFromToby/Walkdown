@@ -56,6 +56,14 @@ backend; otherwise exit 2 before anything runs. The Jev row in `backends` gains
 `ask.sweep_findings`; a `backends` row with role `sweep`; results in answers.jsonl with
 role `sweep`. With none: no `soft.sweep` finding.
 
+## `--pinpoint` (added 2026-10-13, owner)
+
+`--pinpoint none|claude-cli` (or `WALKDOWN_SOFT_PINPOINT`; default none). Needs `--sweep`;
+without it a note says so and nothing is asked. With claude-cli: `pinpoint.targets` over the
+sweep findings, one `pinpoint.question` each to `ClaudeCLI.pinpoint` (the pinpoint system
+prompt, same isolation), findings from `pinpoint.findings`; a `backends` row with role
+`pinpoint`; raw answers in answers.jsonl with role `pinpoint`. Spec: `specs/pinpoint.SPEC.md`.
+
 ## Laya retired (2026-10-03)
 
 Choosing `laya` still works (its code is kept), but the runner prints a note that it is
