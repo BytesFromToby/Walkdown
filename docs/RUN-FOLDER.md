@@ -10,7 +10,8 @@ reports were built from, for anyone who wants to check a finding or build on the
 
 ```
 RepoResults/<name>/<date>_<hash7>/          one run, e.g. RepoResults/backlog/2026-10-02_b449d9f
-  summary.html        the page for people: what to look at first, one sentence per stage
+  summary.html        the page for people: the lethal trifecta, files, outside links, hidden text, secrets, places to check
+  summary-v1.html     the earlier summary page, kept while the new one settles
   review.html         each place to check, one at a time, to mark Concerned, Not concerned, or Not sure
   marks.json          your marks from review.html, once you save them here (Walkdown never writes it)
   summary.md          the same summary as text
@@ -131,7 +132,7 @@ running any stage or model:
 python stages/08-report/run.py --rerender RepoResults/<name>/<run>
 ```
 
-It rewrites `summary.html`, `review.html`, `summary.md`, and `full.md`, re-stamps validation with
+It rewrites `summary.html`, `summary-v1.html`, `review.html`, `summary.md`, and `full.md`, re-stamps validation with
 the current grader, and appends a line to LOG.md. `review.html` reads back a `marks.json` saved
 next to it, so your marks return with the page.
 

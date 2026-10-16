@@ -1,14 +1,15 @@
 # Reading a Walkdown report
 
-A run produces four reports, at the top of its run folder
+A run produces these reports, at the top of its run folder
 (`RepoResults/<name>/<date>_<hash7>/`):
 
 | File | For | What it holds |
 |---|---|---|
-| `summary.html` | most readers | what to look at first, the trifecta checklist, one plain sentence per stage |
-| `review.html` | walking through the places | each place to check, one at a time, with the lines around it, for you to mark |
+| `summary.html` | most readers | what the repository can do, its files and outside links, hidden text, secrets, and the places to check |
+| `review.html` | walking through the places | one card per place, with the lines around it, for you to mark |
 | `summary.md` | the same, as text | one status line per stage and up to five points under each |
 | `full.md` | checking a point | every finding, by stage, with file and line |
+| `summary-v1.html` | comparing | the earlier summary page, kept while the new one settles |
 
 Start with `summary.html`. Go to `full.md` for the evidence behind a point. `LOG.md`, next to
 them, says whether each stage passed its validation; the data the reports were built from is in
@@ -21,34 +22,34 @@ them, says whether each stage passed its validation; the data the reports were b
    shape". It does not say the author meant harm.
 2. **No score.** Nothing is added up into a rating. Counts come with what they were counted over.
 3. **Clean means not found.** An empty section means these stages found nothing there. Check
-   section 7 before trusting a zero.
+   "What was not checked" under Other details before trusting a zero.
 
 ## A suggested reading order
 
-1. **LOG.md, the Validation column.** Every stage should say PASS. INCOMPLETE means a check was
-   skipped (usually an optional tool not installed); FAIL means do not trust that stage's
-   findings in this run.
-2. **The trifecta checklist** at the top of `summary.html`: what the repository can do.
-3. **Things to check**: the short list of places to read. `review.html` walks through them one
-   at a time.
-4. **Section 7, Not examined**: what the run skipped that applies to this repository.
+1. **The lethal trifecta** at the top of `summary.html`: what the repository can do, and how it
+   gets in.
+2. **Hidden text and Committed secrets**: usually empty; read them when they are not.
+3. **Risky asks and things to check**, then `review.html`, which walks through every place one at
+   a time.
+4. **Other details**: what the run did not check, and whether every step passed its fixtures. A
+   step that did not pass puts a pill on that heading; do not trust its findings in this run.
 5. **`full.md`** for any point you want to check.
 
 ## summary.html
 
-### Header and tiles
+The page follows the questions a reader brings, in this order. Every section says so in words
+when it found nothing ("No outside links", "Nothing hidden"), or that it was not checked when its
+stage did not run.
 
-The header names the repository, where the copy came from, and the version it was pinned to.
-The tiles count files examined, places to check, and checks skipped. The last counts only
-checks this run skipped that apply to this repository: a missing tool for a file type the
-repository does not ship is listed as "not needed", and the limits that apply to every run
-(static only, English only, patterns can miss) are in section 7's full list, not the count.
+### Header
 
-### What it can do: the trifecta checklist
+"Walkdown report on" the repository, where the copy came from, the version it was pinned to, the
+run, and the Walkdown version. "Review each place" at the top right opens `review.html`.
+
+### The lethal trifecta
 
 Three boxes, one per leg of what Simon Willison calls the
-[lethal trifecta](https://simonw.substack.com/p/the-lethal-trifecta-for-ai-agents). The page
-describes it in plain words rather than by that name:
+[lethal trifecta](https://simonw.substack.com/p/the-lethal-trifecta-for-ai-agents):
 
 | Leg | Checked when the repository... |
 |---|---|
@@ -56,59 +57,89 @@ describes it in plain words rather than by that name:
 | **Takes outside input** | brings in text the user didn't write: the web, other people's issues or email, MCP tools, third-party code |
 | **Sends data out** | moves data off the machine or into shared places: web requests, webhooks, pushes, posts |
 
-A box is checked when at least one piece of evidence supports it, and the evidence is listed in
-`full.md` section 5. **Three checked boxes are common in well-built repositories**: an agent
-that reads files, uses the web, and pushes commits has all three. The combination raises risk.
-It is not an issue on its own.
+A box is checked when at least one piece of evidence supports it; under each checked box is the
+number of places that do (all listed in `full.md` section 5). **Three checked boxes are common in
+well-built repositories**: an agent that reads files, uses the web, and pushes commits has all
+three. The combination raises risk. It is not an issue on its own.
 
-Checked boxes come first, then unchecked ones. The checked boxes are colored by how many there
-are: the first green, the second yellow, the third red. Red means all three at once, the
-combination the trifecta warns about. The color never says one leg is worse than another.
+Checked boxes come first, then unchecked ones, colored by how many there are: the first green,
+the second yellow, the third red. Red means all three at once, the combination the trifecta warns
+about. The color never says one leg is worse than another. If a model read every line cited for a
+leg as not an instruction (a quote, a description), a note says so under the box. The box stays
+checked: a model's read never removes a finding.
 
-Under the boxes: the install grants (runs at load, injects context, persists, uses the network,
-elevated permissions), explained in [HOW-IT-WORKS.md](HOW-IT-WORKS.md#install-grants-capgrant).
+**How it gets in.** What installing it allows, in plain words: runs commands on its own (each
+hook, with its event and command), adds text to the AI's context before you type (how many bytes),
+makes changes that last after the session, uses the network, asks for more permissions than the
+default, connects to outside services (MCP servers, by name), and agents with their own tools (and
+how many have no tools list, so they can use every tool the AI has). What was not found is one
+"Not found" line. Details: [HOW-IT-WORKS.md](HOW-IT-WORKS.md#install-grants-capgrant).
 
-If stage 6 read every line cited for a leg as not an instruction (a quote, a description), a note
-says so under the box. The box stays checked: a model's read never removes a finding.
+### Files
 
-### Walkdown Results Breakdown
+In the open: how many files, how many file types, and their total size. **Worth a look** appears
+only when there is something to see: a file of unknown type, contents of a different type than
+the name says, archives (their contents are not read), symlinks, and files the AI reads that are
+longer than a reviewer's viewer shows (2,000 lines or 50 KB).
 
-One row per stage, numbered in the method's order. Each row asks the stage's question ("What
-ships?"), says in one line what the step does, gives its result in a plain sentence, and then its
-numbers in plain words, with each term explained where it appears (the report says "folder or use
-of wildcards" for what tools call a glob): for stage 1, the count of every
-file type and script language; for stage 3, what loading by a folder or use of wildcards and a dangling reference mean. Numbers shorter than about
-500 characters are shown in the open; longer ones (usually stage 4) sit behind "More detail".
-Stage 7 splits what was not examined into not built yet, skipped in this run, and not needed here;
-the full list, with the limits that apply to every run, is behind its own toggle. A pill marks a stage that did not pass validation, and each row
-ends with its validation result.
+Behind "Files and map": every file type and script language, the largest files, the files a tool
+loads first, the descriptions always in the AI's context, platform manifests, long lines, and the
+map: how files are reached from the starting points (by a reference, only through a folder or use
+of wildcards, or only mentioned that way), the files nothing points to, and broken file references
+(paths written in the files that point at files not in the folder). Some files are named only when
+code runs, so the map can miss links.
 
-### Things to check
+### Outside links
 
-Cards in the order of the breakdown above: a tag naming the section (click it to jump to that
-section's row), a headline, the places it applies to, the quoted text, and
-sometimes a note. Places with the same headline share one card.
+Every web address the skill names. Walkdown gathers them and **opens none of them**, so nothing
+here says whether a link works or what it serves. In the open: how many links, to how many
+different domains, how many sit in text the AI reads, and how many domains the skill's docs never
+mention. Behind the toggle: a table grouped by domain, one row per link, with the file and line
+and who reads that file (the AI, people, scripts, or test data). A long link is shortened on the
+page; its Copy button copies the whole address. Runs made before this list existed show domains.
 
-| Headline | Section | What it means |
-|---|---|---|
-| Runs commands on its own | 1 | a hook that runs whenever the host fires its event, without anyone asking |
-| Hidden when rendered, and reads like an instruction | 2 | text the model receives that a person viewing the file does not see, which also matches a phrase pattern |
-| Disguised with look-alike or invisible characters, and reads like an instruction | 2 | a line that matches a phrase pattern only once look-alike or invisible characters are folded away, so a reader skimming the raw text may not see what the model reads |
-| Nothing refers to this file / Loaded only by a folder or use of wildcards, named by nothing, and it reads like an instruction | 3 | a file a reviewer following references would not open, which also matches a phrase pattern |
-| Matches the wording of ... | 4 | the text matches a phrase pattern; the quote lets you judge, and the note gives the pattern's base rate |
-| A word is defined more than one way / Redefines a safety word / An irreversible or prohibited action with no confirmation step | 4 | from stage 4's tables of definitions and guarded actions |
-| Looks like a committed secret | 4 | a line that looks like an API key or password; the value is never shown, so open the file to check it |
-| Flagged text past the reader window | 4 | in a long file a model reads, flagged lines after the point where a reviewer's viewer may stop showing it |
-| The same flagged sentence in several files | 4 | a sentence a pattern flagged, repeated across files; the note names the pattern family |
-| An image the model is pointed at | 5 | an image a file the model reads references or loads; a model with vision reads text in it, so the note says whether this run could read that text (OCR) or you should open it and look |
-| Test data that the model is pointed at | 5 | a file in a test or fixture folder that a model-read file references directly, so it is read like any other file |
-| An instruction the model sees before you type anything | 5 | text a context-injecting hook prints into the session |
-| No pattern matched, but a model read this as asking for a risky action | 6 (model reads block) | the coverage sweep flagged a passage stage 4 had no hit in |
-| Read as a real instruction to do the flagged thing | 6 | a model's confident reading of a flagged line |
-| Near the line | 6 | a model reading close enough to the cutoff that a repeat read could flip it |
+### Hidden text
 
-**Base rates.** A stage 4 card's note says how often its pattern turns up in the other audited
-repositories: **rare** (none of them), **uncommon** (one), **common** (two or more). A rare
+Text the AI receives that a person reading the file on screen would not see: hidden comments,
+invisible characters, text colored like its background, image descriptions, and the like, with
+how many are in files the AI reads. Then lines that read differently once look-alike or invisible
+characters are swapped for plain ones (most are typographic quotes and dashes), and stretches in a
+non-Latin script, which the risky-ask patterns cannot read. Hidden text that also reads like an
+instruction gets a card.
+
+### Committed secrets
+
+Lines that look like a password, key, or token saved in the files, which scanner found them, and
+what was set aside (lines in test data; hashes, variable names, plain words, local test passwords).
+The value is never shown: open the file to check it. When no scanner ran, the section says it was
+not checked.
+
+### Risky asks and things to check
+
+**The numbers.** How many lines match the wording of a risky request, and who reads them (the AI,
+scripts, people, test data); the matches by kind (reaching out, taking the wheel, changing the
+environment, talking to you); when a model labeled them, how many it read as a real instruction to
+do the flagged thing; and how many actions that should ask you first have no step asking you, with
+the ones the text forbids counted apart.
+
+**Things to check.** The headlines, with how many places each covers; the cards are on the review
+page. Hidden text and secrets are left to their own sections.
+
+| Headline | What it means |
+|---|---|
+| Runs commands on its own | a hook that runs whenever the host fires its event, without anyone asking |
+| Nothing refers to this file / Loaded only by a folder or use of wildcards, named by nothing, and it reads like an instruction | a file a reviewer following references would not open, which also matches a phrase pattern |
+| Matches the wording of ... | the text matches a phrase pattern; the quote lets you judge, and the note gives the pattern's base rate |
+| ..., stated as a prohibition | the same, on a line that forbids the action ("Never have the user paste an API key"); kept so you can read it, and said so, with any exception ("unless ...") |
+| A word is defined more than one way / Redefines a safety word / An irreversible or prohibited action with no confirmation step | from stage 4's tables of definitions and guarded actions; an action the line forbids is never listed as one with no confirmation step |
+| Flagged text past the reader window | in a long file the AI reads, flagged lines after the point where a reviewer's viewer may stop showing it |
+| The same flagged sentence in several files | a sentence a pattern flagged, repeated across files |
+| An image the model is pointed at | an image a file the AI reads references or loads; the note says whether this run could read text in it |
+| Test data that the model is pointed at | a file in a test or fixture folder that a file the AI reads references directly |
+| An instruction the model sees before you type anything | text a context-injecting hook prints into the session |
+
+**Base rates.** A "Matches the wording" note says how often its pattern turns up in the other
+audited repositories: **rare** (none of them), **uncommon** (one), **common** (two or more). A rare
 pattern is more worth reading. The level describes the pattern across repositories; it says
 nothing about this one.
 
@@ -116,48 +147,57 @@ nothing about this one.
 data (tests, fixtures) are counted, never listed: installing the artifact does not put them in
 front of a model. They are all in `full.md`.
 
+When a model ran (stage 6), one line says how many model reads (experimental) are on the review
+page, with a link to how accurate they measured: [MODEL-ACCURACY.md](MODEL-ACCURACY.md).
+
+### Changes since an earlier run
+
+Only when an earlier run of the same repository was a different version: what changed, in counts
+and Walkdown's own words, with every change, file by file, in `changes.md`.
+
 ### Recommendations
 
 Suggestions for the builder, each tied to a file and line, each conditional ("if this skill does
-not need X, ..."), each naming a narrower way to do the same thing. Listed in stage order and
-never ranked: ranking by importance would be a score by another name.
+not need X, ..."), each naming a narrower way to do the same thing. Never ranked: ranking by
+importance would be a score by another name.
 
-### Model reads (experimental)
+### Other details
 
-When stage 6 ran with a model, its cards come last, after the recommendations, in a section
-that starts closed; its toggle shows how many places it holds. Inside: sweep passages no pattern
-matched, confident "do" reads, and reads near the line. A model's reading can be wrong and repeat
-reads vary, so these sit apart from the findings the fixed rules produced, and they never change
-them. The tile counts only the rule-based places and says how many model reads are at the end.
-How accurate these reads measured: [MODEL-ACCURACY.md](MODEL-ACCURACY.md).
-
-## Section 4's numbers
-
-The status line says how many lines have hits and where they are: read by a model, in scripts,
-human-facing, test data. On superpowers, 109 of 626 such lines are text a model reads. When
-stage 6 labels ran, it also gives the **benign share**: of the labeled lines a model reads, how
-many the model read as an instruction to do the matched action and how many as a description,
-quote, or other use. That is a model's reading, with measured accuracy; without labels the line
-says the share was not measured.
+Closed by default. **What was not checked**: checks that apply to this repository and did not run,
+split into not built yet, skipped in this run (usually an optional tool not installed), and not
+needed here, with the full list behind its own toggle, including the limits of every run (static
+only, English only, patterns can miss). **Fixture results**: before a run is trusted, each step
+runs on small test repositories with known contents and is scored against an answer sheet it
+never reads; PASS for each step, and a pill on the heading when one did not pass.
 
 ## review.html
 
-The same places as "Things to check" (and the model reads, when stage 6 ran), one card at a
-time. Each card shows the place's file and line, the line with three lines either side (from
-the text this run read, kept in `data/normalized/text/`), the matched words highlighted, and
-what was flagged in plain words: what the pattern looks for, and why a pattern would care.
-Invisible characters show as `U+XXXX`. In a file where the run found what looks like a secret,
-no lines around the place are shown.
+Every place to check, one card at a time: places the fixed rules found first, places only a model
+flagged at the end.
+
+**One card per place.** Every finding on the same line is one card, whichever step found it. A
+file loaded only by a folder load whose line also matches two patterns is one card that says "and
+2 more findings on this line" and tags each step that found something. A model read of that line
+joins the same card under "What the model said", marked experimental. A sentence repeated across
+files is one card that lists every place it appears, and the findings at those places join it. A
+passage of several lines stays on its own card.
+
+**On each card**: the file and line, linked to the text this run read; "What was flagged", one
+block per finding, each pattern described once in plain words (what it looks for, and why a
+pattern would care); then the line with three lines either side (from `data/normalized/text/`),
+the matched words highlighted. Invisible characters show as `U+XXXX`. In a file where the run
+found what looks like a secret, no lines around the place are shown.
 
 You mark each place **Concerned** (you want to look into it, or change it), **Not concerned**
 (you read it, and it is fine for what the skill is for), or **Not sure**, with an optional note.
-Walkdown makes no call on any place. The marks are yours, and they change nothing in the other
-reports.
+One mark per card. Walkdown makes no call on any place. The marks are yours, and they change
+nothing in the other reports.
 
 Marks are kept in your browser as you go. To keep them with the run, use "Download marks.json"
 at the end and save the file in the run folder, next to the page. Re-rendering the reports
-(`python stages/08-report/run.py --rerender <run folder>`) reads it back into the page. Marks
-do not carry over to a new run of the same repository.
+(`python stages/08-report/run.py --rerender <run folder>`) reads it back into the page. A card
+holding one finding keeps its id across re-renders; marks saved on separate cards before they were
+merged into one do not carry over. Marks do not carry over to a new run of the same repository.
 
 ## summary.md
 
@@ -190,7 +230,7 @@ models ran:
 - **"Do" reads** are listed at p >= 0.9; 0.7 to 0.9 is counted as near the line; lower reads are
   counted only. For the sweep the bands are p >= 0.6 listed and 0.4 to 0.6 near the line.
 - **Why bands:** the same line read twice moves by up to about 0.1, so a single cutoff would put
-  lines in or out of the summary by chance.
+  lines in or out of the review page by chance.
 - **Evidence marks:** a confident read that a line is not an instruction marks it where stage 5
   cites it as evidence, and never removes it.
 

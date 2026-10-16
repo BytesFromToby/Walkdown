@@ -82,8 +82,9 @@ the tools their job needs, and hooks that do what their name says.
 `UserPromptSubmit`); an agent that inherits every tool; files over the reader window;
 `ext-magic-mismatch` (a `.md` that is really an image); manifests that disagree.
 
-**In the report.** Section 1. Hooks appear on the summary page as "Runs commands on its own";
-files over the reader window are listed under section 1 in `summary.md`. Everything is in
+**In the report.** Section 1. Hooks appear on the summary page under "How it gets in" and in Things to check as "Runs
+commands on its own"; files over the reader window are listed under "Worth a look" in the Files
+section (files the AI reads) and under section 1 in `summary.md`. Everything is in
 `full.md` section 1.
 
 ---
@@ -112,7 +113,8 @@ bidirectional characters, nothing unread.
 as "Hidden when rendered, and reads like an instruction"); zero-width characters inside words;
 white-on-white or `display:none` text.
 
-**In the report.** Section 2, with hidden-plus-phrase pairs on the summary page. Tesseract, when
+**In the report.** Section 2, and the Hidden text section of the summary page, with a card for hidden text that
+reads like an instruction. Tesseract, when
 installed, reads text inside images; when it is missing, section 7 says so. Three checks the
 method calls for are not built yet: PDF pages drawn and read as images, HTML as a browser draws
 it, and language detection within Latin script. Section 7 lists them as "not built" on every
@@ -177,7 +179,7 @@ Part 2 builds tables from instruction text (model and subagent files, plus front
 
 | Check | What it records |
 |---|---|
-| `endpoint.host` | every network host named anywhere, whether the docs name it, and where it appears (instructions, docs, code) |
+| `endpoint.host` | every network host named anywhere, whether the docs name it, and where it appears (instructions, docs, code), with each whole address as written; nothing is opened |
 | `rubric.action` | each guarded action in instruction text, its tier (prohibited or confirm-first), and whether a confirmation step exists, is negated, or is itself a redefinition |
 | `cond.branch` | conditional sentences, by kind: harness, clock, version, state, environment, absence, error |
 | `term.def` | definitions in instruction text |
@@ -186,6 +188,14 @@ Part 2 builds tables from instruction text (model and subagent files, plus front
 | `pos.density` | in a long file a model reads: where the flagged lines sit (first 10%, middle, last 10%) and how many are past the reader window (2,000 lines or 50 KB), where a reviewer's viewer may stop |
 | `secret.found` | a line that looks like a committed secret (an API key, a password), found by gitleaks when installed, otherwise detect-secrets; the value is never shown, and other findings on that line have their quote replaced |
 | `rep.sentence` | a sentence repeated across files a model reads; repetition adds weight, so a flagged sentence in several files is listed |
+
+**Prohibitions.** A hit whose line forbids the matched action ("Never have the user paste an API
+key into chat") is kept and tagged `negated`, with the forbidding word and any exception
+("unless the user asks"). Only forbidding words count (never, do not, must not, should not, may
+not, avoid, and the like) and only in the same clause; double negatives and descriptions ("don't
+forget to", "does not") do not. A guarded action the line forbids is never reported as one with
+no confirmation step. Procedures ("How to start") are cited at their first sentence, and two
+procedures alone never make a conflicting definition.
 
 **Signal levels.** Each summary point names its patterns with their **base rate**: how many of
 the other audited repositories that pattern turned up in (outside human-facing files and test
@@ -262,7 +272,7 @@ agents with narrow tools.
 the model before you type); an instruction in a script such a hook runs; elevated grants; agents
 whose tools are wider than their job.
 
-**In the report.** The trifecta checklist at the top of the summary page; section 5 for grants,
+**In the report.** "The lethal trifecta" at the top of the summary page, with "How it gets in"; section 5 for grants,
 bytes at load, and pairs; every leg's and grant's evidence in `full.md`.
 
 ---
@@ -298,8 +308,8 @@ with a hand-labeled set about half the time, and are far more reliable when conf
 caught 11 of 12 paraphrased payloads with no false flags on 20 benign passages; that set was
 written by the same person who wrote the question, so it is a first check.
 
-**In the report.** On the summary page, model reads have their own block, "Model reads
-(experimental)", after the rule-based list. In section 6: sweep passages with no stage 4 hit
+**In the report.** The summary page counts the model reads and links the review page, where
+a read of a flagged line joins that line's card and other reads come last, marked experimental. In section 6: sweep passages with no stage 4 hit
 first, then confident "do" reads, then counts for near-the-line and weaker reads. Every answer
 is in `full.md`.
 

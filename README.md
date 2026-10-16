@@ -44,8 +44,9 @@ One command runs every stage and writes a run folder:
 
 ```
 RepoResults/<name>/<date>_<hash7>/
-  summary.html    the page for people: what to look at first, one sentence per stage
-  review.html     each place to check, one at a time, for you to mark
+  summary.html    the page for people: the lethal trifecta, files, outside links, hidden text, secrets, places to check
+  summary-v1.html the earlier summary page, kept while the new one settles
+  review.html     one card per place to check, one at a time, for you to mark
   summary.md      the same summary as text
   full.md         every finding, with file and line
   LOG.md          what ran, when, and each stage's validation stamp
