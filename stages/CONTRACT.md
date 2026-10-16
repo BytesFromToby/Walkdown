@@ -128,10 +128,10 @@ same report after the phrase findings:
 
 | Check | One finding per | Fields |
 |---|---|---|
-| `rubric.action` | `phrase.J.prohibited` hit in instruction text | `tier`: `prohibited` or `confirm-first`; `action`; `confirmation`: bool; `negated_confirmation`: bool; `confirm_redefined`: bool (a definition of a confirmation word in the step, never counted as one); `confirm_line`; `confirm_quote`; `quote` |
-| `endpoint.host` | distinct network host (`file`, `line` null) | `host`; `documented`: bool; `local`: bool; `kind`: `registry`, `local`, `other`; `where`: counts by `instructions`, `docs`, `code`; `occurrences`: list of `{file, line, where}` |
+| `rubric.action` | `phrase.J.prohibited` hit in instruction text | `tier`: `prohibited` or `confirm-first`; `action`; `confirmation`: bool; `negated_confirmation`: bool; `confirm_redefined`: bool (a definition of a confirmation word in the step, never counted as one); `confirm_line`; `confirm_quote`; `quote`; `negated_action`: bool (the action itself is forbidden, "never ..."; added 2026-10-16, review C25); `carve_out`: the exception after it ("unless ...") or null |
+| `endpoint.host` | distinct network host (`file`, `line` null) | `host`; `documented`: bool; `local`: bool; `kind`: `registry`, `local`, `other`; `where`: counts by `instructions`, `docs`, `code`; `occurrences`: list of `{file, line, where, urls}` (`urls`: the whole addresses on that line, as written; added 2026-10-16) |
 | `cond.branch` | conditional sentence of a known kind | `kind`: `harness`, `clock`, `version`, `state`, `environment`, `absence`, `error`; `kinds`; `condition`; `body`; `quote` |
-| `term.def` | definition in instruction text | `term` (normalized); `definition`; `source`: `explicit`, `mapping`, `glossary`, `procedural`; `quote` |
+| `term.def` | definition in instruction text | `term` (normalized); `definition`; `source`: `explicit`, `mapping`, `glossary`, `procedural`; `quote`; `heading_line` (procedural only: the `How to X` heading; `line` and `quote` are the sentence under it, 2026-10-16, review C26) |
 | `term.conflict` | term with two or more different definitions (`file`, `line` null) | `term`; `definitions`: list of `{file, line, text}` |
 | `term.safety` | definition of a safety word | `term`; `quote` |
 | `pos.density` | model-read file over the reader window with phrase hits (`line` null; added 2026-10-04, REPORTING 4.4) | `lines`; `first10`, `middle80`, `last10`; `window_line`; `beyond_window`; `beyond_lines` |
@@ -142,7 +142,11 @@ Stage 4 findings also carry `patterns`: the stable ids of the rows in
 `stages/04-phrases/patterns.yaml` that hit the line (added 2026-09-29; stage 5
 reads them). Phrase findings also carry `matches`: one `{pattern, text, start}` per
 id in `patterns`, the text that row matched on the folded line (capped at 160
-characters) and its offset there (added 2026-09-30).
+characters) and its offset there (added 2026-09-30). Phrase findings also carry
+`negated`: bool, true when a negation word governs every matched action on the line
+("Never have the user paste an API key"); `negation`: that word; `carve_out`: the
+exception after the action ("unless the user asks"), or null (added 2026-10-16, review
+C25; `stages/04-phrases/specs/negation.SPEC.md`). The hit itself is unchanged.
 
 ### Stage 5: capability (`05-capability`)
 

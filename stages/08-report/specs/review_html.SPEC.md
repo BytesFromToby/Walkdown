@@ -88,8 +88,8 @@ check" when it lists any place.
 
 ## Done when (each backed by a test in `tests/test_review_html.py` or `tests/test_plain.py`)
 
-1. One card per summary item, deterministic places first, then model reads; the deterministic
-   count equals the summary's "places to check".
+1. One card per place (since 2026-10-16, C33 below; before that, one per summary item),
+   deterministic places first, then places that hold only model reads.
 2. A card shows the flagged line with `CONTEXT` lines either side from `text_dir`, the line
    marked and its matched words in `<mark>`; without text, the quote.
 3. A passage longer than `MAX_SPAN` keeps its full location and counts the lines not shown.
@@ -107,3 +107,26 @@ check" when it lists any place.
 11. Each page links to the other at the top right of its header; the summary's line above
     the cards appears only when it lists a place.
 12. No verdict words appear on the page.
+
+## One card per place (added 2026-10-16, review C33)
+
+The partner's marks on Compound Engineering (v3): 332 cards fell on 293 lines; 32 lines carried
+71 cards, and on 16 of them the same reviewer marked the cards differently. `places(r)` now groups
+the summary items (`findings_at`) into places:
+
+- Every finding on one line is one place, whichever stage found it. A model read of that line
+  joins the card ("What the model said:" for each read, tagged experimental); a place made only of
+  model reads stays among the model reads at the end.
+- A sentence repeated across files (`rep.sentence`) is one place that lists every location, and
+  the findings at those locations join it, so the sentence is marked once.
+- A passage (more than one line) and a place with no line stay on their own.
+- The card leads with the first finding (the repeated sentence when there is one), says "and N more
+  findings on this line" or "in N places", tags every stage that found something, and lists each
+  finding under its own headline in "What was flagged".
+- A place of one finding keeps that finding's id, so earlier marks still load; a merged place's id
+  comes from its members' ids (marks saved on the separate cards before do not carry over).
+
+Tests: `test_findings_on_one_line_are_one_card_with_every_finding`,
+`test_a_model_read_of_the_same_line_joins_the_card`,
+`test_a_repeated_sentence_is_one_card_listing_every_place`,
+`test_a_lone_finding_keeps_its_id_and_a_passage_stays_alone`.

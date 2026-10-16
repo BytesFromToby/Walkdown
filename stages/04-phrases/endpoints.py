@@ -44,26 +44,60 @@ def _clean(host: str) -> str | None:
     return h
 
 
-def hosts_in_line(folded: str, vocab) -> list[str]:
+TAIL = re.compile(r"[^\s<>\"'`\[\]]*")  # a Markdown link's "](" ends an address
+TRAIL = ".,;:!?*'\""
+CLOSERS = (("(", ")"), ("[", "]"), ("{", "}"))
+
+
+def _trim(s: str) -> str:
+    """Drop sentence punctuation and unbalanced closing brackets off the end of an address
+    (a Markdown link's `)`, a full stop after a URL)."""
+    while True:
+        before = s
+        s = s.rstrip(TRAIL)
+        for o, c in CLOSERS:
+            if s.endswith(c) and s.count(c) > s.count(o):
+                s = s[:-1]
+        if s == before:
+            return s
+
+
+def addresses_in_line(folded: str, vocab) -> list[tuple[str, str]]:
+    """(host, address) for every host named on the line, in order of first appearance: the
+    address is the whole text that names it, from the scheme (or `git@`, or the bare name)
+    to the end of its path (added 2026-10-16 so the report can list and copy each address)."""
     url, git, bare, port = _regexes(tuple(vocab.schemes), tuple(vocab.tlds))
-    found: list[str] = []
+    found: list[tuple[str, str]] = []
     masked = folded
 
-    def add(h):
-        h = _clean(h)
-        if h and h not in found:
-            found.append(h)
+    def add(m, start, path_only=False):
+        h = _clean(m.group(1))
+        if not h:
+            return
+        end = m.end()
+        if not path_only or folded[end:end + 1] == "/":  # a bare name runs on only into a path
+            end = TAIL.match(folded, end).end()
+        a = _trim(folded[start:end])
+        if (h, a) not in found:
+            found.append((h, a))
 
     for rx in (url, git):
         for m in rx.finditer(masked):
-            add(m.group(1))
+            add(m, m.start())
         masked = rx.sub(lambda m: " " * (m.end() - m.start()), masked)
     for m in port.finditer(masked):
-        add(m.group(1))
+        add(m, m.start(), path_only=True)
     masked = port.sub(lambda m: " " * (m.end() - m.start()), masked)
     for m in bare.finditer(masked):
-        add(m.group(1))
-    return found
+        add(m, m.start(1), path_only=True)
+    # a bare name that is the visible text of a full address on the same line ("[x.io](https://x.io)")
+    return [(h, a) for h, a in found
+            if "://" in a or a.startswith("git@")
+            or not any(h2 == h and a2 != a and a in a2 for h2, a2 in found)]
+
+
+def hosts_in_line(folded: str, vocab) -> list[str]:
+    return list(dict.fromkeys(h for h, _ in addresses_in_line(folded, vocab)))
 
 
 def is_local(host: str, vocab) -> bool:
@@ -76,9 +110,16 @@ def is_local(host: str, vocab) -> bool:
 
 
 def census(occurrences, vocab) -> list[dict]:
+    """Each occurrence is (host, file, line, where) or (host, file, line, where, address);
+    a row gains `urls` (the distinct addresses on that line, in order) when any were given."""
     by: dict[str, set] = {}
-    for host, file, line, where in occurrences:
+    addrs: dict[tuple, list] = {}
+    for host, file, line, where, *rest in occurrences:
         by.setdefault(host, set()).add((file, line, where))
+        if rest and rest[0]:
+            got = addrs.setdefault((host, file, line), [])
+            if rest[0] not in got:
+                got.append(rest[0])
     out = []
     for host in sorted(by):
         occ = sorted(by[host], key=lambda o: (o[0], o[1], WHERE.index(o[2])))
@@ -87,7 +128,10 @@ def census(occurrences, vocab) -> list[dict]:
             if (f, ln) in seen:
                 continue
             seen.add((f, ln))
-            rows.append({"file": f, "line": ln, "where": w})
+            row = {"file": f, "line": ln, "where": w}
+            if (host, f, ln) in addrs:
+                row["urls"] = addrs[(host, f, ln)]
+            rows.append(row)
         counts = {w: sum(1 for r in rows if r["where"] == w) for w in WHERE}
         local = is_local(host, vocab)
         kind = "local" if local else ("registry" if host in vocab.registry else "other")

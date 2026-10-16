@@ -1,7 +1,7 @@
 """Tests for endpoints.py, written from specs/endpoints.SPEC.md."""
 import pytest
 
-from endpoints import census, hosts_in_line, is_local, summary
+from endpoints import addresses_in_line, census, hosts_in_line, is_local, summary
 from vocab import load_vocab
 
 
@@ -70,3 +70,32 @@ def test_one_occurrence_per_line(v):
         ["x.example.com"]
     f = census([("x.example.com", "a.md", 1, "docs"), ("x.example.com", "a.md", 1, "docs")], v)
     assert len(f[0]["occurrences"]) == 1
+
+
+def test_addresses_are_whole_and_trimmed(v):
+    # 7. the whole address, from the scheme to the end of its path, without trailing punctuation
+    #    or a Markdown link's closing bracket; hosts are unchanged
+    line = ("See [the guide](https://Docs.Example.com/a/b?x=1#top). Then git@github.com:o/r.git, "
+            "docs.example.org/path/page, and http://localhost:3000/api.")
+    assert addresses_in_line(line, v) == [
+        ("docs.example.com", "https://Docs.Example.com/a/b?x=1#top"),
+        ("localhost", "http://localhost:3000/api"),
+        ("github.com", "git@github.com:o/r.git"),
+        ("docs.example.org", "docs.example.org/path/page"),
+    ]  # the order hosts_in_line already used: URLs, git remotes, host:port, bare names
+    assert hosts_in_line(line, v) == ["docs.example.com", "localhost", "github.com", "docs.example.org"]
+    assert addresses_in_line("curl https://${HOST}/api", v) == []
+    assert addresses_in_line("(see https://en.wikipedia.org/wiki/Foo_(bar))", v) == \
+        [("en.wikipedia.org", "https://en.wikipedia.org/wiki/Foo_(bar)")]
+
+
+def test_census_keeps_addresses_per_line(v):
+    # 8. a row lists the distinct addresses on its line; rows given no address carry no `urls`
+    f = census([("x.example.com", "a.md", 1, "docs", "https://x.example.com/a"),
+                ("x.example.com", "a.md", 1, "docs", "https://x.example.com/b"),
+                ("x.example.com", "a.md", 1, "docs", "https://x.example.com/a"),
+                ("x.example.com", "b.md", 2, "code")], v)
+    assert f[0]["occurrences"] == [
+        {"file": "a.md", "line": 1, "where": "docs",
+         "urls": ["https://x.example.com/a", "https://x.example.com/b"]},
+        {"file": "b.md", "line": 2, "where": "code"}]

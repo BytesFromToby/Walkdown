@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import re
 
+from negation import negation
+
 LIST_ITEM = re.compile(r"^(\s*)([-*+]|\d+[.)])\s+")
 HEADING = re.compile(r"^\s{0,3}#{1,6}(\s|$)")
 FENCE = re.compile(r"^\s*(```|~~~)")
@@ -155,11 +157,14 @@ def rubric_file(rel, raw, folded, instr, audience, rows, vocab) -> list[dict]:
             if confirm_line is not None:
                 break
         confirmed = confirm_line is not None
+        neg = negation(text, m0.start())  # review C25: a forbidden action is not an unconfirmed one
         out.append({"check": "rubric.action", "file": rel, "line": n, "quote": raw[n - 1],
                     "audience": audience, "tier": tier, "action": action,
                     "patterns": [r.id for r, _ in hits], "confirmation": confirmed,
                     "negated_confirmation": (not confirmed) and negated_seen,
                     "confirm_redefined": redefined,
                     "confirm_line": confirm_line,
-                    "confirm_quote": raw[confirm_line - 1] if confirmed else None})
+                    "confirm_quote": raw[confirm_line - 1] if confirmed else None,
+                    "negated_action": neg is not None,
+                    "carve_out": neg["carve_out"] if neg else None})
     return out

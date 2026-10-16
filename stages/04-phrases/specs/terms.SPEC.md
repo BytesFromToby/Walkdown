@@ -36,7 +36,8 @@ definition per term:
 - `procedural`: a heading `How to X` or `Steps to X`
   (`vocab.procedural_heading`); the term is X and the definition is the first
   non-blank line after the heading (none: no definition). The finding's `line`
-  is the heading line.
+  and `quote` are that sentence's (changed 2026-10-16, review C26: the heading was
+  cited, which is not the definition); `heading_line` names the heading.
 
 `term` is normalized (`normalize_term`): quotes, backticks, and markdown
 emphasis (`*`, `_`, `~`) removed, lowercased, whitespace collapsed, trailing
@@ -52,7 +53,9 @@ Finding: `{check: "term.def", file, line, quote, audience, term, definition, sou
 - `conflicts(defs) -> list[dict]`: one `{check: "term.conflict", file: null,
   line: null, term, definitions}` per term with two or more different
   definitions, compared after lowercasing, collapsing whitespace, and removing
-  trailing punctuation. `definitions` lists every definition of the term as
+  trailing punctuation, of which at least one is not `procedural` (2026-10-16,
+  review C26: two procedures for one verb in two skills are two procedures, not
+  two meanings; a procedure against an explicit definition is still a conflict). `definitions` lists every definition of the term as
   `{file, line, text}` in file then line order. Ordered by term.
 - `safety(defs, vocab) -> list[dict]`: one `{check: "term.safety", file, line,
   quote, audience, term}` per `term.def` where any word of the term matches
@@ -70,8 +73,9 @@ Finding: `{check: "term.def", file, line, quote, audience, term, definition, sou
 2. `This means the tests pass.` and `by no means` give nothing; `By deploy we mean a tagged release.` gives term `deploy`.
 3. `When the user says "tidy up", delete the branch.` gives a `mapping` definition of `tidy up`.
 4. A `## Glossary` section with `- **Done**: merged and pushed` gives a `glossary` definition of `done`; the same line under `## Usage` gives none.
-5. `## How to fix` followed by `Run the repair script.` gives a `procedural` definition of `fix` at the heading line.
+5. `## How to fix` followed by `Run the repair script.` gives a `procedural` definition of `fix` at the sentence line, with `heading_line` the heading.
 6. Two different definitions of `ship` in two files give one `term.conflict` listing both; two identical definitions (differing only in case and spacing) give none.
 7. A definition of `confirmation` or `verified` gives a `term.safety` finding; one of `ship` does not.
 8. A line outside `instr` gives no definition.
 9. `- Delete means delete` gives term `delete` (the list marker is not part of it); `| a | Delete means delete. |` gives term `delete`; `"complete" means.` gives nothing.
+10. Two `How to start` procedures with different first sentences give no conflict; a `How to deploy` procedure and `Deploy means ...` give one.

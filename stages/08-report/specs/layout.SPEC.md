@@ -8,6 +8,7 @@ Where things live in a run folder, in one place, so the writer, `--rerender`, an
 ```
 RepoResults/<repo>/<date>_<hash7>/
   summary.html  review.html  summary.md  full.md    the reports: what people read
+  summary-v1.html                                 report v1, frozen, while summary.html is redesigned (2026-10-16)
   marks.json                           the reader's marks, once saved from review.html
   LOG.md                               what ran, each stage's validation stamp
   data/                                everything else: stage outputs and working files

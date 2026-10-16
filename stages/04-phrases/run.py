@@ -181,8 +181,8 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None) -> tuple[dict, di
         defs.extend(terms.defs_file(rel, raw, folded, instr, aud, vocab))
         for n, line in enumerate(folded, start=1):
             where = "instructions" if n in instr else "docs" if aud == "human" else "code"
-            for host in endpoints.hosts_in_line(line, vocab):
-                occ.append((host, rel, n, where))
+            for host, addr in endpoints.addresses_in_line(line, vocab):
+                occ.append((host, rel, n, where, addr))
 
     per_check = {c: 0 for c in CHECKS}
     per_pattern = {r.id: 0 for r in rows}

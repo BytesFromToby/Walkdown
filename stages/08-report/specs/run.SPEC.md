@@ -20,7 +20,7 @@ python stages/08-report/run.py <input_dir> --repo <name> [--results <dir>] [--da
    there, then renames the folder to `<date>_<hash7>` (hash from stage 1's
    `inv.pin`), or `<date>_failed` when stage 1 failed; `-2`, `-3` when taken.
 2. Runs `validate.stamps` for stages 1 to 6 unless `--no-validate`.
-3. Writes `LOG.md`, `data/07-limits.md`, `summary.html`, `review.html`, `summary.md`, `full.md` (since 2026-10-02; an older run's `--rerender` keeps `report/`). `review.html` (2026-10-12, `specs/review_html.SPEC.md`) reads back a `marks.json` the reader saved beside it; nothing else reads that file.
+3. Writes `LOG.md`, `data/07-limits.md`, `summary.html`, `review.html`, `summary.md`, `full.md` (since 2026-10-02; an older run's `--rerender` keeps `report/`). `review.html` (2026-10-12, `specs/review_html.SPEC.md`) reads back a `marks.json` the reader saved beside it; nothing else reads that file. `summary-v1.html` (2026-10-16) is report v1, frozen at tag `report-v1`, written beside the v2 `summary.html` while the page is redesigned; the summary gets what changed since the newest earlier run of the same repository (`changes_for`: by run-folder name, counts and Walkdown's words only; nothing on a first run or when drift fails).
 4. Prints the run folder path on stdout.
 
 Exit 0 when every stage ran; 1 when a stage failed (documents are still written,

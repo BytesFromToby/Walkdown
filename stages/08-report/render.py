@@ -249,7 +249,8 @@ def part2_line(r) -> str:
     hosts = fnd(r, "04-phrases", "endpoint.host")
     undoc = [h for h in hosts if not h.get("documented") and not h.get("local")]
     rub = fnd(r, "04-phrases", "rubric.action")
-    unconf = [x for x in rub if not x.get("confirmation")]
+    unconf = [x for x in rub if not x.get("confirmation") and not x.get("negated_action")]
+    forbid = sum(1 for x in rub if x.get("negated_action"))
     conds = collections.Counter(c.get("kind") for c in fnd(r, "04-phrases", "cond.branch"))
     cs = ", ".join(f"{v} {k}" for k, v in conds.most_common()) or "none"
     defs = fnd(r, "04-phrases", "term.def")
@@ -261,7 +262,7 @@ def part2_line(r) -> str:
             f"{sum(1 for x in reps if x.get('patterns'))} flagged. " + secrets_line(r))
     return (f"Hosts: {len(hosts)}, {len(undoc)} not named in the docs. Confirm-first or "
             f"prohibited actions in instruction text: {len(rub)}, {len(unconf)} with no "
-            f"confirmation step. Conditionals: {cs}. Definitions: {len(defs)}, "
+            f"confirmation step, {forbid} stated as prohibitions. Conditionals: {cs}. Definitions: {len(defs)}, "
             f"{n(len(fnd(r, '04-phrases', 'term.conflict')), 'conflict')}, "
             f"{n(len(fnd(r, '04-phrases', 'term.safety')), 'safety-word definition')}." + tail)
 
@@ -379,6 +380,18 @@ def points(reports, stage) -> list[str]:
     return []
 
 
+def prohibition_note(x, short=False) -> str:
+    """Review C25: a hit or rubric row whose action the line forbids ("Never ..."). The finding
+    stays; this says how it is stated, with any exception ("unless ...")."""
+    if not (x.get("negated") or x.get("negated_action")):
+        return ""
+    carve = f"; exception: {x['carve_out']}" if x.get("carve_out") else ""
+    if short:
+        return f" ({carve[2:]})" if carve else ""
+    word = f" ({x['negation']}{carve})" if x.get("negation") else (f" ({carve[2:]})" if carve else "")
+    return f" (stated as a prohibition{word})"
+
+
 def hidden_how(p) -> str:
     """How a hidden+phrase pair hides its line: rendering hides it, or the phrase matches only
     once look-alike or invisible characters are folded (2026-10-09)."""
@@ -452,7 +465,7 @@ def _part2_points(r) -> list[str]:
         if x.get("confirm_redefined"):
             out.append(f"{loc(x)}: {x['tier']} action whose step redefines confirmation: "
                        f"{code(x['quote'].strip())}")
-        elif x.get("tier") == "prohibited" and not x.get("confirmation"):
+        elif x.get("tier") == "prohibited" and not x.get("confirmation") and not x.get("negated_action"):
             out.append(f"{loc(x)}: prohibited-tier action with no confirmation step: "
                        f"{code(x['quote'].strip())}")
     out = pos + out
@@ -1042,7 +1055,8 @@ def _f4(r, _):
             if pc:
                 L += ["Patterns: " + ", ".join(f"{k} {v}" for k, v in sorted(pc.items())), ""]
             L += [f"- {loc(h)} [{', '.join(h.get('patterns', []))}] ({h.get('audience')})"
-                  f"{' (matched only after folding)' if h.get('folded') else ''}: "
+                  f"{' (matched only after folding)' if h.get('folded') else ''}"
+                  f"{prohibition_note(h)}: "
                   f"{code(h['quote'].strip())}" for h in rows] or ["None."]
             L.append("")
     return L + _f4_part2(r)
@@ -1060,6 +1074,7 @@ def _f4_part2(r):
     L += _list("Confirm-first and prohibited actions in instruction text",
                fnd(r, "04-phrases", "rubric.action"),
                lambda x: f"{loc(x)}: {x.get('tier')}, {code(x.get('action'))}, "
+                         f"{'stated as a prohibition' + prohibition_note(x, short=True) + ', ' if x.get('negated_action') else ''}"
                          f"{'confirmation at line ' + str(x['confirm_line']) if x.get('confirmation') else 'no confirmation step'}"
                          f"{' (negated: without asking)' if x.get('negated_confirmation') else ''}"
                          f"{' (the step redefines confirmation)' if x.get('confirm_redefined') else ''}: "

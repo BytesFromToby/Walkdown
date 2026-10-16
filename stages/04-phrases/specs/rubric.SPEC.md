@@ -76,3 +76,11 @@ A line inside a fenced block: the step is the block plus the paragraph just
 before its opening fence and the paragraph just after its closing fence. Tests:
 `test_fenced_block_is_one_step_with_its_lead_in_and_follow_up`,
 `test_fenced_block_without_confirmation`.
+
+## Added 2026-10-16 (review C25)
+
+Every row records whether the action itself is forbidden: `negated_action` from
+`negation.negation` at the action's match, and `carve_out`, the exception after it. A forbidden
+action with no confirmation step is a prohibition, never an unconfirmed request; the report reads
+`negated_action` for that. Tests: `tests/test_negation.py` (7) and the grader's `neg-25-rubric-*`
+rows.

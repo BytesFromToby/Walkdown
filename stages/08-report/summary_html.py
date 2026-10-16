@@ -1,8 +1,10 @@
-"""The summary page as readable HTML. Spec: specs/summary_html.SPEC.md.
+"""The summary page, report v2 (owner redesign, 2026-10-16). Spec: specs/summary_html.SPEC.md.
 
-Same facts as summary.md, rewritten for a reader who is not a specialist: what to look
-at first, one plain sentence per stage, technical detail behind a disclosure. Nothing
-here detects or judges; every item comes from render.py's fixed rules.
+Built around a reader's questions, in the owner's order: what it is, the lethal trifecta and how
+it gets in, the files (collapsed), outside links, hidden text, committed secrets, risky asks and
+things to check, changes since the last run, recommendations, other details (collapsed). Same
+facts as before, from render.py's fixed rules; nothing here detects or judges. Report v1 is kept
+frozen as summary_v1_html.py (git tag report-v1) while v2 settles.
 """
 from __future__ import annotations
 
@@ -32,29 +34,6 @@ FAMILY = [  # "Matches ..." states what the pattern found, never what the author
     ("creds.", "Matches the wording of gathering secrets or credentials"),
 ]
 MAX_FIRST = 12
-# "Walkdown Results Breakdown" rows (owner, 2026-10-12): a question, what the step does, its result,
-# and its numbers in the open; numbers longer than OPEN_LIMIT characters go behind a toggle.
-STAGE_QUESTION = {
-    "01-inventory": "What ships?", "02-reader": "What does the model actually read?",
-    "03-graph": "What loads what?", "04-phrases": "What does the text ask for?",
-    "05-capability": "What does it touch?", "06-soft": "What needs a human read?",
-    "07-limits": "What was not examined?",
-}
-STAGE_DESC = {
-    "01-inventory": "A breakdown of how many and what type of files are in the folder.",
-    "02-reader": "What a model receives from each file, compared with what a person sees: hidden or "
-                 "invisible text, comments, text in images.",
-    "03-graph": "Which files point to which, starting from the files a tool loads first, and which "
-                "files nothing points to.",
-    "04-phrases": "Every line whose wording matches a known risky instruction, plus the definitions, "
-                  "conditions, and web addresses in the text.",
-    "05-capability": "What installing it grants: the three capabilities above, and what runs or loads "
-                     "without anyone asking.",
-    "06-soft": "Questions a pattern cannot settle, put to an optional model. Its answers never change "
-               "the findings.",
-    "07-limits": "What this run could not look at, and why.",
-}
-OPEN_LIMIT = 500
 NOT_BUILT = ": not built yet"  # how render.glance marks a check with no code (2026-10-12)
 ACCURACY_URL = "https://github.com/BytesFromToby/Walkdown/blob/main/docs/MODEL-ACCURACY.md"  # the published copy; a run folder has no docs/
 
@@ -102,7 +81,11 @@ def first_items(r) -> list[dict]:
             and h.get("audience") not in ("human", "test-data")]
     for h in hits:
         pats = sorted(R.POINT_PATTERNS & set(h["patterns"]))
-        out.append(_item(4, _family(pats), R.loc(h), h["quote"].strip(), R.rates_note(r, pats),
+        title = _family(pats)
+        if h.get("negated"):  # review C25: kept, and said how it is stated
+            title += (", stated as a prohibition with an exception" if h.get("carve_out")
+                      else ", stated as a prohibition")
+        out.append(_item(4, title, R.loc(h), h["quote"].strip(), R.rates_note(r, pats),
                          lead="How often this pattern turns up elsewhere: ", kind="phrase", src=h))
     for c in R.fnd(r, "04-phrases", "term.conflict"):
         d = c["definitions"][0]
@@ -131,7 +114,7 @@ def first_items(r) -> list[dict]:
         if x.get("confirm_redefined"):
             out.append(_item(4, "An action whose confirmation step is a redefinition", R.loc(x), x["quote"].strip(),
                              kind="rubric.redefined", src=x))
-        elif x.get("tier") == "prohibited" and not x.get("confirmation"):
+        elif x.get("tier") == "prohibited" and not x.get("confirmation") and not x.get("negated_action"):
             out.append(_item(4, "An irreversible or prohibited action with no confirmation step",
                              R.loc(x), x["quote"].strip(), kind="rubric.prohibited", src=x))
     for p in R.pairs(r, "testdata+loaded"):
@@ -218,61 +201,6 @@ def grouped(items) -> list[dict]:
     return out
 
 
-def plain_status(r, stamps, stage) -> str:
-    """One plain sentence per stage."""
-    if stage not in r or r.get(stage) is None:
-        return "This stage did not run."
-    f = lambda check: R.fnd(r, stage, check)  # noqa: E731
-    if stage == "01-inventory":
-        pin = f("inv.pin")[0]
-        hooks = f("struct.hooks")
-        mans = sum(len(m.get("files", [])) for m in f("struct.manifests"))
-        return (f"{pin['files']:,} files. {R.n(len(hooks), 'hook')} that run on their own, "
-                f"{R.n(len(f('struct.agent-tools')), 'agent or command definition')}, "
-                f"{R.n(mans, 'platform manifest')}.")
-    if stage == "02-reader":
-        total = R.fnd(r, "01-inventory", "inv.pin")[0]["files"]
-        unread = len(f("read.unread"))
-        div = [d for d in f("read.divergence") if "skipped" not in d]
-        return (f"The model reads {total - unread:,} of {total:,} files. In {R.n(len(div), 'place')}, "
-                f"what the model reads differs from what a person sees.")
-    if stage == "03-graph":
-        depth = f("graph.depth")
-        loaded = sum(1 for d in depth if d.get("via") == "dynamic")
-        return (f"{R.n(len(f('graph.entry')), 'entry point')} (files a tool loads first). "
-                f"{R.n(len(f('graph.orphan')), 'file')} nothing refers to, {R.n(loaded, 'file')} loaded "
-                "only by a folder or use of wildcards (a file-name pattern, like skills/*/SKILL.md).")
-    if stage == "04-phrases":
-        hits = R.phrase_hits(r)
-        labels = [x for x in R.fnd(r, "06-soft", "soft.label") if "skipped" not in x and x.get("label")]
-        lines = len({(h.get("file"), h.get("line")) for h in hits})
-        share = ""
-        if labels:
-            do = sum(1 for x in labels if x["label"] == "do")
-            share = (f" Of the {len(labels)} that a model sees, {labels[0].get('backend')} read {do} as a "
-                     f"real instruction to do the flagged thing and {len(labels) - do} as something else "
-                     "(a description, a quote, or the words in another sense).")
-        return (f"{_count(lines, 'line')} match the wording of a risky instruction. Each is a place to "
-                f"read, and none is a finding on its own.{share}")
-    if stage == "05-capability":
-        legs = {x["leg"]: x["present"] for x in f("cap.leg")}
-        have = [R.LEG_NAMES[k].lower() for k in R.LEG_NAMES if legs.get(k)]
-        if len(have) == 3:
-            return R.TRIFECTA_ALL
-        if not have:
-            return "None of the three: it does not read your data, take outside input, or send data out."
-        return (f"It {' and '.join(have)}: {len(have)} of the 3 that carry risk only when a tool "
-                "has all three at once.")
-    if stage == "06-soft":
-        s = R._soft(r)
-        if not s["backends"]:
-            return f"{R.n(len(s['questions']), 'question')} written for a person to read. No model was asked."
-        names = ", ".join(sorted({b["backend"] for b in s["backends"]}))
-        return (f"{R.n(len(s['questions']), 'question')} a pattern could not settle, answered by {names}. "
-                "Answers are readings; they reach no verdict.")
-    return ""
-
-
 def file_types(r) -> str:
     """Stage 1's file types and script languages, by count: "File types: md 94, sh 41, ..."."""
     pin = (R.fnd(r, "01-inventory", "inv.pin") or [{}])[0]
@@ -325,137 +253,6 @@ def _count(x: int, word: str) -> str:
     return f"{x:,} {word if x == 1 else word + 's'}"
 
 
-def facts(r, stage) -> list[str] | None:
-    """A row's numbers in plain words, never repeating its plain sentence, each term explained
-    where it appears (owner, 2026-10-12: "What is a glob? What is a dangling reference?").
-    None: no plain version; the row shows the technical status line instead."""
-    f = lambda check: R.fnd(r, stage, check)  # noqa: E731
-    if stage not in r or r.get(stage) is None:
-        return None
-    if stage == "01-inventory":
-        return [x for x in [file_types(r)] if x]
-    if stage == "02-reader":
-        div = [d for d in f("read.divergence") if "skipped" not in d]
-        cs = collections.Counter(d.get("carrier", "?") for d in div)
-        out = []
-        if cs:
-            out.append("Where they differ: " + ", ".join(
-                f"{CARRIER_PLAIN.get(k, 'mixed invisible characters' if '+' in k else k)} {v}"
-                for k, v in cs.most_common()) + ".")
-        fold = len(f("read.fold"))
-        if fold:
-            out.append(f"{_count(fold, 'line')} read differently once look-alike or invisible "
-                       "characters are swapped for plain ones.")
-        script = len(f("read.script"))
-        if script:
-            out.append(f"{R.n(script, 'stretch', 'stretches')} of text in a non-Latin script "
-                       "(Walkdown reads English only).")
-        return out
-    if stage == "03-graph":
-        dang = f("graph.dangling")
-        out = []
-        if dang:
-            ctx = collections.Counter(d.get("context", "?") for d in dang)
-            out.append(f"{_count(len(dang), 'dangling reference')}: file paths written in the repository "
-                       "that point at files not in it (" + ", ".join(
-                           f"{v:,} in {k}" for k, v in ctx.most_common()) + ").")
-        mentioned = sum(1 for d in f("graph.depth") if d.get("via") == "mention")
-        if mentioned:
-            out.append(f"{_count(mentioned, 'more file')} reached only through a mention of a folder or "
-                       "wildcards, without a tool loading them.")
-        if f("graph.dynamic"):
-            out.append("Some files are only named when code runs, so this map can miss links.")
-        return out
-    if stage == "04-phrases":
-        hits = R.phrase_hits(r)
-        out = []
-        by = collections.Counter(h["check"] for h in hits)
-        kinds = [f"{GROUP_PLAIN[g]} {sum(by[c] for c in cs):,}" for g, cs in R.SUBGROUPS.items()]
-        out.append("Matches by kind: " + "; ".join(kinds) + ".")
-        aud = {}
-        for h in hits:
-            aud.setdefault((h.get("file"), h.get("line")), h.get("audience"))
-        where = collections.Counter(AUDIENCE_PLAIN.get(a, "a model") for a in aud.values())
-        out.append("Who reads those lines: " + ", ".join(
-            f"{k} {where[k]:,}" for k in dict.fromkeys(AUDIENCE_PLAIN.values()) if where[k]) + ".")
-        hosts = f("endpoint.host")
-        if hosts:
-            undoc = [h for h in hosts if not h.get("documented") and not h.get("local")]
-            out.append(f"Web addresses: {_count(len(hosts), 'site')} named, {len(undoc)} of them not "
-                       "mentioned in the docs.")
-        rub = f("rubric.action")
-        if rub:
-            unconf = [x for x in rub if not x.get("confirmation")]
-            out.append(f"Actions the AI tool's rules say need your OK first, or never allow (sending, "
-                       f"publishing, paying, entering passwords): {len(rub)} in text a model follows, "
-                       f"{len(unconf)} with no step asking you first.")
-        conds = collections.Counter(c.get("kind") for c in f("cond.branch"))
-        if conds:
-            out.append("Conditions that change what it does: " + ", ".join(
-                f"{v} {COND_PLAIN.get(k, k)}" for k, v in conds.most_common()) + ".")
-        defs = f("term.def")
-        if defs:
-            conflicts, safety = len(f("term.conflict")), len(f("term.safety"))
-            out.append(f"Words given their own meaning: {_count(len(defs), 'definition')}"
-                       + (f", {_count(conflicts, 'word')} defined more than one way" if conflicts else "")
-                       + (f", {_count(safety, 'safety word')} (like done or verified) redefined" if safety
-                          else "") + ".")
-        reps = [x for x in f("rep.sentence") if x.get("patterns")]
-        if reps:
-            out.append(f"{_count(len(reps), 'flagged sentence')} repeated across files a model reads.")
-        far = sum(1 for d in f("pos.density") if d.get("beyond_window"))
-        if far:
-            out.append(f"{_count(far, 'long file')} with flagged lines past where a reviewer's viewer "
-                       "may stop showing the file.")
-        out.append(R.secrets_line(r))
-        return out
-    if stage == "05-capability":
-        grants = [g["grant"] for g in f("cap.grant")]
-        out = ["What installing it grants: " + ("; ".join(GRANT_PLAIN.get(g, g) for g in grants)
-                                               if grants else "nothing beyond its files") + "."]
-        desc = [i for i in f("cap.injection") if i.get("mechanism") == "description"]
-        per = [x for x in f("cap.load-bytes") if x.get("file") and x.get("bytes") is not None]
-        if desc:
-            line = (f"Text in the model's context before you type: {sum(i.get('bytes') or 0 for i in desc):,} "
-                    "bytes of skill and agent descriptions")
-            if per:
-                lo, hi = min(x["bytes"] for x in per), max(x["bytes"] for x in per)
-                line += (f", about {hi:,} bytes with the startup hook" if lo == hi else
-                         f", {lo:,} to {hi:,} bytes with the startup hook, depending on the AI tool")
-            out.append(line + ".")
-        for t in f("cap.testdata"):
-            k = t.get("stage1", 0) + t.get("stage4", 0)
-            if k:
-                out.append(f"{R.n(k, 'finding')} in test or fixture folders set aside; "
-                           "they count toward none of this.")
-        return out
-    if stage == "06-soft":
-        s = R._soft(r)
-        if not s["backends"]:
-            return ["No model was asked. The questions are saved for a person to answer, in "
-                    "data/06-packet.md."]
-        out = []
-        for b in s["backends"]:
-            who = f"{b['backend']} ({'remote' if b.get('remote') else 'local'})"
-            if b["role"] == "label":
-                lc = collections.Counter(x["label"] for x in s["labels"])
-                words = dict(R.LABEL_WORDS)
-                out.append(f"{who} read the {len(s['labels'])} matched lines a model sees: " + ", ".join(
-                    f"{lc[k]} as {words.get(k, k)}" for k, _ in R.LABEL_WORDS if lc[k]) + ".")
-            elif b["role"] == "relational":
-                out.append(f"{who} answered {R.n(len(s['reads']), 'question')} about a finding's context.")
-            elif b["role"] == "sweep":
-                new, old, near_sw = R.sweep_split(s)
-                out.append(f"{who} read {len(s['sweep']):,} passages no pattern matched and flagged "
-                           f"{len(new) + len(old)} ({len(new)} not already found by a pattern); "
-                           f"{len(near_sw)} more are near the line.")
-            elif b["role"] == "compare":
-                agree = sum(1 for x in s["agree"] if x.get("agree"))
-                out.append(f"{who} agreed with the first labeler on {agree} of {len(s['agree'])}.")
-        return out + ["Their answers are in the model reads at the end."]
-    return None
-
-
 def _wheres(ws) -> str:
     uniq = list(dict.fromkeys(ws))
     return "  ·  ".join(uniq[:4]) + (f"  ·  +{len(uniq) - 4} more" if len(uniq) > 4 else "")
@@ -466,157 +263,466 @@ CHECK = ('<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="1.5" y="1.5" widt
 BOX = '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="1.5" y="1.5" width="17" height="17" rx="3"/></svg>'
 
 
-def _trifecta(legs, marked=()) -> str:
-    """The three legs as a checklist: a box per plain term, a one-line definition under each.
-    `marked`: legs whose every cited line stage 6 read as not an instruction (soft D5).
-    Checked legs come first, then unchecked (owner, 2026-10-12). Each checked box takes a color
-    by its position among the checked ones, green, yellow, red (`data-n` 1 to 3): the risk is
-    in having all three at once, so the third check is the red one, whichever leg it is."""
-    order = [k for k in R.LEG_NAMES if legs.get(k)] + [k for k in R.LEG_NAMES if not legs.get(k)]
-    rows = []
-    for i, k in enumerate(order, 1):
-        on = bool(legs.get(k))
-        mk = ('<div class="leg-def">Every line cited for this was read in stage 6 as not an '
-              'instruction. The box stays checked; see 5 in the full report.</div>'
-              if on and k in marked else "")
-        n = f' data-n="{i}"' if on else ""
-        rows.append(f'<li class="leg {"on" if on else "off"}"{n}><span class="box" role="img" '
-                    f'aria-label="{"yes" if on else "no"}">{CHECK if on else BOX}</span>'
-                    f'<div><div class="leg-name">{esc(R.LEG_NAMES[k])}</div>'
-                    f'<div class="leg-def">{esc(R.LEG_DEFS[k])}</div>{mk}</div></li>')
-    n_on = sum(1 for k in R.LEG_NAMES if legs.get(k))
-    foot = R.TRIFECTA_ALL if n_on == 3 else R.TRIFECTA_SOME.format(n=n_on)
-    return (f'<section class="trifecta" aria-label="What it can do"><h2>What it can do</h2>'
-            f'<ul class="legs">{"".join(rows)}</ul><p class="leg-foot">{esc(foot)}</p></section>')
+# ---------------------------------------------------------------- report v2 sections (2026-10-16)
+
+TRIFECTA_LEDE = ("Simon Willison's name for three things an AI tool can do. Each one is ordinary on its "
+                 "own. A tool that does all three can be steered by text from outside into sending "
+                 "your data away.")
+READ_BY = {"model": "the AI", "subagent": "the AI", "tool": "scripts", "human": "people",
+           "test-data": "test data"}
+LINK_SHOW = 72  # characters of an address shown in the links table; Copy takes the whole address
+LIST_MAX = 6    # files named in a line of the stats before "+N more"
+OWN_SECTIONS = {"hidden+phrase", "secret"}  # item kinds with a section of their own
 
 
-def _tile(label, value, sub="") -> str:
-    return (f'<div class="tile"><div class="tile-v">{esc(value)}</div>'
-            f'<div class="tile-l">{esc(label)}</div>{f"<div class=tile-s>{esc(sub)}</div>" if sub else ""}</div>')
+def _size(b: int) -> str:
+    if b < 1000:
+        return f"{b:,} bytes"
+    for unit in ("KB", "MB", "GB"):
+        b /= 1000
+        if b < 1000 or unit == "GB":
+            return f"{b:.1f} {unit}"
+    return ""
 
 
-def _cards(items, empty: str) -> list[str]:
+def _files(xs) -> str:
+    xs = list(dict.fromkeys(xs))
+    return ", ".join(xs[:LIST_MAX]) + (f", +{len(xs) - LIST_MAX} more" if len(xs) > LIST_MAX else "")
+
+
+def read_by(path) -> str:
+    """Who reads a file, in plain words, from stage 4's audience rule (by path)."""
+    return READ_BY.get(R.audience(path) if path else "model", "the AI")
+
+
+def _section(sid, title, lede, body, cls="") -> str:
+    lede_html = f'<p class="lede">{lede}</p>' if lede else ""
+    return (f'<section class="block {cls}" id="{sid}"><h2>{esc(title)}</h2>{lede_html}{body}</section>')
+
+
+def _p(text) -> str:
+    return f"<p>{esc(text)}</p>"
+
+
+def _empty(text) -> str:
+    return f'<p class="empty">{esc(text)}</p>'
+
+
+def _cards(items) -> str:
     out = []
     for it in items[:MAX_FIRST]:
         quotes = "\n".join(it["quotes"][:6])
         q = f'<pre class="quote">{esc(quotes)}</pre>' if quotes else ""
-        nt = (f'<p class="note">{esc((it.get("lead") or "") + it["note"])}</p>'
-              if it.get("note") else "")
+        nt = f'<p class="note">{esc((it.get("lead") or "") + it["note"])}</p>' if it.get("note") else ""
         places = len(it["wheres"])
         count = f' <span class="count">{places} places</span>' if places > 1 else ""
-        num = it["stage"]
-        out.append(f'<li class="item"><div class="item-h"><a class="stage-tag" href="#stage-{num}">'
-                   f'{esc(PLAIN_STAGE[R.ORDER[num - 1]])}</a>'
-                   f'<h3>{esc(it["title"])}{count}</h3></div>'
+        out.append(f'<li class="item"><h3>{esc(it["title"])}{count}</h3>'
                    f'<code class="where">{esc(_wheres(it["wheres"]))}</code>{q}{nt}</li>')
-    more = len(items) - MAX_FIRST
-    if more > 0:
-        out.append(f'<li class="more">{more} more in the full report.</li>')
-    if not items:
-        out.append(f'<li class="more">{empty}</li>')
+    if len(items) > MAX_FIRST:
+        out.append(f'<li class="more">{len(items) - MAX_FIRST} more on the review page.</li>')
+    return f'<ol class="cards">{"".join(out)}</ol>'
+
+
+def header(meta) -> str:
+    bits = [meta.get("source", ""), f"{meta.get('hash_kind', '?')} {str(meta.get('hash', ''))[:12]}",
+            f"retrieved {meta.get('date', '')}", f"run {meta.get('run', '')}"]
+    if meta.get("tool"):
+        bits.append(f"Walkdown {meta['tool']}")
+    return ('<header class="card"><div class="top"><a class="pagelink" href="review.html">'
+            'Review each place →</a></div>'
+            f'<h1><span class="h1-lead">Walkdown report on</span> {esc(meta["repo"])}</h1>'
+            f'<div class="meta">{"".join(f"<span>{esc(b)}</span>" for b in bits if b)}</div></header>')
+
+
+def trifecta(r) -> str:
+    """The three legs as a checklist, checked first and colored by position (owner, 2026-10-12),
+    each with how many places back it; then how it gets in: grants and what loads on its own."""
+    legs = {x["leg"]: x for x in R.fnd(r, "05-capability", "cap.leg")}
+    on = {k: bool(legs.get(k, {}).get("present")) for k in R.LEG_NAMES}
+    marked = R.all_marked_legs(r)
+    order = [k for k in R.LEG_NAMES if on[k]] + [k for k in R.LEG_NAMES if not on[k]]
+    rows = []
+    for i, k in enumerate(order, 1):
+        x = legs.get(k, {})
+        n = x.get("evidence_total", len(x.get("evidence") or []))
+        backing = f'<div class="leg-n">{R.n(n, "place")} in the files</div>' if on[k] and n else ""
+        mk = ('<div class="leg-def">Every line cited for this was read by a model as not an '
+              'instruction. The box stays checked; see 5 in the full report.</div>'
+              if on[k] and k in marked else "")
+        data_n = f' data-n="{i}"' if on[k] else ""
+        rows.append(f'<li class="leg {"on" if on[k] else "off"}"{data_n}><span class="box" role="img" '
+                    f'aria-label="{"yes" if on[k] else "no"}">{CHECK if on[k] else BOX}</span>'
+                    f'<div><div class="leg-name">{esc(R.LEG_NAMES[k])}</div>'
+                    f'<div class="leg-def">{esc(R.LEG_DEFS[k])}</div>{backing}{mk}</div></li>')
+    n_on = sum(on.values())
+    foot = R.TRIFECTA_ALL if n_on == 3 else R.TRIFECTA_SOME.format(n=n_on)
+    return (f'<section class="trifecta block" id="trifecta"><h2>The lethal trifecta</h2>'
+            f'<p class="lede">{esc(TRIFECTA_LEDE)}</p><ul class="legs">{"".join(rows)}</ul>'
+            f'<p class="leg-foot">{esc(foot)}</p>{gets_in(r)}</section>')
+
+
+def gets_in(r) -> str:
+    """What installing it allows, and what loads on its own, in plain words."""
+    grants = {g["grant"]: g for g in R.fnd(r, "05-capability", "cap.grant")}
+    hooks = [h for h in R.fnd(r, "01-inventory", "struct.hooks") if not R.is_test_data(h.get("file"))]
+    mcp = [m for m in R.fnd(r, "01-inventory", "struct.mcp") if not R.is_test_data(m.get("file"))]
+    agents = [a for a in R.fnd(r, "01-inventory", "struct.agent-tools") if not R.is_test_data(a.get("file"))]
+    have, lack = [], []
+
+    def row(name, detail, present):
+        (have if present else lack).append((name, detail))
+
+    row("Runs commands on its own",
+        [f"{h.get('event')}: {h.get('command')} ({h['file']})" for h in hooks[:4]]
+        + ([f"+{len(hooks) - 4} more"] if len(hooks) > 4 else []),
+        bool(hooks) or "exec-at-load" in grants)
+    desc = [i for i in R.fnd(r, "05-capability", "cap.injection") if i.get("mechanism") == "description"]
+    per = [x for x in R.fnd(r, "05-capability", "cap.load-bytes") if x.get("file") and x.get("bytes") is not None]
+    inj = f"{sum(i.get('bytes') or 0 for i in desc):,} bytes of descriptions" if desc else ""
+    if per:
+        inj += (", " if inj else "") + f"about {max(x['bytes'] for x in per):,} bytes with the startup hook"
+    row("Adds text to the AI's context before you type", inj, "context-injection" in grants)
+    for g, name in (("persistence", "Makes changes that last after the session"),
+                    ("network", "Uses the network"),
+                    ("elevated", "Asks for more permissions than the default")):
+        x = grants.get(g, {})
+        row(name, R.n(x.get("evidence_total", len(x.get("evidence") or [])), "place") if x else "", g in grants)
+    row("Connects to outside services (MCP servers)",
+        ", ".join(m.get("name") or "?" for m in mcp), bool(mcp))
+    inherit = [a for a in agents if not a.get("tools")]
+    row("Agents with their own tools",
+        f"{R.n(len(agents), 'agent or command definition')}"
+        + (f", {len(inherit)} with no tools list (they can use every tool the AI has)" if inherit else ""),
+        bool(agents))
+    lis = "".join(f'<li><span class="g-name">{esc(n)}</span>'
+                  + "".join(f'<span class="g-detail">{esc(x)}</span>'
+                            for x in ([d] if isinstance(d, str) else d) if x) + "</li>" for n, d in have)
+    body = f'<ul class="grants">{lis}</ul>' if have else _empty("Nothing beyond its files: it loads nothing on its own.")
+    if lack:
+        body += f'<p class="g-none">Not found: {esc(", ".join(n[:1].lower() + n[1:] for n, _ in lack))}.</p>'
+    return f'<div class="gets-in"><h3>How it gets in</h3>{body}</div>'
+
+
+def file_concerns(r) -> list[tuple[str, list[str]]]:
+    """What in the files is worth a look, shown above the collapsed stats: (plain line, files)."""
+    census = R.fnd(r, "01-inventory", "struct.census")
+    files = R.fnd(r, "01-inventory", "inv.file")
+    by = collections.defaultdict(list)
+    for c in census:
+        by[c.get("flag")].append(c["file"])
+    out = []
+    unknown = [f["file"] for f in files if (f.get("type") in (None, "", "application/octet-stream"))
+               and not R.is_test_data(f["file"])]
+    if unknown:
+        out.append(("Unknown file type", unknown))
+    if by["ext-magic-mismatch"]:
+        out.append(("Contents are a different type than the file name says", by["ext-magic-mismatch"]))
+    if by["archive"]:
+        out.append(("Archives (their contents were not read)", by["archive"]))
+    if by["symlink"]:
+        out.append(("Links to another file or folder (symlinks)", by["symlink"]))
+    long = [f for f in by["reader-window"] if R.audience(f) in ("model", "subagent")]
+    if long:
+        out.append(("Files the AI reads that are longer than a reviewer's viewer shows "
+                    "(2,000 lines or 50 KB)", long))
     return out
 
 
-def _models_section(r, items) -> str:
-    """Stage 6 reads in their own block (2026-10-03 review C14): model reads are optional and
-    experimental, so the deterministic findings lead and these follow, labeled as such. Since
-    2026-10-12 (owner) the block comes last, after the recommendations, closed by default with
-    its count on the toggle: on superpowers 21 model reads had outweighed 2 places to check."""
-    if not items:
+def stats(r) -> str:
+    pin = (R.fnd(r, "01-inventory", "inv.pin") or [{}])[0]
+    files = R.fnd(r, "01-inventory", "inv.file")
+    ext = pin.get("extensions") or {}
+    total = pin.get("files", len(files))
+    head = f"{total:,} files, {R.n(len(ext), 'file type')}, {_size(pin.get('bytes') or 0)} in all."
+    concerns = file_concerns(r)
+    callout = ""
+    if concerns:
+        lis = "".join(f'<li><b>{esc(t)}</b> <span class="count">{len(fs)}</span>'
+                      f'<code class="where">{esc(_files(fs))}</code></li>' for t, fs in concerns)
+        callout = f'<div class="callout"><h3>Worth a look</h3><ul>{lis}</ul></div>'
+    lines = [file_types(r)]
+    big = sorted((f for f in files if not R.is_test_data(f["file"])), key=lambda f: -(f.get("bytes") or 0))[:3]
+    if big:
+        lines.append("Largest: " + ", ".join(f"{f['file']} ({_size(f.get('bytes') or 0)})" for f in big) + ".")
+    kinds = collections.Counter(f.get("entry_point") for f in files if f.get("entry_point"))
+    if kinds:
+        lines.append("Files a tool loads first: " + ", ".join(
+            f"{k.replace('-', ' ')} {v}" for k, v in kinds.most_common()) + ".")
+    desc = R.fnd(r, "01-inventory", "struct.description")
+    if desc:
+        lines.append(f"{R.n(len(desc), 'description')} always in the AI's context (the text that tells "
+                     "it when to use each skill or agent).")
+    mans = sum(len(m.get("files", [])) for m in R.fnd(r, "01-inventory", "struct.manifests"))
+    if mans:
+        lines.append(f"{R.n(mans, 'platform manifest')} (files that tell each AI tool what the plugin holds).")
+    longl = [c for c in R.fnd(r, "01-inventory", "struct.census") if c.get("flag") == "long-line"]
+    if longl:
+        lines.append(f"{_count(len(longl), 'line')} over 500 characters, in "
+                     f"{R.n(len({c['file'] for c in longl}), 'file')}.")
+    if "03-graph" in r:
+        depth = R.fnd(r, "03-graph", "graph.depth")
+        direct = sum(1 for d in depth if d.get("via") == "static")
+        loaded = sum(1 for d in depth if d.get("via") == "dynamic")
+        mention = sum(1 for d in depth if d.get("via") == "mention")
+        orphans = [o["file"] for o in R.fnd(r, "03-graph", "graph.orphan")]
+        orph = len(orphans)
+        lines.append(f"Map: {R.n(len(R.fnd(r, '03-graph', 'graph.entry')), 'starting point')} (files a "
+                     f"tool loads first); {_count(direct, 'file')} reached by following references, "
+                     f"{loaded:,} only through a folder or wildcard load, {mention:,} only mentioned "
+                     f"through a folder or wildcard, {orph:,} that nothing points to"
+                     + (f" ({_files(orphans)})" if orphans else "") + ".")
+        dang = R.fnd(r, "03-graph", "graph.dangling")
+        if dang:
+            ctx = collections.Counter(d.get("context", "?") for d in dang)
+            lines.append(f"Broken file references: {len(dang):,} paths written in the files point at files "
+                         "that are not in the folder (" + ", ".join(f"{v:,} in {k}" for k, v in
+                                                                 ctx.most_common()) + ").")
+        lines.append("Some files are named only when code runs, so the map can miss links.")
+    inner = "".join(_p(x) for x in lines if x)
+    body = (f'<p class="headline">{esc(head)}</p>{callout}'
+            f'<details class="fold"><summary>Files and map</summary><div class="facts">{inner}</div></details>')
+    return _section("files", "Files", "", body)
+
+
+def link_rows(r) -> list[dict]:
+    """One row per address per line: domain, address, file, line, who reads the file. A run made
+    before 2026-10-16 has no addresses saved; its rows show the domain."""
+    rows = []
+    for h in R.fnd(r, "04-phrases", "endpoint.host"):
+        for o in h.get("occurrences", []):
+            who = read_by(o.get("file"))
+            for a in (o.get("urls") or [h["host"]]):
+                rows.append({"host": h["host"], "url": a, "file": o.get("file"), "line": o.get("line"),
+                             "who": who, "documented": h.get("documented")})
+    return rows
+
+
+def links(r) -> str:
+    hosts = R.fnd(r, "04-phrases", "endpoint.host")
+    lede = "Every web address the skill names. Walkdown gathered these and opened none of them."
+    if "04-phrases" not in r:
+        return _section("links", "Outside links", lede, _empty("Not checked: this run has no stage 4 output."))
+    if not hosts:
+        return _section("links", "Outside links", lede, _empty("No outside links: the skill names no web address."))
+    rows = link_rows(r)
+    ai = sum(1 for x in rows if x["who"] == "the AI")
+    undoc = sum(1 for h in hosts if not h.get("documented") and not h.get("local"))
+    head = (f"{_count(len(rows), 'link')} to {R.n(len(hosts), 'different domain')}. "
+            f"{ai:,} in text the AI reads. "
+            f"{R.n(undoc, 'domain')} the skill's docs never mention.")
+    trs = []
+    for host in sorted({x["host"] for x in rows}):
+        mine = [x for x in rows if x["host"] == host]
+        trs.append(f'<tr class="dom"><th colspan="3">{esc(host)} <span class="count">{len(mine)}</span></th></tr>')
+        for x in sorted(mine, key=lambda x: (x["file"] or "", x["line"] or 0, x["url"])):
+            shown = x["url"] if len(x["url"]) <= LINK_SHOW else x["url"][:LINK_SHOW - 1] + "…"
+            where = f"{x['file']}:{x['line']}" if x.get("line") is not None else (x["file"] or "")
+            trs.append(f'<tr><td class="url"><code title="{esc(x["url"])}">{esc(shown)}</code>'
+                       f'<button type="button" class="copy" data-url="{esc(x["url"])}" '
+                       f'aria-label="Copy the whole link">Copy</button></td>'
+                       f'<td class="loc"><code>{esc(where)}</code></td><td class="who">{esc(x["who"])}</td></tr>')
+    table = (f'<details class="fold"><summary>All {len(rows):,} links, by domain</summary>'
+             f'<div class="tablewrap"><table class="links"><thead><tr><th>Link</th><th>File, line</th>'
+             f'<th>Read by</th></tr></thead><tbody>{"".join(trs)}</tbody></table></div></details>')
+    return _section("links", "Outside links", esc(lede), f'<p class="headline">{esc(head)}</p>{table}')
+
+
+def hidden(r, items) -> str:
+    lede = "Text the AI receives that a person reading the file on screen would not see."
+    if "02-reader" not in r:
+        return _section("hidden", "Hidden text", esc(lede), _empty("Not checked: this run has no stage 2 output."))
+    div = [d for d in R.fnd(r, "02-reader", "read.divergence") if "skipped" not in d]
+    fold = R.fnd(r, "02-reader", "read.fold")
+    script = R.fnd(r, "02-reader", "read.script")
+    mine = [it for it in items if it.get("kind") == "hidden+phrase"]
+    if not div and not fold and not script:
+        return _section("hidden", "Hidden text", esc(lede),
+                        _empty("Nothing hidden: what the AI reads matches what a person sees."))
+    lines = []
+    if div:
+        cs = collections.Counter(d.get("carrier", "?") for d in div)
+        ai = sum(1 for d in div if R.audience(d.get("file")) in ("model", "subagent"))
+        lines.append(f"In {R.n(len(div), 'place')}, what the AI reads differs from what a person sees "
+                     f"({ai:,} in files the AI reads): " + ", ".join(
+                         f"{CARRIER_PLAIN.get(k, 'mixed invisible characters' if '+' in k else k)} {v}"
+                         for k, v in cs.most_common()) + ".")
+    if fold:
+        lines.append(f"{_count(len(fold), 'line')} read differently once look-alike or invisible characters "
+                     "are swapped for plain ones (most are typographic quotes and dashes).")
+    if script:
+        lines.append(f"{R.n(len(script), 'stretch', 'stretches')} of text in a non-Latin script; the "
+                     "risky-ask patterns read English only.")
+    body = "".join(_p(x) for x in lines)
+    if mine:
+        body += '<h3>Hidden, and it reads like an instruction</h3>' + _cards(mine)
+    return _section("hidden", "Hidden text", esc(lede), body)
+
+
+def secrets(r, items) -> str:
+    lede = "Lines that look like a password, key, or token saved in the files. Values are never shown here."
+    allf = [x for x in R.fnd(r, "04-phrases", "secret.found")]
+    if "04-phrases" not in r:
+        return _section("secrets", "Committed secrets", esc(lede), _empty("Not checked: this run has no stage 4 output."))
+    if any("skipped" in x for x in allf):
+        return _section("secrets", "Committed secrets", esc(lede),
+                        _empty("Not checked: no secret scanner was installed for this run."))
+    real = [it for it in items if it.get("kind") == "secret"]
+    test = sum(1 for x in allf if x.get("audience") == "test-data")
+    plain = sum(1 for x in allf if x.get("likely_not_secret") and x.get("audience") != "test-data")
+    engine = allf[0].get("engine") if allf else None
+    aside = []
+    if plain:
+        aside.append(f"{plain} that look like hashes, variable names, plain words, or local test passwords")
+    if test:
+        aside.append(f"{test} in test data")
+    note = f" Set aside: {'; '.join(aside)}." if aside else ""
+    by = f" Checked by {engine}." if engine else ""
+    if not real:
+        return _section("secrets", "Committed secrets", esc(lede),
+                        _empty(f"No lines look like committed secrets.{by}{note}"))
+    return _section("secrets", "Committed secrets", esc(lede),
+                    _p(f"{R.n(len(real), 'line')} look like committed secrets.{by}{note}") + _cards(real))
+
+
+def risky(r, items, model_items) -> str:
+    lede = ("Lines whose wording matches a known risky request, and the places picked by fixed rules. "
+            "Each is a place to read; being listed does not mean something is wrong.")
+    if "04-phrases" not in r:
+        return _section("risky", "Risky asks and things to check", esc(lede),
+                        _empty("Not checked: this run has no stage 4 output."))
+    hits = R.phrase_hits(r)
+    aud = {}
+    for h in hits:
+        aud.setdefault((h.get("file"), h.get("line")), h.get("audience"))
+    lines = []
+    if hits:
+        where = collections.Counter(READ_BY.get(a, "the AI") for a in aud.values())
+        lines.append(f"{_count(len(aud), 'line')} match the wording of a risky request. Who reads them: "
+                     + ", ".join(f"{k} {where[k]:,}" for k in dict.fromkeys(READ_BY.values())
+                                 if where[k]) + ".")
+        by = collections.Counter(h["check"] for h in hits)
+        lines.append("By kind: " + "; ".join(f"{GROUP_PLAIN[g]} {sum(by[c] for c in cs):,}"
+                                             for g, cs in R.SUBGROUPS.items()) + ".")
+    labels = [x for x in R.fnd(r, "06-soft", "soft.label") if "skipped" not in x and x.get("label")]
+    if labels:
+        do = sum(1 for x in labels if x["label"] == "do")
+        lines.append(f"A second opinion ({labels[0].get('backend')}) read {do} of the {len(labels)} lines "
+                     "the AI reads as a real instruction to do the flagged thing, and the rest as "
+                     "something else (a description, a quote, or the words in another sense).")
+    rub = R.fnd(r, "04-phrases", "rubric.action")
+    if rub:
+        unconf = sum(1 for x in rub if not x.get("confirmation") and not x.get("negated_action"))
+        forbid = sum(1 for x in rub if x.get("negated_action"))
+        lines.append(f"Actions that should ask you first (sending, publishing, paying, entering passwords): "
+                     f"{len(rub)} in text the AI follows, {unconf} with no step asking you"
+                     + (f", {forbid} where the text forbids the action" if forbid else "") + ".")
+    body = "".join(_p(x) for x in lines) if lines else _empty("No line matches the wording of a risky request.")
+    listed = [it for it in items if it.get("kind") not in OWN_SECTIONS]
+    if listed:
+        lis = "".join(f'<li>{esc(it["title"])} <span class="count">{R.n(len(it["wheres"]), "place")}</span></li>'
+                      for it in listed)
+        body += f'<h3>Things to check</h3><ul class="checks">{lis}</ul>'
+    else:
+        body += _empty("Nothing to check: no place met the rules.")
+    if model_items:
+        n = sum(len(it["wheres"]) for it in model_items)
+        body += (f'<p class="note">Plus {R.n(n, "model read")} (optional, experimental), on the review page. '
+                 f'Measured accuracy: <a href="{ACCURACY_URL}">MODEL-ACCURACY</a>.</p>')
+    if items or model_items:
+        body += ('<p class="review-link"><a href="review.html">Walk through every place one at a time</a>, '
+                 'with the lines around it, and mark each one Concerned, Not concerned, or Not sure.</p>')
+    return _section("risky", "Risky asks and things to check", esc(lede), body)
+
+
+def changes(ch) -> str:
+    """Only when an earlier run of the same repository is a different version: a re-run of the
+    same version has nothing to say here."""
+    if not ch or ch.get("same"):
         return ""
-    names = ", ".join(sorted({b["backend"] for b in R._soft(r)["backends"]})) or "a model"
-    cards = "".join(_cards(items, ""))
-    count = sum(len(it["wheres"]) for it in items)
-    return (f'<section class="models"><details><summary><h2>Model reads (experimental)</h2>'
-            f'<span class="count">{R.n(count, "place")}</span></summary>'
-            f'<p class="lede">Optional stage 6 reads by '
-            f'{esc(names)}. A model\'s reading can be wrong, and repeat reads of one line vary; '
-            f'these never change the findings above. Measured accuracy: '
-            f'<a href="{ACCURACY_URL}">docs/MODEL-ACCURACY.md</a>.</p><ol class="first">{cards}</ol>'
-            f'</details></section>')
+    body = ("".join(_p(x[:1].upper() + x[1:] + ("" if x.endswith(".") else ".")) for x in ch.get("lines", []))
+            + '<p class="note">Every change, file by file: <a href="changes.md">changes.md</a>.</p>')
+    return _section("changes", f"Changes since run {ch['since']}", "", body)
 
 
-def render_page(meta, r, stamps, notes, runs_ok) -> str:
+def recs(r) -> str:
+    rs = R.recommendations(r)
+    body = (f'<ul class="recs">{"".join(f"<li>{esc(x)}</li>" for x in rs)}</ul>' if rs
+            else _empty("None: no finding matched a recommendation."))
+    return _section("recs", f"Recommendations ({len(rs)})",
+                    "Changes to consider. Each depends on what the skill is for. Unranked.", body)
+
+
+def other(r, stamps, notes, runs_ok) -> str:
+    skipped, idle = R.glance(r, notes, stamps, runs_ok)
+    lim = R.limits(r, notes, stamps, runs_ok)
+    todo = [x[:-len(NOT_BUILT)] for x in skipped if x.endswith(NOT_BUILT)]
+    rest = [x for x in skipped if not x.endswith(NOT_BUILT)]
+    parts = ['<h3>What was not checked</h3>',
+             _p(f"{R.n(len(skipped), 'check')} that apply to this repository did not run. A clean result "
+                "says nothing about these.")]
+    if todo:
+        parts.append(_p(f"Not built yet: {'; '.join(todo)}."))
+    if rest:
+        parts.append(_p(f"Skipped in this run: {'; '.join(rest)}."))
+    if idle:
+        parts.append(_p(f"Not needed here: {'; '.join(idle)}."))
+    parts.append(f"<details><summary>Every limit, including those of every run ({len(lim)})</summary>"
+                 f"<ul class=\"lims\">{''.join(f'<li>{esc(x)}</li>' for x in lim)}</ul></details>")
+    parts.append('<h3>Fixture results</h3>'
+                 '<p>Before a run is trusted, each step is run on small test repositories with known '
+                 'contents and scored against an answer sheet it never reads.</p>')
+    rows = []
+    bad = 0
+    for st in R.ORDER:
+        if st == "07-limits" or st not in r:  # a step this run did not include has no result
+            continue
+        s = stamps.get(st)
+        text = s.text if s else "not validated"
+        if s is None or s.result != "PASS":
+            bad += 1
+        rows.append(f'<li><span>{esc(PLAIN_STAGE[st])}</span><code>{esc(text)}</code></li>')
+    parts.append(f'<ul class="stamps">{"".join(rows)}</ul>')
+    parts.append('<p>Every finding, with file and line, is in <code>full.md</code> next to this page.</p>')
+    flag = f' <span class="pill">{R.n(bad, "step")} not passed</span>' if bad else ""
+    return (f'<section class="block" id="other"><details class="fold big"><summary><h2>Other details{flag}</h2>'
+            f'</summary>{"".join(parts)}</details></section>')
+
+
+def render_page(meta, r, stamps, notes, runs_ok, changes_since=None) -> str:
     every = grouped(first_items(r))
     items = [it for it in every if it["stage"] != 6]
     model_items = [it for it in every if it["stage"] == 6]
-    lim = R.limits(r, notes, stamps, runs_ok)
-    skipped, idle = R.glance(r, notes, stamps, runs_ok)
-    recs = R.recommendations(r)
-    pin = (R.fnd(r, "01-inventory", "inv.pin") or [{}])[0]
-    legs = {x["leg"]: x["present"] for x in R.fnd(r, "05-capability", "cap.leg")}
-    total, unread = pin.get("files", 0), len(R.fnd(r, "02-reader", "read.unread"))
-    tiles = [_tile("files examined", f"{total:,}", f"{total - unread:,} read in full"),
-             _tile("places to check", sum(len(it["wheres"]) for it in items),
-                   f"under {len(items)} heading{'s' if len(items) != 1 else ''}"
-                   + (f"; {sum(len(it['wheres']) for it in model_items)} model reads at the end"
-                      if model_items else "")),
-             _tile("checks skipped", len(skipped), "that apply to this repository")]
-    trifecta = _trifecta(legs, R.all_marked_legs(r))
-    first = _cards(items, "Nothing to check: no location met the rules. See each stage below.")
-    models = _models_section(r, model_items)
-    stages = []
-    for i, stage in enumerate(R.ORDER, 1):
-        stamp, tech = "", None
-        more = ""
-        if stage == "07-limits":
-            plain = (f"This run skipped {R.n(len(skipped), 'check')} that apply to this repository. A clean "
-                     "result says nothing about these.")
-            todo = [x[:-len(NOT_BUILT)] for x in skipped if x.endswith(NOT_BUILT)]
-            other = [x for x in skipped if not x.endswith(NOT_BUILT)]
-            texts = ([f"Not built yet: {'; '.join(todo)}."] if todo else []) \
-                + ([f"Skipped in this run: {'; '.join(other)}."] if other else []) \
-                + ([f"Not needed here: {'; '.join(idle)}."] if idle else [])
-            detail = "".join(f"<p>{esc(t)}</p>" for t in texts)
-            more = (f'<details><summary>Every limit, including those of every run ({len(lim)})</summary>'
-                    f"<ul>{''.join(f'<li>{esc(x)}</li>' for x in lim)}</ul></details>")
-        else:
-            plain = plain_status(r, stamps, stage)
-            tech = R.status(r, stamps, stage).replace("\n" + " " * R.COL, " ")
-            texts = facts(r, stage)
-            if texts is None:  # no plain version: the technical line, behind the toggle when long
-                texts = [tech]
-            detail = "".join(f"<p>{esc(t)}</p>" for t in texts if t)
-            st = stamps.get(stage)
-            if st:
-                stamp = f'<p class="stamp">Checked against its test fixtures: {esc(st.text)}</p>'
-        # numbers in the open when short; behind a toggle when long (owner, 2026-10-12)
-        label = "Technical detail" if texts and texts[0] == tech else "More detail"
-        numbers = ("" if not texts else f'<div class="facts">{detail}</div>'
-                   if sum(len(t) for t in texts) < OPEN_LIMIT
-                   else f'<details><summary>{label}</summary>{detail}</details>') + more
-        warn = ""
-        st = stamps.get(stage)
-        if st is not None and st.result != "PASS":
-            warn = f'<span class="pill">validation {esc(st.result.lower())}</span>'
-        stages.append(f'<li class="stage" id="stage-{i}"><span class="num">{i}</span><div class="stage-b">'
-                      f'<h3>{esc(STAGE_QUESTION[stage])} {warn}</h3>'
-                      f'<p class="desc">{esc(STAGE_DESC[stage])}</p><p class="plain">{esc(plain)}</p>'
-                      f'{numbers}{stamp}</div></li>')
-    recs_html = ("".join(f"<li>{esc(x)}</li>" for x in recs) if recs
-                 else "<li>None. No finding matched a recommendation template.</li>")
-    review = ('<p class="review-link"><a href="review.html">Walk through every place one at a time</a>, '
-              'with the lines around it, and mark each one Concerned, Not concerned, or Not sure.</p>'
-              if every else "")
-    return PAGE.format(
-        title=esc(f"Walkdown: {meta['repo']}"), review=review, repo=esc(meta["repo"]), source=esc(meta["source"]),
-        hash=esc(f"{meta['hash_kind']} {meta['hash'][:12]}"), date=esc(meta["date"]), run=esc(meta["run"]),
-        tiles="".join(tiles), trifecta=trifecta, first="".join(first), models=models, stages="".join(stages), recs=recs_html,
-        nrecs=len(recs), notwhat=esc(R.NOT_WHAT))
+    body = [header(meta), trifecta(r), stats(r), links(r), hidden(r, items), secrets(r, items),
+            risky(r, items, model_items), changes(changes_since), recs(r), other(r, stamps, notes, runs_ok),
+            f'<footer><p>{esc(R.NOT_WHAT)}</p></footer>']
+    return ("<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n"
+            f"<title>{esc('Walkdown: ' + meta['repo'])}</title>\n" + FONTS + f"<style>{CSS}</style>\n</head>\n"
+            f"<body>\n<main class=\"wrap\">\n{''.join(body)}\n</main>\n<script>{JS}</script>\n</body>\n</html>\n")
 
 
-PAGE = """<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>{title}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
-<style>
-/* Layout: an inspection record. Header card, a strip of three counts, "things to check" as the
-   main column, then the seven stages as a numbered checklist (the order is the method's order). */
-:root {{
+FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">\n'
+         '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700'
+         '&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">\n')
+
+JS = """
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('button.copy');
+  if (!b) return;
+  var u = b.getAttribute('data-url');
+  function done() { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500); }
+  function fallback() {
+    var t = document.createElement('textarea'); t.value = u; document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); done(); } catch (x) {}
+    t.remove();
+  }
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(u).then(done, fallback);
+  else fallback();
+});
+"""
+
+CSS = """
+:root {
   --paper: #f5f7f8; --sheet: #ffffff; --ink: #17222e; --muted: #5a6875; --rule: #d8dee4;
   --accent: #1d6a86; --flag: #9a5b00; --flag-bg: #fdf3e4; --quote-bg: #eef2f5;
   --leg-1: #2f7d46; --leg-2: #d9a40b; --leg-3: #b42318; --leg-mark: #ffffff; --leg-2-mark: #17222e;
@@ -624,119 +730,93 @@ PAGE = """<!doctype html>
   --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
   --mono: "JetBrains Mono", Consolas, "Courier New", monospace;
   color-scheme: light;
-}}
-@media (prefers-color-scheme: dark) {{ :root:not([data-theme="light"]) {{
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --paper: #0f151b; --sheet: #16202a; --ink: #e3e9ee; --muted: #93a2b0; --rule: #2a3744;
   --accent: #6fb7d3; --flag: #f0b45c; --flag-bg: #2d2415; --quote-bg: #1c2833;
-  --leg-1: #6cc488; --leg-2: #e8c14a; --leg-3: #f2776b; --leg-mark: #0f151b; --leg-2-mark: #0f151b; color-scheme: dark; }} }}
-:root[data-theme="dark"] {{
+  --leg-1: #6cc488; --leg-2: #e8c14a; --leg-3: #f2776b; --leg-mark: #0f151b; --leg-2-mark: #0f151b; color-scheme: dark; } }
+:root[data-theme="dark"] {
   --paper: #0f151b; --sheet: #16202a; --ink: #e3e9ee; --muted: #93a2b0; --rule: #2a3744;
   --accent: #6fb7d3; --flag: #f0b45c; --flag-bg: #2d2415; --quote-bg: #1c2833;
-  --leg-1: #6cc488; --leg-2: #e8c14a; --leg-3: #f2776b; --leg-mark: #0f151b; --leg-2-mark: #0f151b; color-scheme: dark; }}
-* {{ box-sizing: border-box; }}
-body {{ margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.55 var(--body); }}
-.wrap {{ max-width: 58rem; margin: 0 auto; padding-inline: 16px; padding-block: 2rem 4rem; display: grid; gap: 2.2rem; }}
-header.card {{ background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 1.6rem 1.6rem 1.3rem; }}
-.eyebrow {{ font: 600 .78rem/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }}
-.top {{ display: flex; gap: .75rem; justify-content: space-between; align-items: flex-start; }}
-.top .eyebrow {{ min-width: 0; line-height: 1.3; padding-top: .3rem; }}
-.pagelink {{ font: 600 .88rem/1.2 var(--body); color: var(--accent); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: .35rem .75rem; white-space: nowrap; flex-shrink: 0; }}
-.pagelink:hover, .pagelink:focus-visible {{ border-color: var(--accent); }}
-h1 {{ font: 700 clamp(1.9rem, 4vw, 2.6rem)/1.1 var(--display); margin: .5rem 0 .6rem; text-wrap: balance; }}
-.meta {{ font: .82rem/1.5 var(--mono); color: var(--muted); display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; overflow-wrap: anywhere; }}
-.static {{ margin: .9rem 0 0; color: var(--muted); }}
-.tiles {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }}
-.tile {{ background: var(--sheet); padding: 1rem 1.1rem; }}
-.tile-v {{ font: 700 1.9rem/1 var(--display); font-variant-numeric: tabular-nums; }}
-.tile-l {{ margin-top: .35rem; font-weight: 600; }}
-.tile-s {{ font-size: .85rem; color: var(--muted); }}
-h2 {{ font: 700 1.35rem/1.2 var(--display); margin: 0 0 .9rem; }}
-.lede {{ color: var(--muted); margin: -.4rem 0 1rem; max-width: 65ch; }}
-.review-link {{ margin: -.4rem 0 1rem; max-width: 65ch; }}
-.review-link a {{ color: var(--accent); font-weight: 600; }}
-ol, ul {{ margin: 0; padding: 0; list-style: none; }}
-.first {{ display: grid; gap: .8rem; }}
-.item {{ background: var(--sheet); border: 1px solid var(--rule); border-left: 4px solid var(--flag); border-radius: 4px; padding: .9rem 1.1rem; min-width: 0; }}
-.item-h {{ display: flex; gap: .7rem; align-items: baseline; flex-wrap: wrap; }}
-.item h3 {{ margin: 0; font: 600 1.05rem/1.3 var(--body); }}
-.count {{ font: 400 .85rem var(--body); color: var(--muted); }}
-.stage-tag {{ font: 600 .72rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--flag); background: var(--flag-bg); padding: .3rem .5rem; border-radius: 3px; white-space: nowrap; text-decoration: none; }}
-a.stage-tag:hover, a.stage-tag:focus-visible {{ text-decoration: underline; }}
-.where {{ display: block; margin-top: .4rem; font: .8rem/1.4 var(--mono); color: var(--accent); overflow-wrap: anywhere; }}
-.quote {{ margin: .6rem 0 0; padding: .6rem .8rem; background: var(--quote-bg); border-radius: 3px; font: .82rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 9rem; overflow: auto; }}
-.note {{ margin: .5rem 0 0; color: var(--muted); max-width: 70ch; }}
-.more {{ color: var(--muted); padding: .2rem .2rem; }}
-.stages {{ display: grid; gap: 0; border-top: 1px solid var(--rule); }}
-.stage {{ display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: .9rem; padding: 1rem 0; border-bottom: 1px solid var(--rule); }}
-.num {{ font: 700 1.5rem/1 var(--display); color: var(--accent); font-variant-numeric: tabular-nums; padding-top: .15rem; }}
-.stage h3 {{ margin: 0; font: 600 1.08rem/1.3 var(--body); display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }}
-.plain {{ margin: .25rem 0 .3rem; max-width: 68ch; }}
-.pill {{ font: 600 .7rem/1 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--flag); border: 1px solid var(--flag); border-radius: 999px; padding: .25rem .5rem; }}
-details summary {{ cursor: pointer; }}
-details summary:focus-visible {{ outline: 2px solid var(--accent); outline-offset: 2px; }}
-.stage details summary {{ color: var(--accent); font-size: .9rem; }}
-.stage details p, .stage details li, .stage .facts p {{ font-size: .88rem; color: var(--muted); overflow-wrap: anywhere; }}
-.stage .facts p {{ margin: .3rem 0 0; }}
-.stage details ul {{ list-style: disc; padding-left: 1.2rem; margin-top: .4rem; }}
-.desc {{ margin: .2rem 0 .1rem; color: var(--muted); font-size: .92rem; font-style: italic; max-width: 68ch; }}
-.models summary {{ display: flex; gap: .4rem .8rem; align-items: baseline; flex-wrap: wrap; list-style: none; }}
-.models summary::-webkit-details-marker {{ display: none; }}
-.models summary::before {{ content: "\\25B8"; color: var(--accent); }}
-.models details[open] > summary::before {{ content: "\\25BE"; }}
-.models summary h2 {{ margin: 0; }}
-.models summary .count {{ color: var(--muted); }}
-.models details[open] > summary {{ margin-bottom: 1rem; }}
-.stamp {{ font-family: var(--mono); font-size: .78rem; }}
-.recs li {{ padding: .6rem 0; border-bottom: 1px solid var(--rule); max-width: 75ch; overflow-wrap: anywhere; }}
-footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--muted); max-width: 70ch; }}
-.trifecta {{ background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 1.2rem 1.4rem; }}
-.trifecta h2 {{ margin-bottom: .7rem; }}
-.legs {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.1rem; }}
-.leg {{ display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); gap: .6rem; align-items: start; }}
-.box svg {{ width: 1.5rem; height: 1.5rem; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }}
-.leg.on .box svg rect {{ fill: var(--leg-1); stroke: var(--leg-1); }}
-.leg.on .box svg path {{ stroke: var(--leg-mark); stroke-width: 2.4; }}
-.leg.on[data-n="2"] .box svg rect {{ fill: var(--leg-2); stroke: var(--leg-2); }}
-.leg.on[data-n="2"] .box svg path {{ stroke: var(--leg-2-mark); }}
-.leg.on[data-n="3"] .box svg rect {{ fill: var(--leg-3); stroke: var(--leg-3); }}
-.leg.off .box svg rect {{ stroke: var(--muted); }}
-.leg-name {{ font: 600 1.05rem/1.3 var(--body); }}
-.leg.off .leg-name {{ color: var(--muted); }}
-.leg-def {{ font-size: .88rem; color: var(--muted); margin-top: .15rem; }}
-.leg-foot {{ margin: 1rem 0 0; padding-top: .8rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: .92rem; }}
-@media (max-width: 640px) {{ .legs {{ grid-template-columns: 1fr; }} }}
-@media (max-width: 640px) {{ .tiles {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }} header.card {{ padding: 1.2rem; }} }}
-@media (prefers-reduced-motion: reduce) {{ * {{ transition: none !important; }} }}
-</style>
-</head>
-<body>
-<main class="wrap">
-  <header class="card">
-    <div class="top"><div class="eyebrow">Walkdown report</div><a class="pagelink" href="review.html">Review each place →</a></div>
-    <h1>{repo}</h1>
-    <div class="meta"><span>{source}</span><span>{hash}</span><span>retrieved {date}</span><span>run {run}</span></div>
-    <p class="static">Static examination only. Nothing in it was installed or run.</p>
-  </header>
-  <section class="tiles" aria-label="At a glance">{tiles}</section>
-  {trifecta}
-  <section>
-    <h2>Walkdown Results Breakdown</h2>
-    <ol class="stages">{stages}</ol>
-  </section>
-  <section>
-    <h2>Things to check</h2>
-    <p class="lede">Locations picked by fixed rules, in the order of the stages above. Each is a place to read; being listed does not mean something is wrong, and none is a finding against the author.</p>
-    {review}
-    <ol class="first">{first}</ol>
-  </section>
-  <section>
-    <h2>Recommendations ({nrecs})</h2>
-    <p class="lede">Each depends on what the skill is for. Unranked, in stage order.</p>
-    <ul class="recs">{recs}</ul>
-  </section>
-  {models}
-  <footer><p>{notwhat}</p><p>Every finding, with file and line, is in <code>full.md</code> next to this page.</p></footer>
-</main>
-</body>
-</html>
+  --leg-1: #6cc488; --leg-2: #e8c14a; --leg-3: #f2776b; --leg-mark: #0f151b; --leg-2-mark: #0f151b; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.55 var(--body); }
+.wrap { max-width: 58rem; margin: 0 auto; padding-inline: 16px; padding-block: 2rem 4rem; display: grid; gap: 1.6rem; }
+header.card, .block { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 1.2rem 1.4rem; min-width: 0; }
+header.card { padding: 1.4rem 1.6rem 1.2rem; }
+.top { display: flex; justify-content: flex-end; }
+.pagelink { font: 600 .88rem/1.2 var(--body); color: var(--accent); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: .35rem .75rem; white-space: nowrap; }
+.pagelink:hover, .pagelink:focus-visible { border-color: var(--accent); }
+h1 { font: 700 clamp(1.9rem, 4vw, 2.6rem)/1.1 var(--display); margin: .3rem 0 .6rem; text-wrap: balance; overflow-wrap: anywhere; }
+.h1-lead { color: var(--muted); font-weight: 500; }
+.meta { font: .82rem/1.5 var(--mono); color: var(--muted); display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; overflow-wrap: anywhere; }
+h2 { font: 700 1.35rem/1.2 var(--display); margin: 0 0 .7rem; }
+h3 { font: 600 1.02rem/1.3 var(--body); margin: 1.1rem 0 .5rem; }
+.lede { color: var(--muted); margin: -.3rem 0 .9rem; max-width: 68ch; }
+.headline { font-weight: 600; margin: 0 0 .6rem; }
+.block p { margin: .35rem 0; max-width: 72ch; overflow-wrap: anywhere; }
+.empty { color: var(--muted); font-style: italic; }
+.note { color: var(--muted); }
+.count { font: 400 .85rem var(--body); color: var(--muted); }
+ol, ul { margin: 0; padding: 0; list-style: none; }
+details summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+details summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+details.fold > summary { margin: .4rem 0; }
+details.fold[open] > summary { margin-bottom: .6rem; }
+details.big > summary { list-style: none; display: flex; gap: .5rem; align-items: baseline; }
+details.big > summary::-webkit-details-marker { display: none; }
+details.big > summary::before { content: "\\25B8"; color: var(--accent); }
+details.big[open] > summary::before { content: "\\25BE"; }
+details.big > summary h2 { margin: 0; color: var(--ink); display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
+.facts p { font-size: .92rem; color: var(--muted); }
+.legs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.1rem; }
+.leg { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); gap: .6rem; align-items: start; }
+.box svg { width: 1.5rem; height: 1.5rem; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.leg.on .box svg rect { fill: var(--leg-1); stroke: var(--leg-1); }
+.leg.on .box svg path { stroke: var(--leg-mark); stroke-width: 2.4; }
+.leg.on[data-n="2"] .box svg rect { fill: var(--leg-2); stroke: var(--leg-2); }
+.leg.on[data-n="2"] .box svg path { stroke: var(--leg-2-mark); }
+.leg.on[data-n="3"] .box svg rect { fill: var(--leg-3); stroke: var(--leg-3); }
+.leg.off .box svg rect { stroke: var(--muted); }
+.leg-name { font: 600 1.05rem/1.3 var(--body); }
+.leg.off .leg-name { color: var(--muted); }
+.leg-def, .leg-n { font-size: .88rem; color: var(--muted); margin-top: .15rem; }
+.leg-n { font-weight: 600; }
+.leg-foot { margin: 1rem 0 0; padding-top: .8rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: .92rem; }
+.gets-in { margin-top: .4rem; }
+.grants { display: grid; gap: .45rem; }
+.grants li { display: grid; gap: .1rem; padding-left: 1rem; border-left: 3px solid var(--flag); }
+.g-name { font-weight: 600; }
+.g-detail { font: .8rem/1.45 var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.g-none { color: var(--muted); font-size: .9rem; }
+.callout { background: var(--flag-bg); border-radius: 4px; padding: .7rem 1rem; margin: .6rem 0; }
+.callout h3 { margin: 0 0 .4rem; color: var(--flag); }
+.callout li { padding: .25rem 0; }
+.where { display: block; margin-top: .25rem; font: .8rem/1.4 var(--mono); color: var(--accent); overflow-wrap: anywhere; }
+.cards { display: grid; gap: .7rem; }
+.item { border: 1px solid var(--rule); border-left: 4px solid var(--flag); border-radius: 4px; padding: .8rem 1rem; min-width: 0; }
+.item h3 { margin: 0; }
+.quote { margin: .5rem 0 0; padding: .55rem .8rem; background: var(--quote-bg); border-radius: 3px; font: .82rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 9rem; overflow: auto; }
+.more { color: var(--muted); }
+.tablewrap { overflow-x: auto; }
+table.links { width: 100%; border-collapse: collapse; font-size: .85rem; }
+table.links th, table.links td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.links thead th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+table.links tr.dom th { background: var(--quote-bg); font: 600 .9rem var(--mono); }
+td.url { display: flex; gap: .5rem; align-items: baseline; }
+td.url code, td.loc code { font: .8rem/1.4 var(--mono); overflow-wrap: anywhere; }
+td.who { white-space: nowrap; color: var(--muted); }
+button.copy { font: 600 .72rem/1 var(--body); color: var(--accent); background: none; border: 1px solid var(--rule); border-radius: 999px; padding: .2rem .5rem; cursor: pointer; flex-shrink: 0; }
+button.copy:hover, button.copy:focus-visible { border-color: var(--accent); }
+.checks li { padding: .3rem 0; border-bottom: 1px solid var(--rule); }
+.review-link { margin-top: .9rem; }
+.review-link a { color: var(--accent); font-weight: 600; }
+.recs li { padding: .55rem 0; border-bottom: 1px solid var(--rule); max-width: 75ch; overflow-wrap: anywhere; }
+.lims { list-style: disc; padding-left: 1.2rem; font-size: .88rem; color: var(--muted); }
+.stamps li { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .3rem 0; border-bottom: 1px solid var(--rule); }
+.stamps code { font: .78rem var(--mono); color: var(--muted); }
+.pill { font: 600 .7rem/1 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--flag); border: 1px solid var(--flag); border-radius: 999px; padding: .25rem .5rem; }
+footer { border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--muted); max-width: 70ch; }
+@media (max-width: 640px) { .legs { grid-template-columns: 1fr; } header.card, .block { padding: 1rem; } td.who { white-space: normal; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 """

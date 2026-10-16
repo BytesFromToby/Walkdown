@@ -18,7 +18,7 @@ def test_run_folder_and_documents(tiny_repo, tmp_path, capsys, snapshot, run_mai
         assert (d / name).is_file(), name
     # what people read is at the top; nothing else is
     top = sorted(p.name for p in d.iterdir())
-    assert top == ["LOG.md", "data", "full.md", "review.html", "summary.html", "summary.md"]
+    assert top == ["LOG.md", "data", "full.md", "review.html", "summary-v1.html", "summary.html", "summary.md"]
     assert snapshot(tiny_repo) == before
     assert str(d) in capsys.readouterr().out
 

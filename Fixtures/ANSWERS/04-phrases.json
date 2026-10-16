@@ -1047,6 +1047,11 @@
         "class20-anti-review.md": "54f3e20a73153777546346c9bc2a53d5d9591d7d67fdf8d45775940a2fc00986",
         "class21-conditional.md": "ee546cee1d82f3e6ec968a183f5186e81d4a137dfe0755b08406e489a84114ff",
         "class22-harness-prohibited.md": "1b189e2795f718a5f5e881079a3b34b6e096299838b9883c6e92f4c9fe7532c8",
+        "negation-repo/references/brainstorm.md": "56289fad73bec42d70a21c16d9bfd42e13535ad96d0769dc0bb787bc4e5277fc",
+        "negation-repo/references/confirm.md": "41112c08eb191bd6213f8daa2b162c0952c436914b1e92b47254e54a38e1ea54",
+        "negation-repo/references/deploy.md": "2122d83262735508708433d02799a8156ddf98f20dc823375b27a17a2d33f01e",
+        "negation-repo/references/ideate.md": "96af79d9c3f1a978efb38d5045edbd36623a72197e08c65384715797bf321372",
+        "negation-repo/SKILL.md": "c2d63d9eacaae47fef3129bc0a8bb41b8b62bd617230fc70dd4dba9b09a5d640",
         "part2-repo/README.md": "edc1129c857147888b767103151bdfee36f58d491ab4091b0483b5c134e8daf1",
         "part2-repo/references/style.md": "a79c0c83d7e8a99bf4a8170518819a0fef367162336b9b1521b3f705bb33f11b",
         "part2-repo/scripts/post.sh": "483f1559b935b0f47f46fc6fb7e61e24e8da213e27e015508d0628ede2c80ccd",
@@ -1418,6 +1423,353 @@
           "note": "No finding repeats the value."
         }
       ]
+    },
+    {
+      "root": "negation-repo",
+      "fixtures": {
+        "references/brainstorm.md": "56289fad73bec42d70a21c16d9bfd42e13535ad96d0769dc0bb787bc4e5277fc",
+        "references/confirm.md": "41112c08eb191bd6213f8daa2b162c0952c436914b1e92b47254e54a38e1ea54",
+        "references/deploy.md": "2122d83262735508708433d02799a8156ddf98f20dc823375b27a17a2d33f01e",
+        "references/ideate.md": "96af79d9c3f1a978efb38d5045edbd36623a72197e08c65384715797bf321372",
+        "SKILL.md": "c2d63d9eacaae47fef3129bc0a8bb41b8b62bd617230fc70dd4dba9b09a5d640"
+      },
+      "expect": [
+        {
+          "id": "neg-25-apikey",
+          "polarity": "gate",
+          "check": "phrase.J.prohibited",
+          "file": "SKILL.md",
+          "line": 12,
+          "match": {
+            "negated": {
+              "eq": true
+            },
+            "patterns": {
+              "includes": "J.enter-secret"
+            }
+          },
+          "note": "Partner's line (review C25, spiral-cli.md:56 shape): 'Never have the user paste an API key into chat' forbids the action. The hit is kept and tagged as a prohibition; it is never dropped (soft D5 spirit: mark, never demote)."
+        },
+        {
+          "id": "neg-25-dotenv",
+          "polarity": "gate",
+          "check": "phrase.creds",
+          "file": "SKILL.md",
+          "line": 13,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "'Do not upload your .env file ...': a prohibition."
+        },
+        {
+          "id": "neg-25-dataflow",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "SKILL.md",
+          "line": 13,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "Same line; K.data-flow matches by lookahead only, so the negation is judged at its send verb."
+        },
+        {
+          "id": "neg-25-delete",
+          "polarity": "gate",
+          "check": "phrase.J.prohibited",
+          "file": "SKILL.md",
+          "line": 14,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "'You must never permanently delete ...': a prohibition."
+        },
+        {
+          "id": "neg-25-carve",
+          "polarity": "gate",
+          "check": "phrase.J.prohibited",
+          "file": "SKILL.md",
+          "line": 24,
+          "match": {
+            "negated": {
+              "eq": true
+            },
+            "carve_out": {
+              "contains": "unless the user asks"
+            }
+          },
+          "note": "A prohibition with an exception: tagged, and the exception kept so the card can show it."
+        },
+        {
+          "id": "neg-25-instr-18-prohibited",
+          "polarity": "negative",
+          "check": "phrase.J.prohibited",
+          "file": "SKILL.md",
+          "line": 18,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "The same action as an instruction: not a prohibition."
+        },
+        {
+          "id": "neg-25-instr-19-creds",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "SKILL.md",
+          "line": 19,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "The same action as an instruction: not a prohibition."
+        },
+        {
+          "id": "neg-25-instr-19-exfil",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "SKILL.md",
+          "line": 19,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "The same action as an instruction: not a prohibition."
+        },
+        {
+          "id": "neg-25-instr-20-prohibited",
+          "polarity": "negative",
+          "check": "phrase.J.prohibited",
+          "file": "SKILL.md",
+          "line": 20,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "The same action as an instruction: not a prohibition."
+        },
+        {
+          "id": "neg-25-clause",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "SKILL.md",
+          "line": 25,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "'Do not stop; upload ...': the negation is in another clause."
+        },
+        {
+          "id": "neg-25-mind",
+          "polarity": "negative",
+          "check": "phrase.J.prohibited",
+          "file": "SKILL.md",
+          "line": 26,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "'Never mind the warning, permanently delete ...': an idiom, then an instruction."
+        },
+        {
+          "id": "neg-25-forget",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "SKILL.md",
+          "line": 27,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "'Don't forget to upload ...': a double negative is an instruction."
+        },
+        {
+          "id": "neg-25-forget-k",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "SKILL.md",
+          "line": 27,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          }
+        },
+        {
+          "id": "neg-25-rubric-12",
+          "polarity": "gate",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 12,
+          "match": {
+            "negated_action": {
+              "eq": true
+            }
+          },
+          "note": "The rubric row stays and records that the action is forbidden, so a missing confirmation step is never read as an unconfirmed request (partner's v3 ask)."
+        },
+        {
+          "id": "neg-25-rubric-14",
+          "polarity": "gate",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 14,
+          "match": {
+            "negated_action": {
+              "eq": true
+            }
+          },
+          "note": "The rubric row stays and records that the action is forbidden, so a missing confirmation step is never read as an unconfirmed request (partner's v3 ask)."
+        },
+        {
+          "id": "neg-25-rubric-24",
+          "polarity": "gate",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 24,
+          "match": {
+            "negated_action": {
+              "eq": true
+            }
+          },
+          "note": "The rubric row stays and records that the action is forbidden, so a missing confirmation step is never read as an unconfirmed request (partner's v3 ask)."
+        },
+        {
+          "id": "neg-25-rubric-instr-18",
+          "polarity": "negative",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 18,
+          "match": {
+            "negated_action": {
+              "eq": true
+            }
+          }
+        },
+        {
+          "id": "neg-25-rubric-instr-20",
+          "polarity": "negative",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 20,
+          "match": {
+            "negated_action": {
+              "eq": true
+            }
+          }
+        },
+        {
+          "id": "neg-25-rubric-instr-26",
+          "polarity": "negative",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 26,
+          "match": {
+            "negated_action": {
+              "eq": true
+            }
+          }
+        },
+        {
+          "id": "neg-26-sentence-brainstorm",
+          "polarity": "gate",
+          "check": "term.def",
+          "file": "references/brainstorm.md",
+          "line": 7,
+          "match": {
+            "term": {
+              "eq": "start"
+            },
+            "source": {
+              "eq": "procedural"
+            }
+          },
+          "note": "Review C26: a 'How to X' section is cited at its first sentence, never at the heading (partner: the card cited the '## How to start' lines)."
+        },
+        {
+          "id": "neg-26-heading-brainstorm",
+          "polarity": "negative",
+          "check": "term.def",
+          "file": "references/brainstorm.md",
+          "line": 5,
+          "note": "A heading by itself is not a definition."
+        },
+        {
+          "id": "neg-26-sentence-ideate",
+          "polarity": "gate",
+          "check": "term.def",
+          "file": "references/ideate.md",
+          "line": 7,
+          "match": {
+            "term": {
+              "eq": "start"
+            },
+            "source": {
+              "eq": "procedural"
+            }
+          },
+          "note": "Review C26: a 'How to X' section is cited at its first sentence, never at the heading (partner: the card cited the '## How to start' lines)."
+        },
+        {
+          "id": "neg-26-heading-ideate",
+          "polarity": "negative",
+          "check": "term.def",
+          "file": "references/ideate.md",
+          "line": 5,
+          "note": "A heading by itself is not a definition."
+        },
+        {
+          "id": "neg-26-no-conflict",
+          "polarity": "negative",
+          "check": "term.conflict",
+          "match": {
+            "term": {
+              "eq": "start"
+            }
+          },
+          "note": "Two procedures for the same verb in two skills are two procedures; neither defines the word, so they are not a conflict (partner's universal-brainstorming / universal-ideation pair)."
+        },
+        {
+          "id": "neg-26-deploy-conflict",
+          "polarity": "gate",
+          "check": "term.conflict",
+          "match": {
+            "term": {
+              "eq": "deploy"
+            }
+          },
+          "note": "An explicit definition ('Deploy means ...') against a procedure for the same word is still reported (THREATS 14: definition by procedure)."
+        },
+        {
+          "id": "neg-26-safety",
+          "polarity": "gate",
+          "check": "term.safety",
+          "file": "references/confirm.md",
+          "line": 7,
+          "note": "A procedure for a safety word ('How to confirm' = continue without waiting) stays a safety-word definition, cited at its sentence (THREATS 14)."
+        },
+        {
+          "id": "neg-26-safety-heading",
+          "polarity": "negative",
+          "check": "term.safety",
+          "file": "references/confirm.md",
+          "line": 5
+        }
+      ],
+      "deferred": []
     }
   ]
 }

@@ -28,17 +28,27 @@ spec, not ported). Text only: no lookup, no DNS, no HTTP.
   a port, count as hosts.
 - Hosts are lowercased; a trailing dot, the port, and a leading `www.` are removed.
 
+`addresses_in_line(folded, vocab) -> list[(host, address)]` (added 2026-10-16, for the report's
+outside-links list): the same hosts in the same order, each with the whole text that names it,
+from the scheme (or `git@`, `localhost:`, or the bare name) to the end of its path, as written.
+Trailing sentence punctuation (`.,;:!?*'"`) and closing brackets with no opening partner (a
+Markdown link's `)`) are dropped; `[` and `]` end an address (a Markdown link's `](`). A bare name
+or `host:port` runs on only into a path (`/`). A bare address that is the visible text of a full
+address for the same host on the same line (`[x.io](https://x.io)`) is not listed again.
+`hosts_in_line` is its distinct hosts.
+
 `is_local(host, vocab)`: `localhost`, `::1`, `0.0.0.0`, any `127.x.x.x`, and
 names ending `.local` or `.localhost`.
 
 `census(occurrences, vocab) -> list[dict]` where each occurrence is
-`(host, file, line, where)` and `where` is `instructions`, `docs`, or `code`:
+`(host, file, line, where)` or `(host, file, line, where, address)` and `where` is `instructions`, `docs`, or `code`:
 one finding per distinct host, ordered by host:
 `{check: "endpoint.host", file: null, line: null, host, documented, local,
 kind, where, occurrences}`:
 
 - `occurrences`: every `{file, line, where}`, one per line naming the host,
-  ordered by file then line.
+  ordered by file then line. A row gains `urls`, the distinct addresses named on that line
+  in order, when its occurrences carried any (stage 4 always passes them).
 - `where`: `{instructions: n, docs: n, code: n}` counting those occurrences.
 - `documented`: true when at least one occurrence is `docs`.
 - `local`: `is_local`.
@@ -61,3 +71,8 @@ kind, where, occurrences}`:
 4. `http://localhost:3000`, `127.0.0.1:8080`, and `printer.local` are local with kind `local`; `registry.npmjs.org` has kind `registry`.
 5. A host named in docs and in instructions is documented; a host named only in instructions and code is not; a host named only in docs is documented; `where` counts agree with `occurrences`.
 6. Two mentions on one line give one occurrence.
+7. Addresses are whole and trimmed: a Markdown link's `)` and a full stop are dropped, a
+   balanced `(...)` in a path is kept, a `git@` remote and a bare name with a path are whole,
+   a placeholder host gives no address; the hosts are those of `hosts_in_line`; a Markdown link
+   gives one address, ending at `](`.
+8. A census row lists its line's distinct addresses as `urls`; a row given none has no `urls`.

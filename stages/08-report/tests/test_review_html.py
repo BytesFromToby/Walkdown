@@ -210,7 +210,8 @@ def test_one_card_for_one_place_named_by_several_findings():
     assert len(ps) == 1 and ps[0]["patterns"] == ["L.ignore", "K.data-flow"]
     assert len(ps[0]["also"]) == 1
     h = summary_html.render_page(META, r, {}, {}, set(r))
-    assert '<div class="tile-v">1</div><div class="tile-l">places to check</div>' in h
+    assert ('Nothing refers to this file, and it reads like an instruction '
+            '<span class="count">1 place</span>') in h
 
 
 def test_model_read_card_says_what_the_model_said_first_in_plain_words(tmp_path):
@@ -294,3 +295,55 @@ def test_pinpoint_floor_matches_the_report_band():
     pp = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(pp)
     assert pp.MIN_P == RV.R.SWEEP_NEAR_P
+
+
+# C33 (2026-10-16): one card per line, one card per repeated sentence
+def test_findings_on_one_line_are_one_card_with_every_finding():
+    pair = {"check": "cap.pair", "file": "SKILL.md", "line": 12, "pair": "orphan+phrase",
+            "phrase_check": "phrase.L.override", "patterns": ["L.ignore"], "quote": IGNORE["quote"],
+            "evidence": []}
+    r = reports(extra_hits=[IGNORE], pair_rows=[pair])
+    r["03-graph"]["findings"].append({"check": "graph.orphan", "file": "SKILL.md", "line": None})
+    single = {p["id"] for p in RV.findings_at(r)}
+    ps = [p for p in RV.places(r) if p.get("line") == 12]
+    assert len(ps) == 1 and len(ps[0]["parts"]) == 2
+    assert ps[0]["id"] not in single  # a merged place has its own id
+    c = next(c for c in cards(page(r)) if 'data-id="' + ps[0]["id"] in c)
+    assert "and 1 more finding on this line" in c and c.count("<h4>") == 2
+    assert c.count('<div class="marks"') == 1
+
+
+def test_a_model_read_of_the_same_line_joins_the_card():
+    r = reports(extra_hits=[IGNORE])
+    r["06-soft"] = rep("06-soft", {"check": "soft.label", "file": "SKILL.md", "line": 12, "qid": "q-1",
+                                   "label": "do", "probabilities": {"do": 0.97}, "backend": "jev"})
+    r["06-soft"]["backends"] = [{"role": "label", "backend": "jev", "remote": True, "model": "jev"}]
+    ps = [p for p in RV.places(r) if p.get("line") == 12]
+    assert len(ps) == 1 and not ps[0]["model"] and [m["model"] for m in ps[0]["parts"]] == [False, True]
+    c = next(c for c in cards(page(r)) if 'data-id="' + ps[0]["id"] in c)
+    assert "What the model said:" in c and "Model read · experimental" in c
+
+
+def test_a_repeated_sentence_is_one_card_listing_every_place():
+    hit2 = dict(IGNORE, file="ref/b.md", line=4)
+    repx = {"check": "rep.sentence", "file": "SKILL.md", "line": 12, "sentence": IGNORE["quote"],
+            "files": 2, "count": 2, "where": [{"file": "SKILL.md", "line": 12}, {"file": "ref/b.md", "line": 4}],
+            "patterns": ["L.ignore"]}
+    r = reports(extra_hits=[IGNORE, hit2, repx])
+    ps = RV.places(r)
+    grouped = [p for p in ps if p.get("kind") == "rep.sentence"]
+    assert len(grouped) == 1 and {(m["file"], m["line"]) for m in grouped[0]["parts"]} >= {
+        ("SKILL.md", 12), ("ref/b.md", 4)}
+    assert not [p for p in ps if p.get("file") == "ref/b.md"]  # no card of its own
+    c = next(c for c in cards(page(r)) if 'data-id="' + grouped[0]["id"] in c)
+    assert "in 2 places" in c and "SKILL.md:12, ref/b.md:4" in c
+
+
+def test_a_lone_finding_keeps_its_id_and_a_passage_stays_alone():
+    r = with_sweep(reports(extra_hits=[IGNORE]), line=10, end=14)
+    ids = {p["id"] for p in RV.findings_at(r)}
+    for p in RV.places(r):
+        if len(p["parts"]) == 1:
+            assert p["id"] in ids
+    sweep = [p for p in RV.places(r) if p.get("kind") == "sweep"]
+    assert len(sweep) == 1 and len(sweep[0]["parts"]) == 1

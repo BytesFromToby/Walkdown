@@ -49,8 +49,20 @@ def test_glossary(v):
 
 def test_procedural(v):
     d = defs(v, "## How to fix\n\nRun the repair script.\n")
-    assert [(x["term"], x["definition"], x["source"], x["line"]) for x in d] == \
-        [("fix", "Run the repair script.", "procedural", 1)]
+    assert [(x["term"], x["definition"], x["source"], x["line"], x["heading_line"]) for x in d] == \
+        [("fix", "Run the repair script.", "procedural", 3, 1)]
+    assert d[0]["quote"] == "Run the repair script."  # the sentence, never the heading (C26)
+
+
+def test_procedures_alone_are_not_a_conflict(v):
+    # 10. two "How to start" sections are two procedures; an explicit definition against a
+    #     procedure is still a conflict (review C26)
+    a = defs(v, "## How to start\n\nAssess scope first.\n", rel="a.md")
+    b = defs(v, "## How to start\n\nMatch depth to scope.\n", rel="b.md")
+    assert conflicts(a + b) == []
+    c = defs(v, "## How to deploy\n\nTag the release.\n", rel="c.md")
+    e = defs(v, "Deploy means push to production.", rel="e.md")
+    assert [x["term"] for x in conflicts(c + e)] == ["deploy"]
 
 
 def test_conflicts(v):

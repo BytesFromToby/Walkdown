@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from foldtext import fold_line, split_lines
+from negation import anchor, negation
 from patterns import CHECKS
 
 _ORDER = {c: i for i, c in enumerate(CHECKS)}
@@ -43,7 +44,13 @@ def scan_text(rel: str, text: str, rows, audience: str) -> list[dict]:
             hit = by_check[check]
             only_folded = changed and not any(
                 r.hits(raw) for r in rows if r.check == check and r.applies(rel, audience, in_fm))
+            negs = [negation(folded, anchor(r, folded)) for r in hit]  # review C25: tag, never drop
+            stated_neg = all(negs)
             findings.append({"check": check, "file": rel, "line": n, "quote": raw,
                              "patterns": [r.id for r in hit], "audience": audience,
-                             "folded": only_folded, "matches": [_match(r, folded) for r in hit]})
+                             "folded": only_folded, "matches": [_match(r, folded) for r in hit],
+                             "negated": stated_neg,
+                             "negation": negs[0]["word"] if stated_neg else None,
+                             "carve_out": next((x["carve_out"] for x in negs if x and x["carve_out"]), None)
+                             if stated_neg else None})
     return findings

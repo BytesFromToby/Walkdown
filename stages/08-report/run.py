@@ -17,6 +17,7 @@ import pipeline  # noqa: E402
 import render  # noqa: E402
 import review_html  # noqa: E402
 import summary_html  # noqa: E402
+import summary_v1_html  # noqa: E402
 import validate  # noqa: E402
 
 ROOT = HERE.parent.parent
@@ -142,7 +143,11 @@ def write_reports(run_dir, meta, reports, stamps, notes, runs_ok, cap_full):
     (out / "summary.md").write_text(render.summary(meta, reports, stamps, notes, runs_ok),
                                     encoding="utf-8")
     (out / "summary.html").write_text(
-        summary_html.render_page(meta, reports, stamps, notes, runs_ok), encoding="utf-8")
+        summary_html.render_page(meta, reports, stamps, notes, runs_ok, changes_for(run_dir)),
+        encoding="utf-8")
+    # report v1, frozen at tag report-v1, beside v2 while the page is redesigned (owner, 2026-10-16)
+    (out / "summary-v1.html").write_text(
+        summary_v1_html.render_page(meta, reports, stamps, notes, runs_ok), encoding="utf-8")
     (out / "full.md").write_text(render.full(meta, reports, stamps, notes, runs_ok, cap_full),
                                  encoding="utf-8")
     text_dir = layout.data_dir(run_dir) / "normalized" / "text"
@@ -150,6 +155,31 @@ def write_reports(run_dir, meta, reports, stamps, notes, runs_ok, cap_full):
     (out / "review.html").write_text(
         review_html.render_page(meta, reports, text_dir, os.path.relpath(text_dir, out).replace(os.sep, "/"),
                                 marks, err), encoding="utf-8")
+
+
+def changes_for(run_dir) -> dict | None:
+    """What changed since the newest earlier run of the same repository, for the summary page
+    (report v2, 2026-10-16). Earlier = a sibling run folder whose name sorts before this one
+    (names start with the date), so re-rendering an old run never compares it with a newer one.
+    None on a first run or when drift fails; `same` when the version is the same. Writes
+    changes.md beside the reports so the page can link it; the page shows counts and Walkdown's
+    own words only (drift.summary_lines)."""
+    try:
+        import drift
+        run_dir = Path(run_dir).resolve()
+        earlier = sorted(p for p in run_dir.parent.iterdir()
+                         if p.is_dir() and p.name < run_dir.name and (p / "LOG.md").is_file())
+        if not earlier:
+            return None
+        prev = earlier[-1]
+        old, new = drift.load(prev), drift.load(run_dir)
+        a, b = drift.pin(old), drift.pin(new)
+        if a.get("hash") and a.get("hash") == b.get("hash"):
+            return {"since": prev.name, "same": True, "lines": []}
+        _, c = drift.write_report(prev, run_dir)
+        return {"since": prev.name, "same": False, "lines": drift.summary_lines(c)}
+    except Exception:  # drift is extra; it never fails a report
+        return None
 
 
 def soft_grade_env(a) -> dict:

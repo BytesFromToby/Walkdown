@@ -47,3 +47,9 @@ closing delimiter means no frontmatter.
 4. A line separator (U+2028) inside a line does not shift later line numbers.
 5. A `where: frontmatter` row hits inside frontmatter only; `frontmatter_lines` finds the block and ignores an unclosed one.
 6. `audience` is carried onto each finding, and an `audiences` restriction is honored.
+
+## Added 2026-10-16 (review C25)
+
+Each finding carries `negated`, `negation`, and `carve_out` from `negation.py`: `negated` is true
+when a negation governs every pattern's action on the line (`negation.anchor` for where each
+action starts). The finding is otherwise unchanged. Test: `tests/test_negation.py` (7).

@@ -125,13 +125,13 @@ def place_id(it) -> str:
     return hashlib.sha1(key.encode("utf-8")).hexdigest()[:12]
 
 
-def places(r) -> list[dict]:
-    """One place per summary item, in its order: deterministic places, then model reads."""
+def findings_at(r) -> list[dict]:
+    """One entry per summary item, in its order: deterministic items, then model reads."""
     qpats = _question_patterns(r)
     hits = _hit_index(r)
     pins = {f.get("sweep_qid"): f for f in R.fnd(r, "06-soft", "soft.pinpoint") if "skipped" not in f}
     out = []
-    for it in S.first_items(r):  # one item per place already (summary_html.unique)
+    for it in S.first_items(r):  # one item per finding already (summary_html.unique)
         f, line, end = _file_line(it)
         pats = _patterns(it, qpats)
         matches = []
@@ -141,6 +141,55 @@ def places(r) -> list[dict]:
                     "patterns": pats, "matches": matches, "model": it["stage"] == 6,
                     "pin": pins.get((it.get("src") or {}).get("qid")) if it.get("kind") == "sweep" else None})
     return out
+
+
+def _rep_locations(x) -> list[tuple]:
+    return [(w.get("file"), w.get("line")) for w in (x.get("src") or {}).get("where") or []]
+
+
+def places(r) -> list[dict]:
+    """One card per place (review C33, 2026-10-16; partner's v3: 332 cards on 293 lines). Every
+    finding on one line is one place, whichever stage found it, and a model read of that line
+    joins it; a sentence repeated across files is one place, with every location listed, and the
+    findings at those locations join it. A passage (more than one line) or a place with no line
+    stays on its own. The first member leads the card (a repeated sentence leads its group);
+    every member stays on the card as `parts`. A place of one finding keeps that finding's id,
+    so a reader's marks carry over; a merged place's id comes from its members' ids."""
+    base = findings_at(r)
+    rep_of = {}
+    for x in base:
+        if x.get("kind") == "rep.sentence":
+            for loc in _rep_locations(x):
+                rep_of.setdefault(loc, x["id"])
+    groups: dict[tuple, list] = {}
+    for x in base:
+        one_line = x.get("file") and x.get("line") is not None and x.get("end_line") in (None, x["line"])
+        loc = (x.get("file"), x.get("line"))
+        if x.get("kind") == "rep.sentence":
+            gk = ("rep", x["id"])
+        elif one_line and loc in rep_of:
+            gk = ("rep", rep_of[loc])
+        elif one_line:
+            gk = ("line",) + loc
+        else:
+            gk = ("one", x["id"])
+        groups.setdefault(gk, []).append(x)
+    out = []
+    for members in groups.values():
+        lead = (next((m for m in members if m.get("kind") == "rep.sentence"), None)
+                or next((m for m in members if not m["model"]), members[0]))
+        parts = [lead] + [m for m in members if m is not lead]
+        matches = []
+        for m in parts:
+            if (m.get("file"), m.get("line")) == (lead.get("file"), lead.get("line")):
+                matches += [x for x in m["matches"] if x not in matches]
+        pid = lead["id"] if len(parts) == 1 else hashlib.sha1(
+            "".join(sorted(m["id"] for m in parts)).encode("utf-8")).hexdigest()[:12]
+        out.append({**lead, "id": pid, "parts": parts, "matches": matches,
+                    "patterns": [p for m in parts for p in m["patterns"]],
+                    "model": all(m["model"] for m in parts)})
+    det = [p for p in out if not p["model"]]
+    return det + [p for p in out if p["model"]]
 
 
 # ---------------------------------------------------------------------------- the text
@@ -294,8 +343,25 @@ def _links(p, text_href) -> str:
 
 
 def _flagged(p) -> str:
+    """What was flagged: every finding on the place, each under its own headline when there is
+    more than one (review C33)."""
+    parts = [m for m in p.get("parts") or [p] if not m["model"]] if not p["model"] else [p]
+    seen: set = set()  # a pattern is described once per card
+    home = (p.get("file"), p.get("line"))
+    blocks = [_flagged_one(m, title=len(parts) > 1, seen=seen,
+                           at=None if (m.get("file"), m.get("line")) == home else m.get("where"))
+              for m in parts]
+    blocks = [b for b in blocks if b]
+    if not blocks:
+        return ""
+    return f'<div class="flagged"><h3>What was flagged:</h3>{"".join(blocks)}</div>'
+
+
+def _flagged_one(p, title=False, seen=None, at=None) -> str:
+    seen = set() if seen is None else seen
     rows = [f'<li>{esc(words)} <code class="pid">{esc(pid)}</code></li>'
-            for pid, words in plain.describe(p["patterns"])]
+            for pid, words in plain.describe([x for x in p["patterns"] if x not in seen])]
+    seen.update(p["patterns"])
     why = WHY.get(p.get("kind"))
     if why:
         rows.insert(0, f"<li>{esc(why)}</li>")
@@ -305,9 +371,15 @@ def _flagged(p) -> str:
         defs = (p.get("src") or {}).get("definitions") or []
         rows += [f'<li class="muted">Defined at {esc(d.get("file"))}:{esc(d.get("line"))}: '
                  f'“{esc(str(d.get("text", "")).strip())}”</li>' for d in defs]
-    if not rows:
+    if p.get("kind") == "rep.sentence":
+        locs = _rep_locations(p)
+        rows.append(f'<li class="muted">The same sentence is in {len(locs)} places: '
+                    + ", ".join(esc(f"{f}:{ln}") for f, ln in locs) + ".</li>")
+    if not rows and not title:
         return ""
-    return f'<div class="flagged"><h3>What was flagged:</h3><ul>{"".join(rows)}</ul></div>'
+    label = S.PLAIN_STAGE[R.ORDER[p["stage"] - 1]] + (f" · {at}" if at else "")
+    head = f'<h4>{esc(p["title"])} <span class="muted">({esc(label)})</span></h4>' if title else ""
+    return f'{head}<ul>{"".join(rows)}</ul>'
 
 
 def _sure(p):
@@ -348,19 +420,28 @@ def _model_said(p) -> str:
 
 
 def _card(p, k, n, lines, secret, text_href) -> str:
-    tag = esc(S.PLAIN_STAGE[R.ORDER[p["stage"] - 1]])
-    model = '<span class="tag model">Model read · experimental</span>' if p["model"] else ""
+    parts = p.get("parts") or [p]
+    stages = list(dict.fromkeys(m["stage"] for m in parts if not m["model"])) or [p["stage"]]
+    tag = "".join(f'<span class="tag">{esc(S.PLAIN_STAGE[R.ORDER[st - 1]])}</span>' for st in stages)
+    reads = [m for m in parts if m["model"]]
+    model = '<span class="tag model">Model read · experimental</span>' if reads else ""
+    others = len(parts) - 1
+    more = ""
+    if p.get("kind") == "rep.sentence":
+        more = f' <span class="more">in {R.n(len(_rep_locations(p)), "place")}</span>'
+    elif others:
+        more = f' <span class="more">and {R.n(others, "more finding")} on this line</span>'
     marks = "".join(f'<button type="button" class="mark" data-mark="{key}" aria-pressed="false">'
                     f'<b>{i}</b> {esc(name)}<span class="what">{esc(what)}</span></button>'
                     for i, (key, name, what) in enumerate(MARKS, 1))
     plain_where = f'<div class="where">{esc(p["where"])}</div>'
     return (f'<article class="place" id="p-{p["id"]}" data-id="{p["id"]}" data-n="{k}" '
             f'data-stage="{p["stage"]}" data-title="{esc(p["title"])}" data-where="{esc(p["where"])}">'
-            f'<div class="place-h"><span class="tag">{tag}</span>{model}'
+            f'<div class="place-h">{tag}{model}'
             f'<span class="num">Place {k} of {n}</span></div>'
-            f'<h2>{esc(p["title"])}</h2>'
+            f'<h2>{esc(p["title"])}{more}</h2>'
             f'{_links(p, text_href) or plain_where}'
-            f'{_model_said(p) if p["model"] else ""}'
+            f'{"".join(_model_said(m) for m in reads)}'
             f'{_flagged(p)}{context_html(p, lines, secret)}'  # what was flagged above the text (owner, 2026-10-13)
             f'<div class="marks" role="group" aria-label="Your mark">{marks}</div>'
             f'<label class="note-l">Note (optional)<textarea class="note" rows="2"></textarea></label>'
@@ -531,6 +612,8 @@ mark {{ background: var(--hit); color: inherit; border-radius: 2px; padding: 0 1
 .said p {{ margin: .2rem 0; max-width: 72ch; }}
 .said h3, .flagged h3 {{ text-decoration: underline; text-underline-offset: .2em; }}
 .flagged ul {{ margin: 0; padding-left: 1.2rem; display: grid; gap: .3rem; max-width: 72ch; }}
+.flagged h4 {{ font: 600 .92rem/1.3 var(--body); margin: .6rem 0 .25rem; }}
+.place h2 .more {{ font: 400 .9rem var(--body); color: var(--muted); }}
 .pid {{ font: .72rem var(--mono); color: var(--muted); }}
 .marks {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-top: 1rem; }}
 .mark {{ text-align: left; font-weight: 600; line-height: 1.3; padding: .6rem .7rem; }}

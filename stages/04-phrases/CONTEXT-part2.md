@@ -120,7 +120,7 @@ stripped), `definition` (verbatim), `source` (below).
 | `explicit` | `X means`, `X is defined as`, `by X we mean`, `X refers to` |
 | `mapping` | `when the user says X` / `if the user asks for X` followed by what to do |
 | `glossary` | `**X**: ...` or `X: ...` list items under a heading containing glossary, definitions, terms, or vocabulary |
-| `procedural` | a heading `How to X` or `Steps to X` (the definition is the section's first line) |
+| `procedural` | a heading `How to X` or `Steps to X` (the definition is the section's first line, cited at that line; procedures alone never make a conflict; 2026-10-16, review C26) |
 
 `term.conflict`: one finding per term with two or more **different**
 definitions (after normalizing whitespace and case), `file` and `line` null.

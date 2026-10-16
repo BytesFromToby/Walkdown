@@ -104,13 +104,16 @@ def defs_file(rel, raw, folded, instr, audience, vocab) -> list[dict]:
 
     found: list[dict] = []
 
-    def add(n, term, d, source):
+    def add(n, term, d, source, heading_line=None):
         if not term or not WORDY.search(d or ""):
             return
         if any(x["line"] == n and x["term"] == term for x in found):
             return
-        found.append({"check": "term.def", "file": rel, "line": n, "quote": raw[n - 1],
-                      "audience": audience, "term": term, "definition": d, "source": source})
+        row = {"check": "term.def", "file": rel, "line": n, "quote": raw[n - 1],
+               "audience": audience, "term": term, "definition": d, "source": source}
+        if heading_line is not None:
+            row["heading_line"] = heading_line
+        found.append(row)
 
     gloss_level = None
     for n, line in enumerate(src, start=1):
@@ -125,7 +128,8 @@ def defs_file(rel, raw, folded, instr, audience, vocab) -> list[dict]:
                 nxt = next((k for k in range(n + 1, len(src) + 1) if src[k - 1].strip()), None)
                 term = normalize_term(p.group(2))
                 if nxt is not None and nxt not in headings and term:
-                    add(n, term, src[nxt - 1].strip(), "procedural")
+                    # cited at the sentence, never the heading (review C26, 2026-10-16)
+                    add(nxt, term, src[nxt - 1].strip(), "procedural", heading_line=n)
             continue
         if n not in instr:
             continue
@@ -151,7 +155,10 @@ def conflicts(defs) -> list[dict]:
     out = []
     for term in sorted(by):
         rows = sorted(by[term], key=lambda d: (d["file"], d["line"]))
-        if len({_norm_def(d["definition"]) for d in rows}) >= 2:
+        # Two procedures for one verb ("How to start" in two skills) are two procedures, not
+        # two meanings of the word: a conflict needs a definition stated as one (review C26).
+        if (len({_norm_def(d["definition"]) for d in rows}) >= 2
+                and any(d.get("source") != "procedural" for d in rows)):
             out.append({"check": "term.conflict", "file": None, "line": None, "term": term,
                         "definitions": [{"file": d["file"], "line": d["line"],
                                          "text": d["definition"]} for d in rows]})
