@@ -138,7 +138,8 @@ STANDING_LIMITS = [
     "the previous run of the same repository when there is one (changes.md next to this report); "
     "what the artifact becomes after its next update is seen only by auditing it again.",
     "English-language scope: the phrase layer is blind to non-English text (stage 2 lists "
-    "non-Latin runs).",
+    "non-Latin runs, and prose passages in another language in Latin script; a short line can "
+    "slip past that check).",
     "Stage 4 matches patterns; a payload phrased outside every pattern reads as no hit. "
     "A zero here is not safety.",
 ]
@@ -220,9 +221,10 @@ def _s2(r):
     cs = ", ".join(f"{v} {k}" for k, v in carriers.most_common())
     fold = len(fnd(r, "02-reader", "read.fold"))
     script = len(fnd(r, "02-reader", "read.script"))
+    lang = len(fnd(r, "02-reader", "read.language"))
     return (f"{read}/{total} files ({pct}). {n(len(div), 'divergence')}"
             f"{' (' + cs + ')' if cs else ''}. {n(fold, 'line')} changed by folding. "
-            f"{n(script, 'non-Latin run')}.")
+            f"{n(script, 'non-Latin run')}. {n(lang, 'passage')} in a language other than English.")
 
 
 def _s3(r):
@@ -1052,6 +1054,13 @@ def _f2(r, _):
                lambda d: f"{loc(d)}: removed or replaced {', '.join(d.get('removed', []))}")
     L += _list("Non-Latin script runs", fnd(r, "02-reader", "read.script"),
                lambda d: f"{loc(d)}: {d.get('script')} {code(d.get('text'))}")
+    L += _list("Passages in a language other than English (Latin script)",
+               fnd(r, "02-reader", "read.language"),
+               lambda d: f"{loc(d)}"
+                         f"{'-' + str(d['end_line']) if d.get('end_line') not in (None, d.get('line')) else ''}: "
+                         f"{d.get('rule')}, {d.get('other')} other-language words to {d.get('english')} English"
+                         f"{' (' + ', '.join(d['matched']) + ')' if d.get('matched') else ''}: "
+                         f"{code(d.get('text', '').splitlines()[0] if d.get('text') else '')}")
     L += _list("Metadata carrying text", fnd(r, "02-reader", "read.metadata"),
                lambda d: f"{loc(d)}: {d.get('field')} = {code(d.get('text'))}")
     L += _list("Unread", fnd(r, "02-reader", "read.unread"),

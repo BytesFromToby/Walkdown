@@ -25,8 +25,8 @@ the `regex` module's `\p{Script=...}`. `Unknown` when none matches.
 `script_findings(file, line_no, line) -> list[dict]`: one `read.script`
 finding per run (`check`, `file`, `line`, `script`, `text`, plus `col`).
 
-Language detection within Latin script (lingua) is optional in v1 and not done
-here; run.py notes its absence on stderr.
+Language shift within Latin script is `language.py` (`read.language`), not this
+check.
 
 ## Must never
 

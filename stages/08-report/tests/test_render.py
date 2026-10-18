@@ -524,3 +524,16 @@ def test_full_report_lists_settings_and_stated_limits():
     assert "scripts/a.sh:3: tools-flag Read, Grep; rules out write, shell, network (tool)" in out
     assert ("SKILL.md:12: backed (flag); A setting on this line backs it: a --tools list that rules out "
             "writing.") in out
+
+
+def test_full_lists_other_language_passages():
+    r = reports()
+    r["02-reader"]["findings"].append(
+        {"check": "read.language", "file": "SKILL.md", "line": 4, "end_line": 6,
+         "rule": "function-words", "words": 30, "english": 2, "other": 9,
+         "matched": ["der", "und"], "text": "Lies die Datei und\nzweite Zeile\ndritte"})
+    f = full(META, r, PASS, {}, set(r))
+    assert "Passages in a language other than English (Latin script)" in f
+    assert "SKILL.md:4-6: function-words, 9 other-language words to 2 English (der, und)" in f
+    assert "Lies die Datei und" in f and "zweite Zeile" not in f
+    assert "1 passage in a language other than English." in f

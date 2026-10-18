@@ -68,7 +68,6 @@ Optional, used when installed:
 - [Tesseract](https://github.com/tesseract-ocr/tesseract): text inside images.
 - [Poppler](https://poppler.freedesktop.org): rendering PDF pages for comparison.
 - [Playwright](https://playwright.dev): rendering HTML as a browser shows it.
-- [lingua](https://github.com/pemistahl/lingua-py): language detection.
 - [gitleaks](https://github.com/gitleaks/gitleaks): finding committed secrets (preferred over detect-secrets when installed).
 
 Stage 6 backends, chosen at run time (`requirements-soft.txt`):

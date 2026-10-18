@@ -6,6 +6,17 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Stage 2: a language check for text in Latin script (`read.language`). A prose passage whose
+  common short words are mostly one other language's (Spanish `el` / `del`, German `und` /
+  `der`, and ten more lists), or that is heavily accented with no English in it, is listed with
+  the words that matched; the language is never named. Nothing to install: it replaces the
+  planned lingua, and section 7 no longer lists language detection as not built. It reads
+  Markdown outside code fences, plain text, PDF, DOCX, and OCR text, not code comments, config,
+  or HTML. Measured on 1,109 English skill files (20,574 paragraphs): no false positives.
+  Recall on short one-line instructions: 16 of 24 held out, misses mostly short Polish, Czech,
+  and Turkish lines. The summary's Hidden text section and the full report count and list them.
+  New fixture `class04-latin-language.md`.
+
 - Stage 4 now catches an instruction hard-wrapped across two lines of one Markdown paragraph
   (a verb at the end of one line, its target at the start of the next). The finding is cited at
   the line where it starts and quotes both lines. Hits on either line alone are not counted twice.

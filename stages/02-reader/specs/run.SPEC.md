@@ -1,6 +1,6 @@
 # run.py: spec
 
-The single entry point for stage 2. Wires `files`, `fold`, `script_runs`, and
+The single entry point for stage 2. Wires `files`, `fold`, `script_runs`, `language`, and
 the format readers together and prints one contract-1 report
 (`stages/CONTRACT.md`).
 
@@ -22,8 +22,8 @@ Per file, in path order, by kind (`files.classify`):
 
 | Kind | Reading A text | Findings |
 |---|---|---|
-| markdown, html, svg, text | decoded text, original lines | `read.fold` and `read.script` per line; `read.divergence` for invisible characters per line (`fold.invisible_finding`); plus markdown carriers (`read_md`), HTML (`read_html`), or SVG (`read_svg`) divergences |
-| pdf | `read_pdf` lines | `read.fold` / `read.script` over its lines; divergences; `read.metadata` |
+| markdown, html, svg, text | decoded text, original lines | `read.fold` and `read.script` per line; `read.divergence` for invisible characters per line (`fold.invisible_finding`); plus markdown carriers (`read_md`), HTML (`read_html`), or SVG (`read_svg`) divergences; `read.language` (`language.language_findings`) for markdown and for text files with a prose extension (`txt`, `text`, `rst`, `adoc`, `asciidoc`) |
+| pdf | `read_pdf` lines | `read.fold` / `read.script` / `read.language` over its lines; divergences; `read.metadata` |
 | docx | `read_docx` lines | same as pdf |
 | image | none | `read.metadata`; OCR text as a `B-only` divergence, or a `read.divergence` skip plus `read.unread` |
 | office-other, archive, binary | none | `read.unread` with the reason |
@@ -37,18 +37,21 @@ be read by its reader gives `read.unread` with the reason; an SVG that is not
 well-formed still gets its text checks and a `read.divergence` skip.
 
 Within a file, findings are ordered: `read.unread`, `read.divergence`,
-`read.fold`, `read.script`, `read.metadata`, skips.
+`read.fold`, `read.script`, `read.language`, `read.metadata`, skips.
 
 `coverage`: `files`, `files_read`, `bytes`, `bytes_read`, `unread` (list of
 paths), `carriers` (count of divergences per carrier), `markdown_files`,
-`markdown_comments`, `optional_tools` (Tesseract present or absent), and
+`markdown_comments`, `language` (`files` checked for language, paragraphs `judged`, and
+paragraphs too `short` to judge), `optional_tools` (Tesseract present or absent), and
 `not_examined`: what this run left unchecked, each item saying why, "(tesseract not
 installed)" or "(not built)".
 
 stderr: notes, including a missing Tesseract and what it skips, and one `note: not built:`
-line for each check in `NOT_BUILT` (PDF render + OCR, HTML render, language detection within
-Latin script), on every run (2026-10-12: these were once reported as missing tools, though no
-code uses those tools, so installing one hid the gap). A PDF with no text layer is
+line for each check in `NOT_BUILT` (PDF render + OCR, HTML render), on every run (2026-10-12:
+these were once reported as missing tools, though no code uses those tools, so installing one
+hid the gap), and one `note: v1 limit:` line saying what the language check does not read
+(code, config, HTML, paragraphs under five words). Language within Latin script left
+`NOT_BUILT` when `language.py` was built (2026-10-18). A PDF with no text layer is
 `read.unread` whether or not Tesseract is installed.
 
 `--out <dir>` also writes `<dir>/normalized/text/<rel>.txt` (reading A) and
@@ -64,8 +67,7 @@ missing or non-folder argument or a bad `--out`.
 - Print anything but the report to stdout.
 - Write inside the input folder.
 - Run anything from the input, follow a symlink, or fetch a URL.
-- Emit a skip for a check that did run (language detection, not built, is a stderr note,
-  not a `read.script` skip).
+- Emit a skip for a check that did run (a check not built is a stderr note, not a skip).
 - Report a check as waiting on a tool when no code would use the tool.
 
 ## Done when (each backed by a test in `tests/test_run.py`)
@@ -77,3 +79,4 @@ missing or non-folder argument or a bad `--out`.
 5. `--out` writes text and folded files with equal line counts, and folded lines differ only where `read.fold` fired.
 6. `--out` inside the input exits non-zero; the input folder is byte-identical after a run.
 7. A missing folder exits non-zero without printing a report.
+8. A markdown file with a Spanish line in an English list gives one `read.language` finding at that line; the same line in a `.py` file gives none; a PDF line gives one with `text_line`; `coverage.language` counts files and paragraphs; stderr has no `not built: language` line and has the language `v1 limit` line.

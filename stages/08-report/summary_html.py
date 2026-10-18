@@ -591,8 +591,9 @@ def hidden(r, items) -> str:
     div = [d for d in R.fnd(r, "02-reader", "read.divergence") if "skipped" not in d]
     fold = R.fnd(r, "02-reader", "read.fold")
     script = R.fnd(r, "02-reader", "read.script")
+    lang = R.fnd(r, "02-reader", "read.language")
     mine = [it for it in items if it.get("kind") == "hidden+phrase"]
-    if not div and not fold and not script:
+    if not div and not fold and not script and not lang:
         return _section("hidden", "Hidden text", esc(lede),
                         _empty("Nothing hidden: what the AI reads matches what a person sees."))
     lines = []
@@ -609,6 +610,11 @@ def hidden(r, items) -> str:
     if script:
         lines.append(f"{R.n(len(script), 'stretch', 'stretches')} of text in a non-Latin script; the "
                      "risky-ask patterns read English only.")
+    if lang:
+        ai = sum(1 for d in lang if R.audience(d.get("file")) in ("model", "subagent"))
+        lines.append(f"{R.n(len(lang), 'passage')} in a language other than English, written in the "
+                     f"same alphabet ({ai:,} in files the AI reads); the risky-ask patterns read English "
+                     "only, so read these yourself. The full report lists each one.")
     body = "".join(_p(x) for x in lines)
     if mine:
         body += '<h3>Hidden, and it reads like an instruction</h3>' + _cards(mine)

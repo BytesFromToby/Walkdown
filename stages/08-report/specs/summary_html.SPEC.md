@@ -45,7 +45,8 @@ self-contained HTML document (`summary.html`). Sections, in the owner's order:
    audience rule. A run made before 2026-10-16 has no addresses saved; its rows show the domain.
 5. **Hidden text** (its own section, owner). Where what the AI reads differs from what a person
    sees, by how it was hidden and how many are in files the AI reads; lines changed by folding;
-   non-Latin runs; then cards for hidden text that reads like an instruction.
+   non-Latin runs; passages in another language written in Latin script (`read.language`), with
+   how many are in files the AI reads; then cards for hidden text that reads like an instruction.
 6. **Committed secrets** (its own section, owner). Count, engine, what was set aside (test data,
    likely not secrets); one card per place, value never shown. Skipped when no scanner ran.
 7. **Risky asks and things to check.** Overall numbers: lines matched and who reads them, matches
