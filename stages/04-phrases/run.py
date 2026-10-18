@@ -32,6 +32,8 @@ STAGE1_RUN = HERE.parent / "01-inventory" / "run.py"
 LIMITS = [
     "limit: files that do not decode as text (PDF, DOCX, images) are not scanned",
 ]
+EXTRACTED_LIMIT = ("limit: files that do not decode as text (PDF, DOCX, images) are scanned from "
+                   "stage 2's extracted text, phrase patterns only")
 MARKDOWN_EXTS = (".md", ".markdown", ".mdc")
 INSTRUCTION_AUDIENCES = ("model", "subagent")
 PART2_ORDER = ["rubric.action", "endpoint.host", "cond.branch", "term.def", "term.conflict",
@@ -129,7 +131,21 @@ def mask_secret_lines(findings: list[dict]) -> None:
         f["masked"] = True
 
 
-def build_report(input_dir: Path, inv: dict, rows, vocab=None) -> tuple[dict, dict]:
+def extracted_findings(rel, text, rows, aud) -> list[dict]:
+    """Phrase hits in stage 2's text of a binary file: cited by text_line, never by line."""
+    out = []
+    for f in scan_text(rel, text, rows, aud):
+        f["text_line"] = f.pop("line")
+        f["line"] = None
+        if "end_line" in f:
+            f["end_text_line"] = f.pop("end_line")
+        f["extracted"] = True
+        out.append(f)
+    return out
+
+
+def build_report(input_dir: Path, inv: dict, rows, vocab=None,
+                 normalized: Path | None = None) -> tuple[dict, dict]:
     if vocab is None:
         vocab = load_vocab(rows=rows)
     findings_in = inv.get("findings", [])
@@ -158,6 +174,12 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None) -> tuple[dict, di
             not_scanned.append({"file": rel, "reason": "symlink (never followed)"})
             continue
         if not row.get("encoding"):
+            copy = normalized / "text" / f"{rel}.txt" if normalized is not None else None
+            if copy is not None and copy.is_file():  # stage 2's text of a PDF, DOCX, or image
+                scanned += 1
+                findings.extend(extracted_findings(rel, copy.read_text("utf-8", "replace"), rows,
+                                                   audience(rel, scripts, hook_configs)))
+                continue
             not_scanned.append({"file": rel, "reason": f"not text ({row.get('type') or 'binary'})"})
             continue
         if rel.rsplit("/", 1)[-1].lower() in PATTERN_LISTS:
@@ -207,7 +229,8 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None) -> tuple[dict, di
     hits = {"findings": findings,
             "counts": {"per_check": per_check, "per_pattern": per_pattern,
                        "part2": part2_counts(p2)},
-            "scanned": scanned, "not_scanned": not_scanned, "limits": LIMITS}
+            "scanned": scanned, "not_scanned": not_scanned,
+            "limits": [EXTRACTED_LIMIT] if normalized is not None else LIMITS}
     return report, hits
 
 
@@ -225,6 +248,7 @@ def main(argv=None) -> int:
     ap.add_argument("--inventory")
     ap.add_argument("--patterns")
     ap.add_argument("--out")
+    ap.add_argument("--normalized")
     try:
         args = ap.parse_args(sys.argv[1:] if argv is None else argv)
     except SystemExit:
@@ -259,8 +283,11 @@ def main(argv=None) -> int:
         eprint(f"error: {exc}")
         return 1
 
-    report, hits = build_report(root, inv, rows, vocab)
-    for note in LIMITS:
+    normalized = Path(args.normalized).resolve() if args.normalized else None
+    if normalized is not None and not normalized.is_dir():
+        normalized = None  # stage 2 did not run (baserates runs stages 1 and 4 only)
+    report, hits = build_report(root, inv, rows, vocab, normalized)
+    for note in hits["limits"]:
         eprint("note:", note)
     for ns in hits["not_scanned"]:
         eprint(f"note: not scanned: {ns['file']}: {ns['reason']}")

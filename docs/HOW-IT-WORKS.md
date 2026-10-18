@@ -163,7 +163,9 @@ line verbatim, the pattern ids, the matched words, and the file's audience. Matc
 folded line, so hidden characters do not break a match. In Markdown, each line is also matched joined with the next
 line of its paragraph, so an instruction hard-wrapped across two lines is caught; that hit is
 cited at the line where it starts, quotes both lines, and is kept only when neither line hits
-alone.
+alone. PDF, DOCX, and image files are matched too, on the text stage 2 read from them (the text
+layer, text drawn on PDF pages, the text in images); those hits are cited as "extracted text,
+line N", and the tables below are built from text files only.
 
 | Group | Check | Looks for | Threat class |
 |---|---|---|---|

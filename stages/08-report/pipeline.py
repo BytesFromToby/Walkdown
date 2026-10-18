@@ -44,7 +44,8 @@ def _args(stage: str, input_dir: Path, run_dir: Path, soft: dict | None = None) 
         "01-inventory": [str(input_dir)],
         "02-reader": [str(input_dir), *out],
         "03-graph": [str(input_dir), "--inventory", inv, *out],
-        "04-phrases": [str(input_dir), "--inventory", inv, *out],
+        "04-phrases": [str(input_dir), "--inventory", inv, *out,
+                       "--normalized", str(run_dir / "normalized")],  # stage 2's extracted text
         "05-capability": [str(input_dir), "--reports", str(run_dir), *out],
         "06-soft": [str(input_dir), "--reports", str(run_dir), *out,
                     *[x for k, v in (soft or {}).items() if v

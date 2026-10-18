@@ -28,30 +28,43 @@ def _hook_emitters(reports: dict, graph: dict | None) -> dict[str, dict]:
     return out
 
 
+def _pos(f: dict):
+    """Where a finding sits: ("line", n) in a text file, or ("text", n) in the extracted text of
+    a PDF, DOCX, or image (`text_line`, 2026-10-18); None when it has neither."""
+    if f.get("line") is not None:
+        return "line", f["line"]
+    if f.get("text_line") is not None:
+        return "text", f["text_line"]
+    return None
+
+
 def pairs(reports: dict, graph: dict | None = None) -> list[dict]:
     s2, s3, s4 = (_findings(reports, k) for k in ("02", "03", "04"))
     emitters = _hook_emitters(reports, graph)
     orphans = {f["file"]: f for f in s3 if f.get("check") == "graph.orphan"}
     dynamic = {f["file"]: f for f in s3
                if f.get("check") == "graph.depth" and f.get("via") == "dynamic"}
-    hidden: dict[str, list[tuple[int, int, dict, str]]] = {}
+    hidden: dict[tuple, list[tuple[int, int, dict, str]]] = {}  # (file, kind of position)
     for f in s2:
-        if f.get("line") is None or not f.get("file"):
+        pos = _pos(f)
+        if pos is None or not f.get("file"):
             continue
+        kind, n = pos
         if f.get("check") == "read.divergence" and f.get("reading") == "A-only":
             span = str(f.get("text") or "").count("\n")
-            hidden.setdefault(f["file"], []).append(
-                (f["line"], f["line"] + span, f, f"hidden text: {f.get('carrier')}"))
+            hidden.setdefault((f["file"], kind), []).append(
+                (n, n + span, f, f"hidden text: {f.get('carrier')}"))
         elif f.get("check") == "read.fold":
-            hidden.setdefault(f["file"], []).append((f["line"], f["line"], f, "folded line"))
+            hidden.setdefault((f["file"], kind), []).append((n, n, f, "folded line"))
 
     out = []
     # phrase hits only: part 2 tables (rubric, endpoints, conditionals, terms) are
     # descriptions of phrase hits or of the text, not hits to pair (2026-09-29)
     for h in (x for x in s4 if str(x.get("check", "")).startswith("phrase.")):
-        file, line = h.get("file"), h.get("line")
-        if not file or line is None:
+        file, pos = h.get("file"), _pos(h)
+        if not file or pos is None:
             continue
+        kind_at, line = pos
         halves: dict[str, list[dict]] = {}
         if file in orphans:
             halves["orphan+phrase"] = [entry("03", orphans[file], "orphan file")]
@@ -61,7 +74,7 @@ def pairs(reports: dict, graph: dict | None = None) -> list[dict]:
         # a folded line covers the hit only when the hit needs the fold (stage 4 `folded`):
         # an en dash or a "×" folds too, and a hit that matches the raw line is not hidden
         # by it (2026-10-09, caveman: 30 of 38 hidden pairs were typographic folds)
-        cover = [entry("02", f, why) for lo, hi, f, why in hidden.get(file, [])
+        cover = [entry("02", f, why) for lo, hi, f, why in hidden.get((file, kind_at), [])
                  if lo <= line <= hi and (f.get("check") != "read.fold" or h.get("folded"))]
         carrier_only = set(h.get("patterns") or []) <= CARRIER_PATTERNS
         if cover and not carrier_only:
@@ -72,10 +85,14 @@ def pairs(reports: dict, graph: dict | None = None) -> list[dict]:
                                                     "whose output reaches the model")]
         for kind in PAIRS:
             if kind in halves:
-                out.append({"check": "cap.pair", "file": file, "line": line, "pair": kind,
-                            "phrase_check": h.get("check"), "patterns": h.get("patterns") or [],
-                            "quote": h.get("quote"),
-                            "evidence": [entry("04", h, "phrase hit")] + halves[kind]})
-    out.sort(key=lambda p: (p["file"], p["line"], p["phrase_check"] or "",
+                p = {"check": "cap.pair", "file": file, "line": h.get("line"), "pair": kind,
+                     "phrase_check": h.get("check"), "patterns": h.get("patterns") or [],
+                     "quote": h.get("quote"),
+                     "evidence": [entry("04", h, "phrase hit")] + halves[kind]}
+                if kind_at == "text":
+                    p["text_line"] = line
+                out.append(p)
+    out.sort(key=lambda p: (p["file"], p["line"] if p["line"] is not None else -1,
+                            p.get("text_line") or 0, p["phrase_check"] or "",
                             PAIRS.index(p["pair"])))
     return out

@@ -51,7 +51,10 @@ shown).
   `charset-normalizer` detects), including HTML comments, code blocks, and
   frontmatter: the model receives all of it. Walk with stage 1's rules (no
   symlinks out of the tree, no `.git/`). Files that do not decode as text (PDF,
-  DOCX, images) are not scanned in v1; say so on stderr.
+  DOCX, images) are scanned from stage 2's extracted text when the run passes
+  `--normalized` (2026-10-18): the text layer, text drawn on PDF pages, image OCR;
+  phrase patterns only, cited by `text_line` with `line` null. Without it they are
+  not scanned; either way stderr says which.
 
 ## Outputs
 

@@ -8,6 +8,7 @@ scans every text file with the pattern table, and prints one contract-1 report
 
 ```
 python stages/04-phrases/run.py <input_dir> [--inventory <file>] [--patterns <file>] [--out <dir>]
+                                 [--normalized <dir>]
 ```
 
 - `--inventory <file>`: a stage 1 report (JSON) already produced for this input.
@@ -18,6 +19,11 @@ python stages/04-phrases/run.py <input_dir> [--inventory <file>] [--patterns <fi
   stderr, nothing on stdout). Stage 1 code is never imported.
 - `--patterns <file>`: a pattern table other than the shipped `patterns.yaml`
   (for tests). A table that fails validation exits 2.
+- `--normalized <dir>`: stage 2's normalized folder (`<run>/normalized`, 2026-10-18). A file
+  stage 1 found not to be text (PDF, DOCX, an image) whose extracted text stage 2 wrote
+  (`<dir>/text/<rel>.txt`: a document's text layer, text drawn on its pages, or an image's OCR)
+  is scanned from that text. A folder that does not exist counts as no folder (a run of stages
+  1 and 4 only, as `baserates.py` makes).
 
 ## Files scanned
 
@@ -25,8 +31,16 @@ Every `inv.file` row that is not a symlink, has a stage 1 `encoding` (text),
 and whose bytes `foldtext.decode` reads. HTML comments, code blocks, and
 frontmatter are scanned like any other line (the model receives all of them).
 A file that is not scanned (no encoding, undecodable, unreadable, or an
-`inv.file` skip) is named on stderr with its reason; binary documents (PDF,
-DOCX) and images are not scanned in v1.
+`inv.file` skip) is named on stderr with its reason.
+
+**Extracted text** (with `--normalized`): a binary document or image with a stage 2 text copy
+gets the phrase patterns (`scan_text`) over that copy, and nothing else (the part 2 tables,
+position, and repetition read text files only). Its findings carry `line` null, `text_line`
+(and `end_text_line` for a wrapped hit) for the line in the extracted text, and `extracted`
+true. Without `--normalized`, or with no text copy for the file, it is not scanned, as before.
+The limit note on stderr says which: `limit: files that do not decode as text (PDF, DOCX,
+images) are scanned from stage 2's extracted text, phrase patterns only` with the option, the
+old `... are not scanned` without it.
 
 Audience per file: `audience.audience` with `scripts` from `inv.pin`
 `script_languages` and `hook_configs` from `inv.file` `entry_point`
@@ -91,6 +105,7 @@ or a refused `--out`. Exit 1 when stage 1 fails.
 8. Part 2 findings follow every part 1 finding, in CONTRACT order, and part 1 findings are identical to a run without part 2 (same phrase findings as the pattern scan alone).
 9. On a small tree: a confirm-first line in `SKILL.md` gives a `rubric.action`; the same verb in a script gives none; a host in `SKILL.md` and `README.md` is documented, a host in `SKILL.md` and a script only is not; a conditional and a definition in `SKILL.md` give `cond.branch` and `term.def`, and the same lines in `README.md` give none; a frontmatter line of `README.md` counts as instruction text.
 10. `--out` writes the `part2` counts, and they agree with the part 2 findings.
+11. With `--normalized`, a PDF (no stage 1 encoding) whose text copy holds an override phrase gives a phrase finding with `line` null, `text_line`, and `extracted`; it is counted as scanned and is not named as not scanned; the limit note says extracted text is scanned. Without `--normalized` the same PDF is not scanned, with the old note.
 
 Pattern lists (`.gitignore`, `.gitattributes`, other ignore files, `CODEOWNERS`,
 `.gitmodules`, `.mailmap`) are not scanned (reason `pattern list (not instruction

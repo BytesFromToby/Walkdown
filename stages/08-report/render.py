@@ -159,7 +159,12 @@ def code(s) -> str:
 def loc(f) -> str:
     if f.get("file") is None:
         return "(repo)"
-    return f"{f['file']}:{f['line']}" if f.get("line") is not None else f["file"]
+    if f.get("line") is not None:
+        return f"{f['file']}:{f['line']}"
+    if f.get("text_line") is not None:  # a PDF, DOCX, or image: the line in its extracted text
+        page = f", page {f['page']}" if f.get("page") is not None else ""
+        return f"{f['file']} (extracted text{page}, line {f['text_line']})"
+    return f["file"]
 
 
 def fnd(reports, stage, check=None):
@@ -915,6 +920,8 @@ def glance(reports, notes, stamps, runs_ok) -> tuple[list[str], list[str]]:
             if stage == "06-soft" or not LIMIT_NOTE.search(line) or STANDING_NOTE.search(line):
                 continue
             if line.startswith(BINARY_NOTE):
+                if "scanned from stage 2's extracted text" in line:
+                    continue  # read from stage 2's text (2026-10-18); files without one are per-file notes
                 if kinds & {"image", "pdf", "docx"}:
                     skipped.append("Phrase patterns in PDF, DOCX, and image files")
                 continue
