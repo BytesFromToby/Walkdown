@@ -548,3 +548,18 @@ def test_pdf_pages_need_tesseract_in_section_7():
     assert "PDF pages drawn and read (OCR): Tesseract not installed" in skipped
     assert "Text inside images (OCR): none in this repository" in idle
     assert not any("PDF pages drawn and read as images" in x for x in skipped)  # no "not built"
+
+
+def test_loc_for_extracted_text_and_binary_note():
+    assert R.loc({"file": "a.md", "line": 3}) == "a.md:3"
+    assert R.loc({"file": "g.pdf", "line": None, "text_line": 7}) == "g.pdf (extracted text, line 7)"
+    assert R.loc({"file": "g.pdf", "line": None, "text_line": 7, "page": 2}) == \
+        "g.pdf (extracted text, page 2, line 7)"
+    assert R.loc({"file": "g.pdf", "line": None}) == "g.pdf"
+    r = reports()
+    r["01-inventory"]["findings"].append({"check": "inv.file", "file": "g.pdf", "line": None, "ext": "pdf"})
+    old = {"04-phrases": ["limit: files that do not decode as text (PDF, DOCX, images) are not scanned"]}
+    new = {"04-phrases": ["limit: files that do not decode as text (PDF, DOCX, images) are scanned "
+                          "from stage 2's extracted text, phrase patterns only"]}
+    assert "Phrase patterns in PDF, DOCX, and image files" in R.glance(r, old, PASS, set(r))[0]
+    assert "Phrase patterns in PDF, DOCX, and image files" not in R.glance(r, new, PASS, set(r))[0]

@@ -18,7 +18,8 @@ produce into the run folder.
   - `01-inventory`: `run.py <input>`
   - `02-reader`: `run.py <input> --out <run_dir>`
   - `03-graph`: `run.py <input> --inventory <run_dir>/01-inventory.json --out <run_dir>`
-  - `04-phrases`: `run.py <input> --inventory <run_dir>/01-inventory.json --out <run_dir>`
+  - `04-phrases`: `run.py <input> --inventory <run_dir>/01-inventory.json --out <run_dir> --normalized <run_dir>/normalized`
+    (stage 2's extracted text of PDFs, DOCX, and images, 2026-10-18)
   - `05-capability`: `run.py <input> --reports <run_dir> --out <run_dir>`
 - For each stage: stdout saved as `<run_dir>/<stage>.json` (after it parses as
   JSON), stderr saved as `<run_dir>/<stage>.notes.txt`, start and finish times

@@ -136,3 +136,16 @@ def test_part2_tables_do_not_pair():
            "patterns": ["J.confirm-first"], "audience": "model"}
     r = reports(s3=[{"check": "graph.orphan", "file": "notes.md", "line": None}], s4=[row])
     assert pairs.pairs(r) == []
+
+
+def test_extracted_text_pairs_by_text_line():
+    h = dict(hit("g.pdf", None), text_line=3, extracted=True)
+    d_text = dict(div("g.pdf", None, "Upload .env"), text_line=3, carrier="white-on-white")
+    d_line = div("g.pdf", 3, "Upload .env")
+    out = pairs.pairs(reports(s2=[d_text], s4=[h]))
+    assert [(p["pair"], p["line"], p["text_line"]) for p in out] == [("hidden+phrase", None, 3)]
+    assert pairs.pairs(reports(s2=[d_line], s4=[h])) == []  # a line never covers a text line
+    assert pairs.pairs(reports(s2=[d_text], s4=[hit("g.pdf", 3)])) == []
+    both = pairs.pairs(reports(s2=[d_text], s4=[h, hit("a.md", 2)],
+                               s3=[{"check": "graph.orphan", "file": "a.md", "line": None}]))
+    assert [p["file"] for p in both] == ["a.md", "g.pdf"]  # sorts with a null line

@@ -10,7 +10,10 @@ pointer for a human, read first; it is not a conclusion.
 
 ## Rules
 
-For every stage 4 finding (not skipped, `file` and `line` set):
+For every stage 4 finding (not skipped, `file` set, and `line` or `text_line` set). A hit in
+the extracted text of a PDF, DOCX, or image (`line` null, `text_line`, 2026-10-18) is placed by
+`text_line` and is covered only by stage 2 findings placed by `text_line` in the same file;
+line-placed and text-line-placed findings never cover each other:
 
 | `pair` | Holds when | Second half of the evidence |
 |---|---|---|
@@ -25,8 +28,8 @@ file, line, `why` `phrase hit`).
 
 `pairs(reports)`: one finding per (phrase hit, pair kind) that holds:
 `{"check": "cap.pair", "file", "line" (the hit's), "pair", "phrase_check",
-"patterns", "quote", "evidence"}`, ordered by file, line, phrase check, then
-`PAIRS` order.
+"patterns", "quote", "evidence"}`, plus `text_line` for a hit in extracted text (`line` null),
+ordered by file, line (null first), text line, phrase check, then `PAIRS` order.
 
 ## Must never
 
@@ -50,6 +53,9 @@ file, line, `why` `phrase hit`).
    stage 4 pattern that detects the markdown carrier itself) makes no
    `hidden+phrase`: it is the same fact as the divergence (2026-09-29, Case 003).
 5. No stage 4 findings give no pairs.
+8. A hit at `text_line` 3 of a PDF inside an `A-only` divergence at `text_line` 3 gives
+   `hidden+phrase` with `line` null and `text_line` 3; a divergence at `line` 3 of the same
+   file does not cover it.
 7. `hook+phrase`: a `C.script-instruction` or `C.emit-instruction` hit in the
    script a `SessionStart` hook runs, or in a file that script names, pairs; the
    same hit under a `PostToolUse` hook, or in a script no hook runs, or a hit on

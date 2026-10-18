@@ -6,11 +6,17 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- The risky-ask patterns now read PDF, DOCX, and image files, on the text stage 2 read from them
+  (the text layer, text drawn on PDF pages, OCR of images). Hits are cited as "extracted text,
+  line N". Hidden text in a PDF or DOCX that also reads like an instruction now gets the
+  "Hidden, and it reads like an instruction" card. Section 7 no longer lists phrase patterns
+  in those files as skipped; a file stage 2 could not read (an image with no Tesseract) is
+  still listed. The hosts, confirmations, conditions, and definitions tables still read text
+  files only.
 - Stage 2 draws each PDF page and reads it (pypdfium2, now a core dependency, plus Tesseract).
   Lines the page shows that its text layer lacks (a picture of an instruction, text drawn as
   shapes, a scanned page) are listed as hidden text, with the page; the language and script
-  checks read them. A scanned PDF is read instead of listed as unread. The risky-ask patterns
-  still do not read PDF, DOCX, or image text (section 7 says so). Without Tesseract each PDF is a skip and
+  checks read them. A scanned PDF is read instead of listed as unread. Without Tesseract each PDF is a skip and
   section 7 says so; "PDF render" is no longer "not built". The first 50 pages of each PDF.
 - Stage 2, image OCR reads small and faint text better: the image is cropped to its ink, its
   contrast stretched, a dark background inverted, and the crop enlarged; a large image is read
