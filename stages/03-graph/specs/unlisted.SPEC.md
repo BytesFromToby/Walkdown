@@ -38,6 +38,13 @@ list: `check`, `file` (the component's file), `line` null, `manifest`, `kind`, `
 many of that kind the manifest lists), `on_disk` (how many of that kind are under its root).
 Ordered by manifest, kind, file.
 
+## Measured (2026-10-18)
+
+The four audited repositories at their audited commits: 0. obra/superpowers and
+wshobson/agents (current): 0, and 1 of 1 when one skill is left out of a Codex manifest in
+wshobson/agents' own layout; anthropics/skills: 1 (`template/SKILL.md`, 19 of 20 named by its
+marketplace).
+
 ## Must never
 
 - Compare a kind the manifest does not enumerate.

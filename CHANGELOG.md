@@ -6,6 +6,13 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Stage 2, image OCR: a large image is read whole as well as in tiles. Tiles alone cut a word
+  in large type that straddles a tile edge: re-auditing claude-familiar, its banner's title
+  "Claude Familiar" read as "Claude Fami" where the earlier code read it whole. A line read by
+  the whole view and a tile is kept once. Re-audit of the four audited repositories at their
+  audited commits, old code against new: no finding count, trifecta leg, or install grant
+  changed; the new checks found nothing there (no language passages in 4,860 paragraphs, no
+  unlisted components, no PDFs; three images now scanned for phrases, no hits).
 - With the Tesseract program installed but not the `pytesseract` package, skipped OCR was not
   reported: it now shows under Other details on `details.html`, and at the bottom of
   `summary.html` when the repository has images or PDFs.

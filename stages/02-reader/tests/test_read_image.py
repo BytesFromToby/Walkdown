@@ -86,10 +86,11 @@ def test_dark_image_is_inverted():
 def test_large_image_tiles_only_inked_corners():
     im = ink(ink(canvas((2400, 1600)), (40, 40, 400, 50)), (1900, 1560, 2300, 1570))
     vs = read_image.ocr_views(im)
-    # a 2284 x 1554 crop is 3 x 2 tiles; the two blank ones in the middle are dropped (the
-    # bottom-right ink straddles an overlap, so it is in two tiles)
-    assert len(vs) == 3
-    assert all(max(v.size) <= read_image.TILE * read_image.TILE_SCALE for v in vs)
+    # the whole 2284 x 1554 crop first, then its 3 x 2 tiles less the two blank ones in the
+    # middle (the bottom-right ink straddles an overlap, so it is in two tiles)
+    m = read_image.MARGIN
+    assert len(vs) == 4 and vs[0].size == (2300 - 40 + 1 + 2 * m, 1570 - 40 + 1 + 2 * m)
+    assert all(max(v.size) <= read_image.TILE * read_image.TILE_SCALE for v in vs[1:])
 
 
 def test_no_enlarge_is_one_view_of_the_crop():
@@ -127,3 +128,19 @@ def test_small_text_in_large_image_and_faint_text_are_read():
     assert _words_read(read_image.ocr_read(faint)) >= 0.8
     faint_small = _draw_text(canvas((2400, 1600)), (100, 100), 8, (200, 200, 200))
     assert _words_read(read_image.ocr_read(faint_small)) >= 0.7
+
+
+@pytest.mark.skipif(not read_image.ocr_available()[0], reason="needs Tesseract")
+def test_large_type_across_a_tile_overlap_is_read_whole():
+    """A 2752 x 1536 banner's title was cut to "Claude Fami" by tiles alone (2026-10-18)."""
+    from PIL import ImageDraw
+    im = canvas((2400, 1600))
+    d = ImageDraw.Draw(im)
+    d.text((450, 200), "Familiar", font=font(200), fill="black")  # x 450 to 1155: no tile holds it
+    d.text((1300, 800), "Read twice kept once", font=font(40), fill="black")  # inside one tile
+    d.text((40, 1500), "corner", font=font(9), fill="black")
+    d.text((2300, 1500), "edge", font=font(9), fill="black")  # a crop over 2000 px: tiles
+    assert len(read_image.ocr_views(im)) > 1
+    text = read_image.ocr_read(im)
+    assert "Familiar" in text  # tiles alone read nothing of it
+    assert text.count("Read twice kept once") == 1  # the whole view and its tile, kept once

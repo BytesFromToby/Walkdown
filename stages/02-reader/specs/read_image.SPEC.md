@@ -58,9 +58,13 @@ texts in order). Both are used for images and, with `enlarge=False`, for rendere
    `MARGIN` (12 px). An image with no such pixel has no views (no text).
 3. A crop under `OCR_SMALL` (2000) px on its longer side is **one view**, enlarged `OCR_SCALE`
    (3) times, but never past `OCR_MAX` (6000) px.
-4. A larger crop is cut into **tiles** of `TILE` (1000) px overlapping by `OVERLAP` (120) px,
-   row by row; a tile with no ink is dropped; each tile is enlarged `TILE_SCALE` (2) times. Text
-   on a tile edge can appear in two tiles, so a tiled image's OCR text can repeat a line.
+4. A larger crop is read whole first, at its own size, then cut into **tiles** of `TILE`
+   (1000) px overlapping by `OVERLAP` (120) px, row by row; a tile with no ink is dropped; each
+   tile is enlarged `TILE_SCALE` (2) times. The whole view keeps words in large type that
+   straddle a tile overlap (2026-10-18: a 2752 x 1536 banner's title, read whole by the old
+   preprocessing, was cut to "Claude Fami" by tiles alone); the tiles add the small text the
+   whole view misses. `ocr_read` keeps a line read by more than one view once; a line cut
+   differently in two views can still appear twice.
 5. Each view's **contrast is stretched** to the full range (`autocontrast`), and a view whose
    background is dark (under 128) is **inverted**, so the text is dark on light. Both happen
    before the view is enlarged. Measured over 60 faint small cases (5 fonts, 7 to 9 px, gray
@@ -80,9 +84,12 @@ Done when (tests in `tests/test_read_image.py`):
 6. A small image gives one view, grayscale, cropped to its ink and enlarged 3x.
 7. A blank image gives no views.
 8. A dark image gives a view whose background is light.
-9. A large image with ink in two far corners gives tiles for those corners only.
+9. A large image with ink in two far corners gives the whole crop, then tiles for those
+   corners only.
 10. A view never exceeds `OCR_MAX` on its longer side.
 12. `enlarge=False` gives one view the size of the crop, however large.
+13. With Tesseract installed: a word in large type across a tile overlap of a large image is
+    read whole, and a line read by two views appears once.
 11. With Tesseract installed: 9 px text in the corner of a 2400 x 1600 image, `#EEE` text on
     white, and 8 px light-gray text in a 2400 x 1600 image are read (most of their words in
     `ocr_read`), drawn with Pillow's built-in font so the test runs on any OS. The bars test
