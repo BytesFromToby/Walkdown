@@ -152,16 +152,19 @@ Breadth-first from every entry point. Entry points are depth 0.
 | `graph.dangling` | reference that resolves to nothing (`file`, `line`: where it is written) | `target`: the path as written; `context` | THREATS class 12 |
 | `graph.dynamic` | glob, directory reference, or code scan (`file`, `line`: where it is written) | `pattern`; `resolves`: files it matches today; `source`: `glob`, `directory`, or `code`; `load`: bool (see "Load versus mention") | THREATS class 12 |
 | `graph.depth` | reachable file, entry points included (`line`: null) | `depth`; `from`: the parent on the path the depth came from (null at depth 0); `via`: `static`, `dynamic` (a load reaches it), or `mention` (only a folder or glob mention reaches it) | THREATS class 10 |
+| `graph.unlisted` | component (skill folder's `SKILL.md`, agent, command) on disk under a manifest's root that the manifest leaves out, for a kind it names (`line`: null) | `manifest`; `kind`; `listed`; `on_disk` | METHOD "Manifest versus disk" |
 | `graph.unscanned` | node that may hold references but was not scanned (PDF, DOCX, other binary documents, undecodable text) | `reason` | CLAUDE.md "never pass silently" |
 
 Orphans are one finding per file, whatever the file: a license, an image, a
 staged payload. Orphan is a locator. The report groups them; stage 3 does not
 decide which ones matter.
 
-**Manifest versus disk** (METHOD) in v1: a path a manifest names that does not
-exist is a `graph.dangling` finding from the manifest file. The other half,
-files on disk no manifest covers (six skill folders beside a manifest listing
-five), is not built in v1; `run.py` says so on stderr so stage 7 can list it.
+**Manifest versus disk** (METHOD): a path a manifest names that does not exist is a
+`graph.dangling` finding from the manifest file. The other half (2026-10-18,
+`specs/unlisted.SPEC.md`): a component on disk under a manifest's root that the manifest leaves
+out (six skill folders beside a manifest listing five) is `graph.unlisted`. Compared: skills,
+agents, and commands, and only the kinds a manifest names (a manifest that names none relies on
+its folders). Not compared: plugins a marketplace leaves out. `run.py` says so on stderr.
 
 ## Dependencies
 

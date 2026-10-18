@@ -6,6 +6,15 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Stage 3, manifest versus disk, both halves: a skill, agent, or command on disk that its
+  manifest leaves out is listed ("On disk, left out of the manifest"), for the kinds the
+  manifest names; one that names none relies on its folders and is not compared. A plugin with
+  one manifest per host has each compared. On anthropics/skills the marketplace names 19 of 20
+  skills (the template). Section 7 no longer says manifest versus disk is half built.
+- Stage 3: a manifest's paths are read from its plugin root, the folder above `.claude-plugin/`.
+  A nested plugin's `"./skills/"` had pointed at the repository's own `skills/` folder, and a
+  path that resolved nowhere was dropped (wshobson/agents: 52 fewer dangling references, 57 more
+  loads).
 - The risky-ask patterns now read PDF, DOCX, and image files, on the text stage 2 read from them
   (the text layer, text drawn on PDF pages, OCR of images). Hits are cited as "extracted text,
   line N". Hidden text in a PDF or DOCX that also reads like an instruction now gets the

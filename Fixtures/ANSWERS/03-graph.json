@@ -131,6 +131,76 @@
         "references/details.md": "d3e6f32b599ca13a8c4b293aff6ddcaf4909bb34b3414e6aa74c5e34b99c2116",
         "references/helpers.md": "9e39c2670e9f897214aee6f72f6b36658353ed80b5f1b34ca84fa01c0c1f8cd8"
       }
+    },
+    {
+      "root": "plugin-repo",
+      "fixtures": {
+        ".claude-plugin/plugin.json": "5523cce2cbf39f832456f6c1a91f99172e21e4838291018819a89f149e77eeea",
+        "README.md": "3ef311b396701f3da5b10d6c97a90d2fb3e565f458716d4af9113c5d933c86bc",
+        "agents/x.md": "b9a356f9f3102371257a27bd58dda87c29e561704ae86eada4b8c9f856ca5d29",
+        "agents/y.md": "aa9855a248489bba099db6944c742b094f2c59d79a9d5567188e277c9d49e3a6",
+        "commands/z.md": "049c74e8b17122e60098f4318e9543b76423d83e35d20ac9a534711676a3a0b4",
+        "skills/a/SKILL.md": "0b1bf5f130ae08d5e15939d6bfe78d58d7ae54cfbad8ccea097c828e9e0d20d5",
+        "skills/b/SKILL.md": "ace35bed87db225d38e44657b0bcf4621a73355594b4d4c4002707958b8df600",
+        "skills/c/SKILL.md": "818768a91d72496cf78295c2c308bef1b6b190c89aa3e2bc43d0b4df1bea24d6"
+      },
+      "expect": [
+        {
+          "id": "gr-unl-skill",
+          "polarity": "gate",
+          "check": "graph.unlisted",
+          "file": "skills/c/SKILL.md",
+          "match": {
+            "kind": {
+              "eq": "skill"
+            },
+            "listed": {
+              "eq": 2
+            },
+            "on_disk": {
+              "eq": 3
+            },
+            "manifest": {
+              "eq": ".claude-plugin/plugin.json"
+            }
+          },
+          "note": "Six skill folders beside a manifest listing five, in miniature: c is on disk and not named. Claude Code still loads it from skills/; a reviewer reading the manifest does not see it."
+        },
+        {
+          "id": "gr-unl-agent",
+          "polarity": "gate",
+          "check": "graph.unlisted",
+          "file": "agents/y.md",
+          "match": {
+            "kind": {
+              "eq": "agent"
+            }
+          },
+          "note": "Agent y is on disk and not named; the manifest names agent x."
+        },
+        {
+          "id": "gr-unl-count",
+          "polarity": "gate",
+          "check": "graph.unlisted",
+          "count": 2,
+          "note": "Exactly c and y."
+        },
+        {
+          "id": "gr-unl-neg-listed",
+          "polarity": "negative",
+          "check": "graph.unlisted",
+          "file": "skills/a/SKILL.md",
+          "note": "Named by the manifest."
+        },
+        {
+          "id": "gr-unl-neg-cmd",
+          "polarity": "negative",
+          "check": "graph.unlisted",
+          "file": "commands/z.md",
+          "note": "The manifest names no commands: it relies on the commands/ folder, so commands are not compared."
+        }
+      ],
+      "deferred": []
     }
   ]
 }

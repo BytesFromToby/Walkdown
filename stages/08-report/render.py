@@ -243,6 +243,9 @@ def _s3(r):
     loaded = sum(1 for d in depth if d.get("via") == "dynamic")
     mentioned = sum(1 for d in depth if d.get("via") == "mention")
     tail = " Graph incomplete by construction." if dyn else ""
+    unl = len(fnd(r, "03-graph", "graph.unlisted"))
+    tail = (f" {n(unl, 'skill, agent, or command', 'skills, agents, or commands')} on disk that "
+            f"their manifest leaves out." if unl else "") + tail
     return (f"{n(entries, 'entry point')}. {n(orph, 'orphan')}. "
             f"{n(len(dang), 'dangling reference')}{' (' + cs + ')' if cs else ''}. "
             f"{n(dyn, 'dynamic load')}: {n(loaded, 'file')} loaded only through one (named by "
@@ -1097,6 +1100,10 @@ def _f3(r, _):
                lambda f: f"{loc(f)}: {f.get('source')} {code(f.get('pattern'))} "
                          f"({'load' if f.get('load') else 'mention'}) resolves to "
                          f"{n(len(f.get('resolves', [])), 'file')}")
+    L += _list("On disk, left out of the manifest (a host that finds components by folder may "
+               "still load them)", fnd(r, "03-graph", "graph.unlisted"),
+               lambda f: f"{f['file']}: {f.get('kind')} not named by {f.get('manifest')}, which "
+                         f"names {f.get('listed')} of the {f.get('on_disk')} on disk")
     L += _list("Dangling references", fnd(r, "03-graph", "graph.dangling"),
                lambda f: f"{loc(f)}: {code(f.get('target'))} ({f.get('context')})")
     L += _list("Not scanned for references", fnd(r, "03-graph", "graph.unscanned"),

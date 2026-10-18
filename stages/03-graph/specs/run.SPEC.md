@@ -59,11 +59,11 @@ Self-edges are dropped. `graph.entry` per entry point (`kind`),
 
 stdout: `{"stage": "03-graph", "contract": 1, "findings": [...]}`, findings in
 this order: `graph.entry` (path order), `graph.orphan`, `graph.dangling` (file,
-line order), `graph.dynamic` (file, line order), `graph.depth`,
-`graph.unscanned`.
+line order), `graph.dynamic` (file, line order), `graph.unlisted` (`unlisted.py`: components
+on disk a manifest leaves out, 2026-10-18), `graph.depth`, `graph.unscanned`.
 
-stderr: notes. Always the v1 limit: manifest versus disk (files on disk no
-manifest covers) is not built. When any `graph.dynamic` exists: the graph is
+stderr: notes. Always the v1 limit: manifest versus disk compares skills, agents, and commands,
+only the kinds a manifest names, and not plugins a marketplace leaves out. When any `graph.dynamic` exists: the graph is
 incomplete by construction (count of dynamic loads).
 
 `--out <dir>`: also writes `<dir>/graph.json`: `nodes` (`path`, `entry`: kind
@@ -95,4 +95,6 @@ an unreadable `--inventory`, or a refused `--out`. Exit 1 when stage 1 fails.
 6. A PDF node gives `graph.unscanned`.
 7. A missing input folder exits non-zero with nothing on stdout; the input is byte-identical after a run.
 8. A script with `os.listdir("prompts")` gives a `graph.dynamic` with `source` `code` resolving to the files in `prompts/`.
+11. A manifest in `plugins/p/.codex-plugin/plugin.json` naming `./skills/` reaches `plugins/p/skills/`, not a top-level `skills/` (a manifest's paths are relative to its plugin root, the folder above its dot folder; the repository root stays the fallback).
+10. A `.claude-plugin/plugin.json` listing two of three skill folders gives one `graph.unlisted` for the third, after the `graph.dynamic` rows.
 9. A folder named in README prose is a mention (`load` false; the files under it are `via` `mention`, not orphans); a folder named in a manifest is a load (`load` true; files under it `via` `dynamic`). The rule: a dynamic edge is a load when its context is `config`, its form is `scan`, or it is a glob from a `skill`, `agent`, or `command` entry point.
