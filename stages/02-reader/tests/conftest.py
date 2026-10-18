@@ -4,6 +4,13 @@ import zipfile
 from pathlib import Path
 
 STAGE = Path(__file__).resolve().parents[1]
+
+
+def font(size: int):
+    """Pillow's built-in scalable font: the same on every OS, no system font needed (the OCR
+    tests once used a Linux font path and skipped on Windows)."""
+    from PIL import ImageFont
+    return ImageFont.load_default(size=size)
 if str(STAGE) not in sys.path:
     sys.path.insert(0, str(STAGE))
 

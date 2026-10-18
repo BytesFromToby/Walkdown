@@ -63,8 +63,11 @@ texts in order). Both are used for images and, with `enlarge=False`, for rendere
    on a tile edge can appear in two tiles, so a tiled image's OCR text can repeat a line.
 5. Each view's **contrast is stretched** to the full range (`autocontrast`), and a view whose
    background is dark (under 128) is **inverted**, so the text is dark on light. Both happen
-   before the view is enlarged: the other order reads faint small text worse (69% of words
-   against 92%).
+   before the view is enlarged. Measured over 60 faint small cases (5 fonts, 7 to 9 px, gray
+   170 and 210, two lines, in a 2400 x 1600 image): this order read more words in 13, fewer in
+   4, the same in 43 (mean 0.814 against 0.804). One DejaVu case had shown 0.92 against 0.69;
+   with Pillow's built-in font the same case goes the other way, so the gain is small and
+   font-dependent, not the 23-point gap one case suggested.
 
 Why (`OCR-SPIKE-2026-10-18.md`): small text in a large image was read at its natural size and
 missed (9 px text in a 2400 x 1600 image: 64% of words; 8 px light gray: 23%). With crop,
@@ -82,4 +85,6 @@ Done when (tests in `tests/test_read_image.py`):
 12. `enlarge=False` gives one view the size of the crop, however large.
 11. With Tesseract installed: 9 px text in the corner of a 2400 x 1600 image, `#EEE` text on
     white, and 8 px light-gray text in a 2400 x 1600 image are read (most of their words in
-    `ocr_read`).
+    `ocr_read`), drawn with Pillow's built-in font so the test runs on any OS. The bars test
+    that the text is read at all (the old preprocessing read 64% and 23% of such words), not one
+    Tesseract version's exact score.

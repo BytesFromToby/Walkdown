@@ -161,7 +161,7 @@ def test_pdf_pages(tmp_path, monkeypatch):
     from .test_render_pdf import LAYER, OCR, PLANTED, image_pdf
     import pytest
     if not OCR:
-        pytest.skip("needs Tesseract and the DejaVu font")
+        pytest.skip("needs Tesseract")
     root = tmp_path / "in"
     root.mkdir()
     (root / "a.pdf").write_bytes(image_pdf(LAYER, PLANTED))
