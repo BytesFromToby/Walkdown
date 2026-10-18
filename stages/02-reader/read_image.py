@@ -74,8 +74,8 @@ def _ink_box(g, bg):
 
 
 def _view(g, bg, scale):
-    """Contrast stretched first, then enlarged: the other order reads faint small text worse
-    (8 px light gray in a large image, 69% of words against 92%; OCR spike)."""
+    """Contrast stretched first, then enlarged: over 60 faint small cases (5 fonts, 7 to 9 px,
+    two grays) this order read more words in 13 and fewer in 4 (spec, OCR preprocessing)."""
     from PIL import Image, ImageOps
     g = ImageOps.autocontrast(g, cutoff=0)
     if bg < 128:
