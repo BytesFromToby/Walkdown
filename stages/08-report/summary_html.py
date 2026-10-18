@@ -227,7 +227,7 @@ CARRIER_PLAIN = {
     "details": "collapsed sections", "reference-definition": "unused link definitions",
     "document-title": "document titles", "zero-width": "invisible characters",
     "bidi": "text-direction controls", "soft-hyphen": "soft hyphens",
-    "white-on-white": "text colored like its background", "image-text": "text inside images",
+    "white-on-white": "text colored like its background", "image-text": "text inside images or drawn on PDF pages",
     "vanish": "hidden Word text", "display:none": "elements styled not to show",
     "not-rendered": "text the page never shows", "aria-label": "screen-reader labels",
     "desc": "image descriptions inside SVG files", "metadata": "SVG metadata", "script": "SVG scripts",

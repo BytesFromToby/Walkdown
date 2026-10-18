@@ -6,6 +6,12 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Stage 2 draws each PDF page and reads it (pypdfium2, now a core dependency, plus Tesseract).
+  Lines the page shows that its text layer lacks (a picture of an instruction, text drawn as
+  shapes, a scanned page) are listed as hidden text, with the page; the language and script
+  checks read them. A scanned PDF is read instead of listed as unread. The risky-ask patterns
+  still do not read PDF, DOCX, or image text (section 7 says so). Without Tesseract each PDF is a skip and
+  section 7 says so; "PDF render" is no longer "not built". The first 50 pages of each PDF.
 - Stage 2, image OCR reads small and faint text better: the image is cropped to its ink, its
   contrast stretched, a dark background inverted, and the crop enlarged; a large image is read
   in tiles, blank ones skipped. 9 px text in the corner of a large image went from 64% of its

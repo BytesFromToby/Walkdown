@@ -439,6 +439,82 @@
           "file": "class04-latin-language.md",
           "line": 26,
           "note": "Spanish inside a fenced code block is not prose."
+        },
+        {
+          "id": "rd-pdfimg-gate",
+          "polarity": "gate",
+          "check": "read.divergence",
+          "file": "class11-pdf-image.pdf",
+          "match": {
+            "carrier": {
+              "eq": "image-text"
+            },
+            "method": {
+              "eq": "ocr"
+            },
+            "reading": {
+              "eq": "B-only"
+            },
+            "page": {
+              "eq": 1
+            },
+            "text": {
+              "contains": "ssh/id_rsa"
+            }
+          },
+          "note": "An instruction drawn as a picture on a page whose text layer says something harmless. The text layer alone misses it; the page drawn and read finds it. Needs Tesseract (a skip without it)."
+        },
+        {
+          "id": "rd-pdfimg-count",
+          "polarity": "gate",
+          "check": "read.divergence",
+          "file": "class11-pdf-image.pdf",
+          "count": 1,
+          "match": {
+            "carrier": {
+              "eq": "image-text"
+            }
+          },
+          "note": "Exactly one: the two text-layer lines are seen on the drawn page, so they are not reported."
+        },
+        {
+          "id": "rd-pdfscan-gate",
+          "polarity": "gate",
+          "check": "read.divergence",
+          "file": "class11-pdf-scan.pdf",
+          "match": {
+            "carrier": {
+              "eq": "image-text"
+            },
+            "text": {
+              "contains": "dangerously-skip-permissions"
+            }
+          },
+          "note": "A scanned page: no text layer at all. Read by OCR instead of listed as unread."
+        },
+        {
+          "id": "rd-pdfhidden-neg-ocr",
+          "polarity": "negative",
+          "check": "read.divergence",
+          "file": "class11-pdf-hidden.pdf",
+          "match": {
+            "carrier": {
+              "eq": "image-text"
+            }
+          },
+          "note": "White-on-white text is in the layer and not drawn: the static check finds it; the drawn page must not add an OCR finding."
+        },
+        {
+          "id": "rd-pdfmeta-neg-ocr",
+          "polarity": "negative",
+          "check": "read.divergence",
+          "file": "class06-metadata.pdf",
+          "match": {
+            "carrier": {
+              "eq": "image-text"
+            }
+          },
+          "note": "Ordinary text, drawn as written: nothing unseen."
         }
       ],
       "deferred": [
@@ -477,6 +553,8 @@
         "class11-html-hidden.html": "24d55e69a895cec40b5dd47fc1794c6046e3e8c7465c1e5874e8f43e2bf08084",
         "class11-image-text.png": "67b47dcc5ee4c756c3f694bff9d089fd59596af77db17b511ddeb469ea5d4cca",
         "class11-pdf-hidden.pdf": "f07862e634911a3517b081a65ae1478eeac5fd3dfa4b827d624855496d2c019d",
+        "class11-pdf-image.pdf": "4464b137e9e8de81cfa6298a84e9e418f551007083023cdb8023b2854168c4ca",
+        "class11-pdf-scan.pdf": "758477759a1b5a3c7983a8d99eb0699709f3155b989c262d311a92305650c784",
         "class11-svg-text.svg": "1f72006f91c08720a9fe63baff40e2999a484961e7cfb5b2d8acce021731be93",
         "class18-archive.zip": "fc7dbfb30c7c63de7fdbc1623b500c7ee01e22663cc6d7c615c7ffee87395426"
       }

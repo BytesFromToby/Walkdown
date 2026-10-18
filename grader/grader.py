@@ -56,6 +56,9 @@ def finding_matches(exp, finding):
 def skip_applies(exp, finding):
     if "skipped" not in finding or finding.get("check") != exp["check"]:
         return False
+    if finding.get("carrier"):  # a skip of one carrier only (PDF page OCR): rows about that carrier
+        if (exp.get("match") or {}).get("carrier", {}).get("eq") != finding["carrier"]:
+            return False
     return finding.get("file") in (None, exp.get("file"))
 
 
@@ -219,7 +222,9 @@ def print_stage(res, explain):
         n, nt = tally(rows, "negative")
         r, rt = tally(rows, "recall")
         print(f"   gate      {g}/{gt}")
-        print(f"   negative  {n}/{nt}   ({nt - n} false positive{'s' if nt - n != 1 else ''})")
+        fp = sum(1 for r in res["rows"] if r["exp"]["polarity"] == "negative"
+                 and r["status"] == "FALSE POSITIVE")
+        print(f"   negative  {n}/{nt}   ({fp} false positive{'s' if fp != 1 else ''})")
         if rt:
             print(f"   recall    {r}/{rt}  {round(100 * r / rt)}%  (measured, never required)")
     for row in rows:

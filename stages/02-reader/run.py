@@ -21,6 +21,7 @@ import read_md  # noqa: E402
 import read_pdf  # noqa: E402
 import read_svg  # noqa: E402
 import language  # noqa: E402
+import render_pdf  # noqa: E402
 import script_runs  # noqa: E402
 
 STAGE = "02-reader"
@@ -46,11 +47,10 @@ def optional_tools() -> dict:
 # Checks the method calls for that have no code yet (2026-10-12, an outside audit): stage 2
 # once looked for pdf2image, Playwright, and lingua and called each missing tool the reason, but
 # nothing here uses them, so installing one would have hidden the gap. Reported as not built,
-# always, apart from a missing tool, until the code exists. Language within Latin script is
-# built (2026-10-18, language.py, no dependency) and left this list.
+# always, apart from a missing tool, until the code exists. Built and left this list
+# (2026-10-18): language within Latin script (language.py, no dependency) and PDF render + OCR
+# (render_pdf.py: pypdfium2, a core dependency; the OCR needs Tesseract, a skip without it).
 NOT_BUILT = [
-    ("PDF render + OCR", "image-only text in PDFs (text painted but missing from the text layer); "
-                         "PDF reading B is static (color, render mode, page box)"),
     ("HTML render", "HTML as a browser draws it; HTML reading B uses static style (inline and "
                     "<style> rules)"),
 ]
@@ -95,6 +95,43 @@ def language_checks(rel, lines, markdown, state, line_based=True):
     return language.language_findings(rel, lines, markdown, line_based=line_based)
 
 
+def pdf_pages(rel, data, lines, tools, state):
+    """Draw each page and read it (render_pdf): OCR lines missing from the text layer are B-only
+    image-text divergences, appended to the lines so the line checks and --out see them. Returns
+    (findings, lines, no_layer_unread)."""
+    has_layer = any(ln.strip() for ln in lines)
+    if not tools["tesseract"]:
+        why = tools["tesseract_detail"]
+        state["pdf_pages"] += render_pdf.page_ocr(data, ocr=False).total
+        return ([{"check": "read.divergence", "file": rel, "line": None, "carrier": "image-text",
+                  "skipped": f"pdf pages not drawn and read ({why})"}],
+                lines, None if has_layer else f"pdf has no text layer; OCR not run ({why})")
+    po = render_pdf.page_ocr(data)
+    state["pdf_pages"] += po.total
+    state["pdf_pages_read"] += len(po.pages)
+    state["pdf_low_confidence"] += sum(len(b) for low in po.low
+                                       for b in render_pdf.unseen(low, lines))
+    out, lines = [], list(lines)
+    for page_no, text in enumerate(po.pages, start=1):
+        for block in render_pdf.unseen(text, lines):
+            if lines and lines[-1] != "":
+                lines.append("")
+            out.append(div(rel, None, "\n".join(block), "image-text", method="ocr",
+                           reading="B-only", page=page_no, text_line=len(lines) + 1))
+            lines.extend(block)
+    if po.skipped:
+        out.append({"check": "read.divergence", "file": rel, "line": None, "carrier": "image-text",
+                    "skipped": f"pdf pages not drawn and read ({po.skipped})"})
+    elif po.total > len(po.pages):
+        out.append({"check": "read.divergence", "file": rel, "line": None, "carrier": "image-text",
+                    "skipped": f"pdf pages {len(po.pages) + 1} to {po.total} not drawn and read "
+                               f"(the first {render_pdf.MAX_PAGES} are)"})
+    no_layer = None
+    if not has_layer and (po.skipped or not po.pages):
+        no_layer = f"pdf has no text layer; OCR not run ({po.skipped or 'no page read'})"
+    return out, lines, no_layer
+
+
 def read_one(rel, data, kind, tools, state):
     """Findings for one file, and (text_lines, folded_lines) or None."""
     out = []
@@ -131,16 +168,19 @@ def read_one(rel, data, kind, tools, state):
         r = read_pdf.read_pdf(data) if kind == "pdf" else read_docx.read_docx(data)
         if r.unread:
             return [unread(rel, r.unread)], None
-        fs, folded = line_checks(rel, r.lines, line_based=False)
-        fs += language_checks(rel, r.lines, False, state, line_based=False)
+        lines, no_layer = r.lines, None
         for d in r.divergences:
             extra = {k: v for k, v in d.items() if k not in ("text", "carrier")}
             out.append(div(rel, None, d["text"], d["carrier"], **extra))
-        if kind == "pdf" and not any(ln.strip() for ln in r.lines):
-            out.insert(0, unread(rel, "pdf has no text layer; rendering and OCR of PDF pages "
-                                      "is not built"))
+        if kind == "pdf":
+            page_fs, lines, no_layer = pdf_pages(rel, data, r.lines, tools, state)
+            out += page_fs
+        fs, folded = line_checks(rel, lines, line_based=False)
+        fs += language_checks(rel, lines, False, state, line_based=False)
+        if no_layer:
+            out.insert(0, unread(rel, no_layer))
         meta = [{"check": "read.metadata", "file": rel, "line": None, **m} for m in r.metadata]
-        return out + fs + meta, (r.lines, folded)
+        return out + fs + meta, (lines, folded)
 
     if kind == "image":
         r = read_image.read_image(data)
@@ -165,8 +205,9 @@ def read_one(rel, data, kind, tools, state):
 def build_report(input_dir: Path, out_dir: Path | None = None) -> dict:
     tools = optional_tools()
     if not tools["tesseract"]:
-        eprint(f"note: {tools['tesseract_detail']}: images are skipped for OCR "
-               "(read.divergence skip) and listed as read.unread")
+        eprint(f"note: {tools['tesseract_detail']}: images and PDF pages are skipped for OCR "
+               "(read.divergence skip); images and PDFs with no text layer are listed as "
+               "read.unread")
     for what, covers in NOT_BUILT:
         eprint(f"note: not built: {what}: {covers}")
     eprint(f"note: {LANGUAGE_NOTE}")
@@ -210,7 +251,7 @@ def build_report(input_dir: Path, out_dir: Path | None = None) -> dict:
                        if f["check"] == "read.divergence" and "carrier" in f)
     not_examined = []
     if not tools["tesseract"]:
-        not_examined.append("image OCR (tesseract not installed)")
+        not_examined.append("image and PDF page OCR (tesseract not installed)")
     not_examined += [f"{what} (not built)" for what, _ in NOT_BUILT]
     coverage = {
         "files": len(entries), "files_read": read_files,
@@ -221,6 +262,8 @@ def build_report(input_dir: Path, out_dir: Path | None = None) -> dict:
         "markdown_comments": state["markdown_comments"],
         "language": {"files": state["language_files"], "judged": state["language_judged"],
                      "short": state["language_short"]},
+        "pdf_pages": {"total": state["pdf_pages"], "read": state["pdf_pages_read"],
+                      "low_confidence": state["pdf_low_confidence"]},
         "optional_tools": {k: v for k, v in tools.items() if not k.endswith("_detail")},
         "not_examined": not_examined,
     }

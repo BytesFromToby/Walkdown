@@ -42,7 +42,7 @@ stage never opens `Fixtures/ANSWERS/`.
 | Markdown / text | raw decoded text | rendered text: HTML comments, reference-link definitions, link titles, image alt text, `<details>` bodies and `hidden` / `display:none` HTML removed |
 | HTML | all DOM text, including attributes a model may read (`alt`, `title`, `aria-label`) and comments | text a browser would paint: drop `display:none`, `visibility:hidden`, `hidden`, and text whose color equals its background, resolving inline styles and `<style>` class rules; drop attributes and comments |
 | SVG | all XML text: `<title>`, `<desc>`, `<metadata>`, comments, `<script>`, every `<text>` | painted `<text>` only: drop text whose fill is `none`, transparent, or the background color |
-| PDF | text layer | painted text: text layer minus characters drawn in the page background color (white by default) or with invisible render mode. When render + OCR are available, OCR of the rendered page may be used instead; say which in `method` |
+| PDF | text layer | painted text: text layer minus characters drawn in the page background color (white by default) or with invisible render mode (`static-style`); and each page drawn (pypdfium2) and read by OCR: lines the text layer lacks are `B-only`, carrier `image-text`, method `ocr`, and are appended to the reading-A lines, so `read.fold`, `read.script`, and `read.language` read them and `--out` writes them (stage 4 does not read stage 2's normalized text yet). Needs Tesseract; without it, a **skip** per PDF, and a PDF with no text layer is `read.unread` |
 | DOCX | every run in `word/document.xml` | visible body: drop `w:vanish` runs and runs colored as the page background (white by default) |
 | Images (PNG, JPEG, …) | none (no text layer) | OCR. Needs Tesseract; without it, emit a **skip**, never a pass |
 
@@ -74,10 +74,14 @@ metadata), `regex` (Unicode script property), `confusable_homoglyphs`
 (confusables; check its license at pin time, TOOLING), `charset-normalizer`
 (encodings), `PyYAML`.
 
-Optional, never required: Tesseract via `pytesseract` (image OCR). A missing Tesseract is
-reported on stderr and as skips. Planned and **not built** (2026-10-12): PDF render + OCR
-(poppler via `pdf2image`), true HTML render (Playwright). Each run reports them as not built;
-installing those libraries changes nothing. Language within Latin script was planned on
+`pypdfium2` (PDF page rendering, BSD-3-Clause / Apache-2.0; replaced the planned poppler,
+2026-10-18, `OCR-SPIKE-2026-10-18.md`).
+
+Optional, never required: Tesseract via `pytesseract` (OCR of images and PDF pages). A missing
+Tesseract is reported on stderr and as skips. Planned and **not built** (2026-10-12): true HTML
+render (Playwright). Each run reports it as not built; installing the library changes nothing.
+A pip-only OCR engine (RapidOCR) was measured against Tesseract and not taken: it missed
+near-invisible text (the spike). Language within Latin script was planned on
 `lingua`; it is built instead with no dependency (`read.language`, 2026-10-18), because the
 check needs "is this English?", not the language's name, and every optional tool is one more
 thing a user has to install.

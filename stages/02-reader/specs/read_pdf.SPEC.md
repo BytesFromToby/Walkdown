@@ -34,9 +34,9 @@ The bytes of one PDF file.
 Colors: gray, RGB, and CMYK fill values are converted to RGB; pattern or
 unknown colors count as visible.
 
-OCR of rendered pages (poppler + Tesseract) is optional and not used in v1;
-run.py notes that the image-only direction (text painted but absent from the
-text layer) is not examined.
+The other direction, text painted on the page but absent from the text layer, is
+`render_pdf` (pages drawn by pypdfium2 and read by Tesseract, 2026-10-18); run.py
+compares the two.
 
 ## Must never
 

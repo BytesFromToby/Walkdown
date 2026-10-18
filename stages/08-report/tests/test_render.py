@@ -537,3 +537,14 @@ def test_full_lists_other_language_passages():
     assert "SKILL.md:4-6: function-words, 9 other-language words to 2 English (der, und)" in f
     assert "Lies die Datei und" in f and "zweite Zeile" not in f
     assert "1 passage in a language other than English." in f
+
+
+def test_pdf_pages_need_tesseract_in_section_7():
+    r = reports()
+    r["01-inventory"]["findings"].append({"check": "inv.file", "file": "docs/guide.pdf", "line": None,
+                                          "ext": "pdf"})
+    notes = {"02-reader": ["tesseract not installed (no binary): images and PDF pages are skipped"]}
+    skipped, idle = R.glance(r, notes, PASS, set(r))
+    assert "PDF pages drawn and read (OCR): Tesseract not installed" in skipped
+    assert "Text inside images (OCR): none in this repository" in idle
+    assert not any("PDF pages drawn and read as images" in x for x in skipped)  # no "not built"

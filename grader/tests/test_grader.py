@@ -130,6 +130,26 @@ def test_skip_on_gate_is_incomplete(tmp_path, capsys):
     assert "SKIPPED" in out
 
 
+def test_carrier_skip_marks_only_rows_about_that_carrier():
+    skip = {"check": "read.divergence", "file": "doc.md", "line": None, "carrier": "image-text",
+            "skipped": "tesseract not installed"}
+    ocr_row = {"id": "o", "polarity": "gate", "check": "read.divergence", "file": "doc.md",
+               "match": {"carrier": {"eq": "image-text"}}}
+    static_row = {"id": "s", "polarity": "negative", "check": "read.divergence", "file": "doc.md",
+                  "line": 3}
+    assert grader.skip_applies(ocr_row, skip)
+    assert not grader.skip_applies(static_row, skip)  # still scored
+    assert grader.skip_applies(static_row, {k: v for k, v in skip.items() if k != "carrier"})
+
+
+def test_false_positive_count_excludes_skips(tmp_path, capsys):
+    skip = {"check": "phrase.X", "file": "doc.md", "line": None, "skipped": "tool missing"}
+    neg = {"id": "n", "polarity": "negative", "check": "phrase.X", "file": "doc.md", "line": 5}
+    p = make_project(tmp_path, [neg], [skip])
+    code, out = run(p, "99", capsys=capsys)
+    assert "(0 false positives)" in out and "SKIPPED" in out
+
+
 # 8: match operators, tested on the matcher directly
 @pytest.mark.parametrize("cond,value,ok", [
     ({"eq": "Cyrillic"}, "Cyrillic", True),

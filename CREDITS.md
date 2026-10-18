@@ -55,6 +55,7 @@ Required (`requirements.txt`):
 | charset-normalizer | MIT | detecting text encodings |
 | pdfminer.six | MIT | reading PDF text |
 | pypdf | BSD-3-Clause | reading PDF structure |
+| pypdfium2 (PDFium) | BSD-3-Clause / Apache-2.0 | drawing PDF pages to read them |
 | beautifulsoup4 | MIT | reading HTML |
 | lxml | BSD-3-Clause | parsing HTML and XML |
 | Pillow | MIT-CMU | reading images and their metadata |
@@ -65,8 +66,7 @@ Required (`requirements.txt`):
 
 Optional, used when installed:
 
-- [Tesseract](https://github.com/tesseract-ocr/tesseract): text inside images.
-- [Poppler](https://poppler.freedesktop.org): rendering PDF pages for comparison.
+- [Tesseract](https://github.com/tesseract-ocr/tesseract): text inside images and PDF pages.
 - [Playwright](https://playwright.dev): rendering HTML as a browser shows it.
 - [gitleaks](https://github.com/gitleaks/gitleaks): finding committed secrets (preferred over detect-secrets when installed).
 

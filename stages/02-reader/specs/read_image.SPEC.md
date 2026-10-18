@@ -46,9 +46,12 @@ and a `read.unread` finding.
 
 ## OCR preprocessing (2026-10-04; rebuilt 2026-10-18 from the OCR spike)
 
-`ocr_views(im) -> list[Image]`: the grayscale views Tesseract reads, in reading order.
-`ocr_read(im) -> str`: their OCR text joined with newlines (the views' texts in order). Both are
-used for images and for rendered PDF pages (`read_pdf`).
+`ocr_views(im, enlarge=True) -> list[Image]`: the grayscale views Tesseract reads, in reading
+order. `ocr_lines(im, enlarge=True) -> list[(text, confidence)]`: the OCR lines of every view,
+in order, each with the median of Tesseract's word confidences (0 to 100); used by
+`render_pdf`, which drops low-confidence lines (image OCR keeps every line). `ocr_read(im, enlarge=True) -> str`: their OCR text joined with newlines (the views'
+texts in order). Both are used for images and, with `enlarge=False`, for rendered PDF pages
+(`render_pdf`): one view of the crop, steps 1, 2 and 5 only, never enlarged or tiled.
 
 1. Grayscale. The **background** is the most common gray value.
 2. **Crop** to the pixels that differ from the background by more than `INK` (3), plus a
@@ -76,6 +79,7 @@ Done when (tests in `tests/test_read_image.py`):
 8. A dark image gives a view whose background is light.
 9. A large image with ink in two far corners gives tiles for those corners only.
 10. A view never exceeds `OCR_MAX` on its longer side.
+12. `enlarge=False` gives one view the size of the crop, however large.
 11. With Tesseract installed: 9 px text in the corner of a 2400 x 1600 image, `#EEE` text on
     white, and 8 px light-gray text in a 2400 x 1600 image are read (most of their words in
     `ocr_read`).
