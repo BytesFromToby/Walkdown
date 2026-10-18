@@ -91,6 +91,13 @@ def test_large_image_tiles_only_inked_corners():
     assert all(max(v.size) <= read_image.TILE * read_image.TILE_SCALE for v in vs)
 
 
+def test_no_enlarge_is_one_view_of_the_crop():
+    im = ink(ink(canvas((2400, 1600)), (40, 40, 2300, 45)), (40, 1495, 2300, 1500))
+    vs = read_image.ocr_views(im, enlarge=False)
+    m = read_image.MARGIN
+    assert len(vs) == 1 and vs[0].size == (2300 - 40 + 1 + 2 * m, 1500 - 40 + 1 + 2 * m)
+
+
 def test_view_never_exceeds_max():
     im = ink(canvas((1990, 1990)), (0, 0, 1989, 1989), (0, 0, 0))
     im = ink(im, (5, 5, 1984, 1984), "white")  # ink at the edges, crop stays 1990 px

@@ -38,7 +38,10 @@ python grader/grader.py --rehash <stage>       rewrite fixture hashes after a de
      if the expectation has one, `line` is equal if it has one, and every
      `match` condition holds.
    - A skip finding (has `skipped`) for the same check and file marks the
-     expectation **SKIPPED** instead of scoring it.
+     expectation **SKIPPED** instead of scoring it. A skip that names a `carrier` (stage 2's
+     PDF page OCR, 2026-10-18) marks only the rows whose `match` names that carrier with
+     `eq`; the file's other rows for the check are still scored.
+   - The negative line's false-positive count is the rows that hit, never the skipped ones.
    - `gate`: passes when at least one finding matches (exactly `count` when
      given). Otherwise a miss.
    - `negative`: passes when no finding matches. Otherwise a false positive.

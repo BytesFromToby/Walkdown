@@ -258,7 +258,8 @@ def test_not_examined_counts_only_what_applies_here():
     assert any(x.startswith("Language detection") for x in skipped)
     assert any(x.startswith("Text inside images") for x in idle)  # no image in the repository
     assert not any("v1 limit" in x for x in skipped)  # a standing limit stays in the full list
-    assert "Not needed here: Text inside images (OCR): none in this repository." in h
+    assert ("Not needed here: Text inside images (OCR): none in this repository; PDF pages drawn and "
+            "read (OCR): none in this repository.") in h
 
 
 def test_not_built_is_told_apart_from_a_missing_tool():

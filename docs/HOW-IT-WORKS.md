@@ -117,10 +117,11 @@ white-on-white or `display:none` text.
 
 **In the report.** Section 2, and the Hidden text section of the summary page, with a card for hidden text that
 reads like an instruction. Tesseract, when
-installed, reads text inside images; when it is missing, section 7 says so. Two checks the
-method calls for are not built yet: PDF pages drawn and read as images, and HTML as a browser
-draws it. Section 7 lists them as "not built" on every run, apart from a missing tool, because
-installing a library would not add them. The language check needs nothing installed; it reads
+installed, reads text inside images and on PDF pages (each page is drawn and read, and lines
+its text layer lacks are listed, as when a page shows a picture of an instruction); when it is
+missing, section 7 says so. One check the method calls for is not built yet: HTML as a browser
+draws it. Section 7 lists it as "not built" on every run, apart from a missing tool, because
+installing a library would not add it. The language check needs nothing installed; it reads
 prose only (not code comments, config values, or HTML), and section 7 says so.
 
 ---

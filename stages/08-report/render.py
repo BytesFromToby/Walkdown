@@ -853,6 +853,7 @@ HTML_EXTS = {"html", "htm", "xhtml"}
 # used the tools).
 TOOL_NOTES = [
     ("tesseract", "Text inside images (OCR)", ("image",), "Tesseract not installed"),
+    ("tesseract", "PDF pages drawn and read (OCR)", ("pdf",), "Tesseract not installed"),
     ("not built: PDF render", "PDF pages drawn and read as images", ("pdf",), "not built yet"),
     ("not built: HTML render", "HTML as a browser draws it", ("html",), "not built yet"),
     ("not built: language detection", "Language detection in Latin-script text", None, "not built yet"),

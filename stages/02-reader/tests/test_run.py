@@ -155,3 +155,51 @@ def test_language(tmp_path):
     assert "not built: language" not in text
     assert "note: v1 limit: the language check" in text
     assert not any("language" in x for x in doc["coverage"]["not_examined"])
+
+
+def test_pdf_pages(tmp_path, monkeypatch):
+    from .test_render_pdf import LAYER, OCR, PLANTED, image_pdf
+    import pytest
+    if not OCR:
+        pytest.skip("needs Tesseract and the DejaVu font")
+    root = tmp_path / "in"
+    root.mkdir()
+    (root / "a.pdf").write_bytes(image_pdf(LAYER, PLANTED))
+    (root / "scan.pdf").write_bytes(image_pdf([], PLANTED))
+    code, out, err = run(root)
+    doc = json.loads(out.decode("utf-8"))
+    fs = doc["findings"]
+    img = [f for f in fs if f["check"] == "read.divergence" and f.get("carrier") == "image-text"]
+    a = [f for f in img if f["file"] == "a.pdf"]
+    assert len(a) == 1 and a[0]["method"] == "ocr" and a[0]["reading"] == "B-only"
+    assert a[0]["page"] == 1 and "previous instructions" in a[0]["text"].lower()
+    assert a[0]["text_line"] > len(LAYER)  # appended after the text layer
+    assert [f for f in img if f["file"] == "scan.pdf"]
+    assert not [f for f in fs if f["check"] == "read.unread"]  # the scan is read, not unread
+    assert doc["coverage"]["pdf_pages"] == {"total": 2, "read": 2, "low_confidence": 0}
+    assert "not built: PDF render" not in err.decode("utf-8")
+    # stage 4 reads the normalized text: the OCR lines are in it
+    out_dir = tmp_path / "out"
+    run(root, "--out", out_dir)
+    text = (out_dir / "normalized" / "text" / "a.pdf.txt").read_text(encoding="utf-8")
+    assert "previous instructions" in text.lower()
+
+
+def test_pdf_pages_without_tesseract(tmp_path):
+    import importlib.util  # stage 2's run.py by path: every stage has a run.py
+    spec = importlib.util.spec_from_file_location("walkdown_s02_run", RUN)
+    runner = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(runner)
+    root = tmp_path / "in"
+    root.mkdir()
+    (root / "a.pdf").write_bytes(make_pdf("BT /F1 12 Tf 72 720 Td (Hello there) Tj ET\n"))
+    (root / "empty.pdf").write_bytes(make_pdf("0 0 0 rg\n60 690 300 50 re f\n"))
+    runner.optional_tools = lambda: {"tesseract": False, "tesseract_detail": "tesseract not installed"}
+    doc = runner.build_report(root)
+    fs = doc["findings"]
+    skips = [f for f in fs if f["check"] == "read.divergence" and "skipped" in f]
+    assert {f["file"] for f in skips} == {"a.pdf", "empty.pdf"}
+    un = [f for f in fs if f["check"] == "read.unread"]
+    assert [f["file"] for f in un] == ["empty.pdf"] and "OCR not run" in un[0]["reason"]
+    assert doc["coverage"]["pdf_pages"] == {"total": 2, "read": 0, "low_confidence": 0}
+    assert "image and PDF page OCR (tesseract not installed)" in doc["coverage"]["not_examined"]

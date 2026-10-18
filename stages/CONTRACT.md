@@ -59,7 +59,9 @@ A **skip** is a finding with a `skipped` field instead of results:
 
 A stage emits a skip when a check could not run (missing optional tool,
 unreadable input). A skip is never a pass: the grader reports the stage as
-INCOMPLETE, and a real run lists it in stage 7.
+INCOMPLETE, and a real run lists it in stage 7. A skip may name a `carrier` when only that part
+of the check was skipped (stage 2's PDF page OCR, `image-text`, 2026-10-18: the static PDF
+readings still ran); the grader then skips only the rows about that carrier.
 
 ## Check vocabulary
 

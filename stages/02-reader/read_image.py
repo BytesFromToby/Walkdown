@@ -85,7 +85,7 @@ def _view(g, bg, scale):
     return g.resize((w * k, h * k), Image.LANCZOS) if k > 1 else g
 
 
-def ocr_views(im):
+def ocr_views(im, enlarge: bool = True):
     """The grayscale views Tesseract reads, in reading order (spec, OCR preprocessing): cropped
     to the ink, contrast stretched, dark backgrounds inverted, enlarged; a large crop in tiles.
     Small or faint text is a way to hide an instruction in an image (OCR-SPIKE-2026-10-18.md)."""
@@ -97,6 +97,8 @@ def ocr_views(im):
     x0, y0, x1, y1 = box
     g = g.crop((max(0, x0 - MARGIN), max(0, y0 - MARGIN),
                 min(g.width, x1 + MARGIN), min(g.height, y1 + MARGIN)))
+    if not enlarge:  # a rendered PDF page: its text is drawn large enough already
+        return [_view(g, bg, 1)]
     if max(g.size) < OCR_SMALL:
         return [_view(g, bg, OCR_SCALE)]
     views, step = [], TILE - OVERLAP
@@ -108,11 +110,28 @@ def ocr_views(im):
     return views
 
 
-def ocr_read(im) -> str:
+def ocr_lines(im, enlarge: bool = True) -> list[tuple[str, float]]:
+    """OCR lines of an image with Tesseract's median word confidence (0 to 100), in order."""
+    import statistics
+    import pytesseract
+    out = []
+    for v in ocr_views(im, enlarge):
+        d = pytesseract.image_to_data(v, output_type=pytesseract.Output.DICT)
+        lines: dict[tuple, list] = {}
+        for i, w in enumerate(d["text"]):
+            if w.strip():
+                key = (d["block_num"][i], d["par_num"][i], d["line_num"][i])
+                lines.setdefault(key, []).append((w, float(d["conf"][i])))
+        out += [(" ".join(w for w, _ in ws), statistics.median(c for _, c in ws))
+                for ws in lines.values()]
+    return out
+
+
+def ocr_read(im, enlarge: bool = True) -> str:
     """OCR text of an image: each view's text, in order, joined with newlines."""
     import pytesseract
-    return "\n".join(t.strip("\n") for t in (pytesseract.image_to_string(v) for v in ocr_views(im))
-                     if t.strip())
+    texts = (pytesseract.image_to_string(v) for v in ocr_views(im, enlarge))
+    return "\n".join(t.strip("\n") for t in texts if t.strip())
 
 
 def read_image(data: bytes, ocr: bool = True) -> ImageReading:
