@@ -29,7 +29,6 @@ the recommendation templates).
     summed across hook configs.
   - A stage whose stamp is not PASS adds "Validation <result>: see 7.".
   - A stage that did not run shows "Not run. See 7.".
-  - Stage 6 shows "Not built."
 - `full(...)`: sections 1 to 7, each with status line, validation stamp, and
   every finding (file:line, fields, verbatim quote in a code span), then
   Recommendations, then "What this is not".
@@ -50,7 +49,7 @@ the recommendation templates).
 - Section 7 of `summary(...)` is `glance_line`: the skipped items by name, "Not needed here",
   any stage whose validation is not PASS, and the length of the full list.
 - `log(...)`: LOG.md per RUN-LAYOUT: one row per stage with start, finish,
-  output, finding count, and validation stamp; 06 as not built.
+  output, finding count, and validation stamp.
 - `code(s)`: an inline code span that survives backticks inside `s`.
 
 ## Signal levels (added 2026-10-01, soft D1)
