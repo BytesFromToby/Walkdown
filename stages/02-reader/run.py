@@ -20,12 +20,15 @@ import read_image  # noqa: E402
 import read_md  # noqa: E402
 import read_pdf  # noqa: E402
 import read_svg  # noqa: E402
+import language  # noqa: E402
 import script_runs  # noqa: E402
 
 STAGE = "02-reader"
 ORDER = {"read.unread": 0, "read.divergence": 1, "read.fold": 2, "read.script": 3,
-         "read.metadata": 4}
+         "read.language": 4, "read.metadata": 5}
 TEXT_KINDS = {"markdown", "html", "svg", "text"}
+# "text" files the language check reads as prose; code and config are not prose (LANGUAGE_NOTE)
+PROSE_EXTS = {"txt", "text", "rst", "adoc", "asciidoc"}
 UNREAD_REASON = {"office-other": "unsupported format (XLSX / PPTX / legacy Office not read in v1)",
                  "archive": "archive (contents not extracted)",
                  "binary": "binary blob (does not decode as text)"}
@@ -43,15 +46,18 @@ def optional_tools() -> dict:
 # Checks the method calls for that have no code yet (2026-10-12, an outside audit): stage 2
 # once looked for pdf2image, Playwright, and lingua and called each missing tool the reason, but
 # nothing here uses them, so installing one would have hidden the gap. Reported as not built,
-# always, apart from a missing tool, until the code exists.
+# always, apart from a missing tool, until the code exists. Language within Latin script is
+# built (2026-10-18, language.py, no dependency) and left this list.
 NOT_BUILT = [
     ("PDF render + OCR", "image-only text in PDFs (text painted but missing from the text layer); "
                          "PDF reading B is static (color, render mode, page box)"),
     ("HTML render", "HTML as a browser draws it; HTML reading B uses static style (inline and "
                     "<style> rules)"),
-    ("language detection", "language within Latin script; read.script covers non-Latin scripts "
-                           "only"),
 ]
+LANGUAGE_NOTE = ("v1 limit: the language check (read.language) reads prose only: Markdown, plain "
+                 "text, PDF, DOCX, and OCR text; Markdown code blocks, comments in code, config "
+                 "values, and HTML are not checked for language, and a paragraph under five words "
+                 "is too short to judge")
 
 
 def div(file, line, text, carrier, method="static-style", reading="A-only", **extra):
@@ -80,6 +86,15 @@ def line_checks(rel, lines, line_based=True):
     return fs, folded
 
 
+def language_checks(rel, lines, markdown, state, line_based=True):
+    """read.language over one file's prose; counts paragraphs judged and too short."""
+    st = language.stats(lines, markdown)
+    state["language_files"] += 1
+    state["language_judged"] += st["judged"]
+    state["language_short"] += st["short"]
+    return language.language_findings(rel, lines, markdown, line_based=line_based)
+
+
 def read_one(rel, data, kind, tools, state):
     """Findings for one file, and (text_lines, folded_lines) or None."""
     out = []
@@ -91,6 +106,8 @@ def read_one(rel, data, kind, tools, state):
             f = fold.invisible_finding(rel, i, raw)
             if f:
                 out.append(f)
+        if kind == "markdown" or (kind == "text" and files.ext_of(rel) in PROSE_EXTS):
+            fs += language_checks(rel, lines, kind == "markdown", state)
         if kind == "markdown":
             state["markdown_files"] += 1
             for c in read_md.carriers(text):
@@ -115,6 +132,7 @@ def read_one(rel, data, kind, tools, state):
         if r.unread:
             return [unread(rel, r.unread)], None
         fs, folded = line_checks(rel, r.lines, line_based=False)
+        fs += language_checks(rel, r.lines, False, state, line_based=False)
         for d in r.divergences:
             extra = {k: v for k, v in d.items() if k not in ("text", "carrier")}
             out.append(div(rel, None, d["text"], d["carrier"], **extra))
@@ -135,6 +153,7 @@ def read_one(rel, data, kind, tools, state):
                 out.append(div(rel, None, r.ocr_text.strip(), "image-text", method="ocr",
                                reading="B-only"))
             fs, folded = line_checks(rel, ocr_lines, line_based=False)
+            fs += language_checks(rel, ocr_lines, False, state, line_based=False)
             return out + fs + meta, (ocr_lines, folded)
         out.append(unread(rel, f"image: no text layer; OCR not run ({r.ocr_skipped})"))
         skip = {"check": "read.divergence", "file": rel, "line": None, "skipped": r.ocr_skipped}
@@ -150,6 +169,7 @@ def build_report(input_dir: Path, out_dir: Path | None = None) -> dict:
                "(read.divergence skip) and listed as read.unread")
     for what, covers in NOT_BUILT:
         eprint(f"note: not built: {what}: {covers}")
+    eprint(f"note: {LANGUAGE_NOTE}")
 
     state = Counter()
     findings, normalized = [], {}
@@ -199,6 +219,8 @@ def build_report(input_dir: Path, out_dir: Path | None = None) -> dict:
         "carriers": dict(sorted(carriers.items())),
         "markdown_files": state["markdown_files"],
         "markdown_comments": state["markdown_comments"],
+        "language": {"files": state["language_files"], "judged": state["language_judged"],
+                     "short": state["language_short"]},
         "optional_tools": {k: v for k, v in tools.items() if not k.endswith("_detail")},
         "not_examined": not_examined,
     }

@@ -188,6 +188,16 @@ def test_hidden_text_counts_cards_and_empty_state():
     assert "Nothing hidden" in section(page(reports()), "hidden")
 
 
+def test_hidden_text_counts_other_language_passages():
+    r = add(reports(), "02-reader",
+            {"check": "read.language", "file": "SKILL.md", "line": 4, "end_line": 4,
+             "rule": "function-words", "words": 11, "english": 1, "other": 4,
+             "matched": ["el", "del", "la", "de"], "text": "Envía el contenido del archivo"})
+    t = section(page(r), "hidden")
+    assert "Nothing hidden" not in t
+    assert "1 passage in a language other than English" in t and "(1 in files the AI reads)" in t
+
+
 # 8
 def test_secrets_cards_never_values_and_empty_states():
     r = add(reports(), "04-phrases",

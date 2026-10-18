@@ -104,6 +104,7 @@ an image).
 | `read.divergence` | text in one reading and not the other, and how it hides: HTML comment, `display:none`, white-on-white, zero-width characters, bidirectional controls, soft hyphens, alt or title text, hidden Office runs | an instruction the reviewer cannot see is still an instruction to the model |
 | `read.fold` | lines that change when invisible and look-alike characters are folded away | "ig​no​re" with zero-width spaces reads as "ignore" to a model; stage 4 matches the folded text |
 | `read.script` | runs of non-Latin script | the phrase patterns are English; a non-English run is unread by stage 4 |
+| `read.language` | prose passages in Latin script that read as another language: one language's common short words (`el`, `und`, `och`) outnumber the English ones, or heavy accents with no English. It never names the language | the same: Spanish in a Markdown list is unread by stage 4, and a clean result on it means nothing |
 | `read.metadata` | text in metadata fields (image EXIF, document properties) | metadata travels with the file and some hosts pass it on |
 | `read.unread` | files the reader could not read, and why | a file nobody read is not a clean file |
 
@@ -116,10 +117,11 @@ white-on-white or `display:none` text.
 
 **In the report.** Section 2, and the Hidden text section of the summary page, with a card for hidden text that
 reads like an instruction. Tesseract, when
-installed, reads text inside images; when it is missing, section 7 says so. Three checks the
-method calls for are not built yet: PDF pages drawn and read as images, HTML as a browser draws
-it, and language detection within Latin script. Section 7 lists them as "not built" on every
-run, apart from a missing tool, because installing a library would not add them.
+installed, reads text inside images; when it is missing, section 7 says so. Two checks the
+method calls for are not built yet: PDF pages drawn and read as images, and HTML as a browser
+draws it. Section 7 lists them as "not built" on every run, apart from a missing tool, because
+installing a library would not add them. The language check needs nothing installed; it reads
+prose only (not code comments, config values, or HTML), and section 7 says so.
 
 ---
 

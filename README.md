@@ -181,7 +181,9 @@ fixtures are unchanged (LOG.md says when it was measured); `--revalidate` measur
 ## Known limits
 
 - **English only.** The phrase patterns are English. On other languages a clean result means
-  nothing, and the report says so.
+  nothing, and the report says so: it lists text in a non-Latin script, and prose passages in
+  another language written in Latin script (found by common short words, with no install). The
+  language check misses some one-line instructions and does not read code comments or config.
 - **Static only.** Nothing is executed. Walkdown makes no claim about what a skill does when it runs.
 - **Known shapes.** Stage 4 finds the phrasings it has patterns for. A new phrasing of a hostile
   instruction can get through; the stage 6 sweep exists to narrow that gap, and is experimental.

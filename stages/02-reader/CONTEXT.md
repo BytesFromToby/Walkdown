@@ -55,7 +55,8 @@ naming how reading B was obtained (`static-style`, `ocr`).
 | Check ID | Rule | Source |
 |---|---|---|
 | `read.fold` | Fold every text line: NFKC normalize; strip zero-width characters (U+200B-U+200F, U+2060-U+2064, U+FEFF), bidi controls (U+202A-U+202E, U+2066-U+2069), soft hyphen (U+00AD) and Unicode tag characters (U+E0000-U+E007F, which can spell invisible ASCII; THREATS class 4); replace line and paragraph separators (U+2028, U+2029, U+0085) with a space so every tool counts the same lines; fold confusables to ASCII where a mapping exists. One finding per line whose folded text differs from the raw text: `folded` (the folded line) and `removed` (each removed or replaced code point as `U+XXXX`, once per occurrence) | METHOD "Folded copy"; THREATS class 4; TOOLING Unicode table |
-| `read.script` | Flag every run of letters in a non-Latin script (Unicode Script property; ignore Common and Inherited), with its line and `script` name. Language detection within Latin script (lingua) is optional in v1 | METHOD "Language / script shift"; CHARTER scope |
+| `read.script` | Flag every run of letters in a non-Latin script (Unicode Script property; ignore Common and Inherited), with its line and `script` name | METHOD "Language / script shift"; CHARTER scope |
+| `read.language` | Flag every prose passage in Latin script that reads as a language other than English: function words of one listed language outnumber English ones, or (unlisted languages) heavy diacritics and no English. Prose is Markdown outside code fences, `.txt` / `.rst` / `.adoc`, PDF and DOCX text, and OCR text. Answers "is this English?" and never names the language. Deterministic, no dependency (`specs/language.SPEC.md`, with its measured base rate and recall; 2026-10-18, replacing the planned lingua) | METHOD "Language / script shift"; CHARTER scope |
 | `read.divergence` | Reading A versus reading B per the table above | METHOD Stage 2; THREATS class 11 |
 | `read.metadata` | Every metadata field carrying text: PDF info dictionary and XMP, DOCX core properties, image EXIF and PNG text chunks. `field` and `text` verbatim | METHOD "Metadata"; THREATS class 6 |
 | `read.unread` | Every file neither reading could read, with `reason` | REPORTING 2.1, 2.2 |
@@ -75,8 +76,11 @@ metadata), `regex` (Unicode script property), `confusable_homoglyphs`
 
 Optional, never required: Tesseract via `pytesseract` (image OCR). A missing Tesseract is
 reported on stderr and as skips. Planned and **not built** (2026-10-12): PDF render + OCR
-(poppler via `pdf2image`), true HTML render (Playwright), language within Latin script
-(`lingua`). Each run reports them as not built; installing those libraries changes nothing.
+(poppler via `pdf2image`), true HTML render (Playwright). Each run reports them as not built;
+installing those libraries changes nothing. Language within Latin script was planned on
+`lingua`; it is built instead with no dependency (`read.language`, 2026-10-18), because the
+check needs "is this English?", not the language's name, and every optional tool is one more
+thing a user has to install.
 
 All development and runs use the project virtualenv: `.venv/` (gitignored),
 created with `python -m venv .venv` and `.venv/Scripts/pip install -r requirements.txt`.

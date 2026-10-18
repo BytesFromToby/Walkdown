@@ -85,7 +85,8 @@ emits it.
 | Check | One finding per | Fields |
 |---|---|---|
 | `read.fold` | line whose folded text differs from the raw text | `folded`: the folded line; `removed`: list of removed or replaced code points as `U+XXXX` |
-| `read.script` | run of non-Latin script or non-English language | `script`: Unicode script name (e.g. `Cyrillic`); `text`: the run |
+| `read.script` | run of non-Latin script | `script`: Unicode script name (e.g. `Cyrillic`); `text`: the run |
+| `read.language` | passage in Latin script that reads as a language other than English (added 2026-10-18) | `rule`: `function-words` or `diacritics`; `end_line`: the passage's last line; `words`, `english`, `other`: word counts (`other` is the best single other language); `matched`: the other-language function words, at most 10; `text`: the passage verbatim, cut at 500 characters (`truncated`). The language is never named |
 | `read.divergence` | text present in one reading and not the other | `reading`: `A-only` or `B-only`; `text`: the divergent text; `carrier`: how it hides (e.g. `display:none`, `white-on-white`, `alt`, `vanish`, `title`, `comment`); `method`: how reading B was obtained (e.g. `static-style`, `ocr`) |
 | `read.metadata` | metadata field carrying text | `field`: field name; `text`: its value |
 | `read.unread` | file the reader could not read | `reason`: why (binary blob, encrypted, unsupported format, missing optional tool) |
@@ -193,6 +194,7 @@ the contract from here on:
 | `struct.census` | `length`, `detected` | a long line's length; the content type the bytes reveal (extension mismatch, archive) |
 | `read.divergence` | `chars`, `page`, `paragraph`, `text_line`, `used` | invisible code points found; PDF page; DOCX paragraph; line in the extracted text for formats without source lines; whether a Markdown reference definition is used |
 | `read.script` | `col` | the column where the non-Latin run starts |
+| `read.language` | `text_line`, `end_text_line` | for PDF, DOCX, and OCR text, the passage's lines in the extracted text (`line` is null) |
 | `graph.dangling` | `form` | where the reference was found: `prose`, `config`, `script`, `fenced`, `comment` |
 | `cond.branch` | `word` | the conditional word that opened the branch |
 | `cap.injection` | `command` | the hook command (hook mechanism) |
