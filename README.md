@@ -67,8 +67,8 @@ The documentation:
 | # | Stage | Question it answers |
 |---|---|---|
 | 1 | Inventory | What ships? Files, formats, hooks, agents, manifests, MCP servers |
-| 2 | Reader | What does the model actually receive? Hidden text, invisible characters, rendered vs raw |
-| 3 | Graph | What loads what? Entry points, references, files nothing names |
+| 2 | Reader | What does the model actually receive? Hidden text, invisible characters, rendered vs raw, text in images and on PDF pages, text in another language |
+| 3 | Graph | What loads what? Entry points, references, files nothing names, components a manifest leaves out |
 | 4 | Phrases | What does the text ask for? About 125 patterns for reaching out, taking the wheel, changing the environment, talking to the human |
 | 5 | Capability | What does installing it grant? The three legs of Simon Willison's lethal trifecta, install grants, pairs worth reading |
 | 6 | Soft reads | What can a pattern not settle? Optional model reads (experimental) |
@@ -90,7 +90,9 @@ python -m venv .venv
 
 That is all stages 1 to 5 and the report need. Optional extras:
 
-- **Tesseract** (OCR of text in images, stage 2). Without it, image text is listed as not examined.
+- **Tesseract** (OCR of text in images and on PDF pages, stage 2). Without it, that text is listed
+  as not examined. It is the one optional tool that changes what a run finds; PDF pages are drawn
+  by `pypdfium2`, which `requirements.txt` installs.
 - **Stage 6 backends** (`requirements-soft.txt`):
   - `jev`: TypeSafe's Jev, a remote labeling model. Needs `TYPESAFE_API_KEY` in the environment
     (on Windows it is also read from the user environment in the registry).

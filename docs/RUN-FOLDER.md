@@ -30,8 +30,9 @@ RepoResults/<name>/<date>_<hash7>/          one run, e.g. RepoResults/backlog/20
     capability.json       stage 5 with every piece of evidence (05-capability.json caps each list at 20)
     graph.json            stage 3's reference graph: nodes and edges
     hits.json             stage 4's hits with counts per check and per pattern, and the files not scanned
-    normalized/           stage 2's text of each file: text/ as the model receives it, folded/ with
-                          invisible and look-alike characters folded away (what stage 4 matched)
+    normalized/           stage 2's text of each file: text/ as the model receives it (for a PDF,
+                          DOCX, or image, the text read from it, OCR included; stage 4 matches
+                          that), folded/ with invisible and look-alike characters folded away
     06-packet.md          stage 6's questions, written for a person to answer
     packet.json           the same questions as data
     answers.jsonl         every model answer, with the exact request and response
@@ -152,5 +153,6 @@ Older runs keep their layout: stage outputs at the top of the run folder and the
 - **Committed secrets** are reported by location only; their values never appear in a report
   or a stage output. `normalized/` holds each file's actual text, secrets included, so treat
   it like the repository itself.
-- **`normalized/` can be deleted** to save space; it is rebuilt by re-running the audit, and the
-  reports do not need it.
+- **`normalized/` can be deleted** to save space once the reports are rendered; it is rebuilt by
+  re-running the audit. A re-render without it still works, but review cards show the flagged
+  line alone, without the lines around it.
