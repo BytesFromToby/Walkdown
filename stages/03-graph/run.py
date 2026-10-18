@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import posixpath
 import subprocess
 import sys
 from pathlib import Path
@@ -19,13 +20,16 @@ from extract import ext_of, extract  # noqa: E402
 from invisible import decode  # noqa: E402
 from resolve import Resolver  # noqa: E402
 from scans import find_scans  # noqa: E402
+from unlisted import manifest_root, unlisted  # noqa: E402
 
 STAGE = "03-graph"
 STAGE1_RUN = HERE.parent / "01-inventory" / "run.py"
 
-LIMIT_NOTE = ("v1 limit: manifest versus disk is half built; a path a manifest names that "
-              "does not exist is graph.dangling, but files on disk that no manifest covers "
-              "are not checked")
+# Manifest versus disk is built both ways (2026-10-18): a path a manifest names that does not
+# exist is graph.dangling, a component on disk its manifest leaves out is graph.unlisted.
+LIMIT_NOTE = ("v1 limit: manifest versus disk compares skills, agents, and commands, and only "
+              "the kinds a manifest names; a manifest that names none relies on its folders and "
+              "is not compared, and plugins a marketplace leaves out are not compared")
 
 DOC_EXTS = {"pdf", "doc", "docx", "docm", "xls", "xlsx", "xlsm", "ppt", "pptx", "pptm",
             "odt", "ods", "odp", "rtf", "epub"}
@@ -164,9 +168,15 @@ def build_report(input_dir: Path, inv: dict) -> tuple[dict, dict]:
                 targets = []
             add_dynamic(rel, s.line, s.pattern, targets, "code", "scan", s.pattern, "code")
 
+        # a manifest's paths are relative to its plugin root, the folder above .claude-plugin/
+        # (2026-10-18: "./skills/" in plugins/p/.codex-plugin/plugin.json had resolved to the
+        # repository's own skills/ folder)
+        base = rel
+        if entries.get(rel) == "manifest":
+            base = posixpath.join(manifest_root(rel), posixpath.basename(rel))
         for f in extract(rel, text):
             ref = f.ref
-            res = resolver.resolve(rel, ref.path, ref.shape)
+            res = resolver.resolve(base, ref.path, ref.shape)
             if res.status == "file":
                 for t in res.targets:
                     add_edge(rel, f.line, t, "static", f.form, ref.written, f.context,
@@ -205,7 +215,8 @@ def build_report(input_dir: Path, inv: dict) -> tuple[dict, dict]:
                   for n in sorted(entries)]
     dang_rows = sorted(dangling.values(), key=lambda d: (d["file"], d["line"], d["target"]))
     dyn_rows = sorted(dynamic.values(), key=lambda d: (d["file"], d["line"], d["pattern"]))
-    findings = (entry_rows + reach_mod.orphan_findings(rc) + dang_rows + dyn_rows
+    unl_rows = unlisted([n for n, k in entries.items() if k == "manifest"], nodes, edges)
+    findings = (entry_rows + reach_mod.orphan_findings(rc) + dang_rows + dyn_rows + unl_rows
                 + reach_mod.depth_findings(rc) + unscanned)
     report = {"stage": STAGE, "contract": 1, "findings": findings}
 

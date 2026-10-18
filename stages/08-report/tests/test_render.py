@@ -563,3 +563,13 @@ def test_loc_for_extracted_text_and_binary_note():
                           "from stage 2's extracted text, phrase patterns only"]}
     assert "Phrase patterns in PDF, DOCX, and image files" in R.glance(r, old, PASS, set(r))[0]
     assert "Phrase patterns in PDF, DOCX, and image files" not in R.glance(r, new, PASS, set(r))[0]
+
+
+def test_unlisted_components_in_full_report():
+    r = reports()
+    r["03-graph"]["findings"].append({"check": "graph.unlisted", "file": "skills/c/SKILL.md", "line": None,
+                                      "manifest": ".claude-plugin/plugin.json", "kind": "skill",
+                                      "listed": 2, "on_disk": 3})
+    f = full(META, r, PASS, {}, set(r))
+    assert "skills/c/SKILL.md: skill not named by .claude-plugin/plugin.json, which names 2 of the 3 on disk" in f
+    assert "1 skill, agent, or command on disk that their manifest leaves out." in f

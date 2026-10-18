@@ -163,3 +163,36 @@ def test_folder_mention_versus_load(tmp_path):
     assert "docs/plan.md" not in {f["file"] for f in by(doc, "graph.orphan")}
     loads = {f["pattern"]: f["load"] for f in by(doc, "graph.dynamic")}
     assert loads["docs/"] is False and loads["skills/"] is True
+
+
+def test_manifest_leaves_a_skill_out(tmp_path):
+    root = tmp_path / "in"
+    files = {".claude-plugin/plugin.json": '{"name": "x", "skills": ["./skills/a", "./skills/b"]}\n'}
+    for s in "abc":
+        files[f"skills/{s}/SKILL.md"] = f"---\nname: {s}\ndescription: {s}.\n---\nbody\n"
+    for rel, text in files.items():
+        p = root / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(text.encode("utf-8"))
+    doc = report(root)
+    unl = by(doc, "graph.unlisted")
+    assert [(f["file"], f["kind"], f["listed"], f["on_disk"]) for f in unl] == [
+        ("skills/c/SKILL.md", "skill", 2, 3)]
+    checks = [f["check"] for f in doc["findings"]]
+    assert checks.index("graph.unlisted") > max(i for i, c in enumerate(checks) if c == "graph.dynamic")
+
+
+def test_nested_manifest_paths_are_relative_to_its_plugin(tmp_path, ):
+    root = tmp_path / "in"
+    files = {"skills/top/SKILL.md": "---\nname: top\ndescription: t.\n---\nbody\n",
+             "plugins/p/.codex-plugin/plugin.json": '{"name": "p", "skills": ["./skills/a"]}\n'}
+    for s in "ab":
+        files[f"plugins/p/skills/{s}/SKILL.md"] = f"---\nname: {s}\ndescription: {s}.\n---\nbody\n"
+    for rel, text in files.items():
+        p = root / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(text.encode("utf-8"))
+    doc = report(root)
+    dyn = [f for f in by(doc, "graph.dynamic") if f["file"].endswith("plugin.json")]
+    assert [d["resolves"] for d in dyn] == [["plugins/p/skills/a/SKILL.md"]]
+    assert [f["file"] for f in by(doc, "graph.unlisted")] == ["plugins/p/skills/b/SKILL.md"]
