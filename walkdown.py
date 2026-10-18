@@ -1,9 +1,11 @@
 """Walkdown: audit the instruction layer of an AI skill or agent repository.
 
-    python walkdown.py <path or git URL> [--name NAME] [--fresh | --keep]
-    python walkdown.py diff <old run folder> <new run folder>
-                       [--label jev|laya|claude-cli] [--compare ...] [--relational claude-cli]
+    python walkdown.py <path or git URL> [--name NAME] [--fresh | --keep] [--revalidate]
+                       [--label jev|claude-cli] [--compare ...] [--relational claude-cli]
                        [--sweep jev] [--pinpoint claude-cli] [--both]
+    python walkdown.py diff <old run folder> <new run folder>
+
+(`laya` is still accepted by --label and --compare; it is retired, 2026-10-03.)
 
 A git URL is cloned (shallow) into ReposToExamine/<name>, or an earlier clone of it updated
 to the latest commit; a path is audited where it is. The

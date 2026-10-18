@@ -110,7 +110,11 @@ page; its Copy button copies the whole address. Runs made before this list exist
 
 Text the AI receives that a person reading the file on screen would not see: hidden comments,
 invisible characters, text colored like its background, image descriptions, and the like, with
-how many are in files the AI reads. Then lines that read differently once look-alike or invisible
+how many are in files the AI reads. It also counts the other direction for images and PDFs:
+text inside an image, or drawn on a PDF page but missing from the PDF's text layer (a picture
+of an instruction), which a model that reads the page as an image sees. A location in a PDF,
+DOCX, or image reads "file (extracted text, page N, line M)": the line in the text Walkdown read
+from it, since such a file has no lines of its own. Then lines that read differently once look-alike or invisible
 characters are swapped for plain ones (most are typographic quotes and dashes), stretches in a
 non-Latin script, and passages in another language written in the same alphabet (Spanish, German,
 and so on). The risky-ask patterns read English only, so a passage in any other language is one
@@ -231,8 +235,8 @@ Every finding, grouped by stage:
 | Section | Holds |
 |---|---|
 | 1 What ships | entry points, the structural census, descriptions, tool grants, hooks, manifests |
-| 2 What the model actually reads | divergences (raw against rendered), lines changed by folding, non-Latin runs, passages in another language, metadata, unread files |
-| 3 What loads what | entry points used, orphans, load-only files, dynamic loads, dangling references, depth |
+| 2 What the model actually reads | divergences (raw against rendered, and PDF pages as drawn against their text layer), lines changed by folding, non-Latin runs, passages in another language, metadata, unread files |
+| 3 What loads what | entry points used, orphans, load-only files, dynamic loads, components on disk a manifest leaves out, dangling references, depth |
 | 4 What the text asks for | every hit, by group (4a to 4d) and check, then the tables: endpoints, guarded actions, conditionals, definitions, conflicts, safety words |
 | 5 What this touches | each trifecta leg with every citation, install grants with evidence, bytes in context at load, agent posture, pairs |
 | 6 Needs a human read | the stage 6 models used, the sweep's flagged passages, every question and every answer |

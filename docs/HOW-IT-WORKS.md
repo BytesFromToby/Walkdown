@@ -138,6 +138,7 @@ prose only (not code comments, config values, or HTML), and section 7 says so.
 | `graph.dynamic` | each glob, directory scan, or pattern read, and the files it matches today | its targets can change after review |
 | `graph.orphan` | files no entry point reaches | dead weight, or a payload waiting for a later version to load it |
 | `graph.dangling` | references to paths that do not exist, by context (prose, code, link, config) | rot, or a slot for a file added later |
+| `graph.unlisted` | skills, agents, or commands on disk that their manifest leaves out, for the kinds it names (a manifest's paths are read from its plugin root) | a reviewer reads the manifest to learn what a plugin holds; a host that finds components by folder can still load the one it leaves out |
 | `graph.unscanned` | files that may hold references but were not scanned | where the graph is blind |
 
 **Usually seen.** Few orphans, dangling references mostly in code (imports the scanner cannot

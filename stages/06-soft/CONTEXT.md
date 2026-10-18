@@ -22,7 +22,7 @@ comes from the answer sheet.
 
 | Job | Backend options | Notes |
 |---|---|---|
-| Labeling (`--label`, env `WALKDOWN_SOFT_LABEL`) | `none`, `jev`, `laya`, `claude-cli` (added 2026-09-30; self-reported confidence, see pre-planning/soft/EVAL.md) | Jev (TypeSafe, remote API) is the first choice for labeling; Laya (local, CPU) is the comparison |
+| Labeling (`--label`, env `WALKDOWN_SOFT_LABEL`) | `none`, `jev`, `laya` (retired 2026-10-03: 13% on the real-lines set; still accepted), `claude-cli` (added 2026-09-30; self-reported confidence, see pre-planning/soft/EVAL.md) | Jev (TypeSafe, remote API) is the first choice for labeling; Laya (local, CPU) is the comparison |
 | Comparison (`--compare`, env `WALKDOWN_SOFT_COMPARE`) | `none`, `jev`, `laya`, `claude-cli` | a second labeling backend on the same questions; agreement is recorded |
 | Relational (`--relational`, env `WALKDOWN_SOFT_RELATIONAL`) | `none`, `claude-cli` | Claude through the Claude Code CLI; local backends come later |
 
