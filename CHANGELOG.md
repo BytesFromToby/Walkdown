@@ -6,6 +6,13 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Stage 2, image OCR reads small and faint text better: the image is cropped to its ink, its
+  contrast stretched, a dark background inverted, and the crop enlarged; a large image is read
+  in tiles, blank ones skipped. 9 px text in the corner of a large image went from 64% of its
+  words read to 100%, 8 px light-gray text from 23% to 92%; near-invisible text (`#EEE` on
+  white) is still read. 19 of 22 cases in the OCR spike against 17 before
+  (`stages/02-reader/OCR-SPIKE-2026-10-18.md`). Tesseract is still the one optional OCR tool:
+  the pip-only engine tried missed near-invisible text.
 - Stage 2: a language check for text in Latin script (`read.language`). A prose passage whose
   common short words are mostly one other language's (Spanish `el` / `del`, German `und` /
   `der`, and ten more lists), or that is heavily accented with no English in it, is listed with
