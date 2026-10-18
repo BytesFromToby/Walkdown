@@ -24,13 +24,14 @@ makes language / script shift its own signal (CHARTER scope section).
 
 ---
 
-## Status (2026-10-03)
+## Status (2026-10-18)
 
 **Alpha, public:** https://github.com/BytesFromToby/Walkdown (released from a separate copy;
 see "Public repo" below). All eight stages run end to end from one command; every stage has
-fixtures, a grader stamp, specs, and tests (538+). Stage 6 (model reads) is optional and
+fixtures, a grader stamp, specs, and tests (743). Stage 6 (model reads) is optional and
 experimental. Four repositories audited (superpowers, Plumbline, claude-familiar, backlog) plus
-the self-audit.
+the self-audit. Not built: HTML as a browser draws it (stage 2). One optional tool affects
+results: Tesseract (OCR of images and PDF pages); gitleaks has a pip fallback.
 
 Where things stand and what is next: `pre-planning/REVIEW-2026-10-03.md` (the latest review:
 fixed items, open design items C14 to C18, and the ordered plan). Stage 6 decisions:
@@ -230,6 +231,15 @@ audited repository's author has seen theirs.
    Self-audit after: ~950 findings set aside, exec-at-load gone; legs remain from the design
    docs. Run folder layout changed (reports + LOG.md on top, rest under `data/`; layout.py).
    Docs: `docs/HOW-IT-WORKS.md`, `docs/RUN-FOLDER.md`, rewritten `docs/READING-THE-REPORT.md`.
+
+16. 2026-10-18 (branch `claude/brave-dirac-9nanuy`): stage 2 language check within Latin script
+   (`read.language`, no dependency; replaces the planned lingua); OCR preprocessing (crop,
+   contrast, invert, tiles) and PDF pages drawn and read (pypdfium2 core; Tesseract optional),
+   with a confidence floor measured on the pdf.js corpus; the OCR spike
+   (`stages/02-reader/OCR-SPIKE-2026-10-18.md`: pip-only OCR not taken); stage 4 reads stage 2's
+   extracted text of PDF, DOCX, and images (`--normalized`), and stage 5 pairs hidden text there;
+   stage 3 manifest versus disk both halves (`graph.unlisted`) and manifest paths read from the
+   plugin root. The grader honors a skip that names its carrier.
 
 Stage 6 working notes and open decisions: `pre-planning/soft/` (README lists D1 to D5).
 Reports: `summary.html` at the top of a run folder is the page for people, and `review.html`

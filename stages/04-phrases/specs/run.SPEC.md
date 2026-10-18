@@ -66,9 +66,10 @@ is `instructions` for an instruction line, else `docs` for a `human` file and
 `code` for a `tool` file. The word lists come from `vocab.load_vocab`, checked
 against the loaded pattern table; a bad vocab file exits 2.
 
-stderr: the limits, always: position and repetition and the gitleaks secret
-scan are not built (stage 4 part 2); binary documents are not scanned; plus one
-line per file not scanned; plus a count of findings, with the part 2 counts.
+stderr: the limit, always: how files that do not decode as text were handled (scanned from
+stage 2's extracted text with `--normalized`, else not scanned); plus one line per file not
+scanned; plus a count of findings, with the part 2 counts. Every part 2 item is built
+(position and repetition and the secret scan since 2026-10-04), so none is named as not built.
 
 `--out <dir>`: also writes `<dir>/hits.json`: `findings` (as stdout),
 `counts` (`per_check`: part 1 findings per phrase check, every check listed,
@@ -99,7 +100,7 @@ or a refused `--out`. Exit 1 when stage 1 fails.
 2. Findings carry the audience of their file (`README.md` human, `agents/x.md` subagent, a script tool, `SKILL.md` model).
 3. `--inventory` with a saved stage 1 report gives the same findings as the subprocess path.
 4. `--out` writes `hits.json` with per-check and per-pattern counts (zeros included) that agree with the findings; `--out` inside the input is refused.
-5. A binary file is not scanned and is named on stderr; stderr names position and repetition and gitleaks as not built, and no longer names the built part 2 items.
+5. A binary file with no stage 2 text copy is not scanned and is named on stderr; stderr names none of the part 2 items (all built) as not built.
 6. A missing input folder exits non-zero with nothing on stdout; the input is byte-identical after a run.
 7. A zero-finding tree still gives a valid report and exit 0.
 8. Part 2 findings follow every part 1 finding, in CONTRACT order, and part 1 findings are identical to a run without part 2 (same phrase findings as the pattern scan alone).

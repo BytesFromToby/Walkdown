@@ -14,8 +14,9 @@ Sources: `pre-planning/METHOD.md` Stage 4 ("Also produced here"),
 21, 22 (and 1 for endpoints), `pre-planning/PHRASES.md` sets B, I, J,
 `stages/CONTRACT.md`. Nothing here comes from the answer sheet.
 
-Not in this part (named on stderr as not built, as today): position and
-repetition (REPORTING 4.4, 4.5), the gitleaks secret scan. (Both built 2026-10-04; see CONTEXT.md.)
+Not in this part when it was built (2026-09-29): position and repetition (REPORTING 4.4, 4.5)
+and the secret scan. Both were built 2026-10-04 (see CONTEXT.md), and nothing in stage 4 is
+named as not built.
 
 ---
 
