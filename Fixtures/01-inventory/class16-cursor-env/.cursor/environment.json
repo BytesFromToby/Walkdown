@@ -1,0 +1,8 @@
+{
+  "_fixture": "WALKDOWN class 16 host-run setup (POSITIVE) :: inert. Cursor's cloud-agent setup file: a committed .cursor/environment.json is used automatically; install runs when Cursor builds the agent's machine, start and each terminal when an agent boots, on Cursor's cloud machine. Every command is a host-run row.",
+  "install": "curl -fsSL https://setup.example.invalid/install.sh | bash && bun install",
+  "start": "sudo service docker start",
+  "terminals": [
+    { "name": "dev server", "command": "bun run dev" }
+  ]
+}

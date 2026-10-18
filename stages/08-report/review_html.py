@@ -68,6 +68,19 @@ MODEL_NOTE = ("This is one model's reading, not a pattern match. Models can be w
               "model: you are the check. It does not change any other finding.")
 
 
+# Review C36 (2026-10-18): the cards readers could not mark (partner's v3: 97 of 104 Not sure on
+# model reads, test data, and the image card) say what the reader is deciding, in one line.
+DECIDE = {
+    "testdata+loaded": "Does the skill mean for the AI to read this file? Test files are often written to "
+                       "look harmful on purpose, and a model reads them like any other text.",
+    "image+loaded": "Does the text in the image tell the AI to do anything you would not want done?",
+    "label": "Does the line tell the AI to do what was flagged, and should this skill do that?",
+    "sweep": "Does the passage tell the AI to do what the model said, and should this skill do that?",
+    "read": "Does the reviewer model's reading hold up against the lines shown?",
+}
+START_LINES = 8  # lines shown from the start of a test-data file
+
+
 def esc(s) -> str:
     return html.escape(str(s if s is not None else ""), quote=True)
 
@@ -156,6 +169,9 @@ def places(r) -> list[dict]:
     every member stays on the card as `parts`. A place of one finding keeps that finding's id,
     so a reader's marks carry over; a merged place's id comes from its members' ids."""
     base = findings_at(r)
+    limit_at = {(x.get("file"), x.get("line")): x for x in R.fnd(r, "05-capability", "cap.limit")}
+    img_text = {x.get("file"): x.get("text") for x in R.fnd(r, "02-reader", "read.divergence")
+                if x.get("carrier") == "image-text" and x.get("text")}
     rep_of = {}
     for x in base:
         if x.get("kind") == "rep.sentence":
@@ -187,7 +203,9 @@ def places(r) -> list[dict]:
             "".join(sorted(m["id"] for m in parts)).encode("utf-8")).hexdigest()[:12]
         out.append({**lead, "id": pid, "parts": parts, "matches": matches,
                     "patterns": [p for m in parts for p in m["patterns"]],
-                    "model": all(m["model"] for m in parts)})
+                    "model": all(m["model"] for m in parts),
+                    "limit": limit_at.get((lead.get("file"), lead.get("line"))),
+                    "image_text": img_text.get(lead.get("file"))})
     det = [p for p in out if not p["model"]]
     return det + [p for p in out if p["model"]]
 
@@ -382,6 +400,58 @@ def _flagged_one(p, title=False, seen=None, at=None) -> str:
     return f'{head}<ul>{"".join(rows)}</ul>'
 
 
+def _enforced(p) -> str:
+    """Is the read-only wording on this line backed by a tool setting? (review C32)"""
+    x = p.get("limit")
+    if not x:
+        return ""
+    routes = R.limit_routes(x)
+    return (f'<div class="enforced"><h3>Is it enforced?</h3><p>{esc(R.limit_words(x))}</p>'
+            + (f'<p class="muted">{esc(routes)}</p>' if routes else "") + "</div>")
+
+
+def _decide(p) -> str:
+    """One line on what the reader is deciding, for the kinds readers could not mark (C36)."""
+    kind = p.get("kind")
+    if not p.get("model") and kind not in ("testdata+loaded", "image+loaded"):
+        return ""
+    k = kind if kind in DECIDE else next((m.get("kind") for m in p.get("parts") or [] if m.get("kind") in DECIDE), None)
+    return f'<p class="decide"><b>To decide:</b> {esc(DECIDE[k])}</p>' if k else ""
+
+
+def _trimmed(lines):
+    """A file's lines without the empty one after its final newline."""
+    return lines[:-1] if lines and lines[-1] == "" else lines
+
+
+def _pointed(p, text_dir, secret_files) -> str:
+    """For test data and images the model is pointed at (C36): the line that points at it, and
+    what is in it (the start of the test file, or the text read from the image)."""
+    kind = p.get("kind")
+    if kind not in ("testdata+loaded", "image+loaded"):
+        return ""
+    src = p.get("src") or {}
+    frm, ln = src.get("from"), src.get("from_line")
+    out = ""
+    lines = _trimmed(read_lines(text_dir, frm)) if frm and ln and frm not in secret_files else None
+    if lines and 1 <= ln <= len(lines):
+        lo, hi = max(1, ln - 2), min(len(lines), ln + 2)
+        rows = "".join(_row(str(n), render_line(lines[n - 1].rstrip("\r")), n == ln) for n in range(lo, hi + 1))
+        out += f'<h3>Where the AI is pointed at it: {esc(frm)}:{ln}</h3><pre class="ctx">{rows}</pre>'
+    if kind == "testdata+loaded":
+        body = _trimmed(read_lines(text_dir, p.get("file"))) if p.get("file") not in secret_files else None
+        if body:
+            first = [x.rstrip("\r") for x in body[:START_LINES]]
+            rows = "".join(_row(str(n), render_line(x), False) for n, x in enumerate(first, 1))
+            more = (f'<p class="muted">{len(body) - START_LINES} more lines; open the file to read them.</p>'
+                    if len(body) > START_LINES else "")
+            out += f'<h3>The start of the file:</h3><pre class="ctx">{rows}</pre>{more}'
+    elif p.get("image_text"):
+        out += (f'<h3>Text read from the image:</h3><pre class="ctx">'
+                f'{_row("", render_line(" ".join(str(p["image_text"]).split()), cap=600), False)}</pre>')
+    return f'<div class="pointed">{out}</div>' if out else ""
+
+
 def _sure(p):
     """How sure the model was, 0 to 1, when the read carries a number."""
     src = p.get("src") or {}
@@ -398,6 +468,11 @@ def _model_said(p) -> str:
     said = ((p.get("lead") or "") + (p.get("note") or "")).rstrip(". ")
     sure = _sure(p)
     score = f", with a <b>{sure:.2f}</b> score" if sure is not None else ""
+    if p.get("kind") == "label" and sure is not None:  # plain words (review C36, 2026-10-18)
+        said = f"{(p.get('src') or {}).get('backend') or 'A model'} read this line as an instruction to do the flagged thing"
+        if R.DO_NEAR_P <= sure < R.DO_CLEAR_P:
+            score += (f"; that is near the line: reading the same line again moves the score by about "
+                      f"{R.DRIFT}, so it could go either way")
     note = esc(MODEL_NOTE)
     pin, add = p.get("pin"), ""
     if pin and pin.get("verified") and pin.get("pin_line") is not None:
@@ -415,11 +490,12 @@ def _model_said(p) -> str:
     elif pin:
         add = ('<p class="muted">A second model was asked which line does this, but its quote was '
                'not found in the file, so its answer is not shown.</p>')
-    return (f'<div class="said"><h3>What the model said:</h3><p>{esc(said)}{score}.</p>{add}'
+    means = f"<p>{esc(R.DO_MEANS)}</p>" if p.get("kind") == "label" else ""  # review C34
+    return (f'<div class="said"><h3>What the model said:</h3><p>{esc(said)}{score}.</p>{means}{add}'
             f'<p class="muted">{note}</p></div>')
 
 
-def _card(p, k, n, lines, secret, text_href) -> str:
+def _card(p, k, n, lines, secret, text_href, text_dir=None, secret_files=()) -> str:
     parts = p.get("parts") or [p]
     stages = list(dict.fromkeys(m["stage"] for m in parts if not m["model"])) or [p["stage"]]
     tag = "".join(f'<span class="tag">{esc(S.PLAIN_STAGE[R.ORDER[st - 1]])}</span>' for st in stages)
@@ -440,9 +516,10 @@ def _card(p, k, n, lines, secret, text_href) -> str:
             f'<div class="place-h">{tag}{model}'
             f'<span class="num">Place {k} of {n}</span></div>'
             f'<h2>{esc(p["title"])}{more}</h2>'
-            f'{_links(p, text_href) or plain_where}'
+            f'{_links(p, text_href) or plain_where}{_decide(p)}'
             f'{"".join(_model_said(m) for m in reads)}'
-            f'{_flagged(p)}{context_html(p, lines, secret)}'  # what was flagged above the text (owner, 2026-10-13)
+            f'{_flagged(p)}{_enforced(p)}{_pointed(p, text_dir, secret_files)}'
+            f'{context_html(p, lines, secret)}'  # what was flagged above the text (owner, 2026-10-13)
             f'<div class="marks" role="group" aria-label="Your mark">{marks}</div>'
             f'<label class="note-l">Note (optional)<textarea class="note" rows="2"></textarea></label>'
             f'</article>')
@@ -496,7 +573,7 @@ def render_page(meta, r, text_dir=None, text_href=None, marks=None, marks_error=
         if p.get("file") not in cache:
             cache[p.get("file")] = read_lines(text_dir, p.get("file"))
         cards.append(_card(p, k, len(ps), cache[p.get("file")], p.get("file") in secret,
-                           text_href))
+                           text_href, text_dir, secret))
     n_det = sum(1 for p in ps if not p["model"])
     n_mod = len(ps) - n_det
     lede = (f"Walkdown flagged {R.n(n_det, 'place')} in this repository"
@@ -611,6 +688,9 @@ mark {{ background: var(--hit); color: inherit; border-radius: 2px; padding: 0 1
 .flagged h3, .said h3 {{ font: 600 .95rem/1.3 var(--body); margin: .9rem 0 .3rem; }}
 .said p {{ margin: .2rem 0; max-width: 72ch; }}
 .said h3, .flagged h3 {{ text-decoration: underline; text-underline-offset: .2em; }}
+.enforced h3, .pointed h3 {{ font: 600 .95rem/1.3 var(--body); margin: .9rem 0 .3rem; text-decoration: underline; text-underline-offset: .2em; }}
+.enforced p {{ margin: .2rem 0; max-width: 72ch; }}
+.decide {{ margin: .6rem 0 .2rem; padding: .45rem .7rem; border-left: 3px solid var(--accent); background: var(--quote-bg); max-width: 72ch; }}
 .flagged ul {{ margin: 0; padding-left: 1.2rem; display: grid; gap: .3rem; max-width: 72ch; }}
 .flagged h4 {{ font: 600 .92rem/1.3 var(--body); margin: .6rem 0 .25rem; }}
 .place h2 .more {{ font: 400 .9rem var(--body); color: var(--muted); }}

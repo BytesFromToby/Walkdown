@@ -308,6 +308,215 @@
           }
         }
       ]
+    },
+    {
+      "root": "license-repo",
+      "expect": [
+        {
+          "id": "inv-lic-root-mit",
+          "polarity": "gate",
+          "check": "inv.license",
+          "file": "LICENSE",
+          "match": {
+            "license": {
+              "eq": "MIT"
+            },
+            "source": {
+              "eq": "file"
+            }
+          },
+          "note": "Top-level LICENSE with the MIT permission grant. Matched by its text, not its title."
+        },
+        {
+          "id": "inv-lic-field-pkg",
+          "polarity": "gate",
+          "check": "inv.license",
+          "file": "package.json",
+          "match": {
+            "license": {
+              "eq": "Apache-2.0"
+            },
+            "source": {
+              "eq": "field"
+            }
+          },
+          "note": "package.json declares a different license than the LICENSE file. Both are reported; the disagreement is the reader's to see."
+        },
+        {
+          "id": "inv-lic-skill-file",
+          "polarity": "gate",
+          "check": "inv.license",
+          "file": "skills/apache-skill/LICENSE.txt",
+          "match": {
+            "license": {
+              "eq": "Apache-2.0"
+            }
+          },
+          "note": "A per-skill license file in a subfolder (skills often ship one each)."
+        },
+        {
+          "id": "inv-lic-frontmatter",
+          "polarity": "gate",
+          "check": "inv.license",
+          "file": "skills/apache-skill/SKILL.md",
+          "match": {
+            "source": {
+              "eq": "field"
+            },
+            "stated": {
+              "contains": "LICENSE.txt"
+            }
+          },
+          "note": "A SKILL.md frontmatter license field that points at a file rather than naming a license: recorded verbatim, no id."
+        },
+        {
+          "id": "inv-lic-unrecognized",
+          "polarity": "gate",
+          "check": "inv.license",
+          "file": "skills/closed/LICENSE.md",
+          "match": {
+            "license": {
+              "eq": null
+            },
+            "stated": {
+              "contains": "All rights reserved"
+            }
+          },
+          "note": "A license file that matches no known license: reported with its first line so the reader sees what it says."
+        },
+        {
+          "id": "inv-lic-gpl-not-agpl",
+          "polarity": "gate",
+          "check": "inv.license",
+          "file": "vendor/LICENSE-GPL",
+          "match": {
+            "license": {
+              "eq": "GPL-3.0"
+            }
+          },
+          "note": "GPL-3.0 text mentions the Affero license in section 13; the title decides, so it must not read as AGPL."
+        },
+        {
+          "id": "inv-lic-toml",
+          "polarity": "gate",
+          "check": "inv.license",
+          "file": "tools/pyproject.toml",
+          "match": {
+            "license": {
+              "eq": "MIT"
+            },
+            "source": {
+              "eq": "field"
+            }
+          },
+          "note": "pyproject.toml [project] license as a {text = ...} table."
+        },
+        {
+          "id": "inv-lic-neg-notes",
+          "polarity": "negative",
+          "check": "inv.license",
+          "file": "docs/licensing.md",
+          "note": "A doc about licensing that quotes MIT wording. Not a license file by name; never read."
+        },
+        {
+          "id": "inv-lic-neg-code",
+          "polarity": "negative",
+          "check": "inv.license",
+          "file": "src/license.py",
+          "note": "Code named license.py is not a license file."
+        },
+        {
+          "id": "inv-lic-neg-readme",
+          "polarity": "negative",
+          "check": "inv.license",
+          "file": "README.md",
+          "note": "README says 'MIT licensed'. Stage 1 does not read prose for a license."
+        }
+      ],
+      "deferred": [],
+      "fixtures": {
+        "docs/licensing.md": "6348920da3ccc37f7bffcd04b0dca6975fac3434330c746cbde0166a6c4016e9",
+        "LICENSE": "3a2734d62549b92de4ccde4efc8a7e787883b154b7d8268cb7a946a63ff9b011",
+        "package.json": "ea577023fb69f2bf7832afc91146a01f9ace2e3ce7ce0d0b1be5e53b016eb464",
+        "README.md": "5c4e6777f00998d5c4e2c9199f09ce86c364ba083f7f8639ef29cc2ce7d5f7dc",
+        "skills/apache-skill/LICENSE.txt": "ac8b08e98ca953ba90c69dbdd56bae14f708f21d9c8c5c6c61e3ebeb99bee5ef",
+        "skills/apache-skill/SKILL.md": "788eaf23b6848f794ca8d1698b730ab3a8f2c3159d5cecb91e117460433f84e1",
+        "skills/closed/LICENSE.md": "8fd329b13efe7dcc46d8040eb0d26eebac88512fe9ead32145c593f36465fbba",
+        "src/license.py": "23f92bc832ce25d8aad9ba08e2edd4ad83783ea9f924b044bab8cda126493d42",
+        "tools/pyproject.toml": "d4bc81359908444c55595b127cedfda13839d5b4ee52d90f8bd0fe59470c5323",
+        "vendor/LICENSE-GPL": "5c7460d28512d559343d6647570085a09a9809237ddecb024398528473821bea"
+      }
+    },
+    {
+      "root": "class16-cursor-env",
+      "expect": [
+        {
+          "id": "inv-16c-install",
+          "polarity": "gate",
+          "check": "struct.hooks",
+          "file": ".cursor/environment.json",
+          "match": {
+            "event": {
+              "eq": "install"
+            },
+            "command": {
+              "contains": "| bash"
+            },
+            "line": {
+              "eq": 3
+            }
+          },
+          "note": "Cursor runs a committed .cursor/environment.json for its cloud agents: install when it builds the machine, start and terminals when an agent boots (cursor.com/docs/cloud-agent/setup). A command the host runs without anyone asking, recorded like a hook, with the line of its key."
+        },
+        {
+          "id": "inv-16c-start",
+          "polarity": "gate",
+          "check": "struct.hooks",
+          "file": ".cursor/environment.json",
+          "match": {
+            "event": {
+              "eq": "start"
+            },
+            "line": {
+              "eq": 4
+            }
+          }
+        },
+        {
+          "id": "inv-16c-terminal",
+          "polarity": "gate",
+          "check": "struct.hooks",
+          "file": ".cursor/environment.json",
+          "match": {
+            "event": {
+              "eq": "terminal: dev server"
+            },
+            "command": {
+              "eq": "bun run dev"
+            }
+          }
+        },
+        {
+          "id": "inv-16c-count",
+          "polarity": "gate",
+          "check": "struct.hooks",
+          "file": ".cursor/environment.json",
+          "count": 3,
+          "note": "One row per command: install, start, and the one terminal; the _fixture key is not a command."
+        },
+        {
+          "id": "inv-16c-neg-path",
+          "polarity": "negative",
+          "check": "struct.hooks",
+          "file": "config/environment.json",
+          "note": "The same keys outside .cursor/: no host reads it, so no host-run row."
+        }
+      ],
+      "deferred": [],
+      "fixtures": {
+        ".cursor/environment.json": "11bc8d90e9a09bc0051ab6396a670c93bbed2a80eda8424198920ffe8f1cd3cb",
+        "config/environment.json": "e2a434398a9850853eaad827077ef00f04920e5f12bfaa432c497a7b5656106d"
+      }
     }
   ]
 }

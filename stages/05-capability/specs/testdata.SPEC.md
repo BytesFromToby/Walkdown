@@ -13,7 +13,9 @@ Stage 1 to 4 reports. Test data is decided by stage 4's `audience.is_test_data` 
 
 - `loaded_pairs(reports)`: one `cap.pair` with `pair: testdata+loaded` per `graph.depth`
   finding whose file is test data, `via: static`, and whose `from` is not test data and has
-  path audience `model` or `subagent`. `from` names the referencing file.
+  path audience `model` or `subagent`. `from` names the referencing file; `from_line` the line
+  there that names it, from the graph's static edge (None without the graph; added 2026-10-18,
+  review C36).
 - `set_aside(reports, loaded)`: a copy of the reports without stage 1 findings on a test-data
   path and stage 4 findings with audience `test-data`, except files in `loaded`; and one
   `cap.testdata` finding counting what was removed (none when nothing was).
@@ -30,5 +32,6 @@ Stage 1 to 4 reports. Test data is decided by stage 4's `audience.is_test_data` 
 
 1. Test data is removed from stages 1 and 4 and counted.
 2. Loaded test data is kept and paired; references from human-facing or test files are not.
+   With the graph, the pair records `from_line` (`test_loaded_pair_records_the_line_that_points_at_it`).
 3. Fixture `testdata-only`: no legs or install grants from samples under tests/.
 4. Fixture `testdata-loaded`: the pair appears and the loaded file's text counts.

@@ -17,6 +17,7 @@ import conditionals  # noqa: E402
 import position  # noqa: E402
 import secret_scan  # noqa: E402
 import endpoints  # noqa: E402
+import restrictions  # noqa: E402
 import rubric  # noqa: E402
 import terms  # noqa: E402
 from audience import audience  # noqa: E402
@@ -34,7 +35,7 @@ LIMITS = [
 MARKDOWN_EXTS = (".md", ".markdown", ".mdc")
 INSTRUCTION_AUDIENCES = ("model", "subagent")
 PART2_ORDER = ["rubric.action", "endpoint.host", "cond.branch", "term.def", "term.conflict",
-               "term.safety", "pos.density", "rep.sentence", "secret.found"]
+               "term.safety", "pos.density", "rep.sentence", "secret.found", "limit.setting"]
 
 
 
@@ -114,7 +115,11 @@ def mask_secret_lines(findings: list[dict]) -> None:
     lines = {(f["file"], f["line"]) for f in findings
              if f.get("check") == "secret.found" and "skipped" not in f}
     for f in findings:
-        if (f.get("file"), f.get("line")) not in lines or f.get("check") == "secret.found":
+        if f.get("check") == "secret.found":
+            continue
+        # a wrapped finding quotes its next line too (review C37)
+        span = {f.get("line"), f.get("end_line")} if f.get("wrapped") else {f.get("line")}
+        if not any((f.get("file"), n) in lines for n in span):
             continue
         for k in TEXT_FIELDS:
             if isinstance(f.get(k), str):
@@ -142,7 +147,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None) -> tuple[dict, di
     findings: list[dict] = []
     not_scanned: list[dict] = []
     scanned = 0
-    rb, cond, defs, occ = [], [], [], []
+    rb, cond, defs, occ, lims = [], [], [], [], []
     texts: dict[str, tuple] = {}  # rel -> (audience, raw lines, bytes): position and repetition
     for row in files:
         rel = row["file"]
@@ -179,6 +184,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None) -> tuple[dict, di
         rb.extend(rubric.rubric_file(rel, raw, folded, instr, aud, rows, vocab))
         cond.extend(conditionals.cond_file(rel, raw, folded, instr, aud, vocab))
         defs.extend(terms.defs_file(rel, raw, folded, instr, aud, vocab))
+        lims.extend(restrictions.limit_file(rel, raw, folded, aud))  # review C32
         for n, line in enumerate(folded, start=1):
             where = "instructions" if n in instr else "docs" if aud == "human" else "code"
             for host, addr in endpoints.addresses_in_line(line, vocab):
@@ -193,7 +199,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None) -> tuple[dict, di
     p2 = (rb + endpoints.census(occ, vocab) + cond + defs + terms.conflicts(defs)
           + terms.safety(defs, vocab)
           + position.density(texts, findings) + position.repetition(texts, findings)
-          + secret_scan.scan(input_dir, {rel: t[0] for rel, t in texts.items()}))
+          + secret_scan.scan(input_dir, {rel: t[0] for rel, t in texts.items()}) + lims)
     p2.sort(key=lambda f: (PART2_ORDER.index(f["check"]), f["file"] or "", f["line"] or 0))
     mask_secret_lines(findings + p2)
     findings = findings + p2

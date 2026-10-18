@@ -239,3 +239,16 @@ Standard library only. No new packages without a note to the user.
   agent tool `mcp__<service>__...` for one (`CONNECTOR_NAMES` in `rules.py`).
 - Neither source counts toward **Sends data out**: bringing code in or reading an account
   sends nothing.
+
+
+## Stated limits (added 2026-10-17, review C32)
+
+`limits.py` adds `cap.limit`: each read-only line a model reads (a `B.safety-adjective` hit or a
+`term.safety` definition naming read-only or no side effects) with what could back it, from stage
+1 and 4 findings only. Backed by a restricting `limit.setting` on the same line, or by the owner's
+tools list (the file itself when it is a skill, agent, or command; else the nearest skill's
+`SKILL.md`) when that list has no writing tool and no Bash; contradicted when the owner's list can
+write; stated otherwise. Other routes in the same skill folder that can write (a setting that
+grants writing, an agent with no tools list or a write-capable one) are listed. It never says a
+limit is broken: a static read cannot see whether a setting is used at run time. Fixture:
+`Fixtures/05-capability/limits-repo/`. Spec: `specs/limits.SPEC.md`.

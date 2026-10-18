@@ -77,6 +77,7 @@ emits it.
 | `struct.hooks` | hook entry (event + matcher) | `event`, `matcher`, `command` |
 | `struct.manifests` | set of platform manifests for one plugin | `files`: list; `divergent`: bool (declared permissions differ) |
 | `struct.mcp` | MCP server declared under `mcpServers` in any config (manifest, `.mcp.json`, settings) (added 2026-09-29) | `name`, `transport` (`stdio`, `http`, ...), `command` (command and args), `url`, `env_keys` (names only, never values) |
+| `inv.license` | a license file (by name: `LICENSE`, `COPYING`, ...) or a declared license field (frontmatter, `package.json`, plugin manifests, `pyproject.toml`, `Cargo.toml`) (added 2026-10-17) | `source`: `file` or `field`; `field`: the key, for a field; `license`: SPDX id or null when not recognized; `how`: `spdx-tag`, `text`, `title`, `field`, or null; `stated`: the declared value verbatim, or an unrecognized file's first line |
 | `struct.census` | structural flag on a file | `flag`: one of `reader-window`, `long-line`, `ext-magic-mismatch`, `bom`, `archive`, `symlink`; `detail`: free text (threshold, column, detected type) |
 
 ### Stage 2: reader (`02-reader`)
@@ -104,7 +105,10 @@ emits it.
 
 One check per PHRASES set or detector. Every finding carries `quote` (the
 original line, verbatim) and may carry `audience` (`model`, `subagent`, `human`,
-`tool`, `test-data` (added 2026-10-02)).
+`tool`, `test-data` (added 2026-10-02)). A phrase finding with `wrapped: true` (added
+2026-10-18, review C37) is a hit on a Markdown line joined with the next line of its paragraph,
+that neither line hits alone: `line` is where it starts, `end_line` the next line, and `quote`
+both lines, joined by a newline.
 
 | Check | Sub-group | Class |
 |---|---|---|
@@ -137,6 +141,7 @@ same report after the phrase findings:
 | `pos.density` | model-read file over the reader window with phrase hits (`line` null; added 2026-10-04, REPORTING 4.4) | `lines`; `first10`, `middle80`, `last10`; `window_line`; `beyond_window`; `beyond_lines` |
 | `secret.found` | file and line that looks like a committed secret (added 2026-10-04) | `kinds`; `engine`: `gitleaks` or `detect-secrets`; `audience`. Never the value. Other stage 4 findings on that line carry `masked: true` and their text replaced |
 | `rep.sentence` | sentence repeated across two or more model-read prose files (first occurrence; added 2026-10-04, REPORTING 4.5) | `sentence`; `files`; `count`; `where`: list of `{file, line}`; `patterns` |
+| `limit.setting` | flag or setting that restricts what tools an agent can use, any audience (added 2026-10-17, review C32; a fact, never a risk) | `kind`: `tools-flag`, `deny`, `sandbox`, `permission-mode`; `tools` (list; tools-flag and deny); `value` (sandbox and permission-mode); `rules_out`: list of `write`, `shell`, `network`; `grants_write`: bool; `audience`; `quote` |
 
 Stage 4 findings also carry `patterns`: the stable ids of the rows in
 `stages/04-phrases/patterns.yaml` that hit the line (added 2026-09-29; stage 5
@@ -160,7 +165,8 @@ Derived from stages 1 to 4; no new detection. `evidence` is a list of
 | `cap.injection` | path by which text reaches context at load | `mechanism`: `description` or `hook`; `event` (hooks); `bytes`: int or null; `basis`: `exact`, `estimate`, `unknown` |
 | `cap.load-bytes` | hook config, one per host (`file` the config; null when no hook injects at load) | `bytes`; `basis`; `unknown_parts` |
 | `cap.posture` | agent or command definition | `tools`; `posture`: list of `read`, `write`, `execute`, `network`, `delegate`, `all`, `other`; `least_privilege`: bool; `description` |
-| `cap.pair` | phrase hit on an orphan, a dynamic-only file, or hidden text; or test data a model-read file references | `pair`: `orphan+phrase`, `dynamic+phrase`, `hidden+phrase`, `hook+phrase` (added 2026-09-29), `testdata+loaded` (added 2026-10-02: `file` is the test-data file, `from` the model-read file referencing it; no `phrase_check` or `quote`), `image+loaded` (added 2026-10-07: `file` is an image a model-read file references or loads, never from a config file; `from` the first such file, `froms` all; `read`: `svg`, `ocr-text`, `ocr-empty`, or `unread` with `reason`; no `phrase_check` or `quote`); `phrase_check`; `patterns`; `quote`; `evidence` |
+| `cap.pair` | phrase hit on an orphan, a dynamic-only file, or hidden text; or test data a model-read file references | `pair`: `orphan+phrase`, `dynamic+phrase`, `hidden+phrase`, `hook+phrase` (added 2026-09-29), `testdata+loaded` (added 2026-10-02: `file` is the test-data file, `from` the model-read file referencing it, `from_line` the line there that names it (added 2026-10-18); no `phrase_check` or `quote`), `image+loaded` (added 2026-10-07: `file` is an image a model-read file references or loads, never from a config file; `from` the first such file, `from_line` its line (added 2026-10-18), `froms` all; `read`: `svg`, `ocr-text`, `ocr-empty`, or `unread` with `reason`; no `phrase_check` or `quote`); `phrase_check`; `patterns`; `quote`; `evidence` |
+| `cap.limit` | read-only wording in instruction text, paired with what could back it (added 2026-10-17, review C32) | `limit`: `read-only`; `quote`; `status`: `backed`, `contradicted`, or `stated`; `backed_by`: `flag`, `tools-list`, or null; `flags`: setting kinds on the line; `owner`: the skill, agent, or command file that owns the line; `owner_tools`; `other_routes`: `{file, line, what}` that can write in the same skill folder; `other_route_at`; `evidence` |
 | `cap.testdata` | run (`file`: null), only when test data was set aside (added 2026-10-02) | `stage1`, `stage4`: findings set aside from each stage; `top_folders`: up to five top-level folders they were in |
 
 ### Additional fields (documented 2026-10-04)
@@ -178,10 +184,11 @@ the contract from here on:
 | `inv.pin` | `magic_backend` | the content-type detector used (`python-magic` or the built-in fallback) |
 | `inv.pin` | `reader_window` | `{lines, bytes}`: the published reader-window thresholds |
 | `inv.pin` | `long_line_limit` | the long-line threshold in characters |
+| `inv.pin` | `license_checked` | true when the run had the `inv.license` check (2026-10-17), so a report can tell "no license found" from "not checked" |
 | `inv.file` | `exec_source` | where the executable bit came from: `git-index`, `stat`, or `stat-windows` (which reflects the extension, not a mode bit) |
 | `struct.description` | `loader`, `loaders_disagree` | `yaml` or `first-colon`: how the description was read; true when the two readings differ |
 | `struct.agent-tools` | `field`, `kind` | the frontmatter key that granted tools; `agent` or `command` |
-| `struct.hooks` | `format`, `commands`, `types`, `async` | `nested` or `flat` hook config; each command, its type, and its async flag (nested format) |
+| `struct.hooks` | `format`, `commands`, `types`, `async`, `host` | `nested` or `flat` hook config, or `cursor-environment` (a command in `.cursor/environment.json`, added 2026-10-17); each command, its type, and its async flag (nested format); `host` `cursor-cloud` when the command runs on Cursor's cloud machine, never the user's computer |
 | `struct.manifests` | `name`, `grants` | the plugin name; `{manifest: [grants]}` per manifest |
 | `struct.census` | `length`, `detected` | a long line's length; the content type the bytes reveal (extension mismatch, archive) |
 | `read.divergence` | `chars`, `page`, `paragraph`, `text_line`, `used` | invisible code points found; PDF page; DOCX paragraph; line in the extracted text for formats without source lines; whether a Markdown reference definition is used |

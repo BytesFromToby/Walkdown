@@ -160,3 +160,12 @@ approve, permission, sandbox, allowed (METHOD). Fields: `term`. Always surfaced.
    undocumented hosts, local hosts; conditionals by kind (PHRASES: superpowers
    carries 19 harness conditionals); definitions, conflicts, safety definitions
    (THREATS 14: superpowers has 6 "means" hits, 0 conflicts).
+
+
+## Settings that restrict tools (added 2026-10-17, review C32)
+
+`restrictions.py` adds the `limit.setting` table: every `--tools` list, `--disallowedTools` or JSON
+deny list, `--sandbox` mode, and `--permission-mode` a line names, in any file, with what it rules
+out (write, shell, network) and whether it allows writing. A fact for stage 5's stated limits,
+never a risk. `--allowedTools` is not a restriction. Fixture rows `p2-lim-*` in
+`part2-repo/scripts/review.sh`. Spec: `specs/restrictions.SPEC.md`.

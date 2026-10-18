@@ -1025,6 +1025,87 @@
           "check": "phrase.L.override",
           "file": "class11-nul-split.md",
           "line": 9
+        },
+        {
+          "id": "ph-wrap-gate-7",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 7,
+          "match": {
+            "patterns": {
+              "includes": "E.persist-target"
+            },
+            "wrapped": {
+              "eq": true
+            },
+            "end_line": {
+              "eq": 8
+            }
+          },
+          "note": "Stage 4 matches one line at a time; an instruction hard-wrapped across two lines of one paragraph is caught by the wrap pass, cited at the line where it starts (review C37)."
+        },
+        {
+          "id": "ph-wrap-gate-10",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 10,
+          "match": {
+            "patterns": {
+              "includes": "E.persist-target"
+            },
+            "wrapped": {
+              "eq": true
+            }
+          }
+        },
+        {
+          "id": "ph-wrap-gate-13",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "wrapped-lines.md",
+          "line": 13,
+          "match": {
+            "patterns": {
+              "includes": "L.skip-confirm"
+            },
+            "wrapped": {
+              "eq": true
+            }
+          }
+        },
+        {
+          "id": "ph-wrap-gate-18",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 18,
+          "note": "The same instruction on one line is caught by the line pass, as before."
+        },
+        {
+          "id": "ph-wrap-neg-22",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 22,
+          "note": "Verb and target in two sentences: the sentence span stops at the full stop."
+        },
+        {
+          "id": "ph-wrap-neg-25",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 25,
+          "note": "The next line starts a list item: a new block, never joined."
+        },
+        {
+          "id": "ph-wrap-neg-29",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 29,
+          "note": "Inside a fenced code block: never joined."
         }
       ],
       "deferred": [],
@@ -1055,6 +1136,7 @@
         "part2-repo/README.md": "edc1129c857147888b767103151bdfee36f58d491ab4091b0483b5c134e8daf1",
         "part2-repo/references/style.md": "a79c0c83d7e8a99bf4a8170518819a0fef367162336b9b1521b3f705bb33f11b",
         "part2-repo/scripts/post.sh": "483f1559b935b0f47f46fc6fb7e61e24e8da213e27e015508d0628ede2c80ccd",
+        "part2-repo/scripts/review.sh": "31131b56ed08eccc51db9c75923ae6510d46f5aacbc6f000746b7462c5c79f09",
         "part2-repo/SKILL.md": "9edaeb794fc940d1f411fc82e70e83d570665836f4b5e55c2f806985f8d87cf0",
         "position-repo/skills/a/meta.json": "a1bb0050f42a9940652e5b182d53e0fdf3c9c67acdf7d27cdfbdaeb025c61727",
         "position-repo/skills/a/SKILL.md": "27b88ee5b18a42b3af6507f6723beed4a111f2ca4a0a4173ff0c1e706f0d9b6e",
@@ -1063,7 +1145,8 @@
         "position-repo/skills/long/SKILL.md": "d69dfafa94c0b4012db359821fcca4cc3c340251d16cea968d6372071011370f",
         "secrets-repo/notes.md": "e0176ca0d9c22e171fd6cf05cfae5aafb976e9b4eadbfabf89a0cee16fbb9dd5",
         "secrets-repo/package-lock.json": "a64daf7505864c82834460ddc8ce9eaa718f584e5d4cb97658e5b0fde52aedd9",
-        "secrets-repo/SKILL.md": "7c2f14b0c5eb6f4aab5c6f83a2bc66000640d3d3953989510bed24365ecbc0f6"
+        "secrets-repo/SKILL.md": "7c2f14b0c5eb6f4aab5c6f83a2bc66000640d3d3953989510bed24365ecbc0f6",
+        "wrapped-lines.md": "0a5d29dca512569cc7403d82c096523591fac9a4201feba644bcc3ff4b58493e"
       }
     },
     {
@@ -1072,6 +1155,7 @@
         "README.md": "edc1129c857147888b767103151bdfee36f58d491ab4091b0483b5c134e8daf1",
         "references/style.md": "a79c0c83d7e8a99bf4a8170518819a0fef367162336b9b1521b3f705bb33f11b",
         "scripts/post.sh": "483f1559b935b0f47f46fc6fb7e61e24e8da213e27e015508d0628ede2c80ccd",
+        "scripts/review.sh": "31131b56ed08eccc51db9c75923ae6510d46f5aacbc6f000746b7462c5c79f09",
         "SKILL.md": "9edaeb794fc940d1f411fc82e70e83d570665836f4b5e55c2f806985f8d87cf0"
       },
       "expect": [
@@ -1299,6 +1383,173 @@
           "check": "term.def",
           "file": "references/style.md",
           "line": 6
+        },
+        {
+          "id": "p2-lim-tools",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 3,
+          "match": {
+            "kind": {
+              "eq": "tools-flag"
+            },
+            "tools": {
+              "same_items": [
+                "Read",
+                "Grep",
+                "Glob"
+              ]
+            },
+            "rules_out": {
+              "same_items": [
+                "write",
+                "shell",
+                "network"
+              ]
+            },
+            "grants_write": {
+              "eq": false
+            }
+          },
+          "note": "A flag or setting that restricts what tools an agent can use (review C32): a fact for stage 5 to pair with read-only wording; never a risk on its own."
+        },
+        {
+          "id": "p2-lim-tools-bash",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 4,
+          "match": {
+            "kind": {
+              "eq": "tools-flag"
+            },
+            "rules_out": {
+              "same_items": []
+            },
+            "grants_write": {
+              "eq": true
+            }
+          },
+          "note": "Bash can write and reach the network, so this list rules nothing out."
+        },
+        {
+          "id": "p2-lim-tools-empty",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 5,
+          "match": {
+            "kind": {
+              "eq": "tools-flag"
+            },
+            "tools": {
+              "same_items": []
+            },
+            "rules_out": {
+              "same_items": [
+                "write",
+                "shell",
+                "network"
+              ]
+            }
+          },
+          "note": "An explicitly empty list leaves no tools."
+        },
+        {
+          "id": "p2-lim-sandbox-ro",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 6,
+          "match": {
+            "kind": {
+              "eq": "sandbox"
+            },
+            "value": {
+              "eq": "read-only"
+            },
+            "rules_out": {
+              "includes": "write"
+            }
+          }
+        },
+        {
+          "id": "p2-lim-sandbox-full",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 7,
+          "match": {
+            "kind": {
+              "eq": "sandbox"
+            },
+            "value": {
+              "eq": "danger-full-access"
+            },
+            "grants_write": {
+              "eq": true
+            },
+            "rules_out": {
+              "same_items": []
+            }
+          }
+        },
+        {
+          "id": "p2-lim-deny",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 8,
+          "match": {
+            "kind": {
+              "eq": "deny"
+            },
+            "rules_out": {
+              "same_items": [
+                "write",
+                "shell"
+              ]
+            }
+          },
+          "note": "Denies every writing tool and Bash; web tools stay, so network is not ruled out."
+        },
+        {
+          "id": "p2-lim-plan",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 9,
+          "match": {
+            "kind": {
+              "eq": "permission-mode"
+            },
+            "value": {
+              "eq": "plan"
+            },
+            "rules_out": {
+              "same_items": [
+                "write",
+                "shell"
+              ]
+            }
+          }
+        },
+        {
+          "id": "p2-lim-allowed-neg",
+          "polarity": "negative",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 10,
+          "note": "--allowedTools pre-approves tools and leaves every other tool available: no restriction."
+        },
+        {
+          "id": "p2-lim-docs-neg",
+          "polarity": "negative",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 11,
+          "note": "Names the flag with no list: not a setting."
         }
       ]
     },

@@ -69,3 +69,14 @@ def test_likely_not_secret_names_and_reserved_hosts():
 def test_hash_key_needs_a_separator_before_the_hash_word():
     from secret_scan import likely_not_secret as why
     assert why('  "avoid": "' + "ab12" * 16 + '",', ["Hex High Entropy String"]) is None
+
+
+def test_wrapped_finding_is_masked_when_its_second_line_holds_a_secret():
+    """Review C37: a wrapped finding quotes two lines; a secret on either masks it."""
+    fs = [{"check": "secret.found", "file": "a.md", "line": 3, "kinds": ["Secret Keyword"]},
+          {"check": "phrase.creds", "file": "a.md", "line": 2, "end_line": 3, "wrapped": True,
+           "quote": f"send the\nkey={FAKE}", "matches": [{"pattern": "creds.secret-name", "text": FAKE}]},
+          {"check": "phrase.creds", "file": "a.md", "line": 2, "end_line": 3, "quote": "a passage"}]
+    run4.mask_secret_lines(fs)
+    assert FAKE not in repr(fs) and fs[1]["masked"]
+    assert fs[2]["quote"] == "a passage" and "masked" not in fs[2]

@@ -58,14 +58,22 @@ def _item(stage, title, where, quote=None, note=None, lead=None, kind=None, src=
             "lead": lead, "kind": kind, "src": src}
 
 
+HOOK_NOTE = "A hook runs whenever the harness fires its event, without anyone asking."
+# Where a host-run command runs, by its hook format (review C31, 2026-10-17).
+HOOK_NOTES = {
+    "cursor-environment": "Cursor runs this on its own cloud machine when it sets up or starts a cloud "
+                          "agent for this repository, without anyone asking. It does not run on your "
+                          "computer.",
+}
+
+
 def first_items(r) -> list[dict]:
     """Everything the summary's points of attention name, as plain items, stage order."""
     out = []
     for h in [h for h in R.fnd(r, "01-inventory", "struct.hooks") if not R.is_test_data(h.get("file"))]:
         out.append(_item(1, "Runs commands on its own", h["file"],
                          f"{h.get('event')}: {h.get('command')}",
-                         "A hook runs whenever the harness fires its event, without anyone asking.",
-                         kind="hook", src=h))
+                         HOOK_NOTES.get(h.get("format"), HOOK_NOTE), kind="hook", src=h))
     model, _ = R._split_audience(r, R.pairs(r, "hidden+phrase"))
     for p in model:
         out.append(_item(2, R.hidden_how(p).capitalize() + ", and reads like an instruction",
@@ -272,6 +280,7 @@ READ_BY = {"model": "the AI", "subagent": "the AI", "tool": "scripts", "human": 
            "test-data": "test data"}
 LINK_SHOW = 72  # characters of an address shown in the links table; Copy takes the whole address
 LIST_MAX = 6    # files named in a line of the stats before "+N more"
+TOP_DIRS = ("", ".claude-plugin")  # where a repo's own license and manifest sit
 OWN_SECTIONS = {"hidden+phrase", "secret"}  # item kinds with a section of their own
 
 
@@ -323,7 +332,7 @@ def _cards(items) -> str:
     return f'<ol class="cards">{"".join(out)}</ol>'
 
 
-def header(meta) -> str:
+def header(meta, r=None) -> str:
     bits = [meta.get("source", ""), f"{meta.get('hash_kind', '?')} {str(meta.get('hash', ''))[:12]}",
             f"retrieved {meta.get('date', '')}", f"run {meta.get('run', '')}"]
     if meta.get("tool"):
@@ -331,7 +340,52 @@ def header(meta) -> str:
     return ('<header class="card"><div class="top"><a class="pagelink" href="review.html">'
             'Review each place →</a></div>'
             f'<h1><span class="h1-lead">Walkdown report on</span> {esc(meta["repo"])}</h1>'
-            f'<div class="meta">{"".join(f"<span>{esc(b)}</span>" for b in bits if b)}</div></header>')
+            f'<div class="meta">{"".join(f"<span>{esc(b)}</span>" for b in bits if b)}</div>'
+            f'{license_line(r) if r is not None else ""}</header>')
+
+
+
+def _dir(path: str) -> str:
+    return path.rsplit("/", 1)[0] if "/" in path else ""
+
+
+def license_line(r) -> str:
+    """The licenses the repo states (stage 1 inv.license, class demo feedback 2026-10-17): the
+    top-level license file first, then any other license stated elsewhere. Says which license
+    text a file matches, never what it allows. A run made before the check says nothing."""
+    pin = (R.fnd(r, "01-inventory", "inv.pin") or [{}])[0]
+    if not pin.get("license_checked"):
+        return ""
+    rows = [x for x in R.fnd(r, "01-inventory", "inv.license") if not R.is_test_data(x["file"])]
+    files = [x for x in rows if x.get("source") == "file" and _dir(x["file"]) in TOP_DIRS]
+    fields = [x for x in rows if x.get("source") == "field" and _dir(x["file"]) in TOP_DIRS]
+    if files:
+        lead = files
+        line = "License: " + "; ".join(
+            f"{x['license']} ({x['file']})" if x.get("license") else
+            f"{x['file']} is not a license Walkdown recognizes; it begins “{x.get('stated') or ''}”"
+            for x in files) + "."
+    elif fields:
+        lead = fields
+        line = ("No license file at the top level; " +
+                "; ".join(f"{x['file']} says {x.get('stated')}" for x in fields) + ".")
+    else:
+        lead = []
+        line = "No license found: no license file and no license field at the top level."
+    shown = {x.get("license") for x in lead}
+    also, unknown = collections.defaultdict(list), []
+    for x in rows:
+        if x in lead:
+            continue
+        if x.get("license") and x["license"] not in shown:
+            also[x["license"]].append(x["file"])
+        elif not x.get("license") and x.get("source") == "file":
+            unknown.append(x["file"])
+    if also:
+        line += " Also stated: " + "; ".join(f"{k} ({_files(v)})" for k, v in sorted(also.items())) + "."
+    if unknown:
+        line += f" {R.n(len(unknown), 'other license file')} Walkdown does not recognize ({_files(unknown)})."
+    return f'<p class="license">{esc(line)}</p>'
 
 
 def trifecta(r) -> str:
@@ -373,7 +427,9 @@ def gets_in(r) -> str:
         (have if present else lack).append((name, detail))
 
     row("Runs commands on its own",
-        [f"{h.get('event')}: {h.get('command')} ({h['file']})" for h in hooks[:4]]
+        [f"{h.get('event')}: {h.get('command')} ({h['file']}"
+         + ("; runs on Cursor's cloud machine, not your computer" if h.get("host") == "cursor-cloud" else "")
+         + ")" for h in hooks[:4]]
         + ([f"+{len(hooks) - 4} more"] if len(hooks) > 4 else []),
         bool(hooks) or "exec-at-load" in grants)
     desc = [i for i in R.fnd(r, "05-capability", "cap.injection") if i.get("mechanism") == "description"]
@@ -392,7 +448,8 @@ def gets_in(r) -> str:
     inherit = [a for a in agents if not a.get("tools")]
     row("Agents with their own tools",
         f"{R.n(len(agents), 'agent or command definition')}"
-        + (f", {len(inherit)} with no tools list (they can use every tool the AI has)" if inherit else ""),
+        + (f", {len(inherit)} with no tools list (they can use every tool the AI has; "
+           f"{R.CAPABILITY_ONLY})" if inherit else ""),
         bool(agents))
     lis = "".join(f'<li><span class="g-name">{esc(n)}</span>'
                   + "".join(f'<span class="g-detail">{esc(x)}</span>'
@@ -608,7 +665,8 @@ def risky(r, items, model_items) -> str:
         do = sum(1 for x in labels if x["label"] == "do")
         lines.append(f"A second opinion ({labels[0].get('backend')}) read {do} of the {len(labels)} lines "
                      "the AI reads as a real instruction to do the flagged thing, and the rest as "
-                     "something else (a description, a quote, or the words in another sense).")
+                     "something else (a description, a quote, or the words in another sense). Such a "
+                     "read says a line tells the AI to do it; it does not say doing it is harmful.")
     rub = R.fnd(r, "04-phrases", "rubric.action")
     if rub:
         unconf = sum(1 for x in rub if not x.get("confirmation") and not x.get("negated_action"))
@@ -616,6 +674,13 @@ def risky(r, items, model_items) -> str:
         lines.append(f"Actions that should ask you first (sending, publishing, paying, entering passwords): "
                      f"{len(rub)} in text the AI follows, {unconf} with no step asking you"
                      + (f", {forbid} where the text forbids the action" if forbid else "") + ".")
+    lim = R.fnd(r, "05-capability", "cap.limit")
+    if lim:  # review C32
+        st = collections.Counter(x.get("status") for x in lim)
+        lines.append(f"Read-only wording the AI follows: {_count(len(lim), 'line')}; {st['backed']} backed by a "
+                     f"tool setting, {st['stated']} stated in the text only, {st['contradicted']} where the "
+                     "owner's tools list can write. A static read cannot see whether a setting is used at run "
+                     "time.")
     body = "".join(_p(x) for x in lines) if lines else _empty("No line matches the wording of a risky request.")
     listed = [it for it in items if it.get("kind") not in OWN_SECTIONS]
     if listed:
@@ -692,7 +757,7 @@ def render_page(meta, r, stamps, notes, runs_ok, changes_since=None) -> str:
     every = grouped(first_items(r))
     items = [it for it in every if it["stage"] != 6]
     model_items = [it for it in every if it["stage"] == 6]
-    body = [header(meta), trifecta(r), stats(r), links(r), hidden(r, items), secrets(r, items),
+    body = [header(meta, r), trifecta(r), stats(r), links(r), hidden(r, items), secrets(r, items),
             risky(r, items, model_items), changes(changes_since), recs(r), other(r, stamps, notes, runs_ok),
             f'<footer><p>{esc(R.NOT_WHAT)}</p></footer>']
     return ("<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
@@ -749,6 +814,7 @@ header.card { padding: 1.4rem 1.6rem 1.2rem; }
 .pagelink:hover, .pagelink:focus-visible { border-color: var(--accent); }
 h1 { font: 700 clamp(1.9rem, 4vw, 2.6rem)/1.1 var(--display); margin: .3rem 0 .6rem; text-wrap: balance; overflow-wrap: anywhere; }
 .h1-lead { color: var(--muted); font-weight: 500; }
+.license { margin: .7rem 0 0; color: var(--ink); max-width: 72ch; overflow-wrap: anywhere; }
 .meta { font: .82rem/1.5 var(--mono); color: var(--muted); display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; overflow-wrap: anywhere; }
 h2 { font: 700 1.35rem/1.2 var(--display); margin: 0 0 .7rem; }
 h3 { font: 600 1.02rem/1.3 var(--body); margin: 1.1rem 0 .5rem; }

@@ -55,6 +55,49 @@ DO_CUTOFF = 0.8
 DRIFT = 0.1
 DO_CLEAR_P = round(DO_CUTOFF + DRIFT, 2)   # listed as a real-instruction read
 DO_NEAR_P = round(DO_CUTOFF - DRIFT, 2)    # listed as near the line
+# What a "do" read means, beside its score (review C34, 2026-10-17): the label says a line tells
+# the AI to do the flagged thing; it never says the thing is harmful.
+DO_MEANS = ("The score is how sure the model is that the line tells the AI to do the flagged thing. "
+            "It does not say whether doing it is harmful: that depends on what the skill is for.")
+# An agent with no tools list (review C27, 2026-10-17): it can use every tool, and the report
+# counts that toward the legs; that is what it could do, with no evidence that it does.
+CAPABILITY_ONLY = "capability only: what it could use, with no evidence it does"
+CAPABILITY_ONLY_SHORT = "capability only"
+# Stated limits (review C32, 2026-10-17): what backs read-only wording, in plain words.
+SETTING_WORDS = {"tools-flag": "a --tools list", "deny": "a deny list", "sandbox": "a read-only sandbox",
+                 "permission-mode": "plan mode"}
+WRITE_CAPABLE = {"Write", "Edit", "MultiEdit", "NotebookEdit", "Bash"}
+
+
+def limit_words(x) -> str:
+    """Whether a tool setting backs a read-only line (stage 5 cap.limit), in plain words. It says
+    what Walkdown found, never that the limit is broken."""
+    owner, tools = x.get("owner"), x.get("owner_tools") or []
+    if x.get("status") == "backed" and x.get("backed_by") == "flag":
+        kinds = ", ".join(dict.fromkeys(SETTING_WORDS.get(k, k) for k in x.get("flags") or [])) or "a setting"
+        return (f"A setting on this line backs it: {kinds} that rules out writing. Whether the command "
+                "runs that way, only running it shows.")
+    if x.get("status") == "backed":
+        return (f"A tool setting backs it: the tools list of {owner} ({', '.join(map(str, tools))}) has "
+                "no writing tool and no shell.")
+    if x.get("status") == "contradicted":
+        w = [str(t) for t in tools if str(t).split("(")[0] in WRITE_CAPABLE or t == "*"]
+        # a fact only: "read-only" can describe something else, such as a data source (2026-10-17,
+        # Compound Engineering's "Email sources are read-only"), which no setting decides
+        return f"No tool setting backs it: the tools list of {owner} includes {', '.join(w)}."
+    return ("Stated in the text; Walkdown found no tool setting that enforces it"
+            + (f" ({owner} has no tools list)." if owner else "."))
+
+
+def limit_routes(x, cap: int = 3) -> str:
+    """Other routes in the same skill that can write, or ""."""
+    rs = x.get("other_routes") or []
+    if not rs:
+        return ""
+    shown = "; ".join(f"{r['file']}" + (f":{r['line']}" if r.get("line") is not None else "")
+                      + f" ({r['what']})" for r in rs[:cap])
+    return (f"Elsewhere in the same skill, a route can write: {shown}"
+            + (f"; +{len(rs) - cap} more" if len(rs) > cap else "") + ".")  # full.md: one per evidence line, so kept short (owner)
 # Soft D5 (2026-10-01): a stage 6 label other than "do" at p >= 0.8 marks a stage 5 evidence
 # line as "read as not an instruction" (measured: 7/7 and 9/9 right on the real lines; at
 # 0.6 three real instructions were misread). A mark never changes stage 5: the leg stays.
@@ -982,7 +1025,7 @@ def _f1(r, _):
     L += _list("Descriptions (always-on text)", fnd(r, "01-inventory", "struct.description"),
                lambda f: f"{loc(f)}: {code(f.get('text'))}")
     L += _list("Agent and command tool grants", fnd(r, "01-inventory", "struct.agent-tools"),
-               lambda f: f"{loc(f)}: tools {f.get('tools') if f.get('tools') is not None else '(none listed: inherits all)'}; "
+               lambda f: f"{loc(f)}: tools {f.get('tools') if f.get('tools') is not None else '(none listed: inherits all; ' + CAPABILITY_ONLY_SHORT + ')'}; "
                          f"job {code(f.get('description'))}")
     L += _list("Hooks", fnd(r, "01-inventory", "struct.hooks"),
                lambda f: f"{f['file']}: event {f.get('event')}, matcher {f.get('matcher')}, "
@@ -990,6 +1033,13 @@ def _f1(r, _):
     L += _list("Platform manifests", fnd(r, "01-inventory", "struct.manifests"),
                lambda f: f"{f.get('name')}: {', '.join(f.get('files', []))}; "
                          f"declared permissions differ: {'yes' if f.get('divergent') else 'no'}")
+    if pin.get("license_checked"):
+        L += _list("Licenses (license files and declared license fields)", fnd(r, "01-inventory", "inv.license"),
+                   lambda f: f"{loc(f)}: {f.get('license') or 'not recognized'}; "
+                             + (f"declared in {f.get('field')}" if f.get("source") == "field"
+                                else f"license file, matched by {f['how']}" if f.get("how") else "license file")
+                             + (f"; says {code(f.get('stated'))}"
+                                if f.get("stated") and f.get("stated") != f.get("license") else ""))
     return L
 
 
@@ -1100,6 +1150,11 @@ def _f4_part2(r):
                lambda d: f"{d['file']} ({d['lines']} lines): {d['first10']} / {d['middle80']} / "
                          f"{d['last10']}; {d['beyond_window']} past the reader window (after line "
                          f"{d['window_line']})")
+    L += _list("Settings that restrict tools (a fact, never a risk)", fnd(r, "04-phrases", "limit.setting"),
+               lambda x: f"{loc(x)}: {x.get('kind')} "
+                         f"{', '.join(x['tools']) if x.get('tools') is not None else x.get('value')}"
+                         f"; rules out {', '.join(x.get('rules_out') or []) or 'nothing'}"
+                         f"{'; allows writing' if x.get('grants_write') else ''} ({x.get('audience')})")
     L += _list("Sentences repeated across files a model reads", fnd(r, "04-phrases", "rep.sentence"),
                lambda x: f"{loc(x)}: in {x['files']} files ({x['count']} times)"
                          + (f", flagged {', '.join(x['patterns'])}" if x.get("patterns") else "")
@@ -1109,8 +1164,9 @@ def _f4_part2(r):
 
 def _ev(f, full_by_key, reads=None):
     ev = full_by_key.get(_key(f), f).get("evidence", [])
-    return [f"    - stage {e.get('stage')} {e.get('check')} {loc(e)}: {e.get('why')}{_mark(e, reads)}"
-            for e in ev]
+    return [f"    - stage {e.get('stage')} {e.get('check')} {loc(e)}: {e.get('why')}"
+            f"{' (' + CAPABILITY_ONLY_SHORT + ')' if e.get('why') == 'tool grant: inherits all' else ''}"
+            f"{_mark(e, reads)}" for e in ev]
 
 
 def _mark(e, reads) -> str:
@@ -1156,6 +1212,13 @@ def _f5(r, capability_full):
                lambda p: f"{loc(p)}: {', '.join(p.get('posture', []))}"
                          f"{' (least privilege)' if p.get('least_privilege') else ''}; "
                          f"job {code(p.get('description'))}")
+    L += _list("Stated limits: read-only wording a model reads, and what backs it",
+               fnd(r, "05-capability", "cap.limit"),
+               lambda x: f"{loc(x)}: {x.get('status')}"
+                         + (f" ({x['backed_by']})" if x.get("backed_by") else "")
+                         + f"; {limit_words(x)}"
+                         + (f" {limit_routes(x)}" if x.get("other_routes") else "")
+                         + f" {code((x.get('quote') or '').strip())}")
     L += _list("Pairs: Test data a model-read file references directly",
                pairs(r, "testdata+loaded"),
                lambda p: f"{p['file']}: referenced from {p.get('from')}")

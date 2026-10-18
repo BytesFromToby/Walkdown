@@ -41,6 +41,8 @@ meaning rewrite the code): 9 of 39.
 The summary lists a line as a real instruction only at p >= 0.9, and calls 0.7 to 0.9 "near
 the line". On the real lines, every "do" read at 0.8 or more was right: 9 of 9.
 
+What a "do" read means: at any score, it says the line tells the AI to do the flagged thing. It does not say the thing is harmful; that depends on what the skill is for, and on the rest of the report. The review cards say so beside each score.
+
 **Repeat reads drift.** The same line read twice moves by a median of 0.02, 95% of the time
 by 0.09 or less, at most 0.14; between 6% and 10% of labels change between two runs. That is
 why the report uses a band around its cutoff instead of a single line.

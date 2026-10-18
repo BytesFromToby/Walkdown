@@ -100,3 +100,30 @@ def test_mcp_servers_from_any_config():
     assert by["tasks"]["env_keys"] == ["ROOT", "TOKEN"] and "secret-value" not in str(rows)
     assert by["remote"]["transport"] == "http" and by["remote"]["url"] == "https://mcp.invalid/v1"
     assert configs.mcp_findings("x.json", {"name": "p"}) == []
+
+
+# Done when 8 (added 2026-10-17, review C31)
+CURSOR_ENV = """{
+  "install": "curl -fsSL https://x.invalid/setup.sh | bash",
+  "start": "sudo service docker start",
+  "terminals": [
+    {"name": "web", "command": "npm run dev"},
+    {"name": "notes"}
+  ],
+  "snapshot": "snap-1"
+}
+"""
+
+
+def test_cursor_environment_commands_are_host_run_rows():
+    doc = json.loads(CURSOR_ENV)
+    rows = configs.cursor_env_findings(".cursor/environment.json", doc, CURSOR_ENV)
+    assert [r["event"] for r in rows] == ["install", "start", "terminal: web"]
+    assert [r["line"] for r in rows] == [2, 3, 5]
+    assert rows[0]["command"] == "curl -fsSL https://x.invalid/setup.sh | bash"
+    assert all(r["check"] == "struct.hooks" and r["format"] == "cursor-environment"
+               and r["host"] == "cursor-cloud" and r["matcher"] is None for r in rows)
+    assert configs.cursor_env_findings("tools/x/.cursor/environment.json", doc, CURSOR_ENV)
+    assert configs.cursor_env_findings("config/environment.json", doc, CURSOR_ENV) == []
+    assert configs.cursor_env_findings(".cursor/environment.json", ["install"], "[]") == []
+    assert configs.cursor_env_findings(".cursor/environment.json", {"snapshot": "s"}, "{}") == []

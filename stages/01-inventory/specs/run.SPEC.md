@@ -21,7 +21,8 @@ stdout: one JSON document, UTF-8:
 Findings in this order: `inv.pin`; `inv.file` per entry (sorted path);
 `struct.census` (per file in path order, flags in census order); then
 `struct.description`, `struct.agent-tools`, `struct.hooks` (each in path
-order); then `struct.manifests` (by name).
+order); then `struct.manifests` (by name); then `struct.mcp`; then `inv.license`
+(path order; `specs/licenses.SPEC.md`).
 
 `inv.pin` also carries the totals METHOD asks for: `extensions` ({ext: count},
 `""` for none), `script_languages` ({language: [files]}, from the extension, or
@@ -43,6 +44,11 @@ A file whose bytes cannot be read gives an `inv.file` skip finding
 
 Each `inv.file` carries `sha256`, the hash of the file's bytes (null for a symlink), so two
 runs can tell exactly which files changed (`stages/08-report/specs/drift.SPEC.md`).
+
+## Added 2026-10-17
+
+`inv.license` findings (license files and declared license fields), and `inv.pin` carries
+`license_checked: true` so a report can tell "none found" from a run made before the check.
 
 ## Must never
 

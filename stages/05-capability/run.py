@@ -19,6 +19,7 @@ sys.path.insert(0, str(HERE))
 import inputs  # noqa: E402
 from injection import injections, load_bytes  # noqa: E402
 from legs import grants, legs  # noqa: E402
+from limits import stated_limits  # noqa: E402
 from pairs import pairs  # noqa: E402
 from posture import postures  # noqa: E402
 from rules import EVIDENCE_CAP, LIMITS  # noqa: E402
@@ -41,13 +42,13 @@ def _inside(child: Path, parent: Path) -> bool:
 
 
 def derive(reports: dict, graph: dict | None) -> list[dict]:
-    loaded = loaded_pairs(reports)
+    loaded = loaded_pairs(reports, graph)
     shown = image_pairs(reports, graph)  # before the set-aside: an image in tests/ still counts
     reports, aside = set_aside(reports, {p["file"] for p in loaded})
     lg = legs(reports)
     inj = injections(reports, graph)
     findings = lg + grants(reports, lg) + inj + load_bytes(inj) + postures(reports) \
-        + pairs(reports, graph) + loaded + shown + aside
+        + pairs(reports, graph) + loaded + shown + stated_limits(reports) + aside
     for f in findings:
         f["evidence_total"] = len(f.get("evidence", []))
     return findings

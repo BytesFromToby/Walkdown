@@ -74,7 +74,7 @@ def image_pairs(reports: dict, graph: dict | None = None) -> list[dict]:
         srcs = sorted(froms[img], key=lambda x: (x[0], x[1] or 0))
         read, reason = _read(reports, img)
         f = {"check": "cap.pair", "file": img, "line": None, "pair": "image+loaded",
-             "from": srcs[0][0], "froms": sorted({s for s, _ in srcs}), "read": read,
+             "from": srcs[0][0], "from_line": srcs[0][1], "froms": sorted({s for s, _ in srcs}), "read": read,
              "evidence": [{"stage": "03", "check": "graph.edge", "file": s, "line": ln,
                            "why": f"references {img}"} for s, ln in srcs]}
         if reason:

@@ -33,6 +33,7 @@ sheet; a builder of this stage never opens `Fixtures/ANSWERS/`.
 | 5 | `struct.agent-tools` | every agent / command definition's granted tools beside its description | METHOD "Grants"; REPORTING 1.9 |
 | 6 | `struct.hooks` | one row per hook entry: event, matcher, command | METHOD "Grants"; REPORTING 1.8 |
 | 7 | `struct.manifests` | each set of platform manifests for one plugin, and whether their declared permissions differ | METHOD "Platform manifests"; THREATS class 9 |
+| 8 | `inv.license` | each license file (by name) and declared license field, with the license it matches | class demo feedback 2026-10-17; `specs/licenses.SPEC.md` |
 
 ### Structural flags (`struct.census`)
 
@@ -65,6 +66,11 @@ sheet; a builder of this stage never opens `Fixtures/ANSWERS/`.
 - **Entry-point kinds:** `skill` (`SKILL.md`), `agent` / `command` (definitions
   above, or files under `agents/` / `commands/`), `hook-config`, `manifest`,
   `mcp-config` (`.mcp.json`), `readme`, `ci` (workflow files).
+
+Licenses (added 2026-10-17): a license file is matched against fixed license wording, a lookup
+like magic bytes, never read for meaning; READMEs are not read for a license. It records which
+license text a file carries, never what the license allows. Fixture `Fixtures/01-inventory/license-repo`
+(written with the code, not blind).
 
 ## Must never
 

@@ -39,3 +39,14 @@ def test_loaded_test_data_is_kept_and_paired():
     out, aside = testdata.set_aside(r, {"tests/a.md"})
     assert "tests/a.md" in [f["file"] for f in out["04"]["findings"]]
     assert aside[0]["stage4"] == 0
+
+
+def test_loaded_pair_records_the_line_that_points_at_it():
+    """Review C36: from_line is the line in the model-read file that names the test file."""
+    import testdata
+    r = {"03": {"findings": [{"check": "graph.depth", "file": "tests/f/setup.md", "line": None,
+                              "via": "static", "depth": 1, "from": "SKILL.md"}]}}
+    g = {"edges": [{"from": "SKILL.md", "to": "tests/f/setup.md", "line": 10, "kind": "static"}]}
+    p = testdata.loaded_pairs(r, g)[0]
+    assert (p["pair"], p["from"], p["from_line"]) == ("testdata+loaded", "SKILL.md", 10)
+    assert testdata.loaded_pairs(r)[0]["from_line"] is None

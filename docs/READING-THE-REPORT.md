@@ -46,6 +46,14 @@ stage did not run.
 "Walkdown report on" the repository, where the copy came from, the version it was pinned to, the
 run, and the Walkdown version. "Review each place" at the top right opens `review.html`.
 
+Under those, one line on the license: the license each top-level license file matches ("License:
+MIT (LICENSE)."), or that the file is not a license Walkdown recognizes and how it begins. With no
+license file it gives what a top-level `license` field says (`package.json`, a plugin manifest),
+and with neither, "No license found". "Also stated" lists any different license found in a
+subfolder or another field, such as a skill that ships its own. Walkdown matches the license's
+wording; it does not say what the license allows. Every license file and field is in `full.md`
+section 1.
+
 ### The lethal trifecta
 
 Three boxes, one per leg of what Simon Willison calls the
@@ -119,8 +127,9 @@ not checked.
 **The numbers.** How many lines match the wording of a risky request, and who reads them (the AI,
 scripts, people, test data); the matches by kind (reaching out, taking the wheel, changing the
 environment, talking to you); when a model labeled them, how many it read as a real instruction to
-do the flagged thing; and how many actions that should ask you first have no step asking you, with
-the ones the text forbids counted apart.
+do the flagged thing; how many actions that should ask you first have no step asking you, with
+the ones the text forbids counted apart; and how many read-only lines the AI follows are backed by
+a tool setting, stated in the text only, or owned by a tools list that can write.
 
 **Things to check.** The headlines, with how many places each covers; the cards are on the review
 page. Hidden text and secrets are left to their own sections.
@@ -184,9 +193,17 @@ passage of several lines stays on its own card.
 
 **On each card**: the file and line, linked to the text this run read; "What was flagged", one
 block per finding, each pattern described once in plain words (what it looks for, and why a
-pattern would care); then the line with three lines either side (from `data/normalized/text/`),
+pattern would care); when the line tells the AI to stay read-only, "Is it enforced?", which says
+whether a tool setting backs it (a restricting flag on the line, or the owner's tools list), or that
+it is stated in the text only, and names other routes in the same skill that can write; then the
+line with three lines either side (from `data/normalized/text/`),
 the matched words highlighted. Invisible characters show as `U+XXXX`. In a file where the run
 found what looks like a secret, no lines around the place are shown.
+
+Cards that are harder to judge say what you are deciding, under **To decide:**: model reads, test
+data the AI is pointed at, and images. A test-data or image card also shows **where the AI is
+pointed at it** (the line that names the file, with context) and what is in it (the start of the
+file, or the text read from the image).
 
 You mark each place **Concerned** (you want to look into it, or change it), **Not concerned**
 (you read it, and it is fine for what the skill is for), or **Not sure**, with an optional note.

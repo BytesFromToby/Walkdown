@@ -13,6 +13,14 @@ self-contained HTML document (`summary.html`). Sections, in the owner's order:
 1. **Header.** "Walkdown report on <name>", big, as one line; then source, pin, retrieval date,
    run, and Walkdown version. A link to `review.html` top right, always. No "Static examination
    only" line (owner); the footer keeps `render.NOT_WHAT`.
+   Under it, one plain line on the license (added 2026-10-17, class demo feedback): the
+   license of each license file at the top level (or in `.claude-plugin/`) with the file, or
+   that the file is not a license Walkdown recognizes and how it begins; with no such file, what
+   the top-level license fields say; with neither, "No license found". Then "Also stated:" any
+   other license found in another file or field, and how many other license files are not
+   recognized. Test data is left out. A run made before stage 1 had the check (no
+   `license_checked` on `inv.pin`) shows no line. It names the license text a file matches,
+   never what the license allows.
 2. **The lethal trifecta** (named for what it is, owner). One line credits Simon Willison and
    says what the three mean together. The three legs as a checklist: checked legs first, colored
    green, yellow, red by position (owner decision, 2026-10-12); each checked leg says how many
@@ -101,3 +109,6 @@ page-wide horizontal scroll, every artifact string HTML-escaped (addresses inclu
 13. No verdict words.
 14. A prohibition keeps its card with the headline saying so; it is never called an action with no
     confirmation step; full.md marks it in section 4 and in the rubric table.
+15. The header's license line: a recognized top-level file, an unrecognized one with its first
+    line, a field when there is no file, "No license found", "Also stated" for a different
+    license elsewhere, no test data, and no line for a run without the check.

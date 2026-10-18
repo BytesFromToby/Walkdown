@@ -6,6 +6,32 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Stage 4 now catches an instruction hard-wrapped across two lines of one Markdown paragraph
+  (a verb at the end of one line, its target at the start of the next). The finding is cited at
+  the line where it starts and quotes both lines. Hits on either line alone are not counted twice.
+- Review page: model reads, test data the AI is pointed at, and image cards now say what you are
+  deciding ("To decide:"). Test-data and image cards show the line that points the AI at the file
+  and what is in it (the start of the file, or the text read from the image). A "do" read says who
+  read it and the score in a sentence, and says when it could go either way.
+- Stated limits: a line that tells the AI to stay read-only now says whether a tool setting backs it
+  (a `--tools` list, deny list, read-only sandbox, or plan mode on the line, or the owner's tools
+  list), or that it is stated in the text only, and names other routes in the same skill that can
+  write. Review cards show it under "Is it enforced?"; the summary counts it; the full report lists
+  every such line and every setting that restricts tools (stage 4 `limit.setting`, stage 5
+  `cap.limit`).
+- Stage 1: commands in `.cursor/environment.json` (Cursor's cloud-agent setup: `install`, `start`,
+  `terminals`) are recorded as commands the host runs on its own, with their lines, and the file is
+  an entry point. The report says they run on Cursor's cloud machine, not on your computer.
+- Wording: a "do" read from a model now says, beside its score, that it means the line tells the AI
+  to do the flagged thing and does not say the thing is harmful (review cards, the summary, and
+  docs/MODEL-ACCURACY.md). An agent with no tools list is marked "capability only: what it could use,
+  with no evidence it does" on the summary and in HOW-IT-WORKS, and "capability only" in the full report
+  (sections 1 and 5).
+- `stages/04-phrases/ADDING-A-TERM.md`: the routine for adding, changing, or retiring a search term.
+- License: stage 1 records every license file and declared license field (frontmatter,
+  `package.json`, plugin manifests, `pyproject.toml`, `Cargo.toml`) and the license its wording
+  matches. The summary page says it in one line under the title, with any different license found
+  elsewhere; `full.md` section 1 lists them all. Suggested at a class demo.
 - Summary page: "Stage by stage" is now "Walkdown Results Breakdown". Each row asks its stage's
   question, says what the step does, and shows its numbers in the open (stage 1: every file type and
   script language); only numbers over 500 characters sit behind "Technical detail". The numbers are

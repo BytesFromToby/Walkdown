@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 import yaml
 
@@ -58,6 +59,52 @@ def hook_findings(rel: str, doc) -> list[dict]:
                 if "async" in entry:
                     row["async"] = [entry["async"]]
             out.append(row)
+    return out
+
+
+# ------------------------------------------------------------------ Cursor cloud-agent setup
+# `.cursor/environment.json` (review C31, 2026-10-17). Cursor's docs (cursor.com/docs/cloud-agent/
+# setup): a committed file is used automatically for Cursor's cloud agents on the repository, ahead
+# of saved settings; `install` runs when Cursor builds the agent's machine, `start` and each
+# `terminals` command when an agent boots; all on Cursor's isolated cloud machines, never the
+# user's own computer (self-hosted machines never read the file). Each command is a host-run row,
+# recorded like a hook (`format` `cursor-environment`, `host` `cursor-cloud`).
+CURSOR_ENV = ".cursor/environment.json"
+
+
+def is_cursor_env(rel: str) -> bool:
+    path = rel.replace("\\", "/").lower()
+    return path == CURSOR_ENV or path.endswith("/" + CURSOR_ENV)
+
+
+def _key_line(text: str | None, key: str, value: str) -> int | None:
+    """The line where `key` holds `value` in the JSON text, else where `key` first appears."""
+    if not text:
+        return None
+    lines = text.split("\n")
+    pat = re.compile(r'"' + re.escape(key) + r'"\s*:')
+    hits = [i for i, ln in enumerate(lines, 1) if pat.search(ln)]
+    exact = [i for i in hits if json.dumps(value)[1:-1][:40] in lines[i - 1]]
+    return (exact or hits or [None])[0]
+
+
+def cursor_env_findings(rel: str, doc, text: str | None = None) -> list[dict]:
+    if not is_cursor_env(rel) or not isinstance(doc, dict):
+        return []
+    out = []
+
+    def row(event, key, cmd):
+        out.append({"check": "struct.hooks", "file": rel, "line": _key_line(text, key, cmd),
+                    "event": event, "matcher": None, "command": cmd, "commands": [cmd],
+                    "types": ["command"], "format": "cursor-environment", "host": "cursor-cloud"})
+
+    for key in ("install", "start"):
+        if isinstance(doc.get(key), str) and doc[key].strip():
+            row(key, key, doc[key])
+    terminals = doc.get("terminals")
+    for t in terminals if isinstance(terminals, list) else []:
+        if isinstance(t, dict) and isinstance(t.get("command"), str) and t["command"].strip():
+            row(f"terminal: {t.get('name') or 'unnamed'}", "command", t["command"])
     return out
 
 

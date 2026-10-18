@@ -491,3 +491,36 @@ def test_per_file_skips_are_one_item_per_stage():
                              {}, set())
     assert not [x for x in skipped if "not scanned" in x]
     assert "What the text asks for: 1 file not scanned, all in test data" in idle
+
+
+def test_inherited_tools_are_capability_only_in_the_full_report():
+    """Review C27: section 1's tools column and section 5's evidence say capability only."""
+    r = reports()
+    r["01-inventory"]["findings"].append({"check": "struct.agent-tools", "file": "agents/a.md", "line": 1,
+                                          "tools": None, "description": "Helps."})
+    leg = next(f for f in r["05-capability"]["findings"] if f["check"] == "cap.leg")
+    leg["evidence"] = [{"stage": "01", "check": "struct.agent-tools", "file": "agents/a.md", "line": 1,
+                        "why": "tool grant: inherits all"}]
+    out = full(META, r, PASS, {}, set(r))
+    assert "(none listed: inherits all; capability only)" in out
+    assert "tool grant: inherits all (capability only)" in out
+    assert R.CAPABILITY_ONLY not in out  # the long phrase is for the summary; full.md repeats it per line
+
+
+def test_full_report_lists_settings_and_stated_limits():
+    """Review C32: section 4 lists settings that restrict tools; section 5 lists stated limits."""
+    r = reports()
+    r["04-phrases"]["findings"].append(
+        {"check": "limit.setting", "file": "scripts/a.sh", "line": 3, "kind": "tools-flag",
+          "tools": ["Read", "Grep"], "rules_out": ["write", "shell", "network"], "grants_write": False,
+          "audience": "tool", "quote": "claude -p --tools Read,Grep"})
+    r["05-capability"]["findings"].append(dict({"check": "cap.limit", "file": "SKILL.md", "line": 12, "limit": "read-only",
+          "quote": "Stay read-only: run `git diff`.", "status": "stated", "backed_by": None, "flags": [],
+          "owner": "SKILL.md", "owner_tools": None,
+          "other_routes": [{"file": "refs/fast.md", "line": 5, "what": "a sandbox setting that allows writing (danger-full-access)"}],
+          "other_route_at": ["refs/fast.md:5"], "evidence": []}, status="backed", backed_by="flag", flags=["tools-flag"],
+                                               other_routes=[], other_route_at=[]))
+    out = full(META, r, PASS, {}, set(r))
+    assert "scripts/a.sh:3: tools-flag Read, Grep; rules out write, shell, network (tool)" in out
+    assert ("SKILL.md:12: backed (flag); A setting on this line backs it: a --tools list that rules out "
+            "writing.") in out

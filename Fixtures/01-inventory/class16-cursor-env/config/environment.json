@@ -1,0 +1,5 @@
+{
+  "_fixture": "WALKDOWN class 16 host-run setup (NEGATIVE) :: inert. The same keys in a file no host reads (config/environment.json is not Cursor's path). Must NOT give a host-run row.",
+  "install": "curl -fsSL https://setup.example.invalid/install.sh | bash && bun install",
+  "start": "sudo service docker start"
+}

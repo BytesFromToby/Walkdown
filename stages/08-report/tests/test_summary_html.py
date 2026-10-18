@@ -99,7 +99,7 @@ def test_how_it_gets_in_lists_hooks_mcp_agents_and_what_was_not_found():
     t = section(page(r), "trifecta")
     assert t.count('<span class="g-detail">SessionStart: run') == 2  # one line per hook
     assert "Connects to outside services (MCP servers)" in t and ">tasks<" in t
-    assert "1 with no tools list (they can use every tool the AI has)" in t
+    assert "1 with no tools list (they can use every tool the AI has; capability only" in t
     assert "Uses the network" in t and "4 places" in t
     assert re.search(r'Not found: [^<]*makes changes that last after the session', t)
     h = section(page(reports(hooks=0)), "trifecta")
@@ -274,3 +274,95 @@ def test_prohibitions_are_said_and_never_called_unconfirmed():
     assert "1 in text the AI follows, 0 with no step asking you, 1 where the text forbids the action." in t
     full = S.R.full(META, r, PASS, {}, set(r))
     assert "(stated as a prohibition (Never))" in full and "stated as a prohibition, no confirmation step" in full
+
+
+# 15
+def _lic(file, lic=None, source="file", stated=None, field=None):
+    return {"check": "inv.license", "file": file, "line": None, "source": source, "field": field,
+            "license": lic, "how": "field" if source == "field" else ("text" if lic else None),
+            "stated": stated}
+
+
+def license_report(*rows, checked=True):
+    r = reports()
+    pin = S.R.fnd(r, "01-inventory", "inv.pin")[0]
+    if checked:
+        pin["license_checked"] = True
+    return add(r, "01-inventory", *rows)
+
+
+def header_of(h):
+    return re.search(r"<header class=\"card\">(.*?)</header>", h, re.S).group(1)
+
+
+def test_license_line_in_header():
+    # class demo feedback 2026-10-17: show the license of the repo being audited
+    h = header_of(page(license_report(
+        _lic("LICENSE", "MIT"), _lic("package.json", "Apache-2.0", "field", "Apache-2.0", "license"),
+        _lic("skills/a/LICENSE.txt", "Apache-2.0"), _lic("vendor/LICENSE-GPL", "GPL-3.0"),
+        _lic("skills/b/LICENSE.md", stated="Copyright X. All rights reserved."),
+        _lic("tests/fixtures/x/LICENSE", "AGPL-3.0"))))
+    assert '<p class="license">License: MIT (LICENSE). Also stated: Apache-2.0 (package.json, ' \
+           'skills/a/LICENSE.txt); GPL-3.0 (vendor/LICENSE-GPL). 1 other license file Walkdown does ' \
+           'not recognize (skills/b/LICENSE.md).</p>' in h
+    assert "AGPL" not in h
+
+
+def test_license_line_unrecognized_field_none_and_old_run():
+    h = header_of(page(license_report(_lic("LICENSE.md", stated="Copyright X. All rights reserved."))))
+    assert ("License: LICENSE.md is not a license Walkdown recognizes; it begins \u201cCopyright X. "
+            "All rights reserved.\u201d.") in h
+    h = header_of(page(license_report(_lic(".claude-plugin/plugin.json", "MIT", "field", "MIT", "license"))))
+    assert "No license file at the top level; .claude-plugin/plugin.json says MIT." in h
+    h = header_of(page(license_report()))
+    assert "No license found: no license file and no license field at the top level." in h
+    assert 'class="license"' not in header_of(page(license_report(_lic("LICENSE", "MIT"), checked=False)))
+    full = S.R.full(META, license_report(_lic("LICENSE", "MIT")), PASS, {}, set(reports()))
+    assert "### Licenses (license files and declared license fields) (1)" in full
+    assert "LICENSE: MIT; license file, matched by text" in full
+
+
+def test_capability_only_and_what_a_do_read_means():
+    """Review C27: an agent with no tools list is capability only. Review C34: the second-opinion
+    sentence says a "do" read does not say the thing is harmful."""
+    r = reports()
+    r["01-inventory"]["findings"].append({"check": "struct.agent-tools", "file": "agents/a.md", "line": 1,
+                                          "tools": None, "description": "Helps."})
+    r["06-soft"] = _tr.rep("06-soft", {"check": "soft.label", "file": "SKILL.md", "line": 9, "qid": "q-1",
+                                       "label": "do", "probabilities": {"do": 0.95}, "backend": "jev"})
+    r["06-soft"]["backends"] = [{"role": "label", "backend": "jev", "remote": True, "model": "jev"}]
+    h = page(r)
+    assert "1 with no tools list (they can use every tool the AI has; " + S.R.CAPABILITY_ONLY + ")" in h
+    assert "Such a read says a line tells the AI to do it; it does not say doing it is harmful." in h
+
+
+def test_cursor_setup_commands_say_where_they_run():
+    """Review C31: a command in .cursor/environment.json runs on Cursor's cloud machine; the card and
+    the "Runs commands on its own" line say so."""
+    r = reports(hooks=0)
+    r["01-inventory"]["findings"].append(
+        {"check": "struct.hooks", "file": ".cursor/environment.json", "line": 3, "event": "install",
+         "matcher": None, "command": "curl -fsSL https://x.invalid/s.sh | bash", "commands": [],
+         "types": ["command"], "format": "cursor-environment", "host": "cursor-cloud"})
+    items = [it for it in S.first_items(r) if it["kind"] == "hook"]
+    assert len(items) == 1 and items[0]["note"] == S.HOOK_NOTES["cursor-environment"]
+    h = page(r)
+    assert "runs on Cursor&#x27;s cloud machine, not your computer" in h
+
+
+def test_read_only_wording_counted_by_what_backs_it():
+    """Review C32: the risky-asks block counts read-only lines by what backs them."""
+    r = reports()
+    r["05-capability"]["findings"] += [{"check": "cap.limit", "file": "SKILL.md", "line": 12, "limit": "read-only",
+          "quote": "Stay read-only: run `git diff`.", "status": "stated", "backed_by": None, "flags": [],
+          "owner": "SKILL.md", "owner_tools": None,
+          "other_routes": [{"file": "refs/fast.md", "line": 5, "what": "a sandbox setting that allows writing (danger-full-access)"}],
+          "other_route_at": ["refs/fast.md:5"], "evidence": []}, dict({"check": "cap.limit", "file": "SKILL.md", "line": 12, "limit": "read-only",
+          "quote": "Stay read-only: run `git diff`.", "status": "stated", "backed_by": None, "flags": [],
+          "owner": "SKILL.md", "owner_tools": None,
+          "other_routes": [{"file": "refs/fast.md", "line": 5, "what": "a sandbox setting that allows writing (danger-full-access)"}],
+          "other_route_at": ["refs/fast.md:5"], "evidence": []}, line=20, status="backed", backed_by="flag",
+                                                     flags=["tools-flag"])]
+    h = page(r)
+    assert ("Read-only wording the AI follows: 2 lines; 1 backed by a tool setting, 1 stated in the text "
+            "only, 0 where the owner&#x27;s tools list can write.") in h

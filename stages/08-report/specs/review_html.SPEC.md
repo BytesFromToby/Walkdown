@@ -130,3 +130,24 @@ Tests: `test_findings_on_one_line_are_one_card_with_every_finding`,
 `test_a_model_read_of_the_same_line_joins_the_card`,
 `test_a_repeated_sentence_is_one_card_listing_every_place`,
 `test_a_lone_finding_keeps_its_id_and_a_passage_stays_alone`.
+
+## Cards a reader can decide (added 2026-10-18, review C36)
+
+The partner's v3 marks: 97 of 104 Not sure were on model reads, test data the model is pointed at,
+and the image card; on rule findings the reader nearly always decided. Those cards now carry:
+
+- **To decide:** one line under the location saying what the reader is deciding (`DECIDE`): on a
+  card made only of model reads, and on test-data and image cards. Cards of rule findings get none.
+- On a test-data or image card, **Where the AI is pointed at it**: the line in the model-read file
+  that names it (stage 5 `from_line`) with two lines either side; then **The start of the file**
+  (its first `START_LINES` lines and how many more), or **Text read from the image** (stage 2's
+  image text). Nothing is shown from a file that holds what looks like a secret.
+- A "do" read in plain words: "<backend> read this line as an instruction to do the flagged thing,
+  with a <score> score", and, near the line, that a second read moves the score by about the drift
+  so it could go either way.
+
+Done when (tests in `tests/test_review_html.py`): a test-data card shows its question, the pointing
+line, and the first lines with a count of the rest; an image card shows its text; a "do" read near
+the line says so in a sentence and asks its question; a card of rule findings asks none.
+
+Still open (owner): whether model reads stay in the same queue or move to a pass of their own.

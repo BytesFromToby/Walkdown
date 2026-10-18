@@ -73,6 +73,7 @@ structures a host loads on its own: skills, agents, hooks, manifests, MCP server
 | `struct.hooks` | each hook: event, matcher, command | a hook runs whenever the host fires its event, without anyone asking |
 | `struct.manifests` | the platform manifests of a plugin, and whether their permissions disagree | the same plugin can claim different permissions on different hosts |
 | `struct.mcp` | each MCP server: name, transport, command or URL, environment variable names (never values) | an MCP server is a channel to the outside |
+| `inv.license` | each license file (`LICENSE`, `COPYING`, ...) and declared license field (frontmatter, `package.json`, plugin manifests, `pyproject.toml`, `Cargo.toml`), with the license its wording matches | what you may do with the repo is set by its license; a skill inside can ship a different one. Matching wording is a lookup, not legal advice |
 | `struct.census` | structural flags: a file past the reader window (2,000 lines or 50 KB), a line over 500 characters, an extension that disagrees with the content, a byte-order mark, an archive, a symlink | text past a reviewer's window, or a file pretending to be another type, is where things hide |
 
 **Usually seen in a well-built repo.** A few entry points, short descriptions, agents granted
@@ -82,7 +83,7 @@ the tools their job needs, and hooks that do what their name says.
 `UserPromptSubmit`); an agent that inherits every tool; files over the reader window;
 `ext-magic-mismatch` (a `.md` that is really an image); manifests that disagree.
 
-**In the report.** Section 1. Hooks appear on the summary page under "How it gets in" and in Things to check as "Runs
+**In the report.** Section 1. The license is one line under the summary page's title. Hooks appear on the summary page under "How it gets in" and in Things to check as "Runs
 commands on its own"; files over the reader window are listed under "Worth a look" in the Files
 section (files the AI reads) and under section 1 in `summary.md`. Everything is in
 `full.md` section 1.
@@ -156,7 +157,10 @@ things instructions depend on (hosts, confirmations, conditions, definitions).
 About 125 patterns (`stages/04-phrases/patterns.yaml`), each citing the threat class or phrase
 set it comes from (`pre-planning/THREATS.md`, `pre-planning/PHRASES.md`). Each hit records the
 line verbatim, the pattern ids, the matched words, and the file's audience. Matching runs on the
-folded line, so hidden characters do not break a match.
+folded line, so hidden characters do not break a match. In Markdown, each line is also matched joined with the next
+line of its paragraph, so an instruction hard-wrapped across two lines is caught; that hit is
+cited at the line where it starts, quotes both lines, and is kept only when neither line hits
+alone.
 
 | Group | Check | Looks for | Threat class |
 |---|---|---|---|
@@ -188,6 +192,7 @@ Part 2 builds tables from instruction text (model and subagent files, plus front
 | `pos.density` | in a long file a model reads: where the flagged lines sit (first 10%, middle, last 10%) and how many are past the reader window (2,000 lines or 50 KB), where a reviewer's viewer may stop |
 | `secret.found` | a line that looks like a committed secret (an API key, a password), found by gitleaks when installed, otherwise detect-secrets; the value is never shown, and other findings on that line have their quote replaced |
 | `rep.sentence` | a sentence repeated across files a model reads; repetition adds weight, so a flagged sentence in several files is listed |
+| `limit.setting` | a flag or setting that restricts what tools an agent can use, in any file: `--tools` with a list, `--disallowedTools` or a JSON deny list, a `--sandbox` mode, a `--permission-mode`; what it rules out (writing, shell, network) and whether it allows writing. `--allowedTools` is not counted: it pre-approves tools and leaves the rest available. A fact for stage 5, never a risk |
 
 **Prohibitions.** A hit whose line forbids the matched action ("Never have the user paste an API
 key into chat") is kept and tagged `negated`, with the forbidding word and any exception
@@ -241,7 +246,9 @@ can be made to leak. Walkdown checks each leg and lists the evidence.
 | **Takes outside input** | a remote-load phrase; a clone or install of third-party code; a WebFetch or WebSearch grant; an agent inheriting all tools; an MCP config or server |
 | **Sends data out** | a remote-load or exfiltration phrase; a WebFetch or WebSearch grant; an agent inheriting all tools; an MCP config or server |
 
-Bash counts toward reading data and running code, never toward sending data out on its own.
+Bash counts toward reading data and running code, never toward sending data out on its own. An
+agent with no tools list can use every tool, so it counts toward all three legs; the report marks
+that as capability only: what it could use, with no evidence that it does.
 **All three legs are common in well-built repositories**: an agent that reads files, uses the
 web, and pushes commits has all three. The combination raises risk; it is not an issue alone.
 
@@ -262,6 +269,7 @@ web, and pushes commits has all three. The combination raises risk; it is not an
 | `cap.injection` | each path by which text reaches the model's context at load (descriptions, hooks), with its size when known |
 | `cap.load-bytes` | per host config: the bytes in context before the first message |
 | `cap.posture` | each agent's tools against its stated job; least-privilege agents are marked |
+| `cap.limit` | read-only wording a model reads, paired with what could back it: a restricting setting on the same line, the tools list of the skill or agent that owns the file, and other routes in the same skill that can write. Backed, contradicted by the owner's tools list, or stated in the text only (a static read cannot see whether a setting is used at run time) |
 | `cap.pair` | two findings worth more together: hidden text with a phrase hit, an orphan with a phrase hit, a load-only file with a phrase hit, an instruction in a script a context-injecting hook runs, test data a model-read file references |
 | `cap.testdata` | how many findings were set aside as test data, and where |
 

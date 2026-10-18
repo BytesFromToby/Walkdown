@@ -48,9 +48,14 @@ def set_aside(reports: dict, loaded=()) -> tuple[dict, list[dict]]:
                   "top_folders": [name for name, _ in folders.most_common(5)]}]
 
 
-def loaded_pairs(reports: dict) -> list[dict]:
+def loaded_pairs(reports: dict, graph: dict | None = None) -> list[dict]:
     """cap.pair testdata+loaded: a test-data file reached by a direct reference from a file a
-    model or subagent reads."""
+    model or subagent reads. `from_line` (review C36, 2026-10-18): the line in `from` that names
+    it, from the graph's static edge, so a card can show where the model is pointed at it."""
+    lines = {}
+    for e in (graph or {}).get("edges") or []:
+        if e.get("kind") == "static" and e.get("line") is not None:
+            lines.setdefault((e.get("from"), e.get("to")), e["line"])
     out = []
     for f in (reports.get("03") or {}).get("findings", []):
         if f.get("check") != "graph.depth" or "skipped" in f or f.get("via") != "static":
@@ -59,7 +64,7 @@ def loaded_pairs(reports: dict) -> list[dict]:
         if dst and src and is_test_data(dst) and not is_test_data(src) \
                 and audience(src) in READ_BY_MODEL:
             out.append({"check": "cap.pair", "file": dst, "line": None, "pair": "testdata+loaded",
-                        "from": src, "evidence": [{"stage": "03", "check": "graph.depth",
+                        "from": src, "from_line": lines.get((src, dst)), "evidence": [{"stage": "03", "check": "graph.depth",
                                                    "file": dst, "line": None,
                                                    "why": f"referenced directly from {src}"}]})
     return out

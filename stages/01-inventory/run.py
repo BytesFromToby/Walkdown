@@ -16,6 +16,7 @@ import census  # noqa: E402
 import configs  # noqa: E402
 import entrypoints  # noqa: E402
 import frontmatter  # noqa: E402
+import licenses  # noqa: E402
 import walk  # noqa: E402
 
 STAGE = "01-inventory"
@@ -79,6 +80,7 @@ def build_report(input_dir: str | Path) -> dict:
               if census.magic_backend() != "python-magic" else ""))
 
     file_rows, census_rows, desc_rows, tool_rows, hook_rows, mcp_rows = [], [], [], [], [], []
+    license_rows = []
     manifests, texts = [], {}
     extensions: dict[str, int] = {}
     languages: dict[str, list[str]] = {}
@@ -112,7 +114,8 @@ def build_report(input_dir: str | Path) -> dict:
             has_tools = bool(fm and frontmatter.tools_value(fm) is not None)
 
             doc = configs.load(e.rel, text) if text is not None else None
-            is_hook = configs.is_hook_config(doc)
+            is_hook = configs.is_hook_config(doc) or (configs.is_cursor_env(e.rel)
+                                                      and isinstance(doc, dict))
             is_man = configs.is_manifest(e.rel, doc)
             entry_kind = entrypoints.classify(e.rel, is_symlink=False, has_tools=has_tools,
                                               is_hook_config=is_hook, is_manifest=is_man)
@@ -133,7 +136,12 @@ def build_report(input_dir: str | Path) -> dict:
                                   "kind": entry_kind})
             if is_hook:
                 hook_rows.extend(configs.hook_findings(e.rel, doc))
+                hook_rows.extend(configs.cursor_env_findings(e.rel, doc, text))
             mcp_rows.extend(configs.mcp_findings(e.rel, doc))
+            if text is not None:
+                if licenses.is_license_file(e.rel):
+                    license_rows.append(licenses.file_finding(e.rel, text))
+                license_rows.extend(licenses.field_findings(e.rel, text, doc, fm))
             if is_man:
                 manifests.append((e.rel, doc["name"], configs.manifest_grants(doc)))
 
@@ -161,9 +169,10 @@ def build_report(input_dir: str | Path) -> dict:
         reader_window={"lines": census.READER_LINES, "bytes": census.READER_BYTES},
         long_line_limit=census.LONG_LINE,
         channel_filters=channel_filters(w.root, set(texts), texts),
+        license_checked=True,
     )
     findings = ([pin] + file_rows + census_rows + desc_rows + tool_rows + hook_rows
-                + configs.manifest_findings(manifests) + mcp_rows)
+                + configs.manifest_findings(manifests) + mcp_rows + license_rows)
     return {"stage": STAGE, "contract": 1, "findings": findings}
 
 

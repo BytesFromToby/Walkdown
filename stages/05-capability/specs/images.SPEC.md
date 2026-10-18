@@ -45,3 +45,6 @@ tests/ that a model-read file points at still counts.
 4. Without graph.json, `graph.depth` static records give the pair.
 5. Fixture `image-loaded`: the skill's image pairs; the README's banner and the unreferenced
    image do not.
+
+Added 2026-10-18 (review C36): `from_line`, the line in `from` that references the image, so a
+review card can show where the model is pointed at it (grader row `cap-img-from-line`).
