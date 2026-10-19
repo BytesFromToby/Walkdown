@@ -20,6 +20,7 @@ import endpoints  # noqa: E402
 import restrictions  # noqa: E402
 import rubric  # noqa: E402
 import terms  # noqa: E402
+import termset  # noqa: E402
 from audience import audience  # noqa: E402
 from foldtext import decode, fold_line, split_lines  # noqa: E402
 from patterns import CHECKS, TableError, load_table  # noqa: E402
@@ -225,7 +226,8 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
     p2.sort(key=lambda f: (PART2_ORDER.index(f["check"]), f["file"] or "", f["line"] or 0))
     mask_secret_lines(findings + p2)
     findings = findings + p2
-    report = {"stage": STAGE, "contract": 1, "findings": findings}
+    # the search terms and matching code this report came from (review C22 b, 2026-10-19)
+    report = {"stage": STAGE, "contract": 1, "terms": termset.describe(rows), "findings": findings}
     hits = {"findings": findings,
             "counts": {"per_check": per_check, "per_pattern": per_pattern,
                        "part2": part2_counts(p2)},

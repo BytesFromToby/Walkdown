@@ -6,7 +6,11 @@ Threat class 8 (supply chain and drift): a repository can be fine when installed
 later. Comparing two audits shows what a new version adds: files, hooks, tool grants, MCP
 servers, descriptions, phrase hits, network hosts, and capability. Stage 6 is not compared
 (model reads drift on their own). Detects nothing new: every line points at findings both runs
-already made. Writes nothing unless asked (`write_report`).
+already made. Writes nothing unless asked (`write_report`, `since`).
+
+Each new or gone phrase hit says where it came from (review C22 b, 2026-10-19): the repository
+(its file was added, removed, or edited) or Walkdown (the same file, and a search term or the
+matching code changed; stage 4 records both in its `terms` block).
 """
 from __future__ import annotations
 
@@ -20,6 +24,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent / "04-phrases"))
 
 import layout  # noqa: E402
+import termset  # noqa: E402
 from audience import audience  # noqa: E402
 
 STAGES = ("01-inventory", "03-graph", "04-phrases", "05-capability")
@@ -32,7 +37,10 @@ def load(run_dir) -> dict:
     for stage in STAGES:
         f = data / f"{stage}.json"
         if f.is_file():
-            out[stage] = json.loads(f.read_text(encoding="utf-8")).get("findings", [])
+            doc = json.loads(f.read_text(encoding="utf-8"))
+            out[stage] = doc.get("findings", [])
+            if stage == "04-phrases":
+                out["terms"] = doc.get("terms")  # absent before 2026-10-19
     cap = data / "capability.json"
     if cap.is_file():  # stage 5 with every citation
         out["05-capability"] = json.loads(cap.read_text(encoding="utf-8")).get("findings", [])
@@ -114,6 +122,26 @@ def compare(old: dict, new: dict) -> dict:
     c["hits_added"] = [nh[k] for k in sorted(set(nh) - set(oh))]
     c["hits_removed"] = [oh[k] for k in sorted(set(oh) - set(nh))]
 
+    t = termset.diff(old.get("terms"), new.get("terms"))
+    c["terms"] = t
+    edited = set(c["files_added"]) | set(c["files_removed"]) | set(c["files_changed"])
+
+    def cause(h, rows):
+        f = h.get("file")
+        if f in edited:
+            return "repo"
+        if f in c["files_unverified"]:
+            return "unverified"
+        if not t["known"]:
+            return "walkdown"
+        if set(h.get("patterns") or []) & rows:
+            return "terms"
+        return "code" if t["code_changed"] else "other"
+    c["hits_added_cause"] = [cause(h, set(t["rows_added"]) | set(t["rows_changed"]))
+                             for h in c["hits_added"]]
+    c["hits_removed_cause"] = [cause(h, set(t["rows_removed"]) | set(t["rows_changed"]))
+                               for h in c["hits_removed"]]
+
     def hosts(r):
         return {x["host"] for x in _f(r, "04-phrases", "endpoint.host")}
     c["hosts_added"] = sorted(hosts(new) - hosts(old))
@@ -147,6 +175,59 @@ COUNTS = (("files_added", "files added"), ("files_removed", "files removed"),
           ("pairs_added", "new pairs"))
 
 
+# where a new or gone phrase hit came from, in reading order (review C22 b)
+CAUSES = (("repo", "from changes in the repository"),
+          ("terms", "from Walkdown's search terms"),
+          ("code", "from Walkdown's matching code"),
+          ("other", "from another part of Walkdown (same file, search terms, and matching code)"),
+          ("walkdown", "from Walkdown (the older run recorded no search-term version)"),
+          ("unverified", "on files the older run recorded no content hash for"))
+CAUSE_SHORT = {"terms": "Walkdown's search terms", "code": "Walkdown's matching code",
+               "other": "another part of Walkdown", "walkdown": "Walkdown",
+               "unverified": "file not verified"}
+OTHER_DIFFS = ("legs_changed", "entry_removed", "mcp_removed", "hosts_removed", "capgrants_removed")
+
+
+def same_repo(old, new) -> bool:
+    """Both runs read the same version of the repository (the same stage 1 pin)."""
+    a, b = pin(old), pin(new)
+    return bool(a.get("hash")) and a.get("hash") == b.get("hash")
+
+
+def differs(c) -> bool:
+    """Any difference in what the two runs recorded."""
+    return any(c.get(k) for k, _ in COUNTS) or any(c.get(k) for k in OTHER_DIFFS)
+
+
+def _plural(n, word, many=None) -> str:
+    return f"{n} {word if n == 1 else (many or word + 's')}"
+
+
+def terms_line(t) -> str | None:
+    """What changed in Walkdown's search terms and matching code, counts only."""
+    if not t.get("known") or t.get("same"):
+        return None
+    counts = [(len(t[k]), w) for k, w in (("rows_added", "added"), ("rows_changed", "changed"),
+                                          ("rows_removed", "retired")) if t[k]]
+    out = ([_plural(sum(n for n, _ in counts), "search term")
+            + " (" + ", ".join(f"{n} {w}" for n, w in counts) + ")"] if counts else [])
+    if t["vocab_changed"]:
+        out.append("word lists changed")
+    if t["code_changed"]:
+        out.append("matching code changed")
+    return "Walkdown changed since the older run: " + ", ".join(out)
+
+
+def cause_lines(c) -> list[str]:
+    """Where new and gone phrase hits came from, when any came from Walkdown."""
+    lines = []
+    for key, word in (("hits_added_cause", "new phrase hits"), ("hits_removed_cause", "phrase hits gone")):
+        n = collections.Counter(c.get(key) or [])
+        if n and set(n) != {"repo"}:
+            lines.append(f"{word}: " + ", ".join(f"{n[k]} {w}" for k, w in CAUSES if n.get(k)))
+    return lines
+
+
 def model_read_hits(c) -> int:
     return sum(1 for h in c["hits_added"] if h.get("audience") in ("model", "subagent"))
 
@@ -162,6 +243,10 @@ def summary_lines(c) -> list[str]:
         parts.append(f"{model_read_hits(c)} of the new phrase hits in text a model reads")
     if parts:
         lines.append(", ".join(parts))
+    tl = terms_line(c.get("terms") or {})
+    if tl:
+        lines.append(tl)
+    lines += cause_lines(c)
     return lines or ["no differences in what Walkdown records"]
 
 
@@ -181,8 +266,11 @@ def render(old_dir, new_dir, old, new, c) -> str:
          f"New: {pn.get('hash_kind', '?')} {str(pn.get('hash', '?'))[:12]}, {pn.get('files', '?')} files.",
          "",
          "What a newer version adds, from the findings both runs already made. Model reads (stage 6) "
-         "are not compared. A change is a location to read; none is a verdict.", "",
-         "Summary: " + "; ".join(summary_lines(c)) + ".", ""]
+         "are not compared. A change is a location to read; none is a verdict.", ""]
+    if same_repo(old, new):
+        L += ["Same version of the repository in both runs: every difference below comes from "
+              "Walkdown.", ""]
+    L += ["Summary: " + "; ".join(summary_lines(c)) + ".", ""]
 
     def section(title, rows, fmt):
         nonlocal L
@@ -205,10 +293,25 @@ def render(old_dir, new_dir, old, new, c) -> str:
     section("New network hosts", c["hosts_added"], str)
     section("Entry points added", c["entry_added"], lambda r: f"{r[0]} ({r[1]})")
     section("New pairs", c["pairs_added"], lambda r: f"{r[1]}: {r[0]} {_code(r[2])}")
+    t = c.get("terms") or {}
+    if t.get("known") and not t.get("same"):
+        rows = [f"{w}: {', '.join(t[k])}" for k, w in (("rows_added", "added"), ("rows_changed", "changed"),
+                                                       ("rows_removed", "retired")) if t[k]]
+        rows += [w for k, w in (("vocab_changed", "word lists (vocab.yaml) changed"),
+                                ("code_changed", "matching code (stage 4) changed")) if t[k]]
+        section("Walkdown's search terms and matching code", rows, str)
+    elif not t.get("known") and (c["hits_added"] or c["hits_removed"]):
+        L += ["The older run recorded no search-term version, so a phrase hit on an unchanged file "
+              "cannot be traced to a term or to the matching code.", ""]
+    causes = dict(zip(map(id, c["hits_added"]), c.get("hits_added_cause") or []))
+
+    def hit_line(h):
+        k = causes.get(id(h), "repo")
+        return (f"{h['file']}:{h.get('line')}: {h['check']} {_code(h.get('quote'))}"
+                + ("" if k == "repo" else f" ({CAUSE_SHORT[k]})"))
     model_hits = [h for h in c["hits_added"] if h.get("audience") in ("model", "subagent")]
     other_hits = [h for h in c["hits_added"] if h not in model_hits]
-    section("New phrase hits in text a model reads", model_hits,
-            lambda h: f"{h['file']}:{h.get('line')}: {h['check']} {_code(h.get('quote'))}")
+    section("New phrase hits in text a model reads", model_hits, hit_line)
     by_aud = collections.Counter(h.get("audience") for h in other_hits)
     if other_hits:
         L += [f"New phrase hits elsewhere: " + ", ".join(f"{n} {a}" for a, n in by_aud.most_common())
@@ -240,6 +343,21 @@ def write_report(old_dir, new_dir) -> tuple[Path, dict]:
     out = layout.report_dir(new_dir) / REPORT
     out.write_text(render(old_dir, new_dir, old, new, c), encoding="utf-8")
     return out, c
+
+
+def since(old_dir, new_dir) -> dict:
+    """What the brief and the summary page say about an earlier run: `same` when the repository
+    version is the same; `differs` when anything recorded differs, then `lines` (counts only) and
+    `report` (changes.md, written). With the same version and no difference, nothing is written;
+    with the same version and a difference, every difference comes from Walkdown (2026-10-19)."""
+    old, new = load(old_dir), load(new_dir)
+    same = same_repo(old, new)
+    c = compare(old, new)
+    if same and not differs(c):
+        return {"same": True, "differs": False, "lines": [], "report": None}
+    out = layout.report_dir(new_dir) / REPORT
+    out.write_text(render(old_dir, new_dir, old, new, c), encoding="utf-8")
+    return {"same": same, "differs": True, "lines": summary_lines(c), "report": out}
 
 
 def main(argv=None) -> int:

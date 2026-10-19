@@ -234,6 +234,10 @@ def test_changes_only_when_relevant():
     t = section(page(changes={"since": "2026-09-01_aaaaaaa", "same": False,
                               "lines": ["3 files added, 1 entry point added"]}), "changes")
     assert 'id="changes"' not in page(changes={"since": "2026-09-01_aaaaaaa", "same": True, "lines": []})
+    # review C22 b: the same version, but Walkdown changed since that run
+    w = section(page(changes={"since": "2026-09-01_aaaaaaa", "same": True, "differs": True,
+                              "lines": ["new phrase hits: 2 from Walkdown's search terms"]}), "changes")
+    assert "Same version of the repository as that run." in w and "2 from Walkdown" in w
     assert "Changes since run 2026-09-01_aaaaaaa" in t
     assert "3 files added, 1 entry point added." in t and 'href="changes.md"' in t
 

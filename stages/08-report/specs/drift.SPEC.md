@@ -42,3 +42,36 @@ audit. `walkdown.py diff <old> <new>` runs it on demand.
 2. A same-size file without a hash in the older run is unverified, not unchanged.
 3. The summary carries no repository text; identical runs say so.
 4. The report is written beside the newer run's reports, and the previous run is found.
+
+## Where a hit came from (added 2026-10-19, review C22 b)
+
+`load` also reads the `terms` block of the stage 4 report (`stages/04-phrases/termset.py`).
+`compare` adds `terms` (`termset.diff` of the two blocks) and, aligned with `hits_added` and
+`hits_removed`, `hits_added_cause` and `hits_removed_cause`, one per hit:
+
+- `repo`: the hit's file was added, removed, or edited.
+- `unverified`: the older run has no content hash for the file.
+- `walkdown`: the file is the same and the older run has no `terms` block, so a term cannot be
+  told from the matching code.
+- `terms`: the file is the same and one of the hit's patterns was added or changed (a new hit),
+  or retired or changed (a gone hit).
+- `code`: the file and the hit's terms are the same and stage 4's code changed.
+- `other`: the file, the terms, and the code are all the same (another stage's output moved it).
+
+`summary_lines` adds "Walkdown changed since the older run: ..." (search terms added, changed,
+retired; word lists; matching code) and, when any hit came from Walkdown, one line each for new
+and gone hits by cause. Counts only. `changes.md` lists the changed terms by id and marks each
+new hit in text a model reads with its cause when that is not the repository.
+
+`same_repo(old, new)`: both runs have the same stage 1 pin. `differs(c)`: anything recorded
+differs. `since(old, new)`: what `walkdown.py` and the summary page say about the previous run:
+with the same version and no difference, nothing is written; otherwise `changes.md` is written,
+and with the same version it opens by saying every difference comes from Walkdown.
+
+Done when (tests in `tests/test_drift.py`):
+
+5. Each cause is assigned: an edited file, an added, changed, or retired row, a matching-code
+   change, a missing term version, a file without a hash; the summary counts them.
+6. Repository changes alone add no cause or Walkdown line.
+7. `since` with the same version writes nothing when nothing differs, and writes a report that
+   names Walkdown when something does.

@@ -109,7 +109,11 @@ emits it.
 
 One check per PHRASES set or detector. Every finding carries `quote` (the
 original line, verbatim) and may carry `audience` (`model`, `subagent`, `human`,
-`tool`, `test-data` (added 2026-10-02)). A phrase finding with `wrapped: true` (added
+`tool`, `test-data` (added 2026-10-02)). The report also carries `terms` beside `findings`
+(added 2026-10-19, review C22 b): the version of the search terms and matching code it came from
+(`version`, `count`, `rows` with one short hash per pattern id, `vocab`, `code`), so two runs can
+tell a hit from a repository change from one from a Walkdown change. A phrase finding with
+`wrapped: true` (added
 2026-10-18, review C37) is a hit on a Markdown line joined with the next line of its paragraph,
 that neither line hits alone: `line` is where it starts, `end_line` the next line, and `quote`
 both lines, joined by a newline.

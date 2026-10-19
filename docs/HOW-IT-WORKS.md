@@ -348,6 +348,17 @@ run with the previous one and writes `changes.md` beside the reports. `walkdown.
 Model reads (stage 6) are not compared: the same line read twice already varies. The brief gets
 counts only; `changes.md` lists every change with file and quote, most consequential first.
 
+**Repository or Walkdown.** A new or gone phrase hit can come from the repository or from
+Walkdown itself (a new search term, a narrowed one, a change in how lines are matched). Stage 4
+records the version of its search terms and its matching code in every run (`terms`: one short
+hash per pattern row, the word lists, and the stage 4 code). Each hit is then traced: its file
+was added, removed, or edited (the repository), or the file is the same and the hit's search term
+was added, changed, or retired (Walkdown's search terms), or only the matching code changed
+(Walkdown's matching code). `changes.md` names the terms that changed by id. A run from before
+2026-10-19 has no term version, so a hit on an unchanged file is put down to Walkdown without
+saying which part. Re-auditing the same version of a repository says nothing when nothing
+differs; when something does, every difference comes from Walkdown, and the brief says so.
+
 **Worth a closer look.** A trifecta leg that switched on, a new install grant (especially
 runs-at-load), a new hook or MCP server, a changed description, a new network host, and new
 phrase hits in text a model reads.

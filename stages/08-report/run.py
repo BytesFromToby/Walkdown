@@ -161,9 +161,10 @@ def changes_for(run_dir) -> dict | None:
     """What changed since the newest earlier run of the same repository, for the summary page
     (report v2, 2026-10-16). Earlier = a sibling run folder whose name sorts before this one
     (names start with the date), so re-rendering an old run never compares it with a newer one.
-    None on a first run or when drift fails; `same` when the version is the same. Writes
-    changes.md beside the reports so the page can link it; the page shows counts and Walkdown's
-    own words only (drift.summary_lines)."""
+    None on a first run or when drift fails; `same` when the version is the same, `differs` when
+    anything recorded differs (with the same version, that is Walkdown's own change; review C22 b).
+    Writes changes.md beside the reports so the page can link it; the page shows counts and
+    Walkdown's own words only (drift.summary_lines)."""
     try:
         import drift
         run_dir = Path(run_dir).resolve()
@@ -172,12 +173,8 @@ def changes_for(run_dir) -> dict | None:
         if not earlier:
             return None
         prev = earlier[-1]
-        old, new = drift.load(prev), drift.load(run_dir)
-        a, b = drift.pin(old), drift.pin(new)
-        if a.get("hash") and a.get("hash") == b.get("hash"):
-            return {"since": prev.name, "same": True, "lines": []}
-        _, c = drift.write_report(prev, run_dir)
-        return {"since": prev.name, "same": False, "lines": drift.summary_lines(c)}
+        s = drift.since(prev, run_dir)
+        return {"since": prev.name, "same": s["same"], "differs": s["differs"], "lines": s["lines"]}
     except Exception:  # drift is extra; it never fails a report
         return None
 

@@ -120,8 +120,11 @@ python -c "import json; [print(x['file'], x['line'], x['quote']) for x in json.l
 ## changes.md: version drift
 
 Written by `walkdown.py` when an earlier run of the same repository exists at a different
-version (or by `walkdown.py diff <old> <new>`). It compares the two runs' findings: files,
-hooks, tool grants, MCP servers, descriptions, phrase hits, hosts, and capability. How it
+version, or at the same version when Walkdown changed since and something differs (or by
+`walkdown.py diff <old> <new>`). It compares the two runs' findings: files, hooks, tool grants,
+MCP servers, descriptions, phrase hits (each with where it came from: the repository, Walkdown's
+search terms, or its matching code), hosts, and capability. The search-term version it reads is
+the `terms` block of `data/04-phrases.json`. How it
 compares is in [HOW-IT-WORKS.md](HOW-IT-WORKS.md#version-drift-comparing-two-runs).
 
 ## Rebuilding the reports

@@ -706,11 +706,13 @@ def risky(r, items, model_items) -> str:
 
 
 def changes(ch) -> str:
-    """Only when an earlier run of the same repository is a different version: a re-run of the
-    same version has nothing to say here."""
-    if not ch or ch.get("same"):
+    """When an earlier run of the same repository is a different version, or the same version and
+    Walkdown changed since (review C22 b, 2026-10-19); a re-run with nothing different says nothing."""
+    if not ch or (ch.get("same") and not ch.get("differs")):
         return ""
-    body = ("".join(_p(x[:1].upper() + x[1:] + ("" if x.endswith(".") else ".")) for x in ch.get("lines", []))
+    lead = (_p("Same version of the repository as that run. Walkdown changed since then, so every "
+               "difference here comes from Walkdown.") if ch.get("same") else "")
+    body = (lead + "".join(_p(x[:1].upper() + x[1:] + ("" if x.endswith(".") else ".")) for x in ch.get("lines", []))
             + '<p class="note">Every change, file by file: <a href="changes.md">changes.md</a>.</p>')
     return _section("changes", f"Changes since run {ch['since']}", "", body)
 

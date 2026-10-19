@@ -48,7 +48,9 @@ Audience per file: `audience.audience` with `scripts` from `inv.pin`
 
 ## Outputs
 
-stdout: `{"stage": "04-phrases", "contract": 1, "findings": [...]}`: first the
+stdout: `{"stage": "04-phrases", "contract": 1, "terms": {...}, "findings": [...]}`
+(`terms`: the version of the search terms and matching code, `termset.describe`, added
+2026-10-19, review C22 b); first the
 part 1 findings from `scan.scan_text`, ordered by file path, then line, then
 check; then the part 2 findings (CONTEXT-part2.md), in CONTRACT order (part 1
 findings are never changed by part 2): `rubric.action` (`rubric.rubric_file`),

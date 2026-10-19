@@ -56,7 +56,9 @@ self-contained HTML document (`summary.html`). Sections, in the owner's order:
    place is listed.
 8. **Changes since run X**, only when an earlier run of the same repository is a different
    version (`run.changes_for`): `drift.summary_lines` and a link to `changes.md`. A re-run of the
-   same version shows nothing here.
+   same version shows nothing here, unless Walkdown changed since and something differs
+   (`differs`, 2026-10-19): then the section opens by saying it is the same version of the
+   repository and every difference comes from Walkdown.
 9. **Recommendations (N)**, unranked.
 10. **Other details**, collapsed: what was not checked (not built yet, skipped in this run, not
     needed here, every limit behind its own toggle), fixture results per step that ran (a pill

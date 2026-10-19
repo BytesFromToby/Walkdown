@@ -70,6 +70,9 @@ def test_contract_and_fields(tmp_path):
     for f in phrase:
         for k in ("check", "file", "line", "quote", "patterns", "audience", "folded"):
             assert k in f
+    # review C22 b: the search terms and matching code the report came from
+    assert set(doc["terms"]) == {"version", "count", "rows", "vocab", "code"}
+    assert doc["terms"]["count"] == len(doc["terms"]["rows"]) > 0
 
 
 def test_audiences(tmp_path):

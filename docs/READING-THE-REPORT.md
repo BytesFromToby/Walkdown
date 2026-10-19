@@ -167,8 +167,11 @@ page, with a link to how accurate they measured: [MODEL-ACCURACY.md](MODEL-ACCUR
 
 ### Changes since an earlier run
 
-Only when an earlier run of the same repository was a different version: what changed, in counts
-and Walkdown's own words, with every change, file by file, in `changes.md`.
+Only when an earlier run of the same repository was a different version, or the same version
+and Walkdown changed since: what changed, in counts and Walkdown's own words, with every change,
+file by file, in `changes.md`. New and gone phrase hits say where they came from: changes in the
+repository, Walkdown's search terms, or Walkdown's matching code. With the same version, the
+section says so first, since every difference then comes from Walkdown.
 
 ### Recommendations
 

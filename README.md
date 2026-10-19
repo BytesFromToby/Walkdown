@@ -121,6 +121,8 @@ Audit the same repository again later (same URL or `--name`) and Walkdown compar
 with the previous one: files added and changed, new hooks, tool grants, MCP servers, changed
 descriptions, new phrase hits, new network hosts, and trifecta legs or install grants that
 switched on. The brief gives the counts; `changes.md` next to the new reports gives the details.
+Each new or gone phrase hit says whether it came from the repository or from Walkdown's own
+search terms or matching, so updating Walkdown is never mistaken for a change in the repository.
 A repository that is fine when you install it can change later; this is how you see what
 changed. To compare any two runs:
 
@@ -175,8 +177,8 @@ stage against an answer sheet the stage code never reads:
 python grader/grader.py all
 ```
 
-The same tests and graders run on GitHub on every push (Linux, Python 3.12 and 3.13, with
-Tesseract), shown by the badge at the top. Each audit runs the grader first, and the result is the stage's validation stamp in `LOG.md`. A
+The same tests and graders run on GitHub on every push (Ubuntu 24.04 and 26.04, Python 3.12
+and 3.13, with Tesseract), shown by the badge at the top. Each audit runs the grader first, and the result is the stage's validation stamp in `LOG.md`. A
 stage that fails its fixtures says so in the report. A stamp is reused while the code and
 fixtures are unchanged (LOG.md says when it was measured); `--revalidate` measures afresh.
 

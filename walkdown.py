@@ -177,18 +177,19 @@ def brief(run_dir: Path) -> str:
 def drift_lines(run_dir: Path) -> list[str]:
     """Version drift against the newest earlier run of the same repository (2026-10-04): writes
     changes.md next to the reports and returns counts-only lines for the brief (no repository
-    text). Nothing when this is the first run; one line when the version is the same."""
+    text). Nothing when this is the first run; one line when the version is the same and nothing
+    differs. The same version with a difference means Walkdown changed (review C22 b, 2026-10-19)."""
     sys.path.insert(0, str(STAGE8))
     import drift  # noqa: E402
     prev = drift.previous_run(run_dir)
     if prev is None:
         return []
-    a, b = drift.pin(drift.load(prev)), drift.pin(drift.load(run_dir))
-    if a.get("hash") and a.get("hash") == b.get("hash"):
+    s = drift.since(prev, run_dir)
+    if not s["differs"]:
         return ["", f"Changes since {prev.name}: same version, nothing to compare."]
-    out, c = drift.write_report(prev, run_dir)
-    return (["", f"Changes since {prev.name} (version drift):"]
-            + [f"  {x}" for x in drift.summary_lines(c)] + [f"  Details: {out}"])
+    head = (f"Changes since {prev.name}: same version of the repository; every difference comes "
+            "from Walkdown:" if s["same"] else f"Changes since {prev.name} (version drift):")
+    return ["", head] + [f"  {x}" for x in s["lines"]] + [f"  Details: {s['report']}"]
 
 
 def diff_main(args) -> int:

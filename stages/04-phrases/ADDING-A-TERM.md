@@ -54,6 +54,9 @@ fixed order. Follow it for every add, every narrowing, and every retirement (rev
    `python stages/08-report/baserates.py <name>=<input_dir> [...] --out stages/08-report/baserates.json`.
 
 8. **Record it.** A CHANGELOG line saying what a reader will notice, and a line in the review list.
+   There is no version to bump: every run records the term set (`termset.py`), so the next audit
+   of a repository Walkdown has seen before names the changed term in `changes.md` and counts the
+   hits it moved under Walkdown's search terms.
 
 ## Retiring a term
 
@@ -69,5 +72,5 @@ fail, the list change, `grader.py all`, recount, record.
 ## Still open (review C22)
 
 Where new terms come from (incident watch, other scanners' rule sets, misses in runs, reader marks,
-labeling); a version for the term set, so two runs can tell a repository change from a new term; how
-often to review the terms; whether outside contributors can propose one.
+labeling); how often to review the terms; whether outside contributors can propose one. (The term
+set's version was built 2026-10-19: `termset.py`.)

@@ -3,6 +3,8 @@ name: tests
 # Every push and pull request: the spec tests, then every stage against its fixtures.
 # Tesseract is installed here so stage 2's image check runs (locally it is optional and
 # its absence gives INCOMPLETE). Stage 6 runs with no model backend: the packet gates only.
+# Each Ubuntu version is named explicitly, so GitHub moving ubuntu-latest (to 26.04, from
+# 2026-10-19) cannot change results unannounced; both are tested because Tesseract differs.
 on:
   push:
     branches: [main]
@@ -14,14 +16,15 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-24.04, ubuntu-26.04]
         python: ["3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
           cache: pip

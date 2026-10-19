@@ -6,6 +6,14 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Comparing two runs now says where each new or gone phrase hit came from: the repository (its file
+  was added, removed, or edited), Walkdown's search terms (a term added, changed, or retired, named
+  in `changes.md`), or Walkdown's matching code. Every stage 4 report records the version of its
+  search terms and code (`terms`). Re-auditing the same version of a repository after Walkdown
+  changed now reports the differences instead of "nothing to compare", and says they come from
+  Walkdown.
+- CI runs on Ubuntu 24.04 and 26.04 by name (GitHub moves `ubuntu-latest` to 26.04 from
+  2026-10-19), with `actions/checkout` and `actions/setup-python` at v7 (Node 24).
 - Stage 3, manifest versus disk, both halves: a skill, agent, or command on disk that its
   manifest leaves out is listed ("On disk, left out of the manifest"), for the kinds the
   manifest names; one that names none relies on its folders and is not compared. A plugin with
