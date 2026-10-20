@@ -61,9 +61,12 @@ Three boxes, one per leg of what Simon Willison calls the
 
 | Leg | Checked when the repository... |
 |---|---|
-| **Reads your data** | reads the user's data wherever it lives: files, secrets, settings, connected accounts |
-| **Takes outside input** | brings in text the user didn't write: the web, other people's issues or email, MCP tools, third-party code |
-| **Sends data out** | moves data off the machine or into shared places: web requests, webhooks, pushes, posts |
+| **Can read your data** | can read the user's data wherever it lives: files, secrets, settings, connected accounts |
+| **Can take outside input** | can bring in text the user didn't write: the web, other people's issues or email, MCP tools, third-party code |
+| **Can send data out** | can move data off the machine or into shared places: web requests, webhooks, pushes, posts |
+
+The names start with "Can" because a static read shows what a skill could do; whether it does
+is only seen by running it.
 
 A box is checked when at least one piece of evidence supports it; under each checked box is the
 number of places that do (all listed in `full.md` section 5). **Three checked boxes are common in
@@ -165,6 +168,25 @@ front of a model. They are all in `full.md`.
 When a model ran (stage 6), one line says how many model reads (experimental) are on the review
 page, with a link to how accurate they measured: [MODEL-ACCURACY.md](MODEL-ACCURACY.md).
 
+### First pass: what the places could lead to
+
+For someone deciding whether to use the repository: the same places, grouped by what they could
+lead to, in a fixed order: **Runs code** (hooks and commands you are asked to run), **Reads
+secrets, calls out, or shares** (credentials, network calls, data sent elsewhere), **Lasting
+changes or permissions** (settings, profiles, permissions, actions that are hard to undo), and
+**Wording only** (everything else). Each group gives its count and its first headlines; the
+review page has every card. Nothing inside a group is ranked.
+
+### Questions before use
+
+The questions the findings raise, in place of a verdict: **permissions to hold back** (agents
+with no tools list, a shell, writing files, the web, hooks, MCP servers, each with where it is
+listed), **what to try first** (the parts of the repository with the most places to check, test
+folders left out), and **before you leave it running unattended** (the places that run code or
+make lasting changes, lines telling the AI it need not ask, read-only claims a tools list
+contradicts, hidden instructions, committed secrets). Only questions with evidence in this run
+appear. The answers are yours.
+
 ### Changes since an earlier run
 
 Only when an earlier run of the same repository was a different version, or the same version
@@ -209,6 +231,15 @@ line with three lines either side (from `data/normalized/text/`),
 the matched words highlighted. Invisible characters show as `U+XXXX`. In a file where the run
 found what looks like a secret, no lines around the place are shown.
 
+When a model read of the line says it is not an instruction (a prohibition, a description, a
+quote, the words in another sense), the card says so in one line: "A reviewer model's reading
+questions this", with who read it and the score. The finding stays; the same line appears under
+the item on the summary page. Each card ends with one line on what only running the skill can
+show for that kind of place ("Only running it shows whether the AI acts on this line"); cards
+that state a fixed fact, such as a committed secret, have none. A line that tells the AI to stay
+read-only in a skill whose own tools list can write is a place of its own: "Says read-only, but
+its tools list can write".
+
 Cards that are harder to judge say what you are deciding, under **To decide:**: model reads, test
 data the AI is pointed at, and images. A test-data or image card also shows **where the AI is
 pointed at it** (the line that names the file, with context) and what is in it (the start of the
@@ -218,6 +249,13 @@ You mark each place **Concerned** (you want to look into it, or change it), **No
 (you read it, and it is fine for what the skill is for), or **Not sure**, with an optional note.
 One mark per card. Walkdown makes no call on any place. The marks are yours, and they change
 nothing in the other reports.
+
+The walk comes in passes, chosen with the buttons above the progress bar: **Rule findings** (the
+places a rule found, walked first), **Model reads, optional** (an optional pass of their own,
+numbered "Model read 1 of N"), and **Not sure, again** (the places you marked Not sure, taken
+when you open it, so the list holds still while you mark them again). Back, Next, and Next
+unmarked move within the pass you are in; the index lists the model reads under their own
+heading.
 
 Marks are kept in your browser as you go. To keep them with the run, use "Download marks.json"
 at the end and save the file in the run folder, next to the page. Re-rendering the reports

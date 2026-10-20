@@ -44,7 +44,8 @@ or `INCOMPLETE (gate 14/15, negative 12/12; skipped: rd-img-ocr)`.
 - `fingerprint(root, env)`: sha256 over every file under `stages/`, `grader/`, and
   `Fixtures/` (path and bytes, `__pycache__` skipped), the Python major.minor, which optional
   tools are present (`optional_tools()`: Tesseract with pytesseract, gitleaks; added
-  2026-10-08; pdf2image and Playwright dropped 2026-10-12, since no stage uses them), and the `WALKDOWN_SOFT_*` variables in `env`. Any change to
+  2026-10-08; pdf2image and Playwright dropped 2026-10-12, since no stage used them; Playwright
+  back 2026-10-20 with stage 2's own check, `render_html.available`), and the `WALKDOWN_SOFT_*` variables in `env`. Any change to
   code, fixtures, answers, installed optional tools, or stage 6 choices gives a new
   fingerprint, so installing Tesseract never reuses a stage 2 INCOMPLETE measured without it.
 - `stamps(..., cache=True)` reuses `.cache/stamps.json` entries keyed `<stage>|<fingerprint>`

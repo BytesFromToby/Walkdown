@@ -89,7 +89,7 @@ emits it.
 | `read.fold` | line whose folded text differs from the raw text | `folded`: the folded line; `removed`: list of removed or replaced code points as `U+XXXX` |
 | `read.script` | run of non-Latin script | `script`: Unicode script name (e.g. `Cyrillic`); `text`: the run |
 | `read.language` | passage in Latin script that reads as a language other than English (added 2026-10-18) | `rule`: `function-words` or `diacritics`; `end_line`: the passage's last line; `words`, `english`, `other`: word counts (`other` is the best single other language); `matched`: the other-language function words, at most 10; `text`: the passage verbatim, cut at 500 characters (`truncated`). The language is never named |
-| `read.divergence` | text present in one reading and not the other | `reading`: `A-only` or `B-only`; `text`: the divergent text; `carrier`: how it hides (e.g. `display:none`, `white-on-white`, `alt`, `vanish`, `title`, `comment`); `method`: how reading B was obtained (e.g. `static-style`, `ocr`) |
+| `read.divergence` | text present in one reading and not the other | `reading`: `A-only` or `B-only`; `text`: the divergent text; `carrier`: how it hides (e.g. `display:none`, `white-on-white`, `alt`, `vanish`, `title`, `comment`; `rendered` for HTML drawn by a browser, with `how`: `collapsed`, `not-rendered`, `invisible`, `transparent`, `zero-size`, `tiny-text`, `off-page`, `clipped-or-covered`, `transparent-text`, `color-matches-background`, or `css-content` for `B-only` text a style sheet adds, added 2026-10-20); `method`: how reading B was obtained (e.g. `static-style`, `ocr`, `render`) |
 | `read.metadata` | metadata field carrying text | `field`: field name; `text`: its value |
 | `read.unread` | file the reader could not read | `reason`: why (binary blob, encrypted, unsupported format, missing optional tool) |
 
@@ -114,9 +114,10 @@ original line, verbatim) and may carry `audience` (`model`, `subagent`, `human`,
 (`version`, `count`, `rows` with one short hash per pattern id, `vocab`, `code`), so two runs can
 tell a hit from a repository change from one from a Walkdown change. A phrase finding with
 `wrapped: true` (added
-2026-10-18, review C37) is a hit on a Markdown line joined with the next line of its paragraph,
-that neither line hits alone: `line` is where it starts, `end_line` the next line, and `quote`
-both lines, joined by a newline.
+2026-10-18, review C37) is a hit on Markdown lines of one paragraph joined as one line (two
+lines, up to four since 2026-10-20) that no line or shorter run inside them hits: `line` is
+where it starts, `end_line` the last line, `quote` every line joined by a newline, and each
+match carries `spans`, `[line, start, end]` in each raw line.
 
 | Check | Sub-group | Class |
 |---|---|---|

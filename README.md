@@ -91,8 +91,11 @@ python -m venv .venv
 That is all stages 1 to 5 and the report need. Optional extras:
 
 - **Tesseract** (OCR of text in images and on PDF pages, stage 2). Without it, that text is listed
-  as not examined. It is the one optional tool that changes what a run finds; PDF pages are drawn
-  by `pypdfium2`, which `requirements.txt` installs.
+  as not examined. PDF pages are drawn by `pypdfium2`, which `requirements.txt` installs.
+- **Playwright** (HTML as a browser draws it, stage 2): `pip install playwright`, then
+  `python -m playwright install chromium-headless-shell`. Pages are drawn with their own scripts
+  off and nothing fetched from the network. Without it, HTML is read from static style only and
+  the rest is listed as not examined.
 - **Stage 6 backends** (`requirements-soft.txt`):
   - `jev`: TypeSafe's Jev, a remote labeling model. Needs `TYPESAFE_API_KEY` in the environment
     (on Windows it is also read from the user environment in the registry).

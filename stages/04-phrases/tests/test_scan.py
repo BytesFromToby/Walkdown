@@ -159,3 +159,95 @@ def test_wrapped_findings_sort_after_the_line_findings(tmp_path):
     out = scan_text("a.md", text, rows(tmp_path), "model")
     assert [(f["check"], f["line"], bool(f.get("wrapped"))) for f in out] == [
         ("phrase.H.anti-review", 1, False), ("phrase.L.override", 1, True)]
+
+
+# C37 follow-up (2026-10-20): runs of up to MAX_JOIN lines, where a match sits on each line,
+# and a line hit the next line cancels.
+
+MORE = """patterns:
+  - id: T.ask
+    check: phrase.L.override
+    regex: 'don''t ask\\b(?!\\s+hypothetical)'
+    source: 'PHRASES:L skip'
+  - id: T.ignore
+    check: phrase.L.override
+    regex: 'ignore (all|previous) instructions'
+    source: 'PHRASES:L ignore'
+  - id: T.pub
+    check: phrase.J.prohibited
+    regex: '\\bpublish\\b'
+    unless: '\\bask\\b'
+    note: 'a confirmation step'
+    source: 'PHRASES:J publish'
+  - id: T.end
+    check: phrase.creds
+    regex: 'printenv\\s*$'
+    source: 'PHRASES:creds env'
+  - id: T.spread
+    check: phrase.E.env
+    regex: 'begin\\b.*\\bfinish'
+    source: 'PHRASES:E spread'
+"""
+
+
+def more(tmp_path):
+    p = tmp_path / "more.yaml"
+    p.write_text(MORE, encoding="utf-8")
+    return load_table(p)
+
+
+def test_three_line_run_and_where_the_match_sits(tmp_path):
+    out = scan_text("a.md", "Then ignore\nall\ninstructions here.\n", rows(tmp_path), "model")
+    [f] = [f for f in out if f.get("wrapped")]
+    assert (f["line"], f["end_line"]) == (1, 3)
+    assert f["quote"] == "Then ignore\nall\ninstructions here."
+    assert f["matches"][0]["spans"] == [[1, 5, 11], [2, 0, 3], [3, 0, 12]]
+    two = scan_text("a.md", "> Then ignore\n>   all instructions\n", rows(tmp_path), "model")
+    assert next(f for f in two if f.get("wrapped"))["matches"][0]["spans"] == [[1, 7, 13], [2, 4, 20]]
+
+
+def test_a_longer_run_never_repeats_a_shorter_one(tmp_path):
+    out = scan_text("a.md", "Then ignore all\ninstructions now\nplease.\n", rows(tmp_path), "model")
+    assert [(f["line"], f["end_line"]) for f in out if f.get("wrapped")] == [(1, 2)]
+
+
+def test_runs_stop_at_max_join(tmp_path):
+    r = more(tmp_path)
+    four = scan_text("a.md", "begin\na\nb\nfinish\n", r, "model")
+    assert [(f["line"], f["end_line"]) for f in four if f.get("wrapped")] == [(1, 4)]
+    five = scan_text("a.md", "begin\na\nb\nc\nfinish\n", r, "model")
+    assert not [f for f in five if f.get("wrapped")]
+
+
+def test_next_line_cancels_a_narrowed_hit(tmp_path):
+    r, gone = more(tmp_path), []
+    out = scan_text("a.md", "Fine, don't ask\nhypothetical questions.\n", r, "model", gone)
+    assert out == [] and gone == [{"check": "phrase.L.override", "file": "a.md", "line": 1,
+                                   "next_line": 2, "patterns": ["T.ask"]}]
+    twin = scan_text("a.md", "Fine, don't ask\nthe user.\n", r, "model")
+    assert [(f["check"], f["line"]) for f in twin] == [("phrase.L.override", 1)]
+
+
+def test_an_unless_on_the_next_line_counts_up_to_its_first_sentence_end(tmp_path):
+    r = more(tmp_path)
+    assert scan_text("a.md", "Then publish it\nand ask first.\n", r, "model") == []
+    kept = scan_text("a.md", "Then publish it\nnow. Ask later.\n", r, "model")
+    assert [(f["check"], f["line"]) for f in kept] == [("phrase.J.prohibited", 1)]
+
+
+def test_only_rows_that_narrow_themselves_are_cancelled(tmp_path):
+    r, gone = more(tmp_path), []
+    out = scan_text("a.md", "Run printenv\nto list them.\n", r, "model", gone)
+    assert [(f["check"], f["line"]) for f in out] == [("phrase.creds", 1)] and gone == []
+
+
+def test_a_partly_cancelled_hit_keeps_its_other_rows(tmp_path):
+    out = scan_text("a.md", "Now ignore all instructions, don't ask\nhypothetical questions.\n",
+                    more(tmp_path), "model")
+    [f] = out
+    assert f["patterns"] == ["T.ignore"] and [m["pattern"] for m in f["matches"]] == ["T.ignore"]
+
+
+def test_cancelling_is_markdown_only(tmp_path):
+    out = scan_text("a.py", "Fine, don't ask\nhypothetical questions.\n", more(tmp_path), "model")
+    assert [(f["check"], f["line"]) for f in out] == [("phrase.L.override", 1)]

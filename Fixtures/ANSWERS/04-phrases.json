@@ -1106,6 +1106,46 @@
           "file": "wrapped-lines.md",
           "line": 29,
           "note": "Inside a fenced code block: never joined."
+        },
+        {
+          "id": "ph-wrap3-gate-35",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 35,
+          "match": {
+            "patterns": {
+              "includes": "E.persist-target"
+            },
+            "wrapped": {
+              "eq": true
+            },
+            "end_line": {
+              "eq": 37
+            }
+          },
+          "note": "Verb on line 35, target on line 37: runs of up to four lines are joined (C37 follow-up, 2026-10-20)."
+        },
+        {
+          "id": "ph-wrap-neg-39",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "wrapped-lines.md",
+          "line": 39,
+          "note": "\"don't ask\" ends the line and \"hypothetical questions\" starts the next: L.skip-confirm's own lookahead cancels it once the sentence is read across the break."
+        },
+        {
+          "id": "ph-wrap-gate-42",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "wrapped-lines.md",
+          "line": 42,
+          "match": {
+            "patterns": {
+              "includes": "L.skip-confirm"
+            }
+          },
+          "note": "The twin: the next line continues with an object, so the line hit stands."
         }
       ],
       "deferred": [],
@@ -1146,7 +1186,7 @@
         "secrets-repo/notes.md": "e0176ca0d9c22e171fd6cf05cfae5aafb976e9b4eadbfabf89a0cee16fbb9dd5",
         "secrets-repo/package-lock.json": "a64daf7505864c82834460ddc8ce9eaa718f584e5d4cb97658e5b0fde52aedd9",
         "secrets-repo/SKILL.md": "7c2f14b0c5eb6f4aab5c6f83a2bc66000640d3d3953989510bed24365ecbc0f6",
-        "wrapped-lines.md": "0a5d29dca512569cc7403d82c096523591fac9a4201feba644bcc3ff4b58493e"
+        "wrapped-lines.md": "3e3c6bdb4a27fbddbebe721a788153f7d03fe4f50488a97d14f68204bba91d01"
       }
     },
     {

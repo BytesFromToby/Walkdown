@@ -132,6 +132,10 @@ def first_items(r) -> list[dict]:
     for p in R.pairs(r, "image+loaded"):
         out.append(_item(5, "An image the model is pointed at", p["file"], note=R.image_note(p),
                          kind="image+loaded", src=p))
+    for x in R.fnd(r, "05-capability", "cap.limit"):  # owner, 2026-10-20, review C32
+        if x.get("status") == "contradicted" and not R.is_test_data(x.get("file")):
+            out.append(_item(5, "Says read-only, but its tools list can write", R.loc(x),
+                             (x.get("quote") or "").strip(), kind="limit.contradicted", src=x))
     for p in R.pairs(r, "hook+phrase"):
         out.append(_item(5, "An instruction the model sees before you type anything", R.loc(p),
                          p["quote"].strip(), "A context-injecting hook runs this script.",
@@ -168,6 +172,11 @@ def first_items(r) -> list[dict]:
                          note=f"Read by {x['backend']}, at p {R.DO_NEAR_P} to {R.DO_CLEAR_P}. "
                               f"Repeat reads of one line vary by about {R.DRIFT}, so each of "
                               "these could go either way.", kind="label", src=x))
+    reads = R.not_instruction_reads(r)  # review C28: a model read that questions a finding
+    for it in out:
+        q = R.questioned(reads, it.get("src")) if it["stage"] < 6 else None
+        if q:
+            it["questioned"] = q
     return unique(out)
 
 
@@ -203,9 +212,12 @@ def grouped(items) -> list[dict]:
             if it.get("note") and it["note"] not in (g.get("note") or "").split(" · "):
                 g["note"] = f"{g['note']} · {it['note']}" if g.get("note") else it["note"]
         else:
-            g = {**it, "wheres": [it["where"]], "quotes": [it["quote"]] if it.get("quote") else []}
+            g = {**it, "wheres": [it["where"]], "quotes": [it["quote"]] if it.get("quote") else [],
+                 "questions": []}
             by[k] = g
             out.append(g)
+        if it.get("questioned"):
+            g["questions"].append((it["where"], it["questioned"]))
     return out
 
 
@@ -231,6 +243,7 @@ CARRIER_PLAIN = {
     "vanish": "hidden Word text", "display:none": "elements styled not to show",
     "not-rendered": "text the page never shows", "aria-label": "screen-reader labels",
     "desc": "image descriptions inside SVG files", "metadata": "SVG metadata", "script": "SVG scripts",
+    "rendered": "web page text a browser does not show, or shows from the style sheet only",
 }
 GROUP_PLAIN = {  # stage 4's four groups (CONTRACT), named by what they look for
     "4a Reaching out": "reaching out (sending data, secrets, loading text from elsewhere)",
@@ -323,6 +336,11 @@ def _cards(items) -> str:
         quotes = "\n".join(it["quotes"][:6])
         q = f'<pre class="quote">{esc(quotes)}</pre>' if quotes else ""
         nt = f'<p class="note">{esc((it.get("lead") or "") + it["note"])}</p>' if it.get("note") else ""
+        qs = it.get("questions") or []
+        nt += "".join(f'<p class="questioned">{esc(q if len(it["wheres"]) == 1 else f"{w}: {q}")}</p>'
+                      for w, q in qs[:3])
+        if len(qs) > 3:
+            nt += f'<p class="questioned">{len(qs) - 3} more places questioned the same way.</p>'
         places = len(it["wheres"])
         count = f' <span class="count">{places} places</span>' if places > 1 else ""
         out.append(f'<li class="item"><h3>{esc(it["title"])}{count}</h3>'
@@ -761,12 +779,150 @@ def other(r, stamps, notes, runs_ok) -> str:
             f'</summary>{"".join(parts)}</details></section>')
 
 
+# Review C29 (owner, 2026-10-20): for someone deciding whether to use the repository. The places
+# to check, grouped by what they could lead to, in a fixed order (the review page keeps every card
+# for the author); and the questions the findings raise before use. Neither is a verdict or a
+# score, and neither ranks one place above another inside a group.
+ACTION_GROUPS = (
+    ("runs", "Runs code", "Commands that run on their own, or that you are asked to run."),
+    ("out", "Reads secrets, calls out, or shares", "Credentials, network calls, and data sent elsewhere."),
+    ("lasting", "Lasting changes or permissions",
+     "Settings, profiles, permissions, and actions that are hard to undo."),
+    ("words", "Wording only", "Instructions that change how the AI reads, decides, or answers."),
+)
+CHECK_GROUP = {"phrase.G.human": "runs", "phrase.K.exfil": "out", "phrase.creds": "out",
+               "phrase.remote-load": "out", "phrase.E.perms": "lasting", "phrase.E.env": "lasting",
+               "phrase.C.second-order": "lasting", "phrase.J.prohibited": "lasting"}
+KIND_GROUP = {"hook": "runs", "hook+phrase": "runs", "secret": "out", "rubric.prohibited": "lasting",
+              "rubric.redefined": "lasting", "limit.contradicted": "lasting"}
+TOOL_ASKS = ((("Bash",), "a shell"), (("Write", "Edit", "MultiEdit", "NotebookEdit"), "to write files"),
+             (("WebFetch", "WebSearch"), "the web"))
+FIRST_SHOWN = 4  # headlines shown per group; the rest are on the review page
+
+
+def action_group(it) -> str:
+    """Which of ACTION_GROUPS an item falls in: by its kind, else by the phrase check behind it."""
+    if it.get("kind") in KIND_GROUP:
+        return KIND_GROUP[it["kind"]]
+    src = it.get("src") or {}
+    check = src.get("check") if str(src.get("check", "")).startswith("phrase.") else src.get("phrase_check")
+    return CHECK_GROUP.get(check, "words")
+
+
+def first_pass(places) -> str:
+    """The places to check by what they could lead to (C29). `places`: first_items without the
+    model reads, one per place; each is grouped by its own finding, then merged by headline."""
+    if not places:
+        return ""
+    by = {k: [] for k, _, _ in ACTION_GROUPS}
+    for it in places:
+        by[action_group(it)].append(it)
+    rows = []
+    for k, name, what in ACTION_GROUPS:
+        its = grouped(by[k])
+        n = len(by[k])
+        heads = "".join(
+            f'<li>{esc(it["title"])} '
+            + (f'<span class="count">{len(it["wheres"])} places</span>' if len(it["wheres"]) > 1
+               else f'<code class="where">{esc(it["wheres"][0])}</code>') + "</li>"
+            for it in its[:FIRST_SHOWN])
+        if len(its) > FIRST_SHOWN:
+            heads += f'<li class="more">{len(its) - FIRST_SHOWN} more headings on the review page.</li>'
+        body = f"<ul>{heads}</ul>" if its else _empty("None found.")
+        rows.append(f'<li class="group"><h3>{esc(name)} <span class="count">{R.n(n, "place")}</span></h3>'
+                    f'<p class="note">{esc(what)}</p>{body}</li>')
+    return _section("firstpass", "First pass: what the places could lead to",
+                    esc("The places to check, by what they could lead to, in a fixed order: code that "
+                        "runs, data leaving, lasting changes, then wording. Every card, with the lines "
+                        "around it, is on the review page."),
+                    f'<ol class="groups">{"".join(rows)}</ol>'
+                    '<p class="review-link"><a href="review.html">Walk through every place one at a time</a>.</p>')
+
+
+def _part(where: str) -> str:
+    """The part of the repository a place belongs to: skills/<name>, agents/<file>, or the top folder."""
+    path = where.split(" (")[0].rsplit(":", 1)[0] if ":" in where.split(" (")[0] else where.split(" (")[0]
+    parts = path.split("/")
+    if parts[0] in ("skills", "agents", "commands", "plugins") and len(parts) > 2:
+        return "/".join(parts[:2])
+    return parts[0] if len(parts) > 1 else path
+
+
+def _tool_names(a) -> set:
+    return {str(t).split("(")[0].strip() for t in a.get("tools") or []}
+
+
+def before_use(r, places) -> str:
+    """Questions the findings raise for someone deciding whether to use the repository (C29).
+    `places`: first_items without the model reads, one per place."""
+    own = lambda xs: [x for x in xs if not R.is_test_data(x.get("file"))]  # noqa: E731
+    agents = own(R.fnd(r, "01-inventory", "struct.agent-tools"))
+    hooks = own(R.fnd(r, "01-inventory", "struct.hooks"))
+    mcp = own(R.fnd(r, "01-inventory", "struct.mcp"))
+    hold = []
+    inherit = [a for a in agents if not a.get("tools")]
+    if inherit:
+        hold.append(f"Should its {R.n(len(inherit), 'agent or command definition')} with no tools list "
+                    "get every tool you have? With no list, each can use all of them (capability only).")
+    for tools, what in TOOL_ASKS:
+        who = sorted({a["file"] for a in agents if _tool_names(a) & set(tools)})
+        if who:
+            hold.append(f"Does it need {what}? Listed for {R.n(len(who), 'definition')}: {_files(who)}.")
+    if hooks:
+        events = sorted({str(h.get("event")) for h in hooks})
+        hold.append(f"Do you want its {R.n(len(hooks), 'hook')} to run on "
+                    f"{'its' if len(hooks) == 1 else 'their'} own ({', '.join(events)})?")
+    if mcp:
+        names = sorted({str(m.get("name")) for m in mcp})
+        hold.append(f"Do you want to connect its MCP servers ({_files(names)})?")
+    per = collections.Counter(_part(it["where"]) for it in places
+                              if not R.is_test_data((it.get("src") or {}).get("file") or it["where"]))
+    first = []
+    if per:
+        top = per.most_common(3)
+        first.append("Which part will you try first? The parts with the most places to check: "
+                      + ", ".join(f"{p} ({c})" for p, c in top) + ".")
+    g = collections.Counter(action_group(it) for it in places)
+    left = []
+    if g["runs"] or g["lasting"]:
+        left.append(f"Which of the {R.n(g['runs'] + g['lasting'], 'place')} that run code or make lasting "
+                    "changes have you read?")
+    skip = [h for h in R.phrase_hits(r) if "L.skip-confirm" in (h.get("patterns") or [])
+            and h.get("audience") in ("model", "subagent") and not h.get("negated")]
+    if skip:
+        left.append(f"{R.n(len(skip), 'line')} {'tells' if len(skip) == 1 else 'tell'} the AI it need not "
+                    "ask before acting. Is that what "
+                    "you want when you are not watching?")
+    kinds = collections.Counter(it.get("kind") for it in places)
+    if kinds["limit.contradicted"]:
+        left.append(f"{R.n(kinds['limit.contradicted'], 'line')} "
+                    f"{'says' if kinds['limit.contradicted'] == 1 else 'say'} read-only in a part whose tools "
+                    "list can write. Does it write?")
+    if kinds["hidden+phrase"]:
+        left.append(f"What is the hidden text that reads like an instruction for "
+                    f"({R.n(kinds['hidden+phrase'], 'place')})?")
+    if kinds["secret"]:
+        left.append(f"Are the {R.n(kinds['secret'], 'value')} that look like committed secrets real, "
+                    "and still live?")
+    blocks = [(t, qs) for t, qs in (("Permissions to hold back", hold), ("What to try first", first),
+                                    ("Before you leave it running unattended", left)) if qs]
+    body = ("".join(f"<h3>{esc(t)}</h3><ul>" + "".join(f"<li>{esc(q)}</li>" for q in qs) + "</ul>"
+                    for t, qs in blocks) if blocks else _empty("No questions from these findings."))
+    return _section("beforeuse", "Questions before use",
+                    esc("Walkdown gives no verdict and no score. These are the questions its findings "
+                        "raise for someone deciding whether to use this repository; the answers, and what "
+                        "to do about them, are yours."), body)
+
+
 def render_page(meta, r, stamps, notes, runs_ok, changes_since=None) -> str:
-    every = grouped(first_items(r))
+    raw = first_items(r)
+    every = grouped(raw)
     items = [it for it in every if it["stage"] != 6]
     model_items = [it for it in every if it["stage"] == 6]
+    places = [it for it in raw if it["stage"] != 6]  # one per place, for the first pass (C29)
     body = [header(meta, r), trifecta(r), stats(r), links(r), hidden(r, items), secrets(r, items),
-            risky(r, items, model_items), changes(changes_since), recs(r), other(r, stamps, notes, runs_ok),
+            risky(r, items, model_items), first_pass(places), before_use(r, places),  # review C29
+            changes(changes_since), recs(r), other(r, stamps, notes, runs_ok),
             f'<footer><p>{esc(R.NOT_WHAT)}</p></footer>']
     return ("<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n"
@@ -831,6 +987,7 @@ h3 { font: 600 1.02rem/1.3 var(--body); margin: 1.1rem 0 .5rem; }
 .block p { margin: .35rem 0; max-width: 72ch; overflow-wrap: anywhere; }
 .empty { color: var(--muted); font-style: italic; }
 .note { color: var(--muted); }
+.questioned { color: var(--muted); border-left: 3px solid var(--muted); padding-left: .6rem; }
 .count { font: 400 .85rem var(--body); color: var(--muted); }
 ol, ul { margin: 0; padding: 0; list-style: none; }
 details summary { cursor: pointer; color: var(--accent); font-weight: 600; }

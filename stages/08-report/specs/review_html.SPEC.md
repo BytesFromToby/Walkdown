@@ -151,3 +151,41 @@ line, and the first lines with a count of the rest; an image card shows its text
 the line says so in a sentence and asks its question; a card of rule findings asks none.
 
 Still open (owner): whether model reads stay in the same queue or move to a pass of their own.
+
+## Owner decisions 2026-10-20 (review C31 part B, C32, C28)
+
+- **What only running it shows** (C31 part B): each card ends with one fixed line for its kind
+  (`RUNTIME`, e.g. "Only running it shows whether the AI acts on this line."); a phrase hit stated
+  as a prohibition says "Only running it shows whether the AI keeps to it."; kinds that state a
+  fixed fact (a committed secret, a file past the reader window, a repeated sentence) have none.
+- **Says read-only, but its tools list can write** (C32): a `cap.limit` with status
+  `contradicted` is a place of its own (stage 5), with "Is it enforced?" on its card; stated-only
+  and backed lines stay counts on the summary.
+- **A reviewer model's reading questions this** (C28): when a confident stage 6 read says the
+  card's line is not an instruction (`render.not_instruction_reads`: a label other than do, at
+  `NOT_DO_P` or more), the card carries one line under its location, with the backend, the label
+  in words, and the score (`render.questioned`). The finding stays. Recommendations carry no
+  model text.
+
+Done when (tests in `tests/test_review_html.py`, `tests/test_summary_html.py`): a hook card and a
+phrase card carry their lines, a prohibition its own, a secret card none; a questioning read adds
+its line to the card and to the summary item; a contradicted read-only line is a place, a stated
+or backed one is not.
+
+## Passes (owner decision 2026-10-20, review C36)
+
+Model reads are a separate, optional pass after the rule findings. Each card carries
+`data-pass` (`main` or `model`) and is numbered within its pass ("Place 3 of 12", "Model read 2
+of 9"); `data-n` keeps the place's number on the page for `marks.json`. Buttons above the
+progress bar choose the pass: Rule findings, Model reads (only when there are any), and Not sure,
+again: the places marked Not sure when it is opened, held while they are marked again. Back,
+Next, Next unmarked, and the progress line work within the current pass; marking a card or
+following the index to a card in another pass switches to it. The page opens on the first
+unmarked rule finding (or the card the address names). The index lists model reads under their
+own heading; the end of the page says what is left in the rule findings, offers the model reads,
+and counts the places marked Not sure.
+
+Done when (`tests/test_review_html.py`): cards carry their pass and numbering, the buttons are
+there (no model button without model reads), and the index heads the model reads. The script was
+driven in a browser on a superpowers run (4 rule findings, 20 model reads): passes switch,
+numbering follows, Not sure again holds its list while re-marked, no page errors.

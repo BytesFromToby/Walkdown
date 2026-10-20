@@ -6,6 +6,30 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Summary page: "First pass" groups the places to check by what they could lead to (runs code;
+  reads secrets, calls out, or shares; lasting changes or permissions; wording only), and
+  "Questions before use" lists the questions the findings raise: permissions to hold back, what
+  to try first, and what to settle before leaving it running unattended. Still no verdict.
+- Review page: model reads are a separate, optional pass after the rule findings, and "Not sure,
+  again" walks just the places you marked Not sure.
+- The capability names now start with "Can": "Can read your data", "Can take outside input",
+  "Can send data out". A static read shows what a skill could do; only running it shows what it does.
+- Review cards end with one line on what only running the skill can show for that kind of place.
+- A model read that calls a flagged line something other than an instruction is now shown with
+  the finding, on its card and on the summary page ("A reviewer model's reading questions this").
+- A line telling the AI to stay read-only, in a skill whose own tools list can write, is now a
+  place to check of its own.
+- HTML as a browser draws it (the last check listed as not built). With Playwright and its
+  Chromium installed, stage 2 draws each HTML file with the page's own scripts off and nothing
+  fetched from the network, and reports text a person would not see that static style misses
+  (in a closed `<details>` section, moved off the page, clipped or covered, hidden by an `@media` rule, colored like the page
+  through a CSS variable), and text a style sheet adds with `::before` or `::after`, which a
+  person sees and the model never receives. Without Playwright, HTML is read from static style
+  only and the report says so.
+- Instructions wrapped across lines: runs of up to four lines of a Markdown paragraph are now
+  read as one, and a pattern's exception works across a line break ("don't ask" at the end of
+  a line, "hypothetical questions" on the next, is no longer flagged). Review cards mark the
+  matched words on every line of a wrapped hit.
 - Comparing two runs now says where each new or gone phrase hit came from: the repository (its file
   was added, removed, or edited), Walkdown's search terms (a term added, changed, or retired, named
   in `changes.md`), or Walkdown's matching code. Every stage 4 report records the version of its

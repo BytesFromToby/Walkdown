@@ -80,3 +80,8 @@ def test_wrapped_finding_is_masked_when_its_second_line_holds_a_secret():
     run4.mask_secret_lines(fs)
     assert FAKE not in repr(fs) and fs[1]["masked"]
     assert fs[2]["quote"] == "a passage" and "masked" not in fs[2]
+    middle = [{"check": "secret.found", "file": "a.md", "line": 3, "kinds": ["Secret Keyword"]},
+              {"check": "phrase.creds", "file": "a.md", "line": 2, "end_line": 4, "wrapped": True,
+               "quote": f"send\nkey={FAKE}\nnow", "matches": []}]
+    run4.mask_secret_lines(middle)
+    assert middle[1]["masked"] and FAKE not in repr(middle)  # a middle line of a longer run

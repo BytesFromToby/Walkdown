@@ -30,8 +30,9 @@ makes language / script shift its own signal (CHARTER scope section).
 see "Public repo" below). All eight stages run end to end from one command; every stage has
 fixtures, a grader stamp, specs, and tests (743). Stage 6 (model reads) is optional and
 experimental. Four repositories audited (superpowers, Plumbline, claude-familiar, backlog) plus
-the self-audit. Not built: HTML as a browser draws it (stage 2). One optional tool affects
-results: Tesseract (OCR of images and PDF pages); gitleaks has a pip fallback.
+the self-audit. Every check the method calls for is built (HTML as a browser draws it was the
+last, 2026-10-20). Two optional tools affect results: Tesseract (OCR of images and PDF pages) and
+Playwright with its Chromium (HTML as a browser draws it); gitleaks has a pip fallback.
 
 Where things stand and what is next: `pre-planning/REVIEW-2026-10-03.md` (the latest review:
 fixed items, open design items C14 to C18, and the ordered plan). Stage 6 decisions:

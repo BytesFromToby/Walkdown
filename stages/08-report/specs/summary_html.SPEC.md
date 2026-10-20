@@ -115,3 +115,37 @@ page-wide horizontal scroll, every artifact string HTML-escaped (addresses inclu
 15. The header's license line: a recognized top-level file, an unrecognized one with its first
     line, a field when there is no file, "No license found", "Also stated" for a different
     license elsewhere, no test data, and no line for a run without the check.
+
+## Owner decisions 2026-10-20
+
+- The capability names start with "Can" (`render.LEG_NAMES`: "Can read your data", "Can take
+  outside input", "Can send data out"; review C31 part B). The frozen v1 page keeps its own copy
+  of the old names (`summary_v1_html.LEG_NAMES_V1`).
+- `first_items` lists a read-only line whose owner's tools list can write as "Says read-only, but
+  its tools list can write" (stage 5, kind `limit.contradicted`; review C32).
+- An item whose line a confident model read calls not an instruction carries `questioned`
+  (`render.questioned`), and `grouped` collects them per place; the headline list shows each
+  under its item, up to three, then a count (review C28).
+
+## First pass and questions before use (owner decision 2026-10-20, review C29)
+
+After "Risky asks and things to check":
+
+- **First pass: what the places could lead to** (`first_pass`): every rule-found place (one per
+  place, before merging) in one of `ACTION_GROUPS`, in that fixed order: runs code, reads secrets
+  or calls out or shares, lasting changes or permissions, wording only (`action_group`: by the
+  item's kind, else by the phrase check behind it; anything else is wording). Each group: its
+  count, its headlines merged within the group (the first `FIRST_SHOWN`, then a count), "None
+  found." when empty, and the review link.
+- **Questions before use** (`before_use`): only questions with evidence, under "Permissions to
+  hold back" (agent or command definitions with no tools list; a shell, writing files, the web,
+  each with the definitions that list it; hooks with their events; MCP servers), "What to try
+  first" (the three parts of the repository with the most places, test data left out), and
+  "Before you leave it running unattended" (places that run code or make lasting changes; lines
+  telling the AI it need not ask, not prohibitions; contradicted read-only lines; hidden text
+  that reads like an instruction; values that look like secrets). No verdict, no score, no
+  advice beyond the questions.
+
+Done when (`tests/test_summary_html.py`): the groups map kinds and checks as above, each place by
+its own finding; the sections follow Risky asks in order; questions appear with their evidence
+and the section says "No questions from these findings." without any.

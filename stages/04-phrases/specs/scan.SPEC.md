@@ -76,7 +76,18 @@ Findings stay ordered by line; on one line, line-pass findings come before wrapp
 
 `run.mask_secret_lines` masks a wrapped finding when either of its lines holds a secret.
 
-Not done: a match across three or more lines (only neighbours are joined), and the reverse
+Since 2026-10-20 (C37 follow-up): runs of up to `MAX_JOIN` (4) lines are joined, and a check
+counts on a run only when no line or shorter run inside it hits it; each match of a wrapped
+finding carries `spans`, `[line, start, end]` per raw line, so a review card marks the words on
+both sides of a break. A line hit whose row narrows itself (a negative lookahead or an `unless`)
+is tested again on the line joined with the next line up to that line's first sentence end; a row
+that no longer hits is taken off the finding, and a finding left with none is no hit
+(`undone_by_next_line`; `scan_text(..., undone=list)` collects them and `run.py` writes them to
+`hits.json`). Rows without either narrowing are never tested this way: one anchored at the end of
+the line would be cancelled by any text after it. A match spread over more than four lines is
+still not caught.
+
+Earlier note (2026-10-18), now history: not done: a match across three or more lines (only neighbours are joined), and the reverse
 case, a line-pass hit that the next line undoes (`don't ask` / `hypothetical questions`).
 
 Done when (tests in `tests/test_scan.py`, `tests/test_secret_scan.py`):
@@ -92,3 +103,16 @@ Done when (tests in `tests/test_scan.py`, `tests/test_secret_scan.py`):
 
 Fixture: `Fixtures/04-phrases/wrapped-lines.md` (grader rows `ph-wrap-*`: three wrapped
 positives, the one-line twin, and negatives for a sentence boundary, a list, and a code fence).
+
+Done when, C37 follow-up (tests in `tests/test_scan.py`, `tests/test_secret_scan.py`):
+
+13. A match across three lines is one finding with `end_line` three lines on and `spans` on each
+    line (quoted lines too); a check found in a shorter run is never repeated in a longer one;
+    a run of five lines is not joined.
+14. "don't ask" ending a line, then "hypothetical questions", is no hit and is listed as undone;
+    the twin with an object stands; an `unless` word on the next line cancels only up to that
+    line's first sentence end; a row anchored at the end of the line is never cancelled; a hit
+    that loses one of two rows keeps the other; only Markdown is tested this way.
+15. A secret on a middle line of a run masks the wrapped finding.
+
+Fixture rows `ph-wrap3-gate-35`, `ph-wrap-neg-39`, `ph-wrap-gate-42` in `wrapped-lines.md`.

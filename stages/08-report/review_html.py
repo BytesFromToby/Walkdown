@@ -80,6 +80,29 @@ DECIDE = {
 }
 START_LINES = 8  # lines shown from the start of a test-data file
 
+# Review C31 part B (owner, 2026-10-20): what only running the skill can settle, one fixed line
+# per kind of card. Kinds that state a fixed fact (a committed secret, a long file, a repeated
+# sentence) have none.
+RUNTIME = {
+    "hook": "Only running it shows whether the command succeeds and what it changes.",
+    "hidden+phrase": "Only running it shows whether the AI acts on the hidden text.",
+    "orphan+phrase": "Only running it shows whether this file is ever loaded.",
+    "dynamic+phrase": "Only running it shows whether this file is ever loaded.",
+    "phrase": "Only running it shows whether the AI acts on this line.",
+    "hook+phrase": "Only running it shows what the hook puts in front of the AI, and whether the AI acts on it.",
+    "term.conflict": "Only running it shows which meaning the AI uses.",
+    "term.safety": "Only running it shows which meaning of the word the AI uses.",
+    "rubric.prohibited": "Only running it shows whether the AI asks before it does this.",
+    "rubric.redefined": "Only running it shows whether the AI asks you, or counts the redefinition as asking.",
+    "testdata+loaded": "Only running it shows whether the AI opens the file and acts on what it says.",
+    "image+loaded": "Only running it shows whether the AI looks at the image and acts on its text.",
+    "limit.contradicted": "Only running it shows whether the skill writes anything.",
+    "label": "Only running it shows whether the AI acts on this line.",
+    "sweep": "Only running it shows whether the AI acts on this passage.",
+    "read": "Only running it shows whether the AI reads it the same way.",
+}
+RUNTIME_PROHIBITION = "Only running it shows whether the AI keeps to it."
+
 
 def esc(s) -> str:
     return html.escape(str(s if s is not None else ""), quote=True)
@@ -234,6 +257,15 @@ def _invisible(ch: str) -> bool:
                            or 0xE0000 <= cp <= 0xE007F)
 
 
+def _wrapped_spans(matches) -> dict[int, list[tuple[int, int]]]:
+    """Per line, where a match that runs across a line break sits (stage 4's `spans`, C37)."""
+    out: dict[int, list[tuple[int, int]]] = {}
+    for m in matches or []:
+        for ln, a, b in m.get("spans") or []:
+            out.setdefault(ln, []).append((a, b))
+    return out
+
+
 def _spans(line: str, matches) -> list[tuple[int, int]]:
     """Where each matched text sits in the true line. Offsets are on the folded line, so use
     them when the text is there, else search for it; a match that cannot be placed is left out."""
@@ -316,11 +348,13 @@ def context_html(p, lines, secret: bool) -> str:
         shown = min(end, line + MAX_SPAN - 1)  # a long passage shows its first MAX_SPAN lines
         lo, hi = max(1, line - CONTEXT), min(len(lines), shown + (CONTEXT if shown == end else 0))
         rows = []
+    wrapped = _wrapped_spans(p["matches"])  # a match across a line break, marked on each line
+    single = [m for m in p["matches"] or [] if not m.get("spans")]
     for n in range(lo, hi + 1):
         text = lines[n - 1].rstrip("\r")
         target = (any(s <= n <= e for s, e in spans) if spans else line <= n <= shown)
-        body = (render_line(text, _spans(text, p["matches"]) if n == line else (), FOCUS_CAP)
-                if target else render_line(text))
+        marks = sorted((_spans(text, single) if n == line else []) + wrapped.get(n, []))
+        body = render_line(text, marks, FOCUS_CAP) if target else render_line(text)
         rows.append(_row(str(n), body, target))
     if shown < end:
         rows.append(_row("", f'<span class="cut">{esc(R.n(end - shown, "more line"))} in this '
@@ -410,6 +444,20 @@ def _enforced(p) -> str:
             + (f'<p class="muted">{esc(routes)}</p>' if routes else "") + "</div>")
 
 
+def _runtime(p) -> str:
+    """What only running it shows, for this kind of card (C31 part B)."""
+    kind = p.get("kind")
+    words = (RUNTIME_PROHIBITION if kind == "phrase" and (p.get("src") or {}).get("negated")
+             else RUNTIME.get(kind))
+    return f'<p class="runtime">{esc(words)}</p>' if words else ""
+
+
+def _questioned(p) -> str:
+    """A reviewer model's reading that questions this finding (C28); the finding stays."""
+    q = p.get("questioned")
+    return f'<p class="questioned">{esc(q)}</p>' if q else ""
+
+
 def _decide(p) -> str:
     """One line on what the reader is deciding, for the kinds readers could not mark (C36)."""
     kind = p.get("kind")
@@ -495,7 +543,10 @@ def _model_said(p) -> str:
             f'<p class="muted">{note}</p></div>')
 
 
-def _card(p, k, n, lines, secret, text_href, text_dir=None, secret_files=()) -> str:
+def _card(p, k, n, lines, secret, text_href, text_dir=None, secret_files=(), at=None) -> str:
+    """`k`: the place's number on the page (marks.json `place`); `at`: (number, count) within its
+    pass, rule findings or model reads (owner, 2026-10-20, review C36)."""
+    j, m = at or (k, n)
     parts = p.get("parts") or [p]
     stages = list(dict.fromkeys(m["stage"] for m in parts if not m["model"])) or [p["stage"]]
     tag = "".join(f'<span class="tag">{esc(S.PLAIN_STAGE[R.ORDER[st - 1]])}</span>' for st in stages)
@@ -511,15 +562,17 @@ def _card(p, k, n, lines, secret, text_href, text_dir=None, secret_files=()) -> 
                     f'<b>{i}</b> {esc(name)}<span class="what">{esc(what)}</span></button>'
                     for i, (key, name, what) in enumerate(MARKS, 1))
     plain_where = f'<div class="where">{esc(p["where"])}</div>'
+    num = f"Model read {j} of {m}" if p["model"] else f"Place {j} of {m}"
     return (f'<article class="place" id="p-{p["id"]}" data-id="{p["id"]}" data-n="{k}" '
+            f'data-pass="{"model" if p["model"] else "main"}" '
             f'data-stage="{p["stage"]}" data-title="{esc(p["title"])}" data-where="{esc(p["where"])}">'
             f'<div class="place-h">{tag}{model}'
-            f'<span class="num">Place {k} of {n}</span></div>'
+            f'<span class="num">{num}</span></div>'
             f'<h2>{esc(p["title"])}{more}</h2>'
-            f'{_links(p, text_href) or plain_where}{_decide(p)}'
+            f'{_links(p, text_href) or plain_where}{_decide(p)}{_questioned(p)}'
             f'{"".join(_model_said(m) for m in reads)}'
             f'{_flagged(p)}{_enforced(p)}{_pointed(p, text_dir, secret_files)}'
-            f'{context_html(p, lines, secret)}'  # what was flagged above the text (owner, 2026-10-13)
+            f'{context_html(p, lines, secret)}{_runtime(p)}'  # what was flagged above the text (owner, 2026-10-13)
             f'<div class="marks" role="group" aria-label="Your mark">{marks}</div>'
             f'<label class="note-l">Note (optional)<textarea class="note" rows="2"></textarea></label>'
             f'</article>')
@@ -569,15 +622,17 @@ def render_page(meta, r, text_dir=None, text_href=None, marks=None, marks_error=
     secret = _secret_files(r)
     cache = {}
     cards = []
+    n_det = sum(1 for p in ps if not p["model"])
+    n_mod = len(ps) - n_det
     for k, p in enumerate(ps, 1):
         if p.get("file") not in cache:
             cache[p.get("file")] = read_lines(text_dir, p.get("file"))
+        at = (k - n_det, n_mod) if p["model"] else (k, n_det)  # model reads come last (places)
         cards.append(_card(p, k, len(ps), cache[p.get("file")], p.get("file") in secret,
-                           text_href, text_dir, secret))
-    n_det = sum(1 for p in ps if not p["model"])
-    n_mod = len(ps) - n_det
+                           text_href, text_dir, secret, at=at))
     lede = (f"Walkdown flagged {R.n(n_det, 'place')} in this repository"
-            + (f", and a model read {n_mod} more (experimental)" if n_mod else "") + ".")
+            + (f", and a model read {n_mod} more (experimental). The model reads are a separate, "
+               f"optional pass after the rest" if n_mod else "") + ".")
     saved, stray = saved_marks(marks, {p["id"] for p in ps}) if marks is not None else ({}, 0)
     loaded = ""
     if marks_error:
@@ -586,9 +641,17 @@ def render_page(meta, r, text_dir=None, text_href=None, marks=None, marks_error=
         loaded = (f'<p class="hint">Marks loaded from {esc(MARKS_FILE)} in the run folder: '
                   f'{len(saved)}' + (f"; {stray} saved marks match no place on this page" if stray else "")
                   + ".</p>")
-    index = "".join(f'<li><a href="#p-{p["id"]}" data-go="{k - 1}"><span class="chip" data-for="{p["id"]}">'
-                    f'</span>{k}. {esc(p["title"])} <code>{esc(p["where"])}</code></a></li>'
+    index = "".join((f'<li class="index-h">Model reads (optional, experimental)</li>'
+                     if p["model"] and k == n_det + 1 else "")
+                    + f'<li><a href="#p-{p["id"]}" data-go="{k - 1}"><span class="chip" data-for="{p["id"]}">'
+                    f'</span>{k - n_det if p["model"] else k}. {esc(p["title"])} <code>{esc(p["where"])}</code></a></li>'
                     for k, p in enumerate(ps, 1))
+    passes = ('<div class="passes nav" role="group" aria-label="Which places">'
+              f'<button type="button" data-pass="main" aria-pressed="true">Rule findings ({n_det})</button>'
+              + (f'<button type="button" data-pass="model" aria-pressed="false">Model reads, optional ({n_mod})</button>'
+                 if n_mod else "")
+              + '<button type="button" data-pass="unsure" aria-pressed="false">Not sure, again '
+                '(<span id="n-unsure">0</span>)</button></div>')
     payload = json.dumps(saved, ensure_ascii=True).replace("<", "\\u003c")
     legend = "".join(f"<li><b>{esc(name)}</b>: {esc(what)}</li>" for _, name, what in MARKS)
     empty = ('<p class="none">Nothing to check: no location met the rules. Each stage\'s result is in '
@@ -597,7 +660,7 @@ def render_page(meta, r, text_dir=None, text_href=None, marks=None, marks_error=
         title=esc(f"Walkdown review: {meta['repo']}"), repo=esc(meta["repo"]), source=esc(source),
         hash=esc(f"{meta.get('hash_kind', '?')} {str(meta.get('hash', ''))[:12]}"), run=esc(meta["run"]),
         lede=esc(lede), legend=legend, loaded=loaded, index=index, n=len(ps), cards="".join(cards),
-        empty=empty, saved=payload, notwhat=esc(R.NOT_WHAT),
+        empty=empty, saved=payload, notwhat=esc(R.NOT_WHAT), passes=passes if ps else "",
         meta_repo=esc(meta["repo"]), meta_run=esc(meta["run"]), meta_hash=esc(str(meta.get("hash", ""))),
         hidden="" if ps else " hidden")
 
@@ -670,6 +733,11 @@ details.index code {{ font-size: .75rem; color: var(--muted); }}
 .places {{ display: grid; gap: 1rem; }}
 .place {{ padding: 1.1rem 1.2rem 1.2rem; border-left: 4px solid var(--flag); min-width: 0; scroll-margin-top: 7rem; }}
 .js.one .place:not(.current) {{ display: none; }}
+.js .place.away {{ display: none; }}
+.passes {{ margin-bottom: .6rem; }}
+.passes button[aria-pressed="true"] {{ border-color: var(--accent); background: var(--quote-bg); }}
+.passes button:disabled {{ opacity: .5; cursor: default; }}
+details.index li.index-h {{ font-weight: 600; color: var(--muted); margin-top: .5rem; font-size: .85rem; }}
 .place-h {{ display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }}
 .tag {{ font: 600 .72rem/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--flag); background: var(--flag-bg); padding: .3rem .5rem; border-radius: 3px; }}
 .tag.model {{ color: var(--accent); background: var(--quote-bg); }}
@@ -690,6 +758,8 @@ mark {{ background: var(--hit); color: inherit; border-radius: 2px; padding: 0 1
 .said h3, .flagged h3 {{ text-decoration: underline; text-underline-offset: .2em; }}
 .enforced h3, .pointed h3 {{ font: 600 .95rem/1.3 var(--body); margin: .9rem 0 .3rem; text-decoration: underline; text-underline-offset: .2em; }}
 .enforced p {{ margin: .2rem 0; max-width: 72ch; }}
+.questioned {{ margin: .5rem 0 .2rem; padding: .45rem .7rem; border-left: 3px solid var(--muted); max-width: 72ch; }}
+.runtime {{ margin: .6rem 0 0; color: var(--muted); font-style: italic; max-width: 72ch; }}
 .decide {{ margin: .6rem 0 .2rem; padding: .45rem .7rem; border-left: 3px solid var(--accent); background: var(--quote-bg); max-width: 72ch; }}
 .flagged ul {{ margin: 0; padding-left: 1.2rem; display: grid; gap: .3rem; max-width: 72ch; }}
 .flagged h4 {{ font: 600 .92rem/1.3 var(--body); margin: .6rem 0 .25rem; }}
@@ -718,7 +788,7 @@ textarea {{ display: block; width: 100%; margin-top: .25rem; font: .95rem/1.4 va
 .none {{ background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 1rem 1.2rem; }}
 footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--muted); max-width: 70ch; font-size: .92rem; }}
 @media (max-width: 640px) {{ .marks {{ grid-template-columns: 1fr; }} header.card {{ padding: 1.2rem; }} .num {{ margin-left: 0; width: 100%; }} }}
-@media print {{ .bar-wrap, .marks, .note-l, .done {{ display: none; }} .js.one .place:not(.current) {{ display: block; }} }}
+@media print {{ .bar-wrap, .marks, .note-l, .done {{ display: none; }} .js.one .place:not(.current), .js .place.away {{ display: block; }} }}
 </style>
 </head>
 <body class="no-js">
@@ -737,6 +807,7 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
   </header>
   {empty}
   <section class="bar-wrap"{hidden} aria-label="Progress">
+    {passes}
     <div class="bar-top"><span class="prog" id="prog"></span>
       <div class="nav"><button type="button" id="prev">Back</button><button type="button" id="next">Next</button>
       <button type="button" id="nextun">Next unmarked</button><button type="button" id="mode">Show all</button></div></div>
@@ -746,6 +817,7 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
   <section class="done"{hidden} aria-label="When you are done">
     <h2>When you are done</h2>
     <ul class="counts" id="counts"></ul>
+    <p class="hint" id="then"></p>
     <p class="hint">Download your marks and save the file as <code>marks.json</code> in this run folder, next to this page. Walkdown reads it back when it re-renders the report, so the marks come back with the page on any computer. If the download is blocked, copy the text below into that file.</p>
     <div class="nav"><button type="button" id="dl">Download marks.json</button><button type="button" id="cp">Copy marks</button>
       <label class="file-l">Load a marks file<input type="file" id="load" accept=".json,application/json"></label>
@@ -771,22 +843,48 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
   try {{ var mine = JSON.parse(localStorage.getItem(STORE) || "{{}}");
     Object.keys(mine).forEach(function (k) {{ marks[k] = mine[k]; }}); }} catch (e) {{}}
   var i = 0;
+  // The walk covers one pass at a time (owner, 2026-10-20, review C36): rule findings, the
+  // optional model reads, or the places marked Not sure, taken when that pass is opened so the
+  // list holds still while they are marked again.
+  var pass = "main", active = cards;
   function get(id) {{ return marks[id] || {{mark: null, note: ""}}; }}
+  function unsure() {{ return cards.filter(function (el) {{ return get(el.dataset.id).mark === "not-sure"; }}); }}
+  function setPass(p, keep) {{
+    var list = p === "unsure" ? unsure() : cards.filter(function (el) {{ return el.dataset.pass === p; }});
+    if (!list.length) return false;
+    pass = p; active = list;
+    document.querySelectorAll(".passes button").forEach(function (b) {{ b.setAttribute("aria-pressed", String(b.dataset.pass === p)); }});
+    cards.forEach(function (el) {{ el.classList.toggle("away", active.indexOf(el) < 0); }});
+    var k = keep ? active.indexOf(keep) : -1;
+    if (k < 0) {{ k = p === "unsure" ? -1 : active.findIndex(function (el) {{ return !isMarked(el.dataset.id); }}); }}
+    i = k < 0 ? 0 : k;
+    return true;
+  }}
   function save() {{ try {{ localStorage.setItem(STORE, JSON.stringify(marks)); }} catch (e) {{}} out(); }}
   function isMarked(id) {{ return !!get(id).mark; }}
   function paint() {{
     var done = 0, c = {{"concerned": 0, "not-concerned": 0, "not-sure": 0}};
-    cards.forEach(function (el, k) {{
+    cards.forEach(function (el) {{
       var m = get(el.dataset.id);
       if (m.mark) {{ done++; c[m.mark]++; }}
-      el.classList.toggle("current", k === i);
+      el.classList.toggle("current", el === active[i]);
       el.querySelectorAll(".mark").forEach(function (b) {{ b.setAttribute("aria-pressed", String(b.dataset.mark === m.mark)); }});
       var ta = el.querySelector(".note"); if (document.activeElement !== ta) ta.value = m.note || "";
       var chip = document.querySelector('.chip[data-for="' + el.dataset.id + '"]');
       if (chip) chip.className = "chip" + (m.mark ? " " + m.mark : "");
     }});
-    $("prog").textContent = (body.classList.contains("one") ? "Place " + (i + 1) + " of " + cards.length + " · " : cards.length + " places · ") + done + " marked";
-    $("fill").style.width = (100 * done / cards.length) + "%";
+    var here = active.filter(function (el) {{ return isMarked(el.dataset.id); }}).length;
+    var what = pass === "model" ? "Model read " : pass === "unsure" ? "Not sure, again: place " : "Place ";
+    $("prog").textContent = (body.classList.contains("one") ? what + (i + 1) + " of " + active.length + " · "
+      : active.length + " places · ") + here + " marked";
+    $("fill").style.width = (100 * here / active.length) + "%";
+    var nu = unsure().length, ub = document.querySelector('.passes [data-pass="unsure"]');
+    $("n-unsure").textContent = nu; if (ub) ub.disabled = !nu && pass !== "unsure";
+    var mainLeft = cards.filter(function (el) {{ return el.dataset.pass === "main" && !isMarked(el.dataset.id); }}).length;
+    var models = cards.filter(function (el) {{ return el.dataset.pass === "model"; }}).length;
+    $("then").textContent = (mainLeft ? mainLeft + " rule findings are not marked yet. " : "")
+      + (models && pass === "main" ? "Then, if you like: the " + models + " model reads, a separate optional pass (the buttons above). " : "")
+      + (nu ? nu + " marked Not sure: \u201cNot sure, again\u201d walks just those." : "");
     $("counts").innerHTML = "";
     KEYS.forEach(function (k) {{ var li = document.createElement("li"); li.textContent = NAMES[k] + ": " + c[k]; $("counts").appendChild(li); }});
     var li = document.createElement("li"); li.textContent = "Not marked: " + (cards.length - done); $("counts").appendChild(li);
@@ -804,25 +902,30 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
   }}
   function set(id, patch) {{ var m = get(id); marks[id] = {{mark: "mark" in patch ? patch.mark : m.mark, note: "note" in patch ? patch.note : m.note}}; save(); paint(); }}
   function pick(key) {{
-    var id = cards[i].dataset.id, cur = get(id).mark;
+    var id = active[i].dataset.id, cur = get(id).mark;
     set(id, {{mark: cur === key ? null : key}});
     if (cur !== key && body.classList.contains("one")) setTimeout(function () {{ go(1); }}, 180);
   }}
-  function go(d) {{ i = Math.max(0, Math.min(cards.length - 1, i + d)); paint(); show(); }}
+  function go(d) {{ i = Math.max(0, Math.min(active.length - 1, i + d)); paint(); show(); }}
   function show() {{
     if (body.classList.contains("one")) document.querySelector(".bar-wrap").scrollIntoView({{block: "start"}});
-    else cards[i].scrollIntoView({{block: "start"}});
-    try {{ history.replaceState(null, "", "#p-" + cards[i].dataset.id); }} catch (e) {{}}
+    else active[i].scrollIntoView({{block: "start"}});
+    try {{ history.replaceState(null, "", "#p-" + active[i].dataset.id); }} catch (e) {{}}
   }}
-  function nextUn() {{ for (var k = 1; k <= cards.length; k++) {{ var j = (i + k) % cards.length;
-    if (!isMarked(cards[j].dataset.id)) {{ i = j; paint(); show(); return; }} }} }}
+  function nextUn() {{ for (var k = 1; k <= active.length; k++) {{ var j = (i + k) % active.length;
+    if (!isMarked(active[j].dataset.id)) {{ i = j; paint(); show(); return; }} }} }}
   cards.forEach(function (el, k) {{
-    el.querySelectorAll(".mark").forEach(function (b) {{ b.addEventListener("click", function () {{ i = k; pick(b.dataset.mark); }}); }});
+    el.querySelectorAll(".mark").forEach(function (b) {{ b.addEventListener("click", function () {{
+      if (active.indexOf(el) < 0) setPass(el.dataset.pass, el); i = active.indexOf(el); pick(b.dataset.mark); }}); }});
     el.querySelector(".note").addEventListener("input", function (e) {{ set(el.dataset.id, {{note: e.target.value}}); }});
-    el.addEventListener("focusin", function () {{ if (!body.classList.contains("one") && i !== k) {{ i = k; paint(); }} }});
+    el.addEventListener("focusin", function () {{ var j = active.indexOf(el);
+      if (!body.classList.contains("one") && j >= 0 && i !== j) {{ i = j; paint(); }} }});
   }});
   document.querySelectorAll("[data-go]").forEach(function (a) {{ a.addEventListener("click", function (e) {{
-    e.preventDefault(); i = +a.dataset.go; paint(); show(); }}); }});
+    e.preventDefault(); var el = cards[+a.dataset.go];
+    if (active.indexOf(el) < 0) setPass(el.dataset.pass, el); i = active.indexOf(el); paint(); show(); }}); }});
+  document.querySelectorAll(".passes button").forEach(function (b) {{ b.addEventListener("click", function () {{
+    if (setPass(b.dataset.pass)) {{ paint(); show(); }} }}); }});
   $("prev").onclick = function () {{ go(-1); }}; $("next").onclick = function () {{ go(1); }}; $("nextun").onclick = nextUn;
   $("mode").onclick = function () {{ var one = body.classList.toggle("one");
     $("mode").textContent = one ? "Show all" : "One at a time"; paint(); show(); }};
@@ -847,7 +950,7 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
       }} catch (err) {{ $("msg").textContent = "That file is not a marks file."; }} }};
     rd.readAsText(f); }};
   var h = location.hash.replace("#p-", ""), at = cards.findIndex(function (el) {{ return el.dataset.id === h; }});
-  if (at >= 0) i = at; else {{ var un = cards.findIndex(function (el) {{ return !isMarked(el.dataset.id); }}); i = un < 0 ? 0 : un; }}
+  if (at >= 0) setPass(cards[at].dataset.pass, cards[at]); else setPass("main") || setPass("model");
   paint(); out();
 }})();
 </script>

@@ -4,7 +4,8 @@
 **Kind of evidence:** pattern hits on the folded text, one finding per line per
 check, each quoting the original line verbatim.
 (Added 2026-10-18, review C37: in Markdown, a hit on a line joined with the next
-line of its paragraph that neither line hits alone, cited at its first line; `specs/scan.SPEC.md`.)
+line of its paragraph that neither line hits alone, cited at its first line; since 2026-10-20 runs
+of up to four lines, and a narrowed row's exception read across the break; `specs/scan.SPEC.md`.)
 **Report heading:** What the text asks for.
 
 Every hit is a **locator, never a verdict**. PHRASES.md records that every

@@ -43,12 +43,14 @@ Within a file, findings are ordered: `read.unread`, `read.divergence`,
 paths), `carriers` (count of divergences per carrier), `markdown_files`,
 `markdown_comments`, `language` (`files` checked for language, paragraphs `judged`, and
 paragraphs too `short` to judge), `pdf_pages` (`total` pages in PDFs, pages `read` by OCR),
-`optional_tools` (Tesseract present or absent), and
+`html` (`files` HTML files seen, `drawn` by a browser; added 2026-10-20),
+`optional_tools` (Tesseract and Playwright present or absent), and
 `not_examined`: what this run left unchecked, each item saying why, "(tesseract not
 installed)" or "(not built)".
 
-stderr: notes, including a missing Tesseract and what it skips, and one `note: not built:`
-line for each check in `NOT_BUILT` (HTML render), on every run (2026-10-12:
+stderr: notes, including a missing Tesseract and what it skips, a missing Playwright
+(`note: html render: <why>`, 2026-10-20), and one `note: not built:`
+line for each check in `NOT_BUILT` (empty since HTML render was built, 2026-10-20), on every run (2026-10-12:
 these were once reported as missing tools, though no code uses those tools, so installing one
 hid the gap), and one `note: v1 limit:` line saying what the language check does not read
 (code, config, HTML, paragraphs under five words). Language within Latin script left
@@ -83,3 +85,13 @@ missing or non-folder argument or a bad `--out`.
 7. A missing folder exits non-zero without printing a report.
 8. A markdown file with a Spanish line in an English list gives one `read.language` finding at that line; the same line in a `.py` file gives none; a PDF line gives one with `text_line`; `coverage.language` counts files and paragraphs; stderr has no `not built: language` line and has the language `v1 limit` line.
 9. A PDF whose page shows text its text layer lacks gives one `image-text` divergence with `page` and a `text_line` after the layer, and the text is in `--out`'s normalized text; a scanned PDF is read, not unread; `coverage.pdf_pages` counts pages. Without Tesseract: one skip per PDF, a PDF with no text layer is `read.unread`, and `not_examined` names image and PDF page OCR.
+
+## HTML drawn (added 2026-10-20)
+
+Each HTML file, after its static reading, is drawn by `render_html.Session` (`html_drawn`): one
+browser for the run, closed at the end even when a file fails. Its findings are
+`read.divergence` with `carrier` `rendered`, `method` `render`, and `how`
+(`specs/render_html.SPEC.md`). Without Playwright, past `render_html.MAX_FILES`, or when a page
+fails to load, the file gets a skip naming carrier `rendered`; `not_examined` lists "HTML as a
+browser draws it (<why>)" when the tool is missing. Test: `tests/test_run.py`
+(`test_html_not_drawn_without_playwright`).

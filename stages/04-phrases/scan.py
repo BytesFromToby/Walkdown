@@ -85,56 +85,166 @@ def prose_lines(lines: list[str], fm: set[int]) -> set[int]:
     return out
 
 
-def joined(first: str, second: str) -> str | None:
-    """The two lines as one paragraph line, or None when the second starts a new block: a list
-    item, or a quote boundary (one line quoted and the other not)."""
+def _rest(first: str, second: str) -> tuple[str, int] | None:
+    """What the second line adds to the paragraph (stripped, without its quote marker when both
+    lines are quoted) and where that starts in the raw line; None when the second line starts a
+    new block: a list item, or a quote boundary (one line quoted and the other not)."""
     if _ITEM.match(second):
         return None
     q1, q2 = _QUOTE.match(first), _QUOTE.match(second)
     if bool(q1) != bool(q2):
         return None
-    rest = second[q2.end():] if q2 else second
-    return first.rstrip() + " " + rest.strip()
+    body = second[q2.end():] if q2 else second
+    lead = len(second) - len(body.lstrip())
+    return body.strip(), lead
+
+
+def joined(first: str, second: str) -> str | None:
+    """The two lines as one paragraph line, or None when the second starts a new block."""
+    r = _rest(first, second)
+    return None if r is None else first.rstrip() + " " + r[0]
+
+
+def _run(lines: list[str], s: int, e: int):
+    """Lines s..e (1-based) as one paragraph line, and per line (line, offset in the joined text,
+    offset in the raw line, length); None when a line in the run starts a new block."""
+    text = lines[s - 1].rstrip()
+    pieces = [(s, 0, 0, len(text))]
+    for k in range(s + 1, e + 1):
+        r = _rest(lines[k - 2], lines[k - 1])
+        if r is None:
+            return None
+        body, lead = r
+        text += " "
+        pieces.append((k, len(text), lead, len(body)))
+        text += body
+    return text, pieces
+
+
+def _line_spans(m: dict, text: str, pieces) -> list[list[int]]:
+    """Where a match on the joined text sits in each raw line, as [line, start, end], so a review
+    card can mark the words on both sides of the break (C37 follow-up, 2026-10-20). Empty when
+    the matched text cannot be placed (folding changed it)."""
+    t = m.get("text") or ""
+    low = text.lower()
+    a = m.get("start")
+    if not (isinstance(a, int) and low[a:a + len(t)] == t.lower()):
+        a = low.find(t.lower()) if t else -1
+    if a < 0:
+        return []
+    b = a + len(t)
+    out = []
+    for line, joff, roff, length in pieces:
+        lo, hi = max(a, joff), min(b, joff + length)
+        if lo < hi:
+            out.append([line, roff + lo - joff, roff + hi - joff])
+    return out
+
+
+# Most lines joined into one: a match spread over more is not caught (a v1 limit; 2026-10-20).
+MAX_JOIN = 4
 
 
 def wrapped_findings(rel: str, lines: list[str], rows, audience: str, fm: set[int],
                      line_checks: dict[int, set]) -> list[dict]:
-    """A hit on a line joined with the next line of its paragraph, for a check that neither
-    line hits alone, so nothing the line pass found is counted twice. Cited at the first line;
-    `end_line` is the second, `quote` is both lines, and `wrapped` is true."""
+    """A hit on a run of lines of one paragraph joined as one line (two lines up to MAX_JOIN),
+    for a check that no line or shorter run inside it hits, so nothing is counted twice. Cited
+    at the first line; `end_line` is the last, `quote` is every line of the run, `wrapped` is
+    true, and each match carries `spans`, its place in each raw line."""
     if not rel.lower().endswith(MARKDOWN_EXTS):
         return []
     prose = prose_lines(lines, fm)
+    covered = {(n, n): set(line_checks.get(n, ())) for n in prose}  # checks hit inside a run
     out = []
-    for n in sorted(prose):
-        if n + 1 not in prose:
-            continue
-        text = joined(lines[n - 1], lines[n])
-        if text is None:
-            continue
-        folded = fold_line(text)
-        found = _hits(rel, folded, rows, audience, False)
-        for check in sorted(found, key=_ORDER.__getitem__):
-            if check in line_checks.get(n, ()) or check in line_checks.get(n + 1, ()):
+    for size in range(2, MAX_JOIN + 1):
+        for s in sorted(prose):
+            e = s + size - 1
+            left, right = covered.get((s, e - 1)), covered.get((s + 1, e))
+            if left is None or right is None:
                 continue
-            f = _finding(rel, n, text, folded, rows, audience, False, check, found[check])
-            f.update(quote=lines[n - 1] + "\n" + lines[n], end_line=n + 1, wrapped=True)
-            out.append(f)
+            run = _run(lines, s, e)
+            if run is None:
+                continue
+            text, pieces = run
+            folded = fold_line(text)
+            found = _hits(rel, folded, rows, audience, False)
+            inner = left | right
+            covered[(s, e)] = inner | set(found)
+            for check in sorted(found, key=_ORDER.__getitem__):
+                if check in inner:
+                    continue
+                f = _finding(rel, s, text, folded, rows, audience, False, check, found[check])
+                for m in f["matches"]:
+                    m["spans"] = _line_spans(m, text, pieces)
+                f.update(quote="\n".join(lines[s - 1:e]), end_line=e, wrapped=True)
+                out.append(f)
     return out
 
 
-def scan_text(rel: str, text: str, rows, audience: str) -> list[dict]:
+_SENTENCE_END = re.compile(r"[.!?](?=\s|$)")
+
+
+def _narrows(row) -> bool:
+    """A row that narrows itself (a negative lookahead or an unless), the only kind the next
+    line can cancel; a row anchored at the end of the line would be cancelled by any text."""
+    return "(?!" in row.regex or row.unless is not None
+
+
+def undone_by_next_line(rel: str, lines: list[str], findings: list[dict], rows, fm: set[int]):
+    """A line hit whose own narrowing cancels it once its sentence goes on to the next line of
+    the paragraph ("Don't ask" / "hypothetical questions"): the row is tested on the line joined
+    with the next line up to that line's first sentence end, and a row that no longer hits is
+    taken off the finding; a finding left with no row is no hit. Markdown only, rows that narrow
+    themselves only (C37 follow-up, 2026-10-20). Returns (findings kept, rows taken off)."""
+    if not rel.lower().endswith(MARKDOWN_EXTS):
+        return findings, []
+    prose = prose_lines(lines, fm)
+    by_id = {r.id: r for r in rows}
+    kept, undone = [], []
+    for f in findings:
+        n = f["line"]
+        pats = [by_id[p] for p in f["patterns"] if p in by_id]
+        if f.get("wrapped") or n not in prose or n + 1 not in prose or not any(map(_narrows, pats)):
+            kept.append(f)
+            continue
+        r = _rest(lines[n - 1], lines[n])
+        if r is None:
+            kept.append(f)
+            continue
+        m = _SENTENCE_END.search(r[0])
+        head = r[0][:m.end()] if m else r[0]
+        folded = fold_line(lines[n - 1].rstrip() + " " + head)
+        gone = [row for row in pats if _narrows(row) and not row.hits(folded)]
+        if not gone:
+            kept.append(f)
+            continue
+        undone.append({"check": f["check"], "file": rel, "line": n, "next_line": n + 1,
+                       "patterns": [row.id for row in gone]})
+        left = [row for row in pats if row not in gone]
+        if left:
+            raw = lines[n - 1]
+            kept.append(_finding(rel, n, raw, fold_line(raw), rows, f["audience"], False,
+                                 f["check"], left))
+    return kept, undone
+
+
+def scan_text(rel: str, text: str, rows, audience: str, undone: list | None = None) -> list[dict]:
+    """`undone`, when given, collects the line hits a next line cancelled (C37 follow-up)."""
     lines = split_lines(text)
     fm = frontmatter_lines(lines)
     findings: list[dict] = []
-    line_checks: dict[int, set] = {}
     for n, raw in enumerate(lines, start=1):
         folded = fold_line(raw)
         in_fm = n in fm
         by_check = _hits(rel, folded, rows, audience, in_fm)
-        line_checks[n] = set(by_check)
         for check in sorted(by_check, key=_ORDER.__getitem__):
             findings.append(_finding(rel, n, raw, folded, rows, audience, in_fm, check, by_check[check]))
+    findings, gone = undone_by_next_line(rel, lines, findings, rows, fm)
+    if undone is not None:
+        undone.extend(gone)
+    line_checks: dict[int, set] = {}
+    for f in findings:
+        line_checks.setdefault(f["line"], set()).add(f["check"])
     findings += wrapped_findings(rel, lines, rows, audience, fm, line_checks)
     findings.sort(key=lambda f: (f["line"], bool(f.get("wrapped")), _ORDER[f["check"]]))
     return findings

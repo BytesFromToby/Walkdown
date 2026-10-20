@@ -73,7 +73,8 @@ stage 2's extracted text with `--normalized`, else not scanned); plus one line p
 scanned; plus a count of findings, with the part 2 counts. Every part 2 item is built
 (position and repetition and the secret scan since 2026-10-04), so none is named as not built.
 
-`--out <dir>`: also writes `<dir>/hits.json`: `findings` (as stdout),
+`--out <dir>`: also writes `<dir>/hits.json`: `undone_by_next_line` (line hits the next line
+of their paragraph cancelled, `scan.undone_by_next_line`, added 2026-10-20), `findings` (as stdout),
 `counts` (`per_check`: part 1 findings per phrase check, every check listed,
 zeros included; `per_pattern`: part 1 findings per pattern id, every id listed,
 zeros included; `part2`: `rubric` (`rows`, `with_confirmation`,

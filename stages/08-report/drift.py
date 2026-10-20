@@ -250,8 +250,8 @@ def summary_lines(c) -> list[str]:
     return lines or ["no differences in what Walkdown records"]
 
 
-LEG_WORDS = {"private-data": "Reads your data", "untrusted-content": "Takes outside input",
-             "external-comms": "Sends data out"}
+LEG_WORDS = {"private-data": "Can read your data", "untrusted-content": "Can take outside input",
+             "external-comms": "Can send data out"}  # render.LEG_NAMES (owner, 2026-10-20, C31 part B)
 
 
 def _code(s, n=160) -> str:

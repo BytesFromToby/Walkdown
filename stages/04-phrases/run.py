@@ -120,8 +120,9 @@ def mask_secret_lines(findings: list[dict]) -> None:
     for f in findings:
         if f.get("check") == "secret.found":
             continue
-        # a wrapped finding quotes its next line too (review C37)
-        span = {f.get("line"), f.get("end_line")} if f.get("wrapped") else {f.get("line")}
+        # a wrapped finding quotes every line of its run (review C37)
+        span = (set(range(f["line"], f["end_line"] + 1)) if f.get("wrapped") and f.get("end_line")
+                else {f.get("line")})
         if not any((f.get("file"), n) in lines for n in span):
             continue
         for k in TEXT_FIELDS:
@@ -165,6 +166,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
     not_scanned: list[dict] = []
     scanned = 0
     rb, cond, defs, occ, lims = [], [], [], [], []
+    undone: list[dict] = []  # line hits the next line cancelled (C37 follow-up)
     texts: dict[str, tuple] = {}  # rel -> (audience, raw lines, bytes): position and repetition
     for row in files:
         rel = row["file"]
@@ -199,7 +201,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
             continue
         scanned += 1
         aud = audience(rel, scripts, hook_configs)
-        findings.extend(scan_text(rel, text, rows, aud))
+        findings.extend(scan_text(rel, text, rows, aud, undone))
         raw = split_lines(text)
         texts[rel] = (aud, raw, len(data))
         folded = [fold_line(x) for x in raw]
@@ -231,7 +233,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
     hits = {"findings": findings,
             "counts": {"per_check": per_check, "per_pattern": per_pattern,
                        "part2": part2_counts(p2)},
-            "scanned": scanned, "not_scanned": not_scanned,
+            "scanned": scanned, "not_scanned": not_scanned, "undone_by_next_line": undone,
             "limits": [EXTRACTED_LIMIT] if normalized is not None else LIMITS}
     return report, hits
 

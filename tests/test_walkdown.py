@@ -58,7 +58,7 @@ def _run_dir(tmp_path):
 def test_brief_has_the_facts_and_none_of_the_repository_text(tmp_path):
     b = wd.brief(_run_dir(tmp_path))
     assert SENTINEL not in b
-    assert "[x] Reads your data" in b and "[ ] Sends data out" in b and "Install grants: network." in b
+    assert "[x] Can read your data" in b and "[ ] Can send data out" in b and "Install grants: network." in b
     assert "What ships: Runs commands on its own (1)" in b and "stage 1:" not in b
     assert "A word is defined more than one way (1)" in b and "Redefines a safety word (1)" in b
     assert "01-inventory What ships: PASS" in b and "02-reader What the model actually reads: not run" in b
@@ -87,5 +87,5 @@ def test_brief_reads_the_current_layout(tmp_path):
     for f in list(d.glob("*.json")):
         f.rename(d / "data" / f.name)
     b = wd.brief(d)
-    assert "[x] Reads your data" in b and str(d / "summary.html") in b
+    assert "[x] Can read your data" in b and str(d / "summary.html") in b
     assert "Things to check: " in b and "place" in b and "heading" in b

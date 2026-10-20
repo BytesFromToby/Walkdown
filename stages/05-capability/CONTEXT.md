@@ -56,9 +56,10 @@ check alone is too broad.
 
 ## Trifecta legs
 
-Plain terms in reports (locked 2026-09-30, THREATS "Organizing frame"):
-`private-data` = **Reads your data**, `untrusted-content` = **Takes outside input**,
-`external-comms` = **Sends data out**. Check IDs and field values are unchanged.
+Plain terms in reports (locked 2026-09-30, THREATS "Organizing frame"; since 2026-10-20 they
+start with "Can", owner, review C31 part B): `private-data` = **Can read your data**,
+`untrusted-content` = **Can take outside input**, `external-comms` = **Can send data out**.
+Check IDs and field values are unchanged. The sections below keep the 2026-09-30 names as written.
 Clone or install of third-party code (leg 2) and connected accounts (leg 1) are counted
 since 2026-09-30 (see the section at the end).
 

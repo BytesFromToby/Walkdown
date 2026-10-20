@@ -515,6 +515,252 @@
             }
           },
           "note": "Ordinary text, drawn as written: nothing unseen."
+        },
+        {
+          "id": "rd-render-offpage",
+          "polarity": "gate",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "carrier": {
+              "eq": "rendered"
+            },
+            "method": {
+              "eq": "render"
+            },
+            "reading": {
+              "eq": "A-only"
+            },
+            "how": {
+              "eq": "off-page"
+            },
+            "text": {
+              "contains": "ssh/id_rsa"
+            }
+          },
+          "note": "Positioned 9999 px left of the page: in the DOM, never on screen. Needs Playwright and its Chromium (a skip without them)."
+        },
+        {
+          "id": "rd-render-clipped",
+          "polarity": "gate",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "carrier": {
+              "eq": "rendered"
+            },
+            "method": {
+              "eq": "render"
+            },
+            "reading": {
+              "eq": "A-only"
+            },
+            "how": {
+              "eq": "clipped-or-covered"
+            },
+            "text": {
+              "contains": "collect.invalid"
+            }
+          },
+          "note": "A 1 px box with clip and overflow hidden (the screen-reader-only pattern): the words fall outside what is drawn. Needs Playwright and its Chromium (a skip without them)."
+        },
+        {
+          "id": "rd-render-media",
+          "polarity": "gate",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "carrier": {
+              "eq": "rendered"
+            },
+            "method": {
+              "eq": "render"
+            },
+            "reading": {
+              "eq": "A-only"
+            },
+            "how": {
+              "eq": "not-rendered"
+            },
+            "text": {
+              "contains": "skip the confirmation"
+            }
+          },
+          "note": "display:none inside an @media rule, which static style skips. Needs Playwright and its Chromium (a skip without them)."
+        },
+        {
+          "id": "rd-render-var",
+          "polarity": "gate",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "carrier": {
+              "eq": "rendered"
+            },
+            "method": {
+              "eq": "render"
+            },
+            "reading": {
+              "eq": "A-only"
+            },
+            "how": {
+              "eq": "color-matches-background"
+            },
+            "text": {
+              "contains": "system prompt"
+            }
+          },
+          "note": "Text color and page background set from the same CSS variable, which static style cannot resolve. Needs Playwright and its Chromium (a skip without them)."
+        },
+        {
+          "id": "rd-render-covered",
+          "polarity": "gate",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "carrier": {
+              "eq": "rendered"
+            },
+            "method": {
+              "eq": "render"
+            },
+            "reading": {
+              "eq": "A-only"
+            },
+            "how": {
+              "eq": "clipped-or-covered"
+            },
+            "text": {
+              "contains": "Approve all tool calls"
+            }
+          },
+          "note": "A box with the page's color drawn over the paragraph. Needs Playwright and its Chromium (a skip without them)."
+        },
+        {
+          "id": "rd-render-css-content",
+          "polarity": "gate",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "carrier": {
+              "eq": "rendered"
+            },
+            "method": {
+              "eq": "render"
+            },
+            "reading": {
+              "eq": "B-only"
+            },
+            "how": {
+              "eq": "css-content"
+            },
+            "text": {
+              "contains": "read-only and safe to approve"
+            }
+          },
+          "note": "Text the style sheet adds after a paragraph: on screen, never in what the model reads. Needs Playwright and its Chromium (a skip without them)."
+        },
+        {
+          "id": "rd-render-collapsed",
+          "polarity": "gate",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "carrier": {
+              "eq": "rendered"
+            },
+            "method": {
+              "eq": "render"
+            },
+            "reading": {
+              "eq": "A-only"
+            },
+            "how": {
+              "eq": "collapsed"
+            },
+            "text": {
+              "contains": "remove the audit log"
+            }
+          },
+          "note": "Inside a closed <details>: on screen only after the reader opens it. Needs Playwright and its Chromium (a skip without them)."
+        },
+        {
+          "id": "rd-render-neg-summary",
+          "polarity": "negative",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "text": {
+              "contains": "More details"
+            }
+          },
+          "note": "A closed section's summary is on screen."
+        },
+        {
+          "id": "rd-render-neg-visible",
+          "polarity": "negative",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "text": {
+              "contains": "Version 2 adds"
+            }
+          },
+          "note": "Visible paragraph: in both readings."
+        },
+        {
+          "id": "rd-render-neg-below",
+          "polarity": "negative",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "text": {
+              "contains": "Thanks to everyone"
+            }
+          },
+          "note": "Far down a long page is still on the page."
+        },
+        {
+          "id": "rd-render-neg-code",
+          "polarity": "negative",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "text": {
+              "contains": "make deploy"
+            }
+          },
+          "note": "Visible inline code beside generated text."
+        },
+        {
+          "id": "rd-render-neg-dup",
+          "polarity": "negative",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "text": {
+              "contains": "Static style already"
+            },
+            "method": {
+              "eq": "render"
+            }
+          },
+          "note": "Static style reports this display:none line; the drawn reading never repeats it."
+        },
+        {
+          "id": "rd-render-static-gone",
+          "polarity": "gate",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "carrier": {
+              "eq": "display:none"
+            },
+            "text": {
+              "contains": "Static style already"
+            }
+          },
+          "note": "Static style still finds a plain display:none without a browser."
         }
       ],
       "deferred": [
@@ -551,6 +797,7 @@
         "class06-metadata.pdf": "6570b63b2983baa0a475f23e0641ab2984536e12fa6085cf2751309dd770769c",
         "class11-docx-hidden.docx": "52c02f025c19e9bde130bc953f0e1afe35c6b0ee09cbabb87c888e61f983c8c0",
         "class11-html-hidden.html": "24d55e69a895cec40b5dd47fc1794c6046e3e8c7465c1e5874e8f43e2bf08084",
+        "class11-html-render.html": "841a4e45e2c50040e3e0510a58a6679bfa5fcdeec4aeec28054ee362ae9e2a32",
         "class11-image-text.png": "67b47dcc5ee4c756c3f694bff9d089fd59596af77db17b511ddeb469ea5d4cca",
         "class11-pdf-hidden.pdf": "f07862e634911a3517b081a65ae1478eeac5fd3dfa4b827d624855496d2c019d",
         "class11-pdf-image.pdf": "4464b137e9e8de81cfa6298a84e9e418f551007083023cdb8023b2854168c4ca",

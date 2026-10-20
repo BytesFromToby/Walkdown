@@ -78,8 +78,9 @@ metadata), `regex` (Unicode script property), `confusable_homoglyphs`
 2026-10-18, `OCR-SPIKE-2026-10-18.md`).
 
 Optional, never required: Tesseract via `pytesseract` (OCR of images and PDF pages). A missing
-Tesseract is reported on stderr and as skips. Planned and **not built** (2026-10-12): true HTML
-render (Playwright). Each run reports it as not built; installing the library changes nothing.
+Tesseract is reported on stderr and as skips. HTML as a browser draws it is **built**
+(2026-10-20, `render_html.py`, `specs/render_html.SPEC.md`): Playwright with its Chromium,
+optional; without it each HTML file gets a skip naming carrier `rendered`.
 A pip-only OCR engine (RapidOCR) was measured against Tesseract and not taken: it missed
 near-invisible text (the spike). Language within Latin script was planned on
 `lingua`; it is built instead with no dependency (`read.language`, 2026-10-18), because the

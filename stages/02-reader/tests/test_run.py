@@ -203,3 +203,25 @@ def test_pdf_pages_without_tesseract(tmp_path):
     assert [f["file"] for f in un] == ["empty.pdf"] and "OCR not run" in un[0]["reason"]
     assert doc["coverage"]["pdf_pages"] == {"total": 2, "read": 0, "low_confidence": 0}
     assert "image and PDF page OCR (tesseract not installed)" in doc["coverage"]["not_examined"]
+
+
+def test_html_not_drawn_without_playwright(tmp_path):
+    """render_html: without Playwright an HTML file keeps its static reading and gets a skip
+    naming carrier rendered; the run says the check was not examined."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("walkdown_s02_run_html", RUN)
+    runner = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(runner)
+    root = tmp_path / "in"
+    root.mkdir()
+    (root / "a.html").write_text("<p>Shown words.</p><p style='display:none'>Hidden words here.</p>",
+                                 encoding="utf-8")
+    runner.optional_tools = lambda: {"tesseract": True, "tesseract_detail": "",
+                                     "playwright": False, "playwright_detail": "playwright not installed"}
+    doc = runner.build_report(root)
+    fs = [f for f in doc["findings"] if f["check"] == "read.divergence"]
+    assert [f["carrier"] for f in fs if "skipped" not in f] == ["display:none"]
+    [skip] = [f for f in fs if "skipped" in f]
+    assert skip["carrier"] == "rendered" and skip["skipped"] == "html not drawn (playwright not installed)"
+    assert doc["coverage"]["html"] == {"files": 1, "drawn": 0}
+    assert "HTML as a browser draws it (playwright not installed)" in doc["coverage"]["not_examined"]

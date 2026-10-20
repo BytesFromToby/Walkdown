@@ -335,7 +335,7 @@ def test_confident_not_instruction_read_marks_evidence_but_keeps_the_leg():
     r = _d5_reports(0.85)
     assert render.all_marked_legs(r) == ["untrusted-content"]
     s = summary(META, r, PASS, {}, set(r))
-    assert "Takes outside input: yes" in s and "every line cited for it was read in stage 6" in s
+    assert "Can take outside input: yes" in s and "every line cited for it was read in stage 6" in s
     f = full(META, r, PASS, {}, set(r))
     assert "(1 citation, 1 read in stage 6 as not an instruction)" in f
     assert "(stage 6 reads this line as description, with no instruction; jev p=0.85)" in f
@@ -573,3 +573,17 @@ def test_unlisted_components_in_full_report():
     f = full(META, r, PASS, {}, set(r))
     assert "skills/c/SKILL.md: skill not named by .claude-plugin/plugin.json, which names 2 of the 3 on disk" in f
     assert "1 skill, agent, or command on disk that their manifest leaves out." in f
+
+
+def test_full_says_how_a_drawn_page_hides_text():
+    """HTML drawn by a browser (2026-10-20): the divergence line names how the text is hidden."""
+    r = reports()
+    r["02-reader"]["findings"] = [
+        {"check": "read.divergence", "file": "plan.html", "line": 315, "reading": "A-only",
+         "text": "Pure deletion of the directory.", "carrier": "rendered", "method": "render",
+         "how": "collapsed"},
+        {"check": "read.divergence", "file": "a.html", "line": 4, "reading": "A-only",
+         "text": "x", "carrier": "display:none", "method": "static-style"}]
+    f = full(META, r, PASS, {}, set(r))
+    assert "plan.html:315: A-only, carrier rendered (collapsed), method render:" in f
+    assert "a.html:4: A-only, carrier display:none, method static-style:" in f

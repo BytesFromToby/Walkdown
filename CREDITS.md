@@ -7,7 +7,7 @@ Walkdown builds on other people's ideas, research, and tools. This page names th
 - **The lethal trifecta**, by Simon Willison. An agent that combines access to private data,
   exposure to untrusted content, and a way to communicate externally can be made to leak that
   data. Walkdown's stage 5 and the checklist at the top of every report are organized around it;
-  the plain terms ("Reads your data", "Takes outside input", "Sends data out") are Walkdown's.
+  the plain terms ("Can read your data", "Can take outside input", "Can send data out") are Walkdown's.
   [The lethal trifecta for AI agents](https://simonw.substack.com/p/the-lethal-trifecta-for-ai-agents)
 - **Interpretable Context Methodology (ICM)**, by Jake Van Clief: context kept in inspectable
   files, organized as numbered stages that each have a written contract. Walkdown is laid out as
@@ -67,7 +67,7 @@ Required (`requirements.txt`):
 Optional, used when installed:
 
 - [Tesseract](https://github.com/tesseract-ocr/tesseract): text inside images and PDF pages.
-- [Playwright](https://playwright.dev): rendering HTML as a browser shows it.
+- [Playwright](https://playwright.dev): drawing HTML as a browser shows it (with its Chromium).
 - [gitleaks](https://github.com/gitleaks/gitleaks): finding committed secrets (preferred over detect-secrets when installed).
 
 Stage 6 backends, chosen at run time (`requirements-soft.txt`):

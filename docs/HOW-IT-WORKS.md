@@ -119,10 +119,14 @@ white-on-white or `display:none` text.
 reads like an instruction. Tesseract, when
 installed, reads text inside images and on PDF pages (each page is drawn and read, and lines
 its text layer lacks are listed, as when a page shows a picture of an instruction); when it is
-missing, section 7 says so. One check the method calls for is not built yet: HTML as a browser
-draws it. Section 7 lists it as "not built" on every run, apart from a missing tool, because
-installing a library would not add it. The language check needs nothing installed; it reads
-prose only (not code comments, config values, or HTML), and section 7 says so.
+missing, section 7 says so. Playwright, when installed with its Chromium, draws each HTML file
+as a browser would, with the page's own scripts off and nothing fetched from the network, and
+lists what static style cannot see: text in a closed `<details>` section, moved off the page,
+clipped or covered by another element, hidden by an `@media` rule, or colored like the page through a CSS variable (carrier
+`rendered`, with `how`), and text a style sheet adds with `::before` or `::after`, which a
+person sees and the model never receives. When it is missing, section 7 says so. The language
+check needs nothing installed; it reads prose only (not code comments, config values, or HTML),
+and section 7 says so.
 
 ---
 
@@ -162,9 +166,11 @@ About 125 patterns (`stages/04-phrases/patterns.yaml`), each citing the threat c
 set it comes from (`pre-planning/THREATS.md`, `pre-planning/PHRASES.md`). Each hit records the
 line verbatim, the pattern ids, the matched words, and the file's audience. Matching runs on the
 folded line, so hidden characters do not break a match. In Markdown, each line is also matched joined with the next
-line of its paragraph, so an instruction hard-wrapped across two lines is caught; that hit is
-cited at the line where it starts, quotes both lines, and is kept only when neither line hits
-alone. PDF, DOCX, and image files are matched too, on the text stage 2 read from them (the text
+lines of its paragraph (up to four lines), so an instruction hard-wrapped across lines is caught;
+that hit is cited at the line where it starts, quotes every line, and is kept only when no
+single line or shorter run hits it. The reverse holds too: a pattern that makes an exception
+("don't ask", but not "don't ask hypothetical questions") reads the line together with the
+start of the next one, so the exception works across a line break. PDF, DOCX, and image files are matched too, on the text stage 2 read from them (the text
 layer, text drawn on PDF pages, the text in images); those hits are cited as "extracted text,
 line N", and the tables below are built from text files only.
 
@@ -248,9 +254,9 @@ can be made to leak. Walkdown checks each leg and lists the evidence.
 
 | Leg | Checked when there is |
 |---|---|
-| **Reads your data** | a credentials phrase; a data-flow or connector phrase; a grant of Read, Grep, Glob, or Bash; an agent inheriting all tools; a connector MCP server or tool (Gmail, Drive, Slack, ...); a hook on PreToolUse, PostToolUse, or UserPromptSubmit |
-| **Takes outside input** | a remote-load phrase; a clone or install of third-party code; a WebFetch or WebSearch grant; an agent inheriting all tools; an MCP config or server |
-| **Sends data out** | a remote-load or exfiltration phrase; a WebFetch or WebSearch grant; an agent inheriting all tools; an MCP config or server |
+| **Can read your data** | a credentials phrase; a data-flow or connector phrase; a grant of Read, Grep, Glob, or Bash; an agent inheriting all tools; a connector MCP server or tool (Gmail, Drive, Slack, ...); a hook on PreToolUse, PostToolUse, or UserPromptSubmit |
+| **Can take outside input** | a remote-load phrase; a clone or install of third-party code; a WebFetch or WebSearch grant; an agent inheriting all tools; an MCP config or server |
+| **Can send data out** | a remote-load or exfiltration phrase; a WebFetch or WebSearch grant; an agent inheriting all tools; an MCP config or server |
 
 Bash counts toward reading data and running code, never toward sending data out on its own. An
 agent with no tools list can use every tool, so it counts toward all three legs; the report marks
@@ -265,7 +271,7 @@ web, and pushes commits has all three. The combination raises risk; it is not an
 | exec-at-load | any hook (it runs when the host fires its event) |
 | context-injection | any description (always in context), or a SessionStart or UserPromptSubmit hook |
 | persistence | phrases that write shell profiles, git config or hooks, memory or settings files, editor autorun, global installs |
-| network | the "Sends data out" leg, or a global install |
+| network | the "Can send data out" leg, or a global install |
 | elevated | skip-permission flags, allow-list edits, confirmations turned off, or an agent inheriting all tools |
 
 ### The rest of stage 5

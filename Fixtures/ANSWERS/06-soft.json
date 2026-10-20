@@ -1285,15 +1285,11 @@
         },
         {
           "id": "real-q-34",
-          "polarity": "gate",
+          "polarity": "negative",
           "check": "soft.question",
           "file": "superpowers/skills/subagent-driven-development/SKILL.L30.md",
           "line": 3,
-          "match": {
-            "kind": {
-              "eq": "label"
-            }
-          }
+          "note": "J.confirm-first reads its unless (ask, confirm) across the line break since 2026-10-20 (C37 follow-up): the line lists publish among actions to ask about first, and the next line says \"stop and ask\". No other pattern hits this line, so no question (the owner labeled it not-to)."
         },
         {
           "id": "real-label-34",

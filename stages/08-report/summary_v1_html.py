@@ -63,6 +63,11 @@ NOT_BUILT = ": not built yet"  # how render.glance marks a check with no code (2
 ACCURACY_URL = "https://github.com/BytesFromToby/Walkdown/blob/main/docs/MODEL-ACCURACY.md"  # the published copy; a run folder has no docs/
 
 
+# Frozen with v1 (tag report-v1): the leg names as they were before 2026-10-20 (render.LEG_NAMES
+# now says "Can ...", review C31 part B).
+LEG_NAMES_V1 = {"private-data": "Reads your data", "untrusted-content": "Takes outside input",
+                "external-comms": "Sends data out"}
+
 def esc(s) -> str:
     return html.escape(str(s if s is not None else ""), quote=True)
 
@@ -260,7 +265,7 @@ def plain_status(r, stamps, stage) -> str:
                 f"read, and none is a finding on its own.{share}")
     if stage == "05-capability":
         legs = {x["leg"]: x["present"] for x in f("cap.leg")}
-        have = [R.LEG_NAMES[k].lower() for k in R.LEG_NAMES if legs.get(k)]
+        have = [LEG_NAMES_V1[k].lower() for k in LEG_NAMES_V1 if legs.get(k)]
         if len(have) == 3:
             return R.TRIFECTA_ALL
         if not have:
@@ -476,7 +481,7 @@ def _trifecta(legs, marked=()) -> str:
     Checked legs come first, then unchecked (owner, 2026-10-12). Each checked box takes a color
     by its position among the checked ones, green, yellow, red (`data-n` 1 to 3): the risk is
     in having all three at once, so the third check is the red one, whichever leg it is."""
-    order = [k for k in R.LEG_NAMES if legs.get(k)] + [k for k in R.LEG_NAMES if not legs.get(k)]
+    order = [k for k in LEG_NAMES_V1 if legs.get(k)] + [k for k in LEG_NAMES_V1 if not legs.get(k)]
     rows = []
     for i, k in enumerate(order, 1):
         on = bool(legs.get(k))
@@ -486,9 +491,9 @@ def _trifecta(legs, marked=()) -> str:
         n = f' data-n="{i}"' if on else ""
         rows.append(f'<li class="leg {"on" if on else "off"}"{n}><span class="box" role="img" '
                     f'aria-label="{"yes" if on else "no"}">{CHECK if on else BOX}</span>'
-                    f'<div><div class="leg-name">{esc(R.LEG_NAMES[k])}</div>'
+                    f'<div><div class="leg-name">{esc(LEG_NAMES_V1[k])}</div>'
                     f'<div class="leg-def">{esc(R.LEG_DEFS[k])}</div>{mk}</div></li>')
-    n_on = sum(1 for k in R.LEG_NAMES if legs.get(k))
+    n_on = sum(1 for k in LEG_NAMES_V1 if legs.get(k))
     foot = R.TRIFECTA_ALL if n_on == 3 else R.TRIFECTA_SOME.format(n=n_on)
     return (f'<section class="trifecta" aria-label="What it can do"><h2>What it can do</h2>'
             f'<ul class="legs">{"".join(rows)}</ul><p class="leg-foot">{esc(foot)}</p></section>')

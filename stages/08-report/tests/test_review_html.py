@@ -63,7 +63,9 @@ def test_one_card_per_summary_item_model_reads_last():
     assert sum(1 for p in ps if not p["model"]) == sum(1 for it in items if it["stage"] != 6)
     h = page(r)
     assert len(cards(h)) == len(ps)
-    assert f"Place 1 of {len(ps)}" in h and "a model read 1 more (experimental)" in h
+    n_det = sum(1 for p in ps if not p["model"])
+    assert f"Place 1 of {n_det}" in h and f"Model read 1 of {len(ps) - n_det}" in h  # C36: own pass
+    assert "a model read 1 more (experimental)" in h
 
 
 # 2
@@ -430,3 +432,56 @@ def test_do_read_in_plain_words_with_a_question():
     assert RV.esc(RV.DECIDE["label"]) in c
     plain = next(c for c in cards(page(reports(extra_hits=[IGNORE]))) if "SKILL.md:12" in c)
     assert "To decide:" not in plain
+
+
+def test_wrapped_match_is_marked_on_each_line(tmp_path):
+    """C37 follow-up: a match that runs across a line break is marked on both lines."""
+    d = skill_text(tmp_path, numbered(20, {12: "Then ignore", 13: "all instructions here."}))
+    hit = {"check": "phrase.L.override", "file": "SKILL.md", "line": 12, "end_line": 13,
+           "wrapped": True, "quote": "Then ignore\nall instructions here.", "patterns": ["L.ignore"],
+           "matches": [{"pattern": "L.ignore", "text": "ignore all instructions", "start": 5,
+                        "spans": [[12, 5, 11], [13, 0, 16]]}],
+           "audience": "model", "folded": False}
+    c = next(c for c in cards(page(reports(extra_hits=[hit]), text_dir=d)) if "SKILL.md:12" in c)
+    assert "Then <mark>ignore</mark>" in c and "<mark>all instructions</mark> here." in c
+
+
+def test_runtime_line_per_kind_of_card():
+    """Owner, 2026-10-20 (review C31 part B): one fixed line says what only running it shows;
+    a prohibition says so its own way; a committed secret has none."""
+    r = reports(hooks=1, extra_hits=[IGNORE, dict(IGNORE, line=14, negated=True, negation="never")])
+    r["04-phrases"]["findings"].append({"check": "secret.found", "file": "SKILL.md", "line": 18,
+                                        "kinds": ["Secret Keyword"], "engine": "detect-secrets",
+                                        "audience": "model"})
+    cs = cards(page(r))
+    hook = next(c for c in cs if "Runs commands on its own" in c)
+    assert RV.esc(RV.RUNTIME["hook"]) in hook
+    assert RV.esc(RV.RUNTIME["phrase"]) in next(c for c in cs if "SKILL.md:12" in c)
+    assert RV.esc(RV.RUNTIME_PROHIBITION) in next(c for c in cs if "SKILL.md:14" in c)
+    assert "Only running it shows" not in next(c for c in cs if "Looks like a committed secret" in c)
+
+
+def test_questioned_line_on_the_card():
+    r = reports(extra_hits=[IGNORE])
+    r["06-soft"] = rep("06-soft", {"check": "soft.label", "file": "SKILL.md", "line": 12, "label": "description",
+                                   "probabilities": {"description": 0.95}, "backend": "jev"})
+    c = next(c for c in cards(page(r)) if "SKILL.md:12" in c)
+    assert "A reviewer model&#x27;s reading questions this: jev read the line as a description (p=0.95)." in c
+
+
+def test_model_reads_are_a_separate_pass_and_not_sure_can_be_walked_again():
+    """Owner, 2026-10-20 (review C36): cards say which pass they belong to and are numbered
+    within it; the page offers the rule findings, the optional model reads, and the places
+    marked Not sure as passes; without model reads there is no model pass."""
+    r = with_sweep(reports(extra_hits=[IGNORE]))
+    h = page(r)
+    cs = cards(h)
+    assert all('data-pass="main"' in c for c in cs if "Model read" not in c)
+    assert [c for c in cs if 'data-pass="model"' in c] and all("Model read" in c for c in cs if 'data-pass="model"' in c)
+    assert 'data-pass="main" aria-pressed="true">Rule findings (' in h
+    assert 'data-pass="model" aria-pressed="false">Model reads, optional (1)' in h
+    assert 'data-pass="unsure"' in h and "Not sure, again" in h
+    assert '<li class="index-h">Model reads (optional, experimental)</li>' in h
+    assert "separate, optional pass" in h
+    plain = page(reports(extra_hits=[IGNORE]))
+    assert 'data-pass="model" aria-pressed' not in plain and '<li class="index-h">' not in plain

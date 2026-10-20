@@ -107,8 +107,11 @@ BASE = baserates.load()
 COL = 32  # summary label column: longest heading plus a space
 
 # The trifecta legs in plain words, locked by the owner 2026-09-30 (THREATS "Organizing frame").
-LEG_NAMES = {"private-data": "Reads your data", "untrusted-content": "Takes outside input",
-             "external-comms": "Sends data out"}
+# "Can ...": a static read shows what a skill could do, never what it does (owner, 2026-10-20,
+# review C31 part B; the 2026-09-30 names were "Reads your data", "Takes outside input",
+# "Sends data out", kept in the frozen v1 page).
+LEG_NAMES = {"private-data": "Can read your data", "untrusted-content": "Can take outside input",
+             "external-comms": "Can send data out"}
 LEG_DEFS = {
     "private-data": "Reads the user's data, wherever it lives: files, secrets, settings, connected accounts.",
     "untrusted-content": "Brings in text the user didn't write: the web, other people's issues or email, MCP tools, third-party code.",
@@ -330,6 +333,23 @@ def not_instruction_reads(r) -> dict:
         if (x.get("probabilities") or {}).get(x["label"], 0) >= NOT_DO_P:
             out[(x.get("file"), x.get("line"))] = x
     return out
+
+
+LABEL_SAID = dict(LABEL_WORDS)
+
+
+def questioned(reads, src) -> str | None:
+    """One line for a card and the summary when a reviewer model's reading questions a finding
+    (owner, 2026-10-20, review C28): a confident stage 6 read that the finding's line is not an
+    instruction (`not_instruction_reads`). The finding stays; this is shown beside it."""
+    if not src or src.get("line") is None:
+        return None
+    x = reads.get((src.get("file"), src.get("line")))
+    if not x:
+        return None
+    p = (x.get("probabilities") or {}).get(x["label"], 0)
+    return (f"A reviewer model's reading questions this: {x.get('backend') or 'a model'} read the "
+            f"line as {LABEL_SAID.get(x['label'], x['label'])} (p={p:.2f}).")
 
 
 def evidence_mark(e, reads) -> dict | None:
@@ -863,6 +883,7 @@ TOOL_NOTES = [
     ("tesseract", "Text inside images (OCR)", ("image",), "Tesseract not installed"),
     ("tesseract", "PDF pages drawn and read (OCR)", ("pdf",), "Tesseract not installed"),
     ("not built: PDF render", "PDF pages drawn and read as images", ("pdf",), "not built yet"),
+    ("html render:", "HTML as a browser draws it", ("html",), "Playwright not installed"),  # since 2026-10-20
     ("not built: HTML render", "HTML as a browser draws it", ("html",), "not built yet"),
     ("not built: language detection", "Language detection in Latin-script text", None, "not built yet"),
     # the same three as runs before 2026-10-12 noted them
@@ -944,7 +965,8 @@ def glance(reports, notes, stamps, runs_ok) -> tuple[list[str], list[str]]:
             idle.append(f"{HEADINGS[stage]}: {n(in_tests, 'file')} not scanned, all in test data")
     other = collections.Counter(
         f["skipped"] for stage in ORDER[:5] for f in fnd(reports, stage)
-        if "skipped" in f and "tesseract" not in str(f["skipped"]))
+        if "skipped" in f and "tesseract" not in str(f["skipped"])
+        and not str(f["skipped"]).startswith("html not drawn (playwright"))
     skipped += [f"{n(c, 'file')}: {why}" for why, c in other.items()]
     unread = fnd(reports, "02-reader", "read.unread")
     if unread:
@@ -1059,8 +1081,9 @@ def _f1(r, _):
 def _f2(r, _):
     L = _list("Divergences (reading A versus reading B)",
               [d for d in fnd(r, "02-reader", "read.divergence") if "skipped" not in d],
-              lambda d: f"{loc(d)}: {d.get('reading')}, carrier {d.get('carrier')}, "
-                        f"method {d.get('method')}: {code(d.get('text'))}")
+              lambda d: f"{loc(d)}: {d.get('reading')}, carrier {d.get('carrier')}"
+                        + (f" ({d['how']})" if d.get("how") else "")  # how a drawn page hides it (2026-10-20)
+                        + f", method {d.get('method')}: {code(d.get('text'))}")
     L += _list("Lines changed by folding", fnd(r, "02-reader", "read.fold"),
                lambda d: f"{loc(d)}: removed or replaced {', '.join(d.get('removed', []))}")
     L += _list("Non-Latin script runs", fnd(r, "02-reader", "read.script"),

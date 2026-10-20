@@ -54,13 +54,24 @@ FINGERPRINT_DIRS = ("stages", "grader", "Fixtures")
 SKIP_PARTS = {"__pycache__", ".pytest_cache"}
 
 
+def _playwright() -> bool:
+    """Stage 2's own check (render_html.available): the package and an installed Chromium."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "02-reader"))
+    try:
+        import render_html
+        return render_html.available()[0]
+    except Exception:
+        return False
+
+
 def optional_tools() -> str:
     """Which optional tools a grader run would find. Installing one changes what a stage can
     measure (2026-10-08: Tesseract installed, the cached stage 2 INCOMPLETE was still reused)."""
     have = {
         "tesseract": bool(shutil.which("tesseract")) and importlib.util.find_spec("pytesseract") is not None,
         "gitleaks": bool(shutil.which("gitleaks")),
-    }  # pdf2image and Playwright left out 2026-10-12: no stage uses them (not built)
+        "playwright": _playwright(),
+    }  # pdf2image left out 2026-10-12 (no stage uses it); Playwright back 2026-10-20 (HTML render)
     return ",".join(f"{k}={int(v)}" for k, v in sorted(have.items()))
 
 

@@ -101,6 +101,7 @@ def test_out_counts_and_refusal(tmp_path):
     doc, _ = report(tmp_path / "in", "--patterns", table(tmp_path), "--out", tmp_path / "o")
     hits = json.loads((tmp_path / "o" / "hits.json").read_text("utf-8"))
     assert hits["findings"] == doc["findings"]
+    assert hits["undone_by_next_line"] == []  # C37 follow-up: line hits a next line cancelled
     pc = hits["counts"]["per_check"]
     assert pc["phrase.L.override"] == 4 and pc["phrase.G.human"] == 1
     assert pc["phrase.J.prohibited"] == 0 and len(pc) == 14

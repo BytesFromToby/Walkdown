@@ -2,7 +2,8 @@ name: tests
 
 # Every push and pull request: the spec tests, then every stage against its fixtures.
 # Tesseract is installed here so stage 2's image check runs (locally it is optional and
-# its absence gives INCOMPLETE). Stage 6 runs with no model backend: the packet gates only.
+# its absence gives INCOMPLETE); Playwright's Chromium likewise, so HTML is drawn. Stage 6 runs
+# with no model backend: the packet gates only.
 # Each Ubuntu version is named explicitly, so GitHub moving ubuntu-latest (to 26.04, from
 # 2026-10-19) cannot change results unannounced; both are tested because Tesseract differs.
 on:
@@ -31,7 +32,9 @@ jobs:
       - name: Install Tesseract
         run: sudo apt-get update -q && sudo apt-get install -y -q tesseract-ocr
       - name: Install requirements
-        run: python -m pip install -r requirements.txt pytesseract==0.3.13
+        run: python -m pip install -r requirements.txt pytesseract==0.3.13 playwright==1.64.0
+      - name: Install Chromium for HTML drawing (Playwright)
+        run: python -m playwright install chromium-headless-shell
       - name: Spec tests
         run: python -m pytest -q
       - name: Stage fixtures (grader)

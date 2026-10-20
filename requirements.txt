@@ -1,5 +1,5 @@
 # Walkdown core dependencies: pip-installable only (TOOLING "Usable by everyone").
-# Optional tools (Tesseract, gitleaks) are never listed here;
+# Optional tools (Tesseract, Playwright, gitleaks) are never listed here;
 # a stage that lacks one emits a skip. Versions pinned 2026-09-25 (stage 2 build).
 pytest==9.1.1
 PyYAML==6.0.3
