@@ -45,6 +45,11 @@ A file whose bytes cannot be read gives an `inv.file` skip finding
 Each `inv.file` carries `sha256`, the hash of the file's bytes (null for a symlink), so two
 runs can tell exactly which files changed (`stages/08-report/specs/drift.SPEC.md`).
 
+Added 2026-10-20: a text file also carries `sha256_lf` and `sha256_crlf` (`text_hashes`), its
+content hashed with every line ending as LF and as CRLF, so a checkout that only converted line
+endings is not counted as an edit. Byte-level, so none for UTF-16 or UTF-32 text, and none for
+binary files or symlinks. Test: `test_text_hashes_ignore_line_endings`.
+
 ## Added 2026-10-17
 
 `inv.license` findings (license files and declared license fields), and `inv.pin` carries

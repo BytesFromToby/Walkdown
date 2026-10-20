@@ -10,11 +10,10 @@ reports were built from, for anyone who wants to check a finding or build on the
 
 ```
 RepoResults/<name>/<date>_<hash7>/          one run, e.g. RepoResults/backlog/2026-10-02_b449d9f
-  summary.html        the page for people: the lethal trifecta, files, outside links, hidden text, secrets, places to check
-  summary-v1.html     the earlier summary page, kept while the new one settles
+  summary.html        one page: the security concerns found, what it can do, questions before use
+  details.html        every section in full, with a Not concerned box on every row
   review.html         each place to check, one at a time, to mark Concerned, Not concerned, or Not sure
-  marks.json          your marks from review.html, once you save them here (Walkdown never writes it)
-  summary.md          the same summary as text
+  marks.json          your marks, once you save them here (Walkdown never writes it)
   full.md             every finding, by stage, with file and line
   changes.md          what changed since the previous run of the same repository (only when there is one)
   LOG.md              what ran, when, with which models, and each stage's validation stamp
@@ -136,9 +135,11 @@ running any stage or model:
 python stages/08-report/run.py --rerender RepoResults/<name>/<run>
 ```
 
-It rewrites `summary.html`, `summary-v1.html`, `review.html`, `summary.md`, and `full.md`, re-stamps validation with
-the current grader, and appends a line to LOG.md. `review.html` reads back a `marks.json` saved
-next to it, so your marks return with the page.
+It rewrites `summary.html`, `details.html`, `review.html`, and `full.md`, removes the pages runs
+made before 2026-10-20 also wrote (`summary.md`, `summary-v1.html`), re-stamps validation with the
+current grader, and appends a line to LOG.md. The pages read back a `marks.json` saved next to
+them, so your marks return with the pages; a run with no `marks.json` of its own starts from the
+newest earlier run's ([Your marks](READING-THE-REPORT.md#your-marks)).
 
 ## Runs made before 2026-10-02
 

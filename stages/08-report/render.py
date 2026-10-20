@@ -46,7 +46,6 @@ POINT_PATTERNS = {
     "A.prior-consent", "A.standing", "A.install-consent", "A.persona-grant",
     "J.enter-secret", "RL.pipe-shell", "G.pipe-shell", "RL.fetch-follow",
 }
-MAX_POINTS = 5
 # Stage 6 "do" reads (soft D1, 2026-10-01). The cutoff is 0.8 (measured: 7/7 right on the
 # real lines). Jev's p(do) for one line moves between runs: 95% of repeat reads within 0.09
 # (soft/EVAL.md "near-the-line band"). So a read within DRIFT of the cutoff is "near the
@@ -181,13 +180,6 @@ def n(x, word, plural=None) -> str:
 
 def pairs(reports, kind):
     return [f for f in fnd(reports, "05-capability", "cap.pair") if f.get("pair") == kind]
-
-
-def _points(items, fmt):
-    lines = [f"  - {fmt(x)}" for x in items[:MAX_POINTS]]
-    if len(items) > MAX_POINTS:
-        lines.append(f"  - +{len(items) - MAX_POINTS} more in the full report")
-    return lines
 
 
 def stamp_suffix(stamps, stage) -> str:
@@ -395,63 +387,6 @@ STATUS = {"01-inventory": _s1, "02-reader": _s2, "03-graph": _s3, "04-phrases": 
 
 # ---------------------------------------------------------------- points of attention
 
-def points(reports, stage) -> list[str]:
-    r = reports
-    if stage == "01-inventory":
-        hooks = fnd(r, stage, "struct.hooks")
-        items = [f"{h['file']}: {h.get('event')} hook runs {code(h.get('command'))}"
-                 for h in hooks if not is_test_data(h.get("file"))]
-        window = [c for c in fnd(r, stage, "struct.census") if c.get("flag") == "reader-window"]
-        read = [c for c in window if audience(c.get("file") or "") not in ("human", "test-data")]
-        items += [f"{c['file']}: over the reader window ({c.get('detail')})" for c in read]
-        lines = _points(items, str)
-        td = sum(1 for h in hooks if is_test_data(h.get("file")))
-        if td:
-            lines.append(f"  - {n(td, 'more hook')} in test data (never loaded on install), "
-                         "in the full report")
-        if len(window) > len(read):
-            lines.append(f"  - {n(len(window) - len(read), 'more file')} over the reader window in "
-                         "human-facing files or test data, in the full report")
-        return lines
-    if stage == "02-reader":
-        model, counted = _split_audience(r, pairs(r, "hidden+phrase"))
-        lines = _points(model, lambda p: f"{loc(p)}: {hidden_how(p)} and matches "
-                                         f"{p['phrase_check']}: {code(p['quote'].strip())}")
-        return lines + _counted_line(counted, "More hidden-text hits")
-    if stage == "03-graph":
-        both = pairs(r, "orphan+phrase") + pairs(r, "dynamic+phrase")
-        model, counted = _split_audience(r, both)
-        why = {"orphan+phrase": "referenced by nothing",
-               "dynamic+phrase": "loaded only through a dynamic load, named by nothing"}
-        lines = _points(model, lambda p: f"{loc(p)}: {why[p['pair']]}, and matches "
-                                         f"{p['phrase_check']}: {code(p['quote'].strip())}")
-        return lines + _counted_line(counted, "More such pairs")
-    if stage == "04-phrases":
-        hits = [h for h in phrase_hits(r) if POINT_PATTERNS & set(h.get("patterns", []))]
-        model = [h for h in hits if h.get("audience") not in ("human", "test-data")]
-        human = sum(1 for h in hits if h.get("audience") == "human")
-        test = sum(1 for h in hits if h.get("audience") == "test-data")
-        lines = _points(_part2_points(r) + model,
-                        lambda h: h if isinstance(h, str) else
-                        f"{loc(h)}: {code(h['quote'].strip())} "
-                        f"({rates_note(r, sorted(POINT_PATTERNS & set(h['patterns'])))})")
-        if human:
-            lines.append(f"  - {n(human, 'more hit')} on these patterns in human-facing files, "
-                         "in the full report")
-        if test:
-            lines.append(f"  - {n(test, 'more hit')} on these patterns in test data, "
-                         "in the full report")
-        return lines
-    if stage == "05-capability":
-        items = [("testdata", p) for p in pairs(r, "testdata+loaded")]
-        items += [("image", p) for p in pairs(r, "image+loaded")]
-        items += [("hook", p) for p in pairs(r, "hook+phrase")]
-        items += [("inj", i) for i in fnd(r, stage, "cap.injection") if i.get("mechanism") == "hook"]
-        return _points(items, _point5)
-    if stage == "06-soft":
-        return _points6(r)
-    return []
-
 
 def prohibition_note(x, short=False) -> str:
     """Review C25: a hit or rubric row whose action the line forbids ("Never ..."). The finding
@@ -485,18 +420,6 @@ def _split_audience(r, items):
     return listed, counted
 
 
-def _counted_line(counted, what) -> list[str]:
-    parts = []
-    if counted.get("tool"):
-        parts.append(f"{counted['tool']} in scripts")
-    if counted.get("human"):
-        parts.append(f"{counted['human']} in human-facing files (changelog, license, docs, "
-                     "templates)")
-    if counted.get("test-data"):
-        parts.append(f"{counted['test-data']} in test data")
-    return [f"  - {what}: " + " and ".join(parts) + ", in the full report"] if parts else []
-
-
 def secrets_line(r) -> str:
     """Section 4's count of lines that look like committed secrets (2026-10-04)."""
     allf = [x for x in (r.get("04-phrases") or {}).get("findings", []) if x.get("check") == "secret.found"]
@@ -512,37 +435,6 @@ def secrets_line(r) -> str:
     return (f"Lines that look like committed secrets: {len(allf) - test - plain}"
             + (f" (plus {'; plus '.join(extra)})" if extra else "")
             + (f", by {engine}." if engine else "."))
-
-
-def _part2_points(r) -> list[str]:
-    """Rare, high-signal part 2 rows: a word defined two ways, a safety word defined,
-    a prohibited-tier action with no confirmation step, a step whose confirmation is
-    a redefinition (THREATS 14, 22); flagged lines past the reader window, and a flagged
-    sentence repeated across files (REPORTING 4.4, 4.5; 2026-10-04)."""
-    sec = [x for x in fnd(r, "04-phrases", "secret.found")
-           if x.get("audience") != "test-data" and not x.get("likely_not_secret")]
-    pos = [f"{loc(x)}: looks like a committed secret ({', '.join(x.get('kinds') or [])}; "
-           f"value not shown)" for x in sec]
-    pos += [f"{d['file']}: {n(d['beyond_window'], 'flagged line')} past the reader window "
-           f"(after line {d['window_line']} of {d['lines']})"
-           for d in fnd(r, "04-phrases", "pos.density") if d.get("beyond_window")]
-    pos += [f"{loc(x)}: the same flagged sentence in {x['files']} files "
-            f"({', '.join(x['patterns'])}): {code(x['sentence'])}"
-            for x in fnd(r, "04-phrases", "rep.sentence") if x.get("patterns")]
-    out = [f"{d['file']}:{d['line']}: \"{c['term']}\" is defined differently in "
-           f"{n(len(c['definitions']), 'place')}" for c in fnd(r, "04-phrases", "term.conflict")
-           for d in c["definitions"][:1]]
-    out += [f"{loc(t)}: defines the safety word \"{t['term']}\": {code(t['quote'].strip())}"
-            for t in fnd(r, "04-phrases", "term.safety")]
-    for x in fnd(r, "04-phrases", "rubric.action"):
-        if x.get("confirm_redefined"):
-            out.append(f"{loc(x)}: {x['tier']} action whose step redefines confirmation: "
-                       f"{code(x['quote'].strip())}")
-        elif x.get("tier") == "prohibited" and not x.get("confirmation") and not x.get("negated_action"):
-            out.append(f"{loc(x)}: prohibited-tier action with no confirmation step: "
-                       f"{code(x['quote'].strip())}")
-    out = pos + out
-    return out
 
 
 def _soft(r):
@@ -637,44 +529,6 @@ def _s6(r) -> str:
     return line + " Answers are located observations; they reach no verdict."
 
 
-def _points6(r) -> list[str]:
-    s = _soft(r)
-    # Sweep passages with no stage 4 hit come first: they are the only stage 6 points about
-    # text no pattern located (soft D2). Strongest first.
-    new, old, near_sw = sweep_split(s)
-    items = [f"{span(x)}: no stage 4 pattern here; {x['backend']} reads this passage as telling "
-             f"the reader to {SWEEP_PLAIN.get(sweep_kind(x), sweep_kind(x))} (p={x['p_any']:.2f})"
-             for x in new]
-    for x in s["reads"]:
-        if not x.get("answer"):
-            continue
-        if x.get("file"):  # a read anchored to a line: show its substance
-            flat = " ".join(x["answer"].replace("**", "").split())
-            items.append(f"{loc(x)}: read by {x['backend']}: {code(flat[:240] + ('…' if len(flat) > 240 else ''))}")
-        else:  # the repo-wide capability narrative: point to it, do not quote a lead-in
-            items.append(f"(repo): capability narrative by {x['backend']} "
-                         f"({len(x['answer'].split())} words), in the full report")
-    clear, near = do_reads(s["labels"])
-    items += [f"{loc(x)}: {x['backend']} reads this line as an instruction to do the matched "
-              f"action (p={p_do(x):.2f})" for x in clear]
-    lines = _points(items, str)
-    if old:
-        lines.append(f"  - {n(len(old), 'more passage')} flagged by the sweep where stage 4 already "
-                     "has a hit, in the full report")
-    if near_sw:
-        lines.append(f"  - {n(len(near_sw), 'more passage')} near the sweep's line (p {SWEEP_NEAR_P} "
-                     f"to {SWEEP_CLEAR_P}): repeat sweeps vary by about {SWEEP_DRIFT}, so these "
-                     "could go either way; in the full report")
-    if near:
-        lines.append(f"  - {n(len(near), 'more \"do\" read')} near the line (p {DO_NEAR_P} to "
-                     f"{DO_CLEAR_P}): repeat reads of one line vary by about {DRIFT}, so these "
-                     "could go either way; in the full report")
-    weak = sum(1 for x in s["labels"] if x.get("label") == "do") - len(clear) - len(near)
-    if weak:
-        lines.append(f"  - {n(weak, 'more \"do\" read')} below p={DO_NEAR_P}, in the full report")
-    return lines
-
-
 def p_do(x) -> float:
     return (x.get("probabilities") or {}).get("do", 0)
 
@@ -750,20 +604,6 @@ IMAGE_READ = {  # what stage 2 got of a pointed-at image's text, in plain words
 def image_note(x) -> str:
     return (f"Referenced from {', '.join(x.get('froms') or [x.get('from')])}, which the model reads. "
             f"A model with vision reads text in an image; {IMAGE_READ.get(x.get('read'), x.get('read'))}.")
-
-
-def _point5(item) -> str:
-    kind, x = item
-    if kind == "image":
-        return f"{x['file']}: an image the model is pointed at. {image_note(x)}"
-    if kind == "testdata":
-        return (f"{x['file']}: sits in test data, but {x.get('from')} (read by the model) "
-                "references it directly, so it is read like any other file")
-    if kind == "hook":
-        return (f"{loc(x)}: an instruction in a script a context-injecting hook runs, so it can "
-                f"reach the model before the first user input: {code(x['quote'].strip())}")
-    return (f"{x['file']}: {x.get('event')} hook puts text in context before the first user "
-            f"input ({_bytes(x)})")
 
 
 def _bytes(i) -> str:
@@ -978,42 +818,6 @@ def glance(reports, notes, stamps, runs_ok) -> tuple[list[str], list[str]]:
 
 
 # ---------------------------------------------------------------- documents
-
-def summary(meta, reports, stamps, notes, runs_ok) -> str:
-    L = [f"# {meta['repo']}", "",
-         f"{meta['source']} | retrieved {meta['date']} | {meta['hash_kind']} {meta['hash'][:12]}",
-         "Static examination only. Nothing executed.", ""]
-    for i, stage in enumerate(ORDER, 1):
-        head = f"{i} {HEADINGS[stage]}".ljust(COL - 1) + " "
-        if stage == "07-limits":
-            L.append(f"{head}{glance_line(reports, notes, stamps, runs_ok)}")
-            continue
-        L.append(f"{head}{status(reports, stamps, stage)}")
-        if stage == "05-capability" and stage in reports:
-            L.append(" " * COL + load_bytes_line(reports))
-        pts = points(reports, stage) if stage in reports else []
-        if not pts and stage in reports and stamps.get(stage) and stamps[stage].result == "PASS" \
-                and stage != "05-capability":
-            L[-1] += " Nothing on the attention list (validated)."
-        L.extend(pts)
-    L += ["", f"Recommendations: {len(recommendations(reports))}, in the full report. Unranked.",
-          "", NOT_WHAT, ""]
-    return "\n".join(L)
-
-
-def glance_line(reports, notes, stamps, runs_ok) -> str:
-    """Section 7 in one line: the skipped checks that apply here, by name; the rest by count."""
-    skipped, idle = glance(reports, notes, stamps, runs_ok)
-    out = (f"{n(len(skipped), 'check')} skipped that apply to this repository"
-           + (": " + "; ".join(skipped) if skipped else "") + ".")
-    if idle:
-        out += " Not needed here: " + "; ".join(idle) + "."
-    bad = [s for s, st in stamps.items() if st.result != "PASS"]
-    if bad:
-        out += f" Validation not PASS for {', '.join(bad)}."
-    total = len(limits(reports, notes, stamps, runs_ok))
-    return out + f" Full list ({total} lines, with the standing limits of the method) in the full report."
-
 
 def full(meta, reports, stamps, notes, runs_ok, capability_full=None) -> str:
     L = [f"# {meta['repo']}: full report", "",
@@ -1315,7 +1119,7 @@ def log(meta, runs, stamps, reports) -> str:
         L.append(f"| {stage} | {x.started} | {x.finished or ''} | {'data/' + stage + '.json' if x.ok else ''} | "
                  f"{res} | {st.text if st else ''} |")
     L += [f"| 07-limits | | {meta.get('finished', '')} | data/07-limits.md | written | |",
-          f"| 08-report | | {meta.get('finished', '')} | summary.html, review.html, summary.md, full.md | written | |",
+          f"| 08-report | | {meta.get('finished', '')} | summary.html, details.html, review.html, full.md | written | |",
           "", "A report about someone else's repository is not published until its author has "
           "seen it.", ""]
     return "\n".join(L) + "\n"

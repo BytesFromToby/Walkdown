@@ -160,9 +160,57 @@ def test_since_same_version(tmp_path):
     s = drift.since(a, c)
     assert (s["same"], s["differs"]) == (True, True)
     md = s["report"].read_text(encoding="utf-8")
-    assert "Same version of the repository in both runs: every difference below comes from Walkdown." in md
+    assert "Same version of the repository; every difference comes from Walkdown." in md
     assert "## Walkdown's search terms and matching code (1)" in md and "- added: E.new" in md
     assert "(Walkdown's search terms)" in md
     assert "new phrase hits: 1 from Walkdown's search terms" in s["lines"]
     s = drift.since(a, run(tmp_path, "2026-01-04_bbb", EDITED, [], pin_hash="bbb", terms=t))
     assert (s["same"], s["differs"]) == (False, True) and s["report"].is_file()
+
+
+# 2026-10-20: a file whose bytes differ only in line endings is not an edit.
+
+import hashlib  # noqa: E402
+
+
+def eol_inv(f, text, crlf=False, hashes=True):
+    lf = text.encode("utf-8")
+    raw = lf.replace(b"\n", b"\r\n") if crlf else lf
+    row = inv(f, hashlib.sha256(raw).hexdigest(), bytes_=len(raw))
+    if hashes:
+        row.update(sha256_lf=hashlib.sha256(lf).hexdigest(),
+                   sha256_crlf=hashlib.sha256(lf.replace(b"\n", b"\r\n")).hexdigest())
+    return row
+
+
+def test_line_endings_alone_are_not_an_edit(tmp_path):
+    t = terms({"E.a": "1"})
+    old = [eol_inv("a.md", "one\ntwo\n", crlf=True), eol_inv("b.md", "x\n")]
+    new = [eol_inv("a.md", "one\ntwo\n"), eol_inv("b.md", "y\n")]
+    c = drift.compare(drift.load(run(tmp_path, "a", old, terms=t)),
+                      drift.load(run(tmp_path, "b", new, [hit("a.md", ["E.a"], "q")], terms=t)))
+    assert c["files_eol"] == ["a.md"] and c["files_changed"] == ["b.md"]
+    assert c["hits_added_cause"] == ["other"]  # a.md has the same content: not the repository
+    assert "1 files differing only in line endings" in drift.summary_lines(c)[0]
+
+
+def test_an_older_run_without_the_hashes_is_matched_either_way(tmp_path):
+    old = [eol_inv("a.md", "one\n", crlf=True, hashes=False), eol_inv("b.md", "two\n", hashes=False)]
+    new = [eol_inv("a.md", "one\n"), eol_inv("b.md", "two\n", crlf=True)]
+    c = drift.compare(drift.load(run(tmp_path, "a", old)), drift.load(run(tmp_path, "b", new)))
+    assert c["files_eol"] == ["a.md", "b.md"] and c["files_changed"] == []
+
+
+def test_same_commit_with_files_changed_on_disk_is_said_so(tmp_path):
+    t = terms({"E.a": "1"})
+    a = run(tmp_path, "2026-01-01_aaa", [eol_inv("a.md", "one\n", crlf=True)], terms=t)
+    b = run(tmp_path, "2026-01-02_aaa", [eol_inv("a.md", "one\n")], terms=t)
+    s = drift.since(a, b)
+    assert (s["same"], s["differs"], s["report"]) == (True, False, None)  # line endings only: nothing
+    c = run(tmp_path, "2026-01-03_aaa", [eol_inv("a.md", "two\n")], [hit("a.md", ["E.a"], "q")], terms=t)
+    s = drift.since(a, c)
+    assert s["on_disk"] == 1
+    assert s["header"].startswith("same commit of the repository, but 1 file on disk differs")
+    md = s["report"].read_text(encoding="utf-8")
+    assert "every difference comes from Walkdown" not in md
+    assert "differences in other files come from Walkdown" in md

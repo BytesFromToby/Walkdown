@@ -1,152 +1,112 @@
 # render.py: spec
 
-Pure functions that turn stage reports into the run's documents. Nothing is
-detected or judged; every rule that picks what to show is a fixed table at the
-top of the file (`SUBGROUPS`, `POINT_PATTERNS`, `LEG_NAMES`, `STANDING_LIMITS`,
-the recommendation templates).
+`full.md`, the run log, the not-checked lists, the recommendations, and the fixed tables and
+words the pages share. Pure functions over the stage reports: nothing is detected or judged, and
+every rule that picks what to show is a fixed table at the top of the file.
+
+Status: built.
 
 ## Inputs
 
-- `meta`: `repo`, `run`, `date`, `source`, `hash`, `hash_kind`, optional
-  `tool`, `channel`, `finished`, `feedback`.
+- `meta`: `repo`, `run`, `date`, `source`, `hash`, `hash_kind`, and optionally `tool`,
+  `channel`, `finished`, `feedback`.
 - `reports`: `{stage: contract-1 report}` for the stages that ran.
-- `stamps`: `{stage: validate.Stamp}`.
-- `notes`: `{stage: [stderr lines]}`.
-- `runs_ok`: the set of stages that completed.
-- `capability_full`: stage 5's `capability.json` (full evidence), optional.
+- `stamps`: `{stage: validate.Stamp}`; `notes`: `{stage: [stderr lines]}`; `runs_ok`: the stages
+  that completed.
+- `capability_full`: stage 5's `capability.json` (every citation), optional.
 
 ## Outputs
 
-- `summary(...)`: the summary page (REPORTING Part A). One status line per
-  stage 1 to 7 in stage order, plain-language headings, points of attention
-  under the stage that found them (at most `MAX_POINTS`, then "+N more"),
-  the recommendation count, and the "What this is not" paragraph.
-  - Stage 4's line carries hit counts by sub-group and "benign share not
-    measured".
-  - Stage 5's line states each leg yes / no; when all three are yes it adds the
-    fixed qualifier `TRIFECTA_ALL`. The trifecta is described in plain words; the term "lethal
-    trifecta" appears in the docs with its credit, not in the report (2026-10-07). Bytes at load are listed per path, never
-    summed across hook configs.
-  - A stage whose stamp is not PASS adds "Validation <result>: see 7.".
-  - A stage that did not run shows "Not run. See 7.".
-- `full(...)`: sections 1 to 7, each with status line, validation stamp, and
-  every finding (file:line, fields, verbatim quote in a code span), then
-  Recommendations, then "What this is not".
-- `recommendations(reports)`: template matches only, in stage then document
-  order; each conditional ("If ...") and naming a narrower alternative; one per
-  file and template; settings allow-list edits get their own template.
-- `limits(...)` / `limits_doc(...)`: stage 7: failed or unvalidated stages,
-  skip findings, stage notes naming a limit, unread and unscanned files, then
-  `STANDING_LIMITS`.
-- `glance(...)` -> `(skipped, not needed)` (added 2026-10-07; the owner read "58 things not
-  examined" as a hole): the summary's count. One plain item per check this run skipped that
-  applies to this repository: a stage that did not run, model reads (one item, not one per
-  file), a missing optional tool whose file kind stage 1 saw (`TOOL_NOTES`, `file_kinds`;
-  language detection applies to every run), other skip reasons grouped with a file count,
-  unread and unscanned files. A tool for a file kind the repository does not ship goes to
-  "not needed". Standing notes (`STANDING_NOTE`) and `STANDING_LIMITS` are not counted.
-  `limits` is unchanged and still lists every line.
-- Section 7 of `summary(...)` is `glance_line`: the skipped items by name, "Not needed here",
-  any stage whose validation is not PASS, and the length of the full list.
-- `log(...)`: LOG.md per RUN-LAYOUT: one row per stage with start, finish,
-  output, finding count, and validation stamp.
-- `code(s)`: an inline code span that survives backticks inside `s`.
+- **`full(...)` -> `full.md`**: sections 1 to 7 in stage order, each with its status line
+  (`STATUS`), its validation stamp, and every finding: location (`loc`: `file:line`, or
+  `file (extracted text, page N, line M)` for PDF, DOCX, and image text), fields, and the
+  verbatim quote in a code span (`code`). Then Recommendations, then "What this is not"
+  (`NOT_WHAT`). Notable lists: divergences with their carrier and, for a drawn page, how
+  (`carrier rendered (collapsed)`); every line changed by folding, typography included; the
+  rubric table, prohibitions marked; settings that restrict tools and stated limits with what
+  backs them; each leg's and grant's evidence, a confident not-an-instruction read marked beside
+  it; every stage 6 question with its answer or skip, near-the-line reads tagged.
+- **`recommendations(reports)`**: template matches only, in stage then document order; each
+  conditional ("If ...") and naming a narrower alternative; one per file and template; settings
+  allow-list edits have their own template. Recommendations carry no model text (owner,
+  2026-10-20, C28).
+- **`limits(...)`, `limits_doc(...)` -> `data/07-limits.md`**: stage 7: stages that failed or are
+  not validated, skip findings, stage notes naming a limit, unread and unscanned files, then
+  `STANDING_LIMITS`. Every line, nothing folded.
+- **`glance(...)` -> `(skipped, not needed)`**: the pages' short account of what was not checked:
+  one plain item per check this run skipped that applies to this repository (a stage that did
+  not run; model reads as one item; a missing optional tool whose file kind stage 1 saw,
+  `TOOL_NOTES` and `file_kinds`; other skip reasons grouped with a file count; per-file skips one
+  item per stage, test data counted after; unread and unscanned files). A tool for a file kind
+  the repository does not ship goes to "not needed". Standing notes (`STANDING_NOTE`,
+  `STANDING_LIMITS`) are not counted.
+- **`log(...)` -> `LOG.md`**: one row per stage with start, finish, output, finding count, and
+  validation stamp, the Walkdown version and commit, and one line per re-render.
+- **`code(s)`**: an inline code span that survives backticks inside `s`.
 
-## Signal levels (added 2026-10-01, soft D1)
+## Shared tables and words
 
-- Each stage 4 summary point names its patterns with their base rate over the other
-  audited repos (`rates_note`, from `baserates.json`): "L.ignore, rare: in 0 of 3 other
-  audited repos". No table: the pattern is just named.
-- Stage 6 "do" reads use a band around the 0.8 cutoff, `DRIFT` = 0.1 (measured: 95% of
-  repeat Jev reads of one line within 0.09): p >= 0.9 is listed as a real-instruction
-  read (up to the point cap); 0.7 <= p < 0.9 is one counted "near the line" line with the
-  drift stated, and each such read is tagged ", near the line" in the full report; below
-  0.7 is counted, in the full report.
-
-## Evidence read as not an instruction (added 2026-10-01, soft D5)
-
-A stage 6 label other than `do` at p(label) >= `NOT_DO_P` (0.8) on a line that stage 5
-cites as stage 4 evidence marks that entry in the full report ("stage 6: read as
-description, not an instruction; jev p=0.85") and counts it beside the leg. The leg's
-yes/no never changes. When a present leg's whole evidence list (not truncated:
-`evidence_total` equals the listed count) is marked, the summary says so under the
-trifecta line. Stage 1 evidence (grants, hooks) is never marked.
-
-## Sweep (added 2026-10-01, soft D2)
-
-Sweep band (2026-10-01): measured drift of p_any between repeat sweeps is up to 0.10, so
-`SWEEP_DRIFT` = 0.1 around the stage 6 cutoff 0.5. The report lists a passage at p_any >=
-0.6; 0.4 to 0.6 is near the line, flagged or not, counted in the summary and tagged
-", near the line" in the full report. A passage whose top answer is `none` is named by its
-likeliest listed kind (`sweep_kind`). Listed sweep passages with no stage 4 hit lead the
-stage 6 points, strongest first:
-"<file>:<line>-<end>: no stage 4 pattern here; jev reads this passage as telling the reader
-to <plain kind> (p=..)". Flagged passages stage 4 already covers are one counted line. The
-status line adds "Sweep: ..: N passages read, F flagged, U with no stage 4 hit". The full
-report lists every flagged passage with its kind, p, and coverage.
-
-## Test data (added 2026-10-02)
-
-Hits, hooks, and pairs in test data are counted in the summary ("N more ... in test data"),
-never listed as points. Section 5's status adds "Test data set aside: N findings ...", the
-`testdata+loaded` pairs lead the stage 5 points and have their own list in the full report,
-and section 7 states that test data is recognized by name.
+- `LEG_NAMES` ("Can read your data", "Can take outside input", "Can send data out"), `LEG_DEFS`,
+  `TRIFECTA_ALL`, `TRIFECTA_SOME`; `NOT_WHAT`; `CAPABILITY_ONLY` and `CAPABILITY_ONLY_SHORT`
+  ("capability only"); `DO_MEANS` (what a "do" score means and does not).
+- `POINT_PATTERNS`, `SUBGROUPS`, `HEADINGS`, `ORDER`.
+- Signal levels (soft D1): each stage 4 point names its patterns with their base rate over the
+  other audited repositories (`rates_note`, from `baserates.json`), or just the pattern when
+  there is no table. "Do" reads: p >= `DO_CLEAR_P` (0.9) is a real-instruction read; `DO_NEAR_P`
+  (0.7) to 0.9 is near the line, with `DRIFT` (0.1) stated; below is counted in `full.md`.
+- Sweep band (soft D2): `SWEEP_DRIFT` 0.1 around the 0.5 cutoff; a passage at p_any >= 0.6 is
+  listed, 0.4 to 0.6 is near the line; a passage whose top answer is `none` is named by its
+  likeliest kind (`sweep_kind`).
+- Read as not an instruction (soft D5): a stage 6 label other than `do` at p >= `NOT_DO_P` (0.8)
+  on a line stage 5 cites marks that evidence (`not_instruction_reads`, `evidence_mark`,
+  `all_marked_legs`); a leg never changes. The same reads give the pages' questioning line
+  (`questioned`, C28).
+- Benign share (C15): `benign_share` gives the label split when stage 6 labeled lines, else says
+  it was not measured.
+- Stated limits: `limit_words`, `limit_routes` (C32).
+- Test data: hits, hooks, and pairs in test data are counted, never listed as points.
 
 ## Must never
 
-- Emit a score, severity, rank, or verdict word (benign, concerning, safe,
+- Emit a score, severity, rank, or verdict word (benign as a verdict, concerning, safe,
   malicious, risk score).
 - Sum SessionStart hook bytes across host configs.
-- Show a non-PASS stage without saying so.
+- Show a stage that did not pass validation without saying so.
 
-## Done when (each backed by a test in `tests/test_render.py`)
+## Done when (tests in `tests/test_render.py`)
 
-1. A small report set gives a summary with seven numbered stage lines in order,
-   each heading from `HEADINGS`.
-2. All three legs present adds the trifecta qualifier; two of three does not.
-3. An INCOMPLETE stamp puts "Validation INCOMPLETE: see 7." on that stage's line
-   and the stage into `limits`.
-4. A hit on a `POINT_PATTERNS` pattern appears as a point under stage 4; a hit
-   on another pattern does not.
-5. Two hook configs' `cap.load-bytes` (one per host, from stage 5) are listed
-   separately and not summed.
-6. `recommendations` gives one line for a SessionStart hook and one for a
-   fetch-and-follow hit, each starting with the location and containing "If".
-7. `full` contains every stage 4 finding's location and quote.
-8. `code` wraps text containing a backtick so the span is not broken.
-9. No document contains the words "verdict: ", "score", "severity", "benign:",
-   or "malicious".
-10. Hidden-text pairs on human-audience lines (stage 4 `audience`) are counted
-   under stage 2, not listed; model-audience ones are listed.
-   A pair whose only stage 2 evidence is a folded line reads "disguised with look-alike or
-   invisible characters", not "hidden when rendered" (`hidden_how`, 2026-10-09).
-11. `dynamic+phrase` pairs are listed under stage 3 beside `orphan+phrase`.
-12. Allow-list edits (`permissions.allow`) in one file give one recommendation
-   with the settings template; a skip-permissions flag gives the other template.
-13. Orphan pairs on human-audience lines are counted under stage 3, not listed.
-14. A `hook+phrase` pair is a stage 5 point and gets the "If this message is meant
-   for the user" recommendation.
-15. Stage 6: status line names each backend (local or remote, model), label counts,
-   agreement, relational answers and skips; points list relational reads and `do`
-   reads at p >= `DO_POINT_P` (0.8, provisional), counting weaker ones; the full
-   report lists every question with each answer or skip.
+1. `full` holds every stage 4 finding's location and quote, and marks prohibitions in section 4
+   and the rubric table.
+2. An INCOMPLETE stamp is said on its stage and puts the stage in `limits`.
+3. Hook configs' load bytes are listed per host, never summed.
+4. `recommendations`: a SessionStart hook and a fetch-and-follow hit each give one line starting
+   with the location and containing "If"; allow-list edits in one file give one; a
+   `hook+phrase` pair gets its template.
+5. `code` survives a backtick.
+6. No document contains "verdict: ", "score", "severity", "benign:", or "malicious".
+7. Hidden-text and orphan pairs on human-facing lines are counted, model-facing ones listed; a
+   pair whose only stage 2 evidence is a folded line reads "disguised with look-alike or
+   invisible characters" (`hidden_how`).
+8. Stage 6: backends named, label counts, agreement, relational answers and skips; every question
+   in `full.md` with its answer or skip.
+9. `glance`: a missing tool counts only when the repository has that file kind; standing notes
+   never count; model-read skips are one item; per-file skips are one item per stage
+   (`test_per_file_skips_are_one_item_per_stage`).
+10. A drawn page's divergence names how it is hidden (`test_full_says_how_a_drawn_page_hides_text`).
+11. `full.md` has the seven sections in order with their headings, each status line carrying a
+    stamp that did not pass (`test_seven_sections_in_order`,
+    `test_incomplete_stamp_flagged_and_listed`).
 
-## Benign share (added 2026-10-03, review C15)
+## History
 
-`benign_share(r)`: when stage 6 labeled lines, section 4's status line ends with "of N lines a
-model reads, <backend> labels X as an instruction to do the matched action and Y as something
-else (... by label)", pointing to the measured accuracy; otherwise "benign share not measured
-(stage 6 labels did not run)". Section 4's line count is split by audience (read by a model,
-in scripts, human-facing, test data; review A5).
-5. `glance` counts a missing tool only when the repository has that file kind, never counts a
-   standing note, and folds model-read skips into one item (`tests/test_summary_html.py`).
-
-Secret hits marked `likely_not_secret` by stage 4 (2026-10-09) are counted apart in section 4's
-secrets line ("plus N that look like hashes, variable names, plain words, or local test
-passwords"), are never summary points, and are listed with the reason in the full report.
-
-`glance` (2026-10-09): per-file skip notes ("not scanned: <file>: <why>") give one item per
-stage, "<N> files not scanned (<count> <why>, ...)", with files in test data counted after
-("plus N in test data"); when every such file is test data, the item moves to "not needed here"
-("<N> files not scanned, all in test data"). The full list keeps one line per file
-(`tests/test_render.py::test_per_file_skips_are_one_item_per_stage`).
+- 2026-09-29: built (stage 8 v1): `summary.md`, `full.md`, recommendations, limits, log.
+- 2026-10-01: signal levels, sweep band, read as not an instruction (soft D1, D2, D5).
+- 2026-10-02: test data counted apart.
+- 2026-10-03: benign share (C15).
+- 2026-10-07: `glance`, the short not-checked account.
+- 2026-10-09: likely-not-secrets counted apart; per-file skips folded.
+- 2026-10-17: "capability only" (C27), stated limits (C32), "do" means (C34).
+- 2026-10-20: "Can" names (C31 part B), questioning reads (C28), drawn HTML's how in `full.md`.
+- 2026-10-20: owner: `summary.md` cut; `summary(...)`, `glance_line(...)`, and the point lists
+  only it used (`points`, `MAX_POINTS`) removed; their tests now check `full.md`, or went where
+  only `summary.md` had the behavior (the pages' `first_items` lists places now).

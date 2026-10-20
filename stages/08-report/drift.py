@@ -59,6 +59,18 @@ def _norm(q) -> str:
     return " ".join(str(q or "").split())
 
 
+def same_text(o: dict, n: dict) -> bool:
+    """Two records of one file whose bytes differ only in line endings (2026-10-20). Either run
+    may predate the line-ending hashes (stage 1 `sha256_lf`, `sha256_crlf`); the other's cover it."""
+    if o.get("sha256_lf") and n.get("sha256_lf"):
+        return o["sha256_lf"] == n["sha256_lf"]
+    if n.get("sha256_lf"):
+        return o.get("sha256") in (n["sha256_lf"], n.get("sha256_crlf"))
+    if o.get("sha256_lf"):
+        return n.get("sha256") in (o["sha256_lf"], o.get("sha256_crlf"))
+    return False
+
+
 def compare(old: dict, new: dict) -> dict:
     """Every difference, as plain data. Keys are stable for rendering and for the brief."""
     c = {}
@@ -66,17 +78,18 @@ def compare(old: dict, new: dict) -> dict:
     nf = {x["file"]: x for x in _f(new, "01-inventory", "inv.file")}
     c["files_added"] = sorted(set(nf) - set(of))
     c["files_removed"] = sorted(set(of) - set(nf))
-    changed, maybe = [], []
+    changed, maybe, eol = [], [], []
     for f in sorted(set(of) & set(nf)):
         a, b = of[f].get("sha256"), nf[f].get("sha256")
         if a and b:
             if a != b:
-                changed.append(f)
+                (eol if same_text(of[f], nf[f]) else changed).append(f)
         elif of[f].get("bytes") != nf[f].get("bytes"):
             changed.append(f)
         else:
             maybe.append(f)  # an older run has no content hash and the size is the same
     c["files_changed"], c["files_unverified"] = changed, maybe
+    c["files_eol"] = eol  # the same content with other line endings: not an edit (2026-10-20)
 
     def ent(r):
         return {(x["file"], x["entry_point"]) for x in _f(r, "01-inventory", "inv.file")
@@ -166,7 +179,8 @@ def compare(old: dict, new: dict) -> dict:
 
 # what each count is called in the brief and the summary line, in reading order
 COUNTS = (("files_added", "files added"), ("files_removed", "files removed"),
-          ("files_changed", "files changed"), ("entry_added", "entry points added"),
+          ("files_changed", "files changed"),
+          ("files_eol", "files differing only in line endings"), ("entry_added", "entry points added"),
           ("hooks_added", "hooks added"), ("hooks_removed", "hooks removed"),
           ("grants_changed", "agent tool grants changed"), ("mcp_added", "MCP servers added"),
           ("mcp_changed", "MCP servers changed"), ("desc_changed", "descriptions changed"),
@@ -196,7 +210,22 @@ def same_repo(old, new) -> bool:
 
 def differs(c) -> bool:
     """Any difference in what the two runs recorded."""
-    return any(c.get(k) for k, _ in COUNTS) or any(c.get(k) for k in OTHER_DIFFS)
+    return (any(c.get(k) for k, _ in COUNTS if k != "files_eol")  # line endings alone are no difference
+            or any(c.get(k) for k in OTHER_DIFFS))
+
+
+def on_disk(c) -> int:
+    """Files added, removed, or edited between the runs (line endings alone not counted)."""
+    return len(c["files_added"]) + len(c["files_removed"]) + len(c["files_changed"])
+
+
+def same_words(c) -> str:
+    """What the brief, changes.md, and the summary say when both runs read the same version."""
+    n = on_disk(c)
+    if not n:
+        return "same version of the repository; every difference comes from Walkdown"
+    return (f"same commit of the repository, but {_plural(n, 'file')} on disk "
+            f"{'differs' if n == 1 else 'differ'} from that run's; differences in other files come from Walkdown")
 
 
 def _plural(n, word, many=None) -> str:
@@ -268,8 +297,8 @@ def render(old_dir, new_dir, old, new, c) -> str:
          "What a newer version adds, from the findings both runs already made. Model reads (stage 6) "
          "are not compared. A change is a location to read; none is a verdict.", ""]
     if same_repo(old, new):
-        L += ["Same version of the repository in both runs: every difference below comes from "
-              "Walkdown.", ""]
+        w = same_words(c)
+        L += [w[0].upper() + w[1:] + ".", ""]
     L += ["Summary: " + "; ".join(summary_lines(c)) + ".", ""]
 
     def section(title, rows, fmt):
@@ -319,6 +348,10 @@ def render(old_dir, new_dir, old, new, c) -> str:
     section("Files added", c["files_added"], lambda f: f"{f} ({audience(f)})")
     section("Files removed", c["files_removed"], str)
     section("Files changed", c["files_changed"], lambda f: f"{f} ({audience(f)})")
+    if c.get("files_eol"):
+        L += [f"## Files that differ only in line endings ({len(c['files_eol'])})", "",
+              "The same content with other line endings (as when a checkout converts them); not "
+              "counted as changed, and nothing in them is new.", ""] + [f"- {f}" for f in c["files_eol"]] + [""]
     if c["files_unverified"]:
         L += [f"{len(c['files_unverified'])} files have the same size in both runs but the older run "
               "recorded no content hash, so a change of the same length cannot be ruled out.", ""]
@@ -354,10 +387,12 @@ def since(old_dir, new_dir) -> dict:
     same = same_repo(old, new)
     c = compare(old, new)
     if same and not differs(c):
-        return {"same": True, "differs": False, "lines": [], "report": None}
+        return {"same": True, "differs": False, "lines": [], "report": None, "on_disk": 0,
+                "header": None}
     out = layout.report_dir(new_dir) / REPORT
     out.write_text(render(old_dir, new_dir, old, new, c), encoding="utf-8")
-    return {"same": same, "differs": True, "lines": summary_lines(c), "report": out}
+    return {"same": same, "differs": True, "lines": summary_lines(c), "report": out,
+            "on_disk": on_disk(c), "header": same_words(c) if same else None}
 
 
 def main(argv=None) -> int:

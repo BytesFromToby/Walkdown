@@ -1,151 +1,121 @@
-# summary_html.py: spec (report v2)
+# summary_html.py: spec
 
-The summary page, rebuilt around a reader's questions (owner redesign, 2026-10-16). Report v1
-(the page in stage order) is kept frozen as `summary_v1_html.py` at git tag `report-v1` and
-written beside this one as `summary-v1.html` until v2 settles. Same facts as before, from the
-fixed rules in `render.py`; nothing new is detected or judged.
+Status: built 2026-10-20 (owner decision the same day). Marks are the run's own or carried,
+matched by stable key as `review.html` matches them (`marks.SPEC.md`).
 
-## Output
+The one page for someone deciding whether to use a repository: what Walkdown found that could
+be dangerous, by fixed kinds, what the repository can do, and what to ask before using it.
+Everything else, what was not checked included, is one click away in `details.html` and
+`review.html`.
 
-`render_page(meta, reports, stamps, notes, runs_ok, changes_since=None) -> str`: one
-self-contained HTML document (`summary.html`). Sections, in the owner's order:
+## Reader and length
 
-1. **Header.** "Walkdown report on <name>", big, as one line; then source, pin, retrieval date,
-   run, and Walkdown version. A link to `review.html` top right, always. No "Static examination
-   only" line (owner); the footer keeps `render.NOT_WHAT`.
-   Under it, one plain line on the license (added 2026-10-17, class demo feedback): the
-   license of each license file at the top level (or in `.claude-plugin/`) with the file, or
-   that the file is not a license Walkdown recognizes and how it begins; with no such file, what
-   the top-level license fields say; with neither, "No license found". Then "Also stated:" any
-   other license found in another file or field, and how many other license files are not
-   recognized. Test data is left out. A run made before stage 1 had the check (no
-   `license_checked` on `inv.pin`) shows no line. It names the license text a file matches,
-   never what the license allows.
-2. **The lethal trifecta** (named for what it is, owner). One line credits Simon Willison and
-   says what the three mean together. The three legs as a checklist: checked legs first, colored
-   green, yellow, red by position (owner decision, 2026-10-12); each checked leg says how many
-   places back it (`evidence_total`); a leg whose every cited line a model read as not an
-   instruction keeps its box and says so (soft D5). The qualifier (`TRIFECTA_ALL` /
-   `TRIFECTA_SOME`) stays. Then **How it gets in**: runs commands on its own (one line per hook),
-   adds text to the AI's context before you type (description and startup-hook bytes), lasting
-   changes, network, more permissions, MCP servers by name, agents with their own tools (and how
-   many have no tools list). What was not found is one "Not found: ..." line.
-3. **Files.** Headline in the open: files, file types, total size. **Worth a look**, in the open
-   and only when there is something: unknown file type, contents of a different type than the
-   name says, archives, symlinks, files the AI reads that are longer than a reviewer's viewer
-   shows. Everything else is collapsed under "Files and map": file types and script languages,
-   largest files, files a tool loads first, descriptions, manifests, long lines, and the map
-   (starting points, how files are reached, files nothing points to by name, broken file
-   references, and that the map can miss links).
-4. **Outside links.** "Walkdown gathered these and opened none of them." In the open: how many
-   links, how many different domains, how many in text the AI reads, how many domains the docs
-   never mention. Collapsed: a table grouped by domain with Link | File, line | Read by. A link
-   longer than `LINK_SHOW` characters is shortened with "…"; its full address is in the title and
-   in a Copy button (copies the whole address). Who reads the file is `READ_BY` over stage 4's
-   audience rule. A run made before 2026-10-16 has no addresses saved; its rows show the domain.
-5. **Hidden text** (its own section, owner). Where what the AI reads differs from what a person
-   sees, by how it was hidden and how many are in files the AI reads; lines changed by folding;
-   non-Latin runs; passages in another language written in Latin script (`read.language`), with
-   how many are in files the AI reads; then cards for hidden text that reads like an instruction.
-6. **Committed secrets** (its own section, owner). Count, engine, what was set aside (test data,
-   likely not secrets); one card per place, value never shown. Skipped when no scanner ran.
-7. **Risky asks and things to check.** Overall numbers: lines matched and who reads them, matches
-   by kind, the second opinion's split when labels ran, actions that should ask first. Then the
-   things to check as a list of headlines with their place counts (hidden text and secrets are
-   left to their sections), the model-read count, and the line linking `review.html` when any
-   place is listed.
-8. **Changes since run X**, only when an earlier run of the same repository is a different
-   version (`run.changes_for`): `drift.summary_lines` and a link to `changes.md`. A re-run of the
-   same version shows nothing here, unless Walkdown changed since and something differs
-   (`differs`, 2026-10-19): then the section opens by saying it is the same version of the
-   repository and every difference comes from Walkdown.
-9. **Recommendations (N)**, unranked.
-10. **Other details**, collapsed: what was not checked (not built yet, skipped in this run, not
-    needed here, every limit behind its own toggle), fixture results per step that ran (a pill
-    "N step(s) not passed" on the heading when any is not PASS), and the pointer to `full.md`.
+Someone asking "is this safe?". The page answers with what was found and where to look, never
+with a verdict (`REPORTS.md`). It fits one laptop screen, about two printed pages: counts and one
+example per row, never lists.
 
-A stage 4 item whose line forbids the matched action (`negated`, review C25) keeps its card with
-", stated as a prohibition" (", ... with an exception" when it has a `carve_out`) on its headline;
-a rubric row whose action is forbidden (`negated_action`) is never listed as "an irreversible or
-prohibited action with no confirmation step", and the risky-asks numbers count it apart ("N where
-the text forbids the action"). Test 14.
+## Inputs
 
-Every section has words for when it found nothing ("No outside links", "Nothing hidden", "No
-lines look like committed secrets", "Nothing to check", "None: no finding matched a
-recommendation"), or says it was not checked when its stage did not run.
+`render_page(meta, reports, stamps, notes, runs_ok, marks=None) -> str`. `marks` are the run's
+marks, this run's own or carried from an earlier run (`marks.SPEC.md`). The places come from
+`details_html.first_items`, the same set `review.html` walks.
 
-Theme tokens for light and dark (`prefers-color-scheme` and `data-theme`), phone width with no
-page-wide horizontal scroll, every artifact string HTML-escaped (addresses included).
+## Output: `summary.html`
 
-`first_items`, `unique`, and `grouped` are unchanged from v1: `review.html` and the brief in
-`walkdown.py` read them.
+1. **Header.** "Walkdown report on <name>"; source, pin, retrieval date, run, Walkdown version;
+   the license line (as `details_html`); links at the top right to "Details" (`details.html`) and
+   "Review each place" (`review.html`).
+2. **The headline sentence**, from the concern rows below:
+   - With concerns: "Walkdown found security concerns in this repository: <N> places, of <K>
+     kinds." When the reader marked some Not concerned: "(<M> of them marked Not concerned)".
+   - With none: "Walkdown found none of the security concerns it looks for." The page's one
+     qualifier is in the footer.
+   Then, only when a step did not work (`failed_steps`, `warning`): "Not every step worked in
+   this run.", each such step by its plain name with "did not run" (no output) or "did not pass its
+   fixture check (<result>)", that a step that did not work can miss places so the page may show
+   fewer than there are, and a link to Other details on `details.html`. A run made without
+   validation has no stamps and gets no line for them.
+3. **Security concerns.** One row per concern kind that has a place, in this fixed order
+   (`CONCERNS`). Each place falls in exactly one row; a place is taken by the first row that fits:
+   1. **Hidden text that reads like an instruction** (kind `hidden+phrase`).
+   2. **Runs code**: hooks, commands run at load, commands the person is asked to run
+      (`details_html.action_group` = `runs`).
+   3. **Looks like a committed secret** (kind `secret`; test data and likely-not-secrets are
+      already left out of the places).
+   4. **Reads secrets, calls out, or shares** (`action_group` = `out`).
+   5. **Lasting changes or permissions** (`action_group` = `lasting`; includes read-only lines a
+      tools list contradicts).
+
+   Each row: the kind, its place count, how many of those the reader marked Not concerned, and
+   one example: the first place (stage order, then file, then line) not marked Not concerned,
+   with its headline and location, linked to its card in `review.html`. "<n> more" links to the
+   matching section of `details.html`.
+
+   With no concern rows, the section has no lede and says "Nothing to point out here."
+
+   Then one line: "<W> more places are wording only: instructions that change how the AI reads,
+   decides, or answers." ("<W> places are ..." with no rows above; `action_group` = `words`),
+   linked to `details.html#risky`. Model reads
+   are not concerns: when any ran, one line counts them ("<R> model reads, experimental, on the
+   review page").
+4. **What it can do.** No lede (the footer covers what a static read can show). The three boxes in one row, checked first, colored as in `details.html`,
+   with no lists, linked to `details.html#trifecta`. Under them, "Each one is ordinary on its
+   own. A tool that does all three can be steered by text from outside into sending your data
+   away." (`TOGETHER`, from `details_html.TRIFECTA_LEDE`), then one line naming the general
+   risks present ("Also: runs commands on its own, adds text before you type, ...").
+5. **Questions before use** (`details_html.before_use`, as built 2026-10-20): only questions with
+   evidence, in its three groups, under one lede: "These are the questions the findings raise for
+   someone deciding whether to use this repository. The answers, and what to do about them, are
+   yours." With no questions: "No questions from these findings." and no lede.
+6. **Footer** (`FOOTER`), the page's one qualifier, in plain words: "Walkdown reads a
+   repository's files without running anything. It points out what it finds and leaves the
+   judgment to you. Finding nothing does not mean a repository is safe." (`details.html` and
+   `full.md` keep `render.NOT_WHAT`.)
+
+What was not checked, and the fixture results, are on `details.html` (Other details) only,
+apart from the warning above. The
+owner found a "Not checked" line here unnerving: on most runs it named only the optional model
+reads, a run setting (2026-10-20).
+
+Theme tokens for light and dark, phone width with no page-wide horizontal scroll, artifact text
+escaped, print on one or two pages.
 
 ## Must never
 
-- Show a score, severity, or verdict; drop the trifecta qualifier.
-- Emit unescaped text from the artifact.
+- Say "do not use", call the repository safe or unsafe, or give a score, grade, or rank.
+- Choose concerns by anything but the fixed kinds and order above.
+- List more than one example per row.
 - Show a secret's value, or open, fetch, or check a link.
+- Emit unescaped artifact text.
 
-## Done when (each backed by a test in `tests/test_summary_html.py`)
+## Done when (tests in `tests/test_summary_html.py`)
 
-1. The sections come in the order above; the title is "Walkdown report on <name>"; no "Static
-   examination only" line; dark-theme tokens; the review link top right.
-2. Artifact text, including link addresses, is escaped.
-3. The trifecta is named, credits Willison, lists checked legs first colored by position, gives
-   each checked leg its place count, and keeps the qualifier; a marked leg keeps its box.
-4. How it gets in lists each hook on its own line, MCP servers by name, agents with no tools list,
-   grants with their counts, and one "Not found" line that keeps "MCP" in capitals.
-5. Files: the headline, the "Files and map" toggle, and Worth a look only for the listed kinds
-   (long files only when the AI reads them).
-6. Outside links: the counts, the table grouped by domain, the full address in title and Copy
-   button, shortened display, who reads each file; an older run falls back to domains; empty state.
-7. Hidden text: the counts in plain words, the cards, and the empty state.
-8. Secrets: the count with engine and what was set aside, a card that shows no value, the empty
-   state, and the skipped state.
-9. Risky asks: the plain numbers ("the AI", not "a model"), the headline list with place counts
-   without the hidden-text and secret headlines, and the review line only when a place is listed.
-10. Changes appear only for a different earlier version, with the summary lines and a link to
-    `changes.md`.
-11. Recommendations have an empty state.
-12. Other details is collapsed and holds what was not checked and the fixture results; a step that
-    did not pass puts a pill on its heading; a step the run did not include is not listed.
-13. No verdict words.
-14. A prohibition keeps its card with the headline saying so; it is never called an action with no
-    confirmation step; full.md marks it in section 4 and in the rubric table.
-15. The header's license line: a recognized top-level file, an unrecognized one with its first
-    line, a field when there is no file, "No license found", "Also stated" for a different
-    license elsewhere, no test data, and no line for a run without the check.
+1. With concerns, the headline gives places and kinds; with none, it says none and that
+   nothing found does not mean safe (`test_headline_with_and_without_concerns`).
+2. Rows appear in the fixed order, only for kinds with places; each place is in exactly one row;
+   wording-only places are one line (`test_rows_in_fixed_order_each_place_once`).
+3. Each row has its count, one example linked to its review card, and a link to the details
+   (`test_each_row_has_one_example_linked_and_a_more_link`); Not concerned marks are counted and
+   skipped for the example (`test_not_concerned_marks_are_counted_and_skip_the_example`).
+4. Model reads are one line and never concerns (`test_model_reads_are_one_line_and_never_concerns`).
+5. The capability row and the questions; no not-checked line
+   (`test_capability_and_questions_and_no_not_checked`, `test_questions_before_use_follow_the_evidence`).
+6. A step that did not run or did not pass its fixture check is named under the headline;
+   with every step working, or no stamps, there is no warning
+   (`test_a_step_that_did_not_work_is_named_under_the_headline`).
+7. No verdict words; artifact text escaped (`test_no_verdict_words_and_escaping`). Checked by eye
+   on a Plumbline run (2026-10-20): about two laptop screens, nothing wider than the page.
 
-## Owner decisions 2026-10-20
+## History
 
-- The capability names start with "Can" (`render.LEG_NAMES`: "Can read your data", "Can take
-  outside input", "Can send data out"; review C31 part B). The frozen v1 page keeps its own copy
-  of the old names (`summary_v1_html.LEG_NAMES_V1`).
-- `first_items` lists a read-only line whose owner's tools list can write as "Says read-only, but
-  its tools list can write" (stage 5, kind `limit.contradicted`; review C32).
-- An item whose line a confident model read calls not an instruction carries `questioned`
-  (`render.questioned`), and `grouped` collects them per place; the headline list shows each
-  under its item, up to three, then a count (review C28).
-
-## First pass and questions before use (owner decision 2026-10-20, review C29)
-
-After "Risky asks and things to check":
-
-- **First pass: what the places could lead to** (`first_pass`): every rule-found place (one per
-  place, before merging) in one of `ACTION_GROUPS`, in that fixed order: runs code, reads secrets
-  or calls out or shares, lasting changes or permissions, wording only (`action_group`: by the
-  item's kind, else by the phrase check behind it; anything else is wording). Each group: its
-  count, its headlines merged within the group (the first `FIRST_SHOWN`, then a count), "None
-  found." when empty, and the review link.
-- **Questions before use** (`before_use`): only questions with evidence, under "Permissions to
-  hold back" (agent or command definitions with no tools list; a shell, writing files, the web,
-  each with the definitions that list it; hooks with their events; MCP servers), "What to try
-  first" (the three parts of the repository with the most places, test data left out), and
-  "Before you leave it running unattended" (places that run code or make lasting changes; lines
-  telling the AI it need not ask, not prohibitions; contradicted read-only lines; hidden text
-  that reads like an instruction; values that look like secrets). No verdict, no score, no
-  advice beyond the questions.
-
-Done when (`tests/test_summary_html.py`): the groups map kinds and checks as above, each place by
-its own finding; the sections follow Risky asks in order; questions appear with their evidence
-and the section says "No questions from these findings." without any.
+- 2026-09-29: first summary (text, `summary.md`).
+- 2026-10-07: HTML summary page (report v1).
+- 2026-10-16: report v2, the long page in the owner's order (now `details_html.SPEC.md`).
+- 2026-10-20: owner: two readers, two pages. This spec becomes the one page; the long page moves
+  to `details.html`. No verdict, "security concerns" allowed. Built the same day. Then the "Not
+  checked" section and the headline's count of checks that did not run were removed, and a
+  warning under the headline names a step that did not work (owner). Then fewer caveats (owner,
+  on the first run with no concerns): "it looks for" in the headline, no "nothing found" line
+  there, "Nothing to point out here." and no ledes on empty sections, no "no verdict and no score"
+  sentence, and a plain footer as the page's one qualifier. Under the three boxes, what they mean
+  together, and no lede above them (owner).

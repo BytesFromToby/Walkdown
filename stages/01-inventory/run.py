@@ -36,6 +36,17 @@ LANG_BY_INTERP = {"sh": "bash", "bash": "bash", "dash": "bash", "zsh": "zsh", "f
                   "ts-node": "TypeScript"}
 
 
+def text_hashes(data: bytes, encoding) -> dict:
+    """A text file's content hashed with every line ending as LF and as CRLF, so a checkout that
+    only converted line endings is not counted as a change (2026-10-20). Byte-level, so only for
+    encodings where a line ending is the bytes \\r\\n or \\n (not UTF-16 or UTF-32)."""
+    if str(encoding or "").lower().replace("_", "-").startswith(("utf-16", "utf-32")):
+        return {}
+    lf = data.replace(b"\r\n", b"\n")
+    return {"sha256_lf": hashlib.sha256(lf).hexdigest(),
+            "sha256_crlf": hashlib.sha256(lf.replace(b"\n", b"\r\n")).hexdigest()}
+
+
 def eprint(*a):
     print(*a, file=sys.stderr)
 
@@ -93,6 +104,7 @@ def build_report(input_dir: str | Path) -> dict:
             flags = [census.symlink_flag(e.rel, e.target or "")]
             entry_kind = None
             digest = None
+            eol = {}
         else:
             try:
                 data = (w.root / e.rel).read_bytes()
@@ -104,6 +116,7 @@ def build_report(input_dir: str | Path) -> dict:
             # per-file content hash, so two runs can tell exactly which files changed
             # (2026-10-04, version drift)
             digest = hashlib.sha256(data).hexdigest()
+            eol = text_hashes(data, facts.encoding) if facts.text_value is not None else {}
             flags = census.census_flags(e.rel, facts)
             text = facts.text_value
             texts[e.rel] = text
@@ -155,7 +168,7 @@ def build_report(input_dir: str | Path) -> dict:
         row = {"check": "inv.file", "file": e.rel, "line": None, "ext": facts.ext,
                "bytes": facts.bytes, "lines": facts.lines, "exec": facts.exec,
                "encoding": facts.encoding, "bom": facts.bom, "type": facts.type,
-               "entry_point": entry_kind, "exec_source": e.exec_source, "sha256": digest}
+               "entry_point": entry_kind, "exec_source": e.exec_source, "sha256": digest, **eol}
         if e.kind == "symlink":
             row["target"] = e.target
         file_rows.append(row)

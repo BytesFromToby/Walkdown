@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 import review_html as RV
-import summary_html
+import details_html as summary_html
 
 # reuse test_render's small report builders (importlib mode: load it by path)
 _spec = importlib.util.spec_from_file_location("walkdown_s08_test_render_rv",
@@ -139,8 +139,8 @@ def test_saved_marks_embedded_and_strays_counted(tmp_path):
                        {"id": ids[1], "mark": "bogus", "note": ""}]}
     h = page(r, marks=marks)
     saved = json.loads(re.search(r'id="saved">(.*?)</script>', h, re.S).group(1))
-    assert saved == {ids[0]: {"mark": "not-sure", "note": ""}}
-    assert "Marks loaded from marks.json in the run folder: 1; 1 saved marks match no place" in h
+    assert saved == {ids[0]: {"mark": "not-sure", "note": "", "from": None}}
+    assert "Marks loaded from marks.json in the run folder: 1; 1 saved marks match nothing in this run" in h
 
 
 def test_unreadable_marks_file_reported(tmp_path):

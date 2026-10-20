@@ -1,13 +1,14 @@
 """The review page: walk the flagged places one at a time and mark each. Spec: specs/review_html.SPEC.md.
 
 Review C21 (owner, 2026-10-08; built 2026-10-12). The places are the summary's "Things to
-check" (summary_html.first_items), one card each, then the stage 6 model reads. A card shows
+check" (details_html.first_items), one card each, then the stage 6 model reads. A card shows
 the line with three lines either side, taken from the text this run read
 (data/normalized/text/), what was flagged in plain words (plain.py), and three marks:
 Concerned, Not concerned, Not sure. Walkdown makes no call on any place; the reader does, on
 the page. Marks are kept in the browser as they are made and leave as marks.json, which the
-reader saves into the run folder; a re-render reads that file back into the page. Marks never
-change a finding, the summary, or full.md.
+reader saves into the run folder; a re-render reads that file back into the page, or carries an
+earlier run's marks by stable key (marks.py, owner 2026-10-20). Marks never change a finding,
+the summary, or full.md.
 
 Every string from the audited repository is escaped here, in Python. The page script handles
 marks and navigation only and never builds markup from repository text.
@@ -21,19 +22,21 @@ import unicodedata
 from pathlib import Path
 from urllib.parse import quote as urlquote
 
+import marks as M
 import plain
 import render as R
-import summary_html as S
+import details_html as S
 
 CONTEXT = 3          # lines shown before and after the flagged line
 MAX_SPAN = 12        # a stage 6 passage longer than this shows its first lines only
 LINE_CAP = 300       # characters shown of a context line
 FOCUS_CAP = 420      # characters shown of the flagged line, around its first match
-MARKS_FILE = "marks.json"
+MARKS_FILE = M.MARKS_FILE
 MARKS = (("concerned", "Concerned", "You want to look into it, or change it."),
          ("not-concerned", "Not concerned", "You read it, and it is fine for what this skill is for."),
          ("not-sure", "Not sure", "You cannot tell from what is shown."))
-MARK_KEYS = tuple(k for k, _, _ in MARKS)
+MARK_KEYS = M.MARK_KEYS
+load_marks = M.load
 # Stage 4's words (stages/04-phrases/run.py SECRET_MASK): a report never repeats a secret.
 SECRET_MASK = "[line not shown: it holds what looks like a secret; open the file to see it]"
 NO_CONTEXT_SECRET = ("Lines around this place are not shown: the file holds what looks like a "
@@ -167,13 +170,13 @@ def findings_at(r) -> list[dict]:
     hits = _hit_index(r)
     pins = {f.get("sweep_qid"): f for f in R.fnd(r, "06-soft", "soft.pinpoint") if "skipped" not in f}
     out = []
-    for it in S.first_items(r):  # one item per finding already (summary_html.unique)
+    for it in S.first_items(r):  # one item per finding already (details_html.unique)
         f, line, end = _file_line(it)
         pats = _patterns(it, qpats)
         matches = []
         for h in hits.get((f, line), []):
             matches += [m for m in h.get("matches") or [] if not pats or m.get("pattern") in pats]
-        out.append({**it, "id": place_id(it), "file": f, "line": line, "end_line": end,
+        out.append({**it, "id": place_id(it), "key": M.place_key(it), "file": f, "line": line, "end_line": end,
                     "patterns": pats, "matches": matches, "model": it["stage"] == 6,
                     "pin": pins.get((it.get("src") or {}).get("qid")) if it.get("kind") == "sweep" else None})
     return out
@@ -189,8 +192,9 @@ def places(r) -> list[dict]:
     joins it; a sentence repeated across files is one place, with every location listed, and the
     findings at those locations join it. A passage (more than one line) or a place with no line
     stays on its own. The first member leads the card (a repeated sentence leads its group);
-    every member stays on the card as `parts`. A place of one finding keeps that finding's id,
-    so a reader's marks carry over; a merged place's id comes from its members' ids."""
+    every member stays on the card as `parts`. A place of one finding keeps that finding's id;
+    a merged place's id comes from its members' ids. `key` is the lead's stable key and `keys`
+    every member's, so a carried mark finds its card from any of them (marks.py)."""
     base = findings_at(r)
     limit_at = {(x.get("file"), x.get("line")): x for x in R.fnd(r, "05-capability", "cap.limit")}
     img_text = {x.get("file"): x.get("text") for x in R.fnd(r, "02-reader", "read.divergence")
@@ -224,7 +228,7 @@ def places(r) -> list[dict]:
                 matches += [x for x in m["matches"] if x not in matches]
         pid = lead["id"] if len(parts) == 1 else hashlib.sha1(
             "".join(sorted(m["id"] for m in parts)).encode("utf-8")).hexdigest()[:12]
-        out.append({**lead, "id": pid, "parts": parts, "matches": matches,
+        out.append({**lead, "id": pid, "keys": [m["key"] for m in parts], "parts": parts, "matches": matches,
                     "patterns": [p for m in parts for p in m["patterns"]],
                     "model": all(m["model"] for m in parts),
                     "limit": limit_at.get((lead.get("file"), lead.get("line"))),
@@ -565,7 +569,8 @@ def _card(p, k, n, lines, secret, text_href, text_dir=None, secret_files=(), at=
     num = f"Model read {j} of {m}" if p["model"] else f"Place {j} of {m}"
     return (f'<article class="place" id="p-{p["id"]}" data-id="{p["id"]}" data-n="{k}" '
             f'data-pass="{"model" if p["model"] else "main"}" '
-            f'data-stage="{p["stage"]}" data-title="{esc(p["title"])}" data-where="{esc(p["where"])}">'
+            f'data-stage="{p["stage"]}" data-title="{esc(p["title"])}" data-where="{esc(p["where"])}" '
+            f'data-key="{p["key"]}" data-keys="{" ".join(p["keys"])}">'
             f'<div class="place-h">{tag}{model}'
             f'<span class="num">{num}</span></div>'
             f'<h2>{esc(p["title"])}{more}</h2>'
@@ -574,48 +579,30 @@ def _card(p, k, n, lines, secret, text_href, text_dir=None, secret_files=(), at=
             f'{_flagged(p)}{_enforced(p)}{_pointed(p, text_dir, secret_files)}'
             f'{context_html(p, lines, secret)}{_runtime(p)}'  # what was flagged above the text (owner, 2026-10-13)
             f'<div class="marks" role="group" aria-label="Your mark">{marks}</div>'
+            f'<p class="from" hidden></p>'
             f'<label class="note-l">Note (optional)<textarea class="note" rows="2"></textarea></label>'
             f'</article>')
 
 
-def saved_marks(data, ids) -> tuple[dict, int]:
-    """Marks from a marks.json the reader saved: {place id: {mark, note}} for places on this
-    page, and how many saved marks match no place here."""
-    out, stray = {}, 0
-    rows = data.get("marks") if isinstance(data, dict) else None
-    for m in rows if isinstance(rows, list) else []:
-        if not isinstance(m, dict):
-            continue
-        mark = m.get("mark") if m.get("mark") in MARK_KEYS else None
-        note = m.get("note") if isinstance(m.get("note"), str) else ""
-        if not mark and not note:
-            continue
-        if m.get("id") not in ids:
-            stray += 1
-            continue
-        out[m["id"]] = {"mark": mark, "note": note}
-    return out, stray
+def saved_marks(data, ps, rows=None) -> tuple[dict, int, list]:
+    """Marks from a marks.json, this run's or carried, matched by stable key (by id in a file made
+    before keys) against `rows` (details_html.mark_rows; default: the places only): ({place id:
+    {mark, note, from}} for the places on this page, how many marks match nothing in this run,
+    the marks for rows on details.html only, kept so a download from this page keeps them)."""
+    rows = rows if rows is not None else [(p["id"], p.get("keys") or [p["id"]]) for p in ps]
+    got, stray = M.match(data, rows)
+    ids = {p["id"] for p in ps}
+    mine = {rid: {"mark": m["mark"], "note": m["note"], "from": m["from"]} for rid, m in got.items() if rid in ids}
+    return mine, stray, [m for rid, m in got.items() if rid not in ids]
 
 
-def load_marks(path) -> tuple[dict | None, str | None]:
-    """A marks.json the reader saved in the run folder: (parsed, None), (None, why it could not
-    be read), or (None, None) when there is none."""
-    p = Path(path)
-    if not p.is_file():
-        return None, None
-    try:
-        data = json.loads(p.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None, "it is not valid JSON"
-    if not isinstance(data, dict) or not isinstance(data.get("marks"), list):
-        return None, "it has no list of marks"
-    return data, None
-
-
-def render_page(meta, r, text_dir=None, text_href=None, marks=None, marks_error=None) -> str:
+def render_page(meta, r, text_dir=None, text_href=None, marks=None, marks_error=None,
+                carried=None, cap_full=None) -> str:
     """The whole page. `text_dir`: the run's normalized/text folder; `text_href`: the same
-    folder relative to the page; `marks`: a parsed marks.json from the run folder, or None;
-    `marks_error`: why a marks.json there could not be read."""
+    folder relative to the page; `marks`: a parsed marks.json, the run's own or, when `carried`
+    names a run, that earlier run's (marks.for_run); `marks_error`: why the run's marks.json
+    could not be read; `cap_full`: capability.json, so marks on details.html's trifecta places
+    are matched as that page matches them."""
     ps = places(r)
     pin = (R.fnd(r, "01-inventory", "inv.pin") or [{}])[0]
     source = meta.get("source") or pin.get("source") or ""
@@ -633,13 +620,19 @@ def render_page(meta, r, text_dir=None, text_href=None, marks=None, marks_error=
     lede = (f"Walkdown flagged {R.n(n_det, 'place')} in this repository"
             + (f", and a model read {n_mod} more (experimental). The model reads are a separate, "
                f"optional pass after the rest" if n_mod else "") + ".")
-    saved, stray = saved_marks(marks, {p["id"] for p in ps}) if marks is not None else ({}, 0)
+    saved, stray, others = (saved_marks(marks, ps, S.mark_rows(r, cap_full)) if marks is not None
+                            else ({}, 0, []))
     loaded = ""
     if marks_error:
         loaded = f'<p class="warn">{esc(MARKS_FILE)} in the run folder could not be read: {esc(marks_error)}</p>'
+    elif marks is not None and carried:
+        loaded = (f'<p class="hint">Your marks from run {esc(carried)}: {len(saved)} carried to the places '
+                  f'they match by what was flagged' + (f"; {stray} earlier marks match nothing in this run"
+                                                      if stray else "")
+                  + ". Each says which run it is from, and you can change it here.</p>")
     elif marks is not None:
         loaded = (f'<p class="hint">Marks loaded from {esc(MARKS_FILE)} in the run folder: '
-                  f'{len(saved)}' + (f"; {stray} saved marks match no place on this page" if stray else "")
+                  f'{len(saved)}' + (f"; {stray} saved marks match nothing in this run" if stray else "")
                   + ".</p>")
     index = "".join((f'<li class="index-h">Model reads (optional, experimental)</li>'
                      if p["model"] and k == n_det + 1 else "")
@@ -653,14 +646,15 @@ def render_page(meta, r, text_dir=None, text_href=None, marks=None, marks_error=
               + '<button type="button" data-pass="unsure" aria-pressed="false">Not sure, again '
                 '(<span id="n-unsure">0</span>)</button></div>')
     payload = json.dumps(saved, ensure_ascii=True).replace("<", "\\u003c")
+    kept = json.dumps(others, ensure_ascii=True).replace("<", "\\u003c")
     legend = "".join(f"<li><b>{esc(name)}</b>: {esc(what)}</li>" for _, name, what in MARKS)
     empty = ('<p class="none">Nothing to check: no location met the rules. Each stage\'s result is in '
-             '<a href="summary.html">the summary</a>.</p>') if not ps else ""
+             '<a href="details.html">the details</a>.</p>') if not ps else ""
     return PAGE.format(
         title=esc(f"Walkdown review: {meta['repo']}"), repo=esc(meta["repo"]), source=esc(source),
         hash=esc(f"{meta.get('hash_kind', '?')} {str(meta.get('hash', ''))[:12]}"), run=esc(meta["run"]),
         lede=esc(lede), legend=legend, loaded=loaded, index=index, n=len(ps), cards="".join(cards),
-        empty=empty, saved=payload, notwhat=esc(R.NOT_WHAT), passes=passes if ps else "",
+        empty=empty, saved=payload, others=kept, notwhat=esc(R.NOT_WHAT), passes=passes if ps else "",
         meta_repo=esc(meta["repo"]), meta_run=esc(meta["run"]), meta_hash=esc(str(meta.get("hash", ""))),
         hidden="" if ps else " hidden")
 
@@ -674,7 +668,7 @@ PAGE = """<!doctype html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
 <style>
-/* Same tokens as summary.html. One place at a time when the script runs; every place in a list
+/* Same tokens as details.html. One place at a time when the script runs; every place in a list
    when it does not (and when printed). */
 :root {{
   --paper: #f5f7f8; --sheet: #ffffff; --ink: #17222e; --muted: #5a6875; --rule: #d8dee4;
@@ -700,6 +694,7 @@ header.card, .place, .done, .bar-wrap {{ background: var(--sheet); border: 1px s
 header.card {{ padding: 1.5rem 1.6rem 1.2rem; }}
 .eyebrow {{ font: 600 .78rem/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }}
 .top {{ display: flex; gap: .75rem; justify-content: space-between; align-items: flex-start; }}
+.pagelinks {{ display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; justify-content: flex-end; }}
 .top .eyebrow {{ min-width: 0; line-height: 1.3; padding-top: .3rem; }}
 .pagelink {{ font: 600 .88rem/1.2 var(--body); color: var(--accent); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: .35rem .75rem; white-space: nowrap; flex-shrink: 0; }}
 .pagelink:hover, .pagelink:focus-visible {{ border-color: var(--accent); }}
@@ -744,6 +739,7 @@ details.index li.index-h {{ font-weight: 600; color: var(--muted); margin-top: .
 .num {{ margin-left: auto; color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }}
 .place h2 {{ font: 600 1.15rem/1.3 var(--body); margin: .6rem 0 .2rem; }}
 .where {{ font: .82rem/1.5 var(--mono); color: var(--muted); overflow-wrap: anywhere; }}
+.from {{ margin: .5rem 0 0; font-size: .85rem; color: var(--muted); }}
 .where a {{ color: var(--accent); }}
 pre.ctx {{ margin: .7rem 0 0; padding: .6rem 0; background: var(--quote-bg); border-radius: 4px; font: .8rem/1.6 var(--mono); white-space: pre-wrap; }}
 .ln {{ display: grid; grid-template-columns: max-content minmax(0, 1fr); padding: 0 .8rem 0 0; }}
@@ -794,7 +790,7 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
 <body class="no-js">
 <main class="wrap" data-repo="{meta_repo}" data-run="{meta_run}" data-hash="{meta_hash}" data-source="{source}">
   <header class="card">
-    <div class="top"><div class="eyebrow">Walkdown review</div><a class="pagelink" href="summary.html">← Summary</a></div>
+    <div class="top"><div class="eyebrow">Walkdown review</div><span class="pagelinks"><a class="pagelink" href="summary.html">← Summary</a><a class="pagelink" href="details.html">Details</a></span></div>
     <h1>{repo}</h1>
     <div class="meta"><span>{source}</span><span>{hash}</span><span>run {run}</span></div>
     <p class="lede">{lede} Walk through them one at a time and mark each the way you read it. Walkdown makes no call on any of them; the marks are yours.</p>
@@ -824,9 +820,10 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
       <span class="hint" id="msg" role="status"></span></div>
     <textarea id="out" readonly aria-label="Marks as JSON"></textarea>
   </section>
-  <footer><p>{notwhat}</p><p>The summary is <a href="summary.html">summary.html</a>; every finding, with file and line, is in <code>full.md</code>.</p></footer>
+  <footer><p>{notwhat}</p><p>The summary is <a href="summary.html">summary.html</a> and every section in full is <a href="details.html">details.html</a>; every finding, with file and line, is in <code>full.md</code>.</p></footer>
 </main>
 <script type="application/json" id="saved">{saved}</script>
+<script type="application/json" id="others">{others}</script>
 <script>
 (function () {{
   "use strict";
@@ -840,6 +837,8 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
   var $ = function (id) {{ return document.getElementById(id); }};
   var marks = {{}};
   try {{ marks = JSON.parse($("saved").textContent) || {{}}; }} catch (e) {{ marks = {{}}; }}
+  var others = [];
+  try {{ others = JSON.parse($("others").textContent) || []; }} catch (e) {{ others = []; }}
   try {{ var mine = JSON.parse(localStorage.getItem(STORE) || "{{}}");
     Object.keys(mine).forEach(function (k) {{ marks[k] = mine[k]; }}); }} catch (e) {{}}
   var i = 0;
@@ -847,7 +846,7 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
   // optional model reads, or the places marked Not sure, taken when that pass is opened so the
   // list holds still while they are marked again.
   var pass = "main", active = cards;
-  function get(id) {{ return marks[id] || {{mark: null, note: ""}}; }}
+  function get(id) {{ return marks[id] || {{mark: null, note: "", from: null}}; }}
   function unsure() {{ return cards.filter(function (el) {{ return get(el.dataset.id).mark === "not-sure"; }}); }}
   function setPass(p, keep) {{
     var list = p === "unsure" ? unsure() : cards.filter(function (el) {{ return el.dataset.pass === p; }});
@@ -870,6 +869,8 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
       el.classList.toggle("current", el === active[i]);
       el.querySelectorAll(".mark").forEach(function (b) {{ b.setAttribute("aria-pressed", String(b.dataset.mark === m.mark)); }});
       var ta = el.querySelector(".note"); if (document.activeElement !== ta) ta.value = m.note || "";
+      var fr = el.querySelector(".from"), old = m.mark && m.from && m.from !== main.dataset.run;
+      fr.hidden = !old; fr.textContent = old ? "Your mark from run " + m.from + "." : "";
       var chip = document.querySelector('.chip[data-for="' + el.dataset.id + '"]');
       if (chip) chip.className = "chip" + (m.mark ? " " + m.mark : "");
     }});
@@ -894,13 +895,17 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
     cards.forEach(function (el) {{
       var m = get(el.dataset.id);
       if (!m.mark && !m.note) return;
-      rows.push({{id: el.dataset.id, place: +el.dataset.n, section: +el.dataset.stage, headline: el.dataset.title,
-                 where: el.dataset.where, mark: m.mark, note: m.note || ""}});
+      rows.push({{key: el.dataset.key, id: el.dataset.id, kind: "place", where: el.dataset.where,
+                 headline: el.dataset.title, mark: m.mark, note: m.note || "", from: m.from || main.dataset.run}});
     }});
-    $("out").value = JSON.stringify({{walkdown_review: 1, repo: main.dataset.repo, run: main.dataset.run,
-      pinned: main.dataset.hash, saved: new Date().toISOString().slice(0, 10), places: cards.length, marks: rows}}, null, 1);
+    others.forEach(function (m) {{ rows.push(m); }});  // marks made on details.html, kept as they are
+    $("out").value = JSON.stringify({{walkdown_marks: 2, repo: main.dataset.repo, run: main.dataset.run,
+      pinned: main.dataset.hash, saved: new Date().toISOString().slice(0, 10), marks: rows}}, null, 1);
   }}
-  function set(id, patch) {{ var m = get(id); marks[id] = {{mark: "mark" in patch ? patch.mark : m.mark, note: "note" in patch ? patch.note : m.note}}; save(); paint(); }}
+  // A changed mark is this run's; a note added to a carried mark keeps the run it came from.
+  function set(id, patch) {{ var m = get(id), now = "mark" in patch && patch.mark !== m.mark;
+    marks[id] = {{mark: "mark" in patch ? patch.mark : m.mark, note: "note" in patch ? patch.note : m.note,
+                 from: now ? main.dataset.run : m.from}}; save(); paint(); }}
   function pick(key) {{
     var id = active[i].dataset.id, cur = get(id).mark;
     set(id, {{mark: cur === key ? null : key}});
@@ -941,11 +946,14 @@ footer {{ border-top: 2px solid var(--ink); padding-top: 1rem; color: var(--mute
   $("cp").onclick = function () {{ out(); navigator.clipboard.writeText($("out").value).then(
     function () {{ $("msg").textContent = "Copied."; }}, function () {{ $("out").select(); $("msg").textContent = "Select and copy the text below."; }}); }};
   $("load").onchange = function (e) {{ var f = e.target.files[0]; if (!f) return; var rd = new FileReader();
-    rd.onload = function () {{ var n = 0, stray = 0, ids = {{}};
-      cards.forEach(function (el) {{ ids[el.dataset.id] = 1; }});
+    rd.onload = function () {{ var n = 0, stray = 0, ids = {{}}, byKey = {{}};
+      cards.forEach(function (el) {{ ids[el.dataset.id] = 1;
+        el.dataset.keys.split(" ").forEach(function (k) {{ if (k && !byKey[k]) byKey[k] = el.dataset.id; }}); }});
       try {{ (JSON.parse(rd.result).marks || []).forEach(function (m) {{
-        if (!m || !ids[m.id]) {{ stray++; return; }}
-        marks[m.id] = {{mark: KEYS.indexOf(m.mark) >= 0 ? m.mark : null, note: typeof m.note === "string" ? m.note : ""}}; n++; }});
+        var id = m && (byKey[m.key] || (ids[m.id] ? m.id : null));
+        if (!id) {{ stray++; return; }}
+        marks[id] = {{mark: KEYS.indexOf(m.mark) >= 0 ? m.mark : null, note: typeof m.note === "string" ? m.note : "",
+                     from: typeof m.from === "string" ? m.from : null}}; n++; }});
         save(); paint(); $("msg").textContent = "Loaded " + n + " marks" + (stray ? "; " + stray + " match no place here." : ".");
       }} catch (err) {{ $("msg").textContent = "That file is not a marks file."; }} }};
     rd.readAsText(f); }};

@@ -49,10 +49,10 @@ Most checks care about who reads a file. Walkdown decides it from the path:
 | subagent | files under `agents/` or `commands/`, `*prompt*.md` | instructions a dispatched agent reads |
 | tool | scripts (`.py`, `.sh`, `.js`, ...), hook configs, build and lock files | code; counted, read by tools |
 | human | README, CHANGELOG, LICENSE, INSTALL, guides, anything under `docs/` or `.github/` | written for people; counted, kept out of capability |
-| test-data | anything under `tests/`, `fixtures/`, `__tests__/`, `testdata/`, `spec/` and the like, or named `test_*.py`, `*.test.*`, `*.spec.*`, `conftest.py`, `*.fixtures.*` | never loaded on install; counted, kept out of capability and the summary |
+| test-data | anything under `tests/`, `fixtures/`, `__tests__/`, `testdata/`, `spec/` and the like, or named `test_*.py`, `*.test.*`, `*.spec.*`, `conftest.py`, `*.fixtures.*` | never loaded on install; counted, kept out of capability and the pages |
 
 Human-facing and test-data hits are still recorded and listed in the full report. They are
-kept out of the summary's points and out of stage 5's capability map, because installing the
+kept out of the places the pages list and out of stage 5's capability map, because installing the
 artifact does not put them in front of a model. One exception: **test data that a model-read
 file references directly** (a skill that says "read tests/fixtures/setup.md and follow it")
 counts like any other file, and stage 5 lists it as a pair.
@@ -83,10 +83,11 @@ the tools their job needs, and hooks that do what their name says.
 `UserPromptSubmit`); an agent that inherits every tool; files over the reader window;
 `ext-magic-mismatch` (a `.md` that is really an image); manifests that disagree.
 
-**In the report.** Section 1. The license is one line under the summary page's title. Hooks appear on the summary page under "How it gets in" and in Things to check as "Runs
-commands on its own"; files over the reader window are listed under "Worth a look" in the Files
-section (files the AI reads) and under section 1 in `summary.md`. Everything is in
-`full.md` section 1.
+**In the report.** Section 1. The license is one line under the title of `details.html`. Hooks
+are a "Runs code" concern on `summary.html`, and on `details.html` appear under "General risks"
+and in Things to check as "Runs commands on its own"; files over the reader window are listed
+under "Worth a look" in the Files section (files the AI reads). Everything is in `full.md`
+section 1.
 
 ---
 
@@ -115,8 +116,9 @@ bidirectional characters, nothing unread.
 as "Hidden when rendered, and reads like an instruction"); zero-width characters inside words;
 white-on-white or `display:none` text.
 
-**In the report.** Section 2, and the Hidden text section of the summary page, with a card for hidden text that
-reads like an instruction. Tesseract, when
+**In the report.** Hidden text that reads like an instruction is the first concern on
+`summary.html`. Section 2, and the Hidden text section of `details.html`, whose count opens every
+hidden place, with a callout for hidden text that reads like an instruction. Tesseract, when
 installed, reads text inside images and on PDF pages (each page is drawn and read, and lines
 its text layer lacks are listed, as when a page shows a picture of an instruction); when it is
 missing, section 7 says so. Playwright, when installed with its Chromium, draws each HTML file
@@ -292,7 +294,7 @@ agents with narrow tools.
 the model before you type); an instruction in a script such a hook runs; elevated grants; agents
 whose tools are wider than their job.
 
-**In the report.** "The lethal trifecta" at the top of the summary page, with "How it gets in"; section 5 for grants,
+**In the report.** The three boxes in one row on `summary.html`. "The lethal trifecta" at the top of `details.html`, each box opening to its places, with what installing it allows beside the box it belongs to and the rest under "General risks"; section 5 for grants,
 bytes at load, and pairs; every leg's and grant's evidence in `full.md`.
 
 ---
@@ -328,7 +330,7 @@ with a hand-labeled set about half the time, and are far more reliable when conf
 caught 11 of 12 paraphrased payloads with no false flags on 20 benign passages; that set was
 written by the same person who wrote the question, so it is a first check.
 
-**In the report.** The summary page counts the model reads and links the review page, where
+**In the report.** `summary.html` and `details.html` count the model reads (never as concerns), and the review page is where
 a read of a flagged line joins that line's card and other reads come last, marked experimental. In section 6: sweep passages with no stage 4 hit
 first, then confident "do" reads, then counts for near-the-line and weaker reads. Every answer
 is in `full.md`.
@@ -346,7 +348,7 @@ run with the previous one and writes `changes.md` beside the reports. `walkdown.
 
 | Compared | How |
 |---|---|
-| files | added, removed, changed, by each file's content hash (stage 1 records it since 2026-10-04) |
+| files | added, removed, changed, by each file's content hash (stage 1 records it since 2026-10-04); a file whose line endings alone changed is listed apart and not counted as edited (since 2026-10-20) |
 | what ships | entry points, hooks, agent tool grants, MCP servers, descriptions |
 | what the text asks | phrase hits new and gone, matched by the line's text so a line that only moved is not new; network hosts |
 | what installing grants | trifecta legs that switched, install grants added or removed, new pairs |
@@ -381,8 +383,9 @@ the standing limits (English only, static only, known shapes).
 
 ## Stage 8: Report
 
-Assembles the summary page, the text summary, and the full report from stages 1 to 7, and
-writes LOG.md with each stage's validation stamp. It adds recommendations: each tied to a file
+Assembles the one-page summary, the details page, the review page, and the full report from
+stages 1 to 7, and writes LOG.md with each stage's validation stamp. The reader's marks are kept
+in `marks.json` and carried to the next run. It adds recommendations: each tied to a file
 and line, conditional on what the artifact is for, naming a narrower way to do the same thing,
 listed in stage order and never ranked.
 

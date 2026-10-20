@@ -1,10 +1,11 @@
 # Stage 8: Report (v1)
 
 **Question:** none. Stage 8 assembles; it detects nothing and concludes nothing.
-**Output:** a run folder (`docs/RUN-FOLDER.md`; layout in `layout.py`): `summary.html`,
-`review.html` (the places one at a time, for the reader to mark), `summary.md` (one screen,
-stage order), `full.md` (every finding, cited, stage order, then recommendations), and
-`LOG.md` at the top, everything else under `data/`.
+**Output:** a run folder (`docs/RUN-FOLDER.md`; layout in `layout.py`): `summary.html` (one
+page, for deciding whether to use the repository), `details.html` (every section in full, for
+improving it), `review.html` (the places one at a time, for the reader to mark), `full.md` (every
+finding, cited, stage order, then recommendations), and `LOG.md` at the top, everything else
+under `data/`. The index of the outputs and their specs: `specs/REPORTS.md`.
 
 Built 2026-09-29, ahead of stages 6 and 7; stage 6 joined the pipeline the same day. Stage 7
 has no folder of its own: its content is gathered here from what stages 1 to 6 say they
@@ -35,7 +36,8 @@ python stages/08-report/run.py <input_dir> --repo <name> [--results <dir>] [--da
 3. Runs the grader for stages 1 to 6 (`grader.py <stage> --json`, with the run's stage 6
    choices) and records each result as that stage's **validation stamp** (REPORTING
    principle 6).
-4. Writes `LOG.md`, `data/07-limits.md`, `summary.html`, `summary.md`, `full.md`.
+4. Writes `LOG.md`, `data/07-limits.md`, `summary.html`, `details.html`, `review.html`,
+   `full.md`, with the reader's marks (`marks.py`).
 
 ## Rules carried from REPORTING
 
@@ -104,7 +106,8 @@ The owner found `summary.md` busy and hard to read. Stage 8 also writes
 `summary.html` (`summary_html.py`): the same facts in plain language, what to
 look at first as grouped cards (stage 4 headlines say what matched, never what the
 author meant), one plain sentence per stage with the technical line behind a
-disclosure, light and dark themes. `summary.md` stays for text tools.
+disclosure, light and dark themes. `summary.md` stays for text tools. (Since 2026-10-20 that
+long page is `details.html` and `summary.md` is cut; see "Two pages" below.)
 
 `run.py --rerender <run_dir>` rebuilds the reports from a finished run's saved stage
 outputs, runs no stage and calls no model (only the grader, for stamps), and appends
@@ -122,3 +125,18 @@ leave as `marks.json`, which the reader saves in the run folder; a re-render rea
 Owner decisions: the places are Things to check plus model reads; no carry-over to the next run
 in v1; whether marks feed stage 6 calibration is still open. A file where stage 4 found a
 possible secret shows no lines around its places. Spec: `specs/review_html.SPEC.md`.
+
+## Two pages, and marks that carry over (2026-10-20)
+
+The owner saw two readers served by one page: someone asking "is this safe?" and someone
+improving the repository. `summary.html` (`summary_html.py`) is now one page: the security
+concerns found, by fixed kinds in a fixed order with one example each, what the repository can do,
+and questions before use; what was not checked is on `details.html`. It never says "do not use", safe, or unsafe, and
+gives no score. The long page moved to `details.html` (`details_html.py`), with a Not concerned box
+on every row that names a place or an address. `summary.md` and `summary-v1.html` were cut (v1
+stays at the tag `report-v1`); a re-render removes them.
+
+Marks are one model across the pages (`marks.py`): Concerned, Not concerned, Not sure, saved by
+the reader as `marks.json`. Each names its row by a stable key (what was flagged, never the line
+number alone), and a run with no `marks.json` takes the newest earlier run's marks by key. This
+replaces the v1 rule of no carry-over. Specs: `specs/REPORTS.md` and the specs it lists.

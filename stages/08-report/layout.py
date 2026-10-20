@@ -4,8 +4,7 @@ Since 2026-10-02 a run folder puts what people read at the top and everything el
 data/:
 
     RepoResults/<repo>/<date>_<hash7>/
-      summary.html  review.html  summary.md  full.md  LOG.md   (marks.json once the reader saves it)
-      summary-v1.html (report v1, frozen, while summary.html is redesigned; 2026-10-16)
+      summary.html  details.html  review.html  full.md  LOG.md   (marks.json once the reader saves it)
       data/   stage outputs (0N-*.json, notes), capability.json, graph.json, 07-limits.md,
               stage 6 packet and answers, normalized/ copies
 
@@ -17,7 +16,9 @@ from __future__ import annotations
 from pathlib import Path
 
 DATA = "data"
-REPORTS = ("summary.html", "summary-v1.html", "review.html", "summary.md", "full.md")
+REPORTS = ("summary.html", "details.html", "review.html", "full.md")
+# written by runs before 2026-10-20 (owner: cut); a re-render removes them
+RETIRED = ("summary.md", "summary-v1.html")
 
 
 def is_new(run_dir) -> bool:

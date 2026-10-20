@@ -133,7 +133,7 @@ def brief(run_dir: Path) -> str:
     sys.path.insert(0, str(STAGE8))
     import layout  # noqa: E402
     import render as R  # noqa: E402
-    import summary_html  # noqa: E402
+    import details_html  # noqa: E402
     reports = {}
     data, out = layout.data_dir(run_dir), layout.report_dir(run_dir)
     for stage in STAGE_NAMES:
@@ -143,7 +143,7 @@ def brief(run_dir: Path) -> str:
     st = stamps((run_dir / "LOG.md").read_text(encoding="utf-8"))
     legs = {x["leg"]: x["present"] for x in R.fnd(reports, "05-capability", "cap.leg")}
     grants = [x["grant"] for x in R.fnd(reports, "05-capability", "cap.grant")]
-    every = summary_html.first_items(reports)
+    every = details_html.first_items(reports)
     items = [it for it in every if it["stage"] != 6]
     model = [it for it in every if it["stage"] == 6]
     by_title = collections.Counter((it["stage"], own_words(it["title"])) for it in items)
@@ -158,7 +158,7 @@ def brief(run_dir: Path) -> str:
     L.append(f"  Install grants: {', '.join(grants) if grants else 'none'}.")
     L += ["", f"Things to check: {len(items)} place{'s' if len(items) != 1 else ''} "
               f"under {len(by_title)} heading{'s' if len(by_title) != 1 else ''}."]
-    L += [f"  {summary_html.PLAIN_STAGE[R.ORDER[s - 1]]}: {t} ({n})"
+    L += [f"  {details_html.PLAIN_STAGE[R.ORDER[s - 1]]}: {t} ({n})"
           for (s, t), n in sorted(by_title.items())] or ["  none"]
     if model:
         L += ["", f"Model reads (experimental, stage 6): {len(model)} place"
@@ -167,6 +167,7 @@ def brief(run_dir: Path) -> str:
     L += ["", "Validation (each stage against its fixtures):"]
     L += [f"  {stage} {STAGE_NAMES[stage]}: {st.get(stage, 'not run')}" for stage in STAGE_NAMES]
     L += ["", f"Report: {out / 'summary.html'}",
+          f"Every section in full: {out / 'details.html'}",
           f"Walk through each place and mark it: {out / 'review.html'}",
           f"Every finding with file and line: {out / 'full.md'}", "",
           'No verdict and no score. "Nothing found" means these stages found nothing; it does '
@@ -187,8 +188,8 @@ def drift_lines(run_dir: Path) -> list[str]:
     s = drift.since(prev, run_dir)
     if not s["differs"]:
         return ["", f"Changes since {prev.name}: same version, nothing to compare."]
-    head = (f"Changes since {prev.name}: same version of the repository; every difference comes "
-            "from Walkdown:" if s["same"] else f"Changes since {prev.name} (version drift):")
+    head = (f"Changes since {prev.name}: {s['header']}:" if s["same"]
+            else f"Changes since {prev.name} (version drift):")
     return ["", head] + [f"  {x}" for x in s["lines"]] + [f"  Details: {s['report']}"]
 
 

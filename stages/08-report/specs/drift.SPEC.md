@@ -75,3 +75,23 @@ Done when (tests in `tests/test_drift.py`):
 6. Repository changes alone add no cause or Walkdown line.
 7. `since` with the same version writes nothing when nothing differs, and writes a report that
    names Walkdown when something does.
+
+## Line endings and files on disk (added 2026-10-20)
+
+A file present in both runs whose `sha256` differs but whose text is the same apart from line
+endings (`same_text`: both runs' `sha256_lf` equal; or, when one run predates those hashes, its
+`sha256` equal to the other run's `sha256_lf` or `sha256_crlf`) goes in `files_eol`, never in
+`files_changed`. It is not an edit: a hit in it is traced as in an unchanged file, it alone makes
+no difference (`differs`), and `changes.md` lists it under its own heading. Found 2026-10-20 on
+Plumbline at one commit: 7 files counted as changed whose line endings alone had gone from CRLF to
+LF.
+
+`on_disk(c)`: files added, removed, or edited. With the same version and none on disk, the brief,
+`changes.md`, and the summary say every difference comes from Walkdown (`same_words`); with some
+on disk (a local folder with uncommitted edits), they say the same commit, with N files that
+differ on disk, and that differences in other files come from Walkdown. `since` returns
+`on_disk` and that `header`.
+
+Done when (tests in `tests/test_drift.py`): a CRLF-to-LF file is line endings only and its hit is
+not put down to the repository; a run without the new hashes is matched in either direction; the
+same version with only line-ending changes writes nothing, and with a file edited on disk says so.

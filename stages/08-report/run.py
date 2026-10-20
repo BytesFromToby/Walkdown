@@ -13,11 +13,12 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import layout  # noqa: E402
+import marks  # noqa: E402
 import pipeline  # noqa: E402
 import render  # noqa: E402
 import review_html  # noqa: E402
+import details_html  # noqa: E402
 import summary_html  # noqa: E402
-import summary_v1_html  # noqa: E402
 import validate  # noqa: E402
 
 ROOT = HERE.parent.parent
@@ -136,25 +137,29 @@ def main(argv=None) -> int:
 
 
 def write_reports(run_dir, meta, reports, stamps, notes, runs_ok, cap_full):
-    """summary.html, review.html, summary.md, full.md where this run's layout keeps them
-    (layout.py). review.html reads back a marks.json the reader saved beside it (2026-10-12)."""
+    """summary.html, details.html, review.html, full.md where this run's layout keeps them (layout.py).
+    The pages read the reader's marks: the marks.json saved beside them (2026-10-12), or else the
+    newest earlier run's, carried by stable key (marks.py; owner, 2026-10-20). The pages a run
+    no longer writes (summary.md, summary-v1.html; owner, 2026-10-20) are removed, so a
+    re-rendered older run keeps no stale copy."""
     out = layout.report_dir(run_dir)
     out.mkdir(exist_ok=True)
-    (out / "summary.md").write_text(render.summary(meta, reports, stamps, notes, runs_ok),
-                                    encoding="utf-8")
+    for name in layout.RETIRED:
+        (out / name).unlink(missing_ok=True)
+    text_dir = layout.data_dir(run_dir) / "normalized" / "text"
+    text_href = os.path.relpath(text_dir, out).replace(os.sep, "/")
+    m = marks.for_run(run_dir)
     (out / "summary.html").write_text(
-        summary_html.render_page(meta, reports, stamps, notes, runs_ok, changes_for(run_dir)),
+        summary_html.render_page(meta, reports, stamps, notes, runs_ok, m["data"]), encoding="utf-8")
+    (out / "details.html").write_text(
+        details_html.render_page(meta, reports, stamps, notes, runs_ok, changes_for(run_dir),
+                                 cap_full, text_href, m["data"], m["carried"]),
         encoding="utf-8")
-    # report v1, frozen at tag report-v1, beside v2 while the page is redesigned (owner, 2026-10-16)
-    (out / "summary-v1.html").write_text(
-        summary_v1_html.render_page(meta, reports, stamps, notes, runs_ok), encoding="utf-8")
     (out / "full.md").write_text(render.full(meta, reports, stamps, notes, runs_ok, cap_full),
                                  encoding="utf-8")
-    text_dir = layout.data_dir(run_dir) / "normalized" / "text"
-    marks, err = review_html.load_marks(out / review_html.MARKS_FILE)
     (out / "review.html").write_text(
         review_html.render_page(meta, reports, text_dir, os.path.relpath(text_dir, out).replace(os.sep, "/"),
-                                marks, err), encoding="utf-8")
+                                m["data"], m["error"], m["carried"], cap_full), encoding="utf-8")
 
 
 def changes_for(run_dir) -> dict | None:
@@ -174,7 +179,8 @@ def changes_for(run_dir) -> dict | None:
             return None
         prev = earlier[-1]
         s = drift.since(prev, run_dir)
-        return {"since": prev.name, "same": s["same"], "differs": s["differs"], "lines": s["lines"]}
+        return {"since": prev.name, "same": s["same"], "differs": s["differs"], "lines": s["lines"],
+                "on_disk": s.get("on_disk", 0)}
     except Exception:  # drift is extra; it never fails a report
         return None
 
@@ -190,7 +196,7 @@ def soft_grade_env(a) -> dict:
 
 
 def rerender(run_dir: Path, a) -> int:
-    """Rebuild summary.md, summary.html, full.md from the stage outputs a finished run
+    """Rebuild the reports (layout.REPORTS) from the stage outputs a finished run
     saved. Runs no stage and calls no model; re-stamps with the grader unless --no-validate;
     appends one line to LOG.md saying when and with which Walkdown version (2026-09-30)."""
     if not (run_dir / "LOG.md").is_file():

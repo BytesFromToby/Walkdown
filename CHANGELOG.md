@@ -6,6 +6,47 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+Nothing yet.
+
+## 0.2.0 (2026-10-20)
+
+Everything since the first alpha, published in public releases 6 to 16 (2026-10-08 to
+2026-10-20). Newest first. Every check the method calls for is now built; two optional tools
+change what a run finds: Tesseract (text in images and on PDF pages) and Playwright with its
+Chromium (HTML as a browser draws it).
+
+- Two pages for two readers. `summary.html` is now one page for deciding whether to use a
+  repository: the security concerns Walkdown found, by kind in a fixed order (hidden text that
+  reads like an instruction, runs code, looks like a committed secret, reads secrets or calls out
+  or shares, lasting changes or permissions) with one example each linked to its review card;
+  what it can do; and Questions before use. A step that did not run or did not pass its fixture
+  check is named under the headline. It never says to use the
+  repository or not, and gives no score. The long page the entries below call the summary page
+  is now `details.html`, where "First pass" became those concern rows. `summary.md` and
+  `summary-v1.html` are no longer written; re-rendering an older run removes them.
+- `details.html` has a Not concerned box on every row that names a place or an address: trifecta
+  places, Worth a look files, outside links, hidden places (the count now opens every one),
+  secrets, and the places under each risky-ask headline (each headline now opens to them). Ticked
+  rows dim, each section counts them, and "Hide Not concerned" folds them away.
+- Marks are one set across the pages and carry over. A place marked on `review.html` or
+  `details.html` is the same mark, and either page's download keeps the other's. A new run of the
+  same repository starts from the newest earlier run's marks, matched by what was flagged (the
+  file and the text of the line, or the address), so a mark follows its line when lines move; each
+  carried mark names its run. `marks.json` is now
+  `walkdown_marks: 2`; files saved earlier still load.
+- The tests and graders also run on macOS 15 and Windows Server 2025 on every push.
+- Summary page, Hidden text: the count first; hidden text that reads like an instruction in a
+  yellow box whose count opens the places, linked to their review cards; and only the lines that
+  hold invisible characters or look-alike letters, counted by kind. Typography (curly quotes,
+  dashes, ellipses, special spaces) is no longer shown or counted there; the full report keeps
+  every changed line.
+- Summary page: each checked box of the lethal trifecta opens to the places behind it, each linked
+  to its review card or the file. "How it gets in" is gone: MCP servers sit under "Can take outside
+  input", the internet under "Can send data out", and the rest under "General risks".
+- Comparing two runs no longer counts a file as changed when only its line endings changed (as
+  when a checkout converts them); such files are listed apart. When both runs read the same
+  commit but files on disk differ, the brief says so instead of crediting every difference to
+  Walkdown.
 - Summary page: "First pass" groups the places to check by what they could lead to (runs code;
   reads secrets, calls out, or shares; lasting changes or permissions; wording only), and
   "Questions before use" lists the questions the findings raise: permissions to hold back, what

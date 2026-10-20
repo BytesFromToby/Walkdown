@@ -14,11 +14,11 @@ def test_run_folder_and_documents(tiny_repo, tmp_path, capsys, snapshot, run_mai
     d = runs[0]
     for name in ["data/01-inventory.json", "data/02-reader.json", "data/03-graph.json",
                  "data/04-phrases.json", "data/05-capability.json", "data/07-limits.md",
-                 "LOG.md", "summary.html", "review.html", "summary.md", "full.md"]:
+                 "LOG.md", "summary.html", "details.html", "review.html", "full.md"]:
         assert (d / name).is_file(), name
     # what people read is at the top; nothing else is
     top = sorted(p.name for p in d.iterdir())
-    assert top == ["LOG.md", "data", "full.md", "review.html", "summary-v1.html", "summary.html", "summary.md"]
+    assert top == ["LOG.md", "data", "details.html", "full.md", "review.html", "summary.html"]
     assert snapshot(tiny_repo) == before
     assert str(d) in capsys.readouterr().out
 
@@ -42,10 +42,12 @@ def test_rerender_rebuilds_report_only(tiny_repo, tmp_path, run_main):
     assert run_main([str(tiny_repo), "--repo", "tiny", "--results", str(res), "--no-validate"]) == 0
     d = next((res / "tiny").iterdir())
     stage_before = {p.name: p.read_bytes() for p in (d / "data").glob("*.json")}
-    (d / "summary.html").unlink()
+    (d / "details.html").unlink()
+    (d / "summary.md").write_text("old", encoding="utf-8")  # a page runs before 2026-10-20 wrote
     log_before = (d / "LOG.md").read_text(encoding="utf-8")
     assert run_main(["--rerender", str(d), "--no-validate"]) == 0
-    assert (d / "summary.html").is_file() and not (d / "report").exists()
+    assert (d / "details.html").is_file() and not (d / "report").exists()
+    assert not (d / "summary.md").exists()  # retired pages are removed on a re-render
     assert {p.name: p.read_bytes() for p in (d / "data").glob("*.json")} == stage_before
     log_after = (d / "LOG.md").read_text(encoding="utf-8")
     assert log_after.startswith(log_before) and "Report re-rendered" in log_after
@@ -83,7 +85,7 @@ def test_rerender_keeps_an_old_layout_run_old(tiny_repo, tmp_path, run_main):
     for p in list((d / "data").iterdir()):
         p.rename(d / p.name)
     (d / "data").rmdir()
-    for name in ("summary.html", "summary.md", "full.md"):
+    for name in ("details.html", "full.md"):
         (d / name).unlink()
     assert run_main(["--rerender", str(d), "--no-validate"]) == 0
-    assert (d / "report" / "summary.html").is_file() and not (d / "summary.html").exists()
+    assert (d / "report" / "details.html").is_file() and not (d / "details.html").exists()

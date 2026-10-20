@@ -5,16 +5,18 @@ A run produces these reports, at the top of its run folder
 
 | File | For | What it holds |
 |---|---|---|
-| `summary.html` | most readers | what the repository can do, its files and outside links, hidden text, secrets, and the places to check |
+| `summary.html` | deciding whether to use the repository | one page: the security concerns Walkdown found, by kind, with one example each; what it can do; questions before use |
+| `details.html` | improving or investigating it | every section in full, every list expandable, and a Not concerned box on every row |
 | `review.html` | walking through the places | one card per place, with the lines around it, for you to mark |
-| `summary.md` | the same, as text | one status line per stage and up to five points under each |
 | `full.md` | checking a point | every finding, by stage, with file and line |
-| `summary-v1.html` | comparing | the earlier summary page, kept while the new one settles |
 
-Start with `summary.html`. Go to `full.md` for the evidence behind a point. `LOG.md`, next to
-them, says whether each stage passed its validation; the data the reports were built from is in
-`data/` ([RUN-FOLDER.md](RUN-FOLDER.md)). What each check means, and why it exists, is in
-[HOW-IT-WORKS.md](HOW-IT-WORKS.md).
+Start with `summary.html`. Each page links the others at the top right. Go to `full.md` for the
+evidence behind a point. `LOG.md`, next to them, says whether each stage passed its validation;
+the data the reports were built from is in `data/` ([RUN-FOLDER.md](RUN-FOLDER.md)). What each
+check means, and why it exists, is in [HOW-IT-WORKS.md](HOW-IT-WORKS.md).
+
+Runs made before 2026-10-20 also had `summary.md` (the summary as text) and `summary-v1.html` (an
+earlier summary page). Re-rendering such a run removes them.
 
 ## Three rules behind every page
 
@@ -22,29 +24,77 @@ them, says whether each stage passed its validation; the data the reports were b
    shape". It does not say the author meant harm.
 2. **No score.** Nothing is added up into a rating. Counts come with what they were counted over.
 3. **Clean means not found.** An empty section means these stages found nothing there. Check
-   "What was not checked" under Other details before trusting a zero.
+   what was not checked (Other details on `details.html`) before trusting a zero.
 
 ## A suggested reading order
 
-1. **The lethal trifecta** at the top of `summary.html`: what the repository can do, and how it
-   gets in.
-2. **Hidden text and Committed secrets**: usually empty; read them when they are not.
-3. **Risky asks and things to check**, then `review.html`, which walks through every place one at
-   a time.
-4. **Other details**: what the run did not check, and whether every step passed its fixtures. A
-   step that did not pass puts a pill on that heading; do not trust its findings in this run.
-5. **`full.md`** for any point you want to check.
+1. **`summary.html`**: the concerns, what the repository can do, and the questions to ask.
+2. **`review.html`**, to walk the places one at a time and mark each.
+3. **`details.html`** for everything else: the files, every outside link, every hidden place,
+   and Other details, which says what the run did not check and whether every step passed its
+   fixtures. A step that did not pass puts a pill on that heading; do not trust its findings in
+   this run.
+4. **`full.md`** for any point you want to check.
 
 ## summary.html
 
-The page follows the questions a reader brings, in this order. Every section says so in words
-when it found nothing ("No outside links", "Nothing hidden"), or that it was not checked when its
-stage did not run.
+One page for someone deciding whether to use the repository. It says what Walkdown found that
+could be a security concern, and where to look. It never says the repository is safe or unsafe,
+never tells you to use it or not, and gives no score.
+
+**The headline.** "Walkdown found security concerns in this repository: N places, of K kinds."
+When you have marked some Not concerned, it says how many. With none: "Walkdown found none of the
+security concerns it looks for.", and the section below says "Nothing to point out here." The
+page's footer says the one thing to keep in mind: Walkdown reads the files without running
+anything, leaves the judgment to you, and finding nothing does not mean a repository is safe.
+
+When a step did not work in this run (it did not run, or it did not pass its fixture check), a
+line under the headline names it: a step that did not work can miss places, so the page may show
+fewer than there are. Other details on `details.html` says why.
+
+**Security concerns.** One row per kind that has places, always in this order:
+
+1. **Hidden text that reads like an instruction**: text the AI receives and a person does not
+   see, which also matches the wording of an instruction.
+2. **Runs code**: hooks, commands run when the skill loads, commands you are asked to run.
+3. **Looks like a committed secret**: a password, key, or token saved in the files (test data and
+   lines that only look like one are left out).
+4. **Reads secrets, calls out, or shares**: credentials, network calls, data sent elsewhere.
+5. **Lasting changes or permissions**: settings, profiles, permissions, actions that are hard to
+   undo, and read-only claims a tools list contradicts.
+
+Each place is in one row only, the first that fits. A row gives its count, how many you marked
+Not concerned, and one example linked to its card on the review page; "N more" opens that section
+of `details.html`. Nothing inside a row is ranked. Under the rows, one line counts the places that
+are wording only (instructions that change how the AI reads, decides, or answers), and one line
+counts model reads when a model ran; model reads are never concerns.
+
+**What it can do.** The three trifecta boxes in one row (see below), what they mean together
+(each is ordinary on its own; a tool that does all three can be steered by text from outside into
+sending your data away), and one line naming the general risks present, such as running commands on its own or adding text before you type.
+
+**Questions before use.** The questions the findings raise, in place of a verdict: **permissions
+to hold back** (agents with no tools list, a shell, writing files, the web, hooks, MCP servers,
+each with where it is listed), **what to try first** (the parts of the repository with the most
+places to check, test folders left out), and **before you leave it running unattended** (the
+places that run code or make lasting changes, lines telling the AI it need not ask, read-only
+claims a tools list contradicts, hidden instructions, committed secrets). Only questions with
+evidence in this run appear. The answers are yours.
+
+What was not checked, and whether every step passed its fixtures, are under Other details on
+`details.html`.
+
+## details.html
+
+Every section in full, for someone improving or investigating the repository. The page follows
+the questions a reader brings, in this order. Every section says so in words when it found
+nothing ("No outside links", "Nothing hidden"), or that it was not checked when its stage did not
+run.
 
 ### Header
 
 "Walkdown report on" the repository, where the copy came from, the version it was pinned to, the
-run, and the Walkdown version. "Review each place" at the top right opens `review.html`.
+run, and the Walkdown version. At the top right, links to the summary and to `review.html`.
 
 Under those, one line on the license: the license each top-level license file matches ("License:
 MIT (LICENSE)."), or that the file is not a license Walkdown recognizes and how it begins. With no
@@ -53,6 +103,16 @@ and with neither, "No license found". "Also stated" lists any different license 
 subfolder or another field, such as a skill that ships its own. Walkdown matches the license's
 wording; it does not say what the license allows. Every license file and field is in `full.md`
 section 1.
+
+### Not concerned
+
+Every row that names a place or an address has a **Not concerned** box: the places under each
+trifecta box, Worth a look files, outside links, hidden places, secrets, and the places under
+each risky-ask headline. Tick it when you have read the row and it is fine for what the
+repository is for. A ticked row is dimmed, its section's heading says how many are marked, and
+"Hide Not concerned" in the bar under the header folds them away. A place's box and its card on
+`review.html` are the same mark; a place you marked Concerned or Not sure there says so beside
+its box. Saving and carrying marks over: see [Your marks](#your-marks).
 
 ### The lethal trifecta
 
@@ -69,7 +129,9 @@ The names start with "Can" because a static read shows what a skill could do; wh
 is only seen by running it.
 
 A box is checked when at least one piece of evidence supports it; under each checked box is the
-number of places that do (all listed in `full.md` section 5). **Three checked boxes are common in
+number of places that do. Click it to open the list: each place links to its card on the review
+page when it has one, or else to this run's copy of the file, and has its Not concerned box (all
+of them are also in `full.md` section 5). **Three checked boxes are common in
 well-built repositories**: an agent that reads files, uses the web, and pushes commits has all
 three. The combination raises risk. It is not an issue on its own.
 
@@ -79,19 +141,21 @@ about. The color never says one leg is worse than another. If a model read every
 leg as not an instruction (a quote, a description), a note says so under the box. The box stays
 checked: a model's read never removes a finding.
 
-**How it gets in.** What installing it allows, in plain words: runs commands on its own (each
-hook, with its event and command), adds text to the AI's context before you type (how many bytes),
-makes changes that last after the session, uses the network, asks for more permissions than the
-default, connects to outside services (MCP servers, by name), and agents with their own tools (and
-how many have no tools list, so they can use every tool the AI has). What was not found is one
-"Not found" line. Details: [HOW-IT-WORKS.md](HOW-IT-WORKS.md#install-grants-capgrant).
+Under the boxes, what installing it allows, in plain words. Two belong to a box and sit in its
+column: connects to outside services (MCP servers, by name) under **Can take outside input**, and
+connects to the internet under **Can send data out**. The rest is **General risks**: runs commands
+on its own (each hook, with its event and command), adds text to the AI's context before you type
+(how many bytes), makes changes that last after the session, asks for more permissions than the
+default, and agents with their own tools (and how many have no tools list, so they can use every
+tool the AI has). What was not found is one "Not found" line. Details: [HOW-IT-WORKS.md](HOW-IT-WORKS.md#install-grants-capgrant).
 
 ### Files
 
 In the open: how many files, how many file types, and their total size. **Worth a look** appears
 only when there is something to see: a file of unknown type, contents of a different type than
 the name says, archives (their contents are not read), symlinks, and files the AI reads that are
-longer than a reviewer's viewer shows (2,000 lines or 50 KB).
+longer than a reviewer's viewer shows (2,000 lines or 50 KB). Each file is listed with its box;
+a long list opens from its count.
 
 Behind "Files and map": every file type and script language, the largest files, the files a tool
 loads first, the descriptions always in the AI's context, platform manifests, long lines, and the
@@ -106,29 +170,36 @@ Every web address the skill names. Walkdown gathers them and **opens none of the
 here says whether a link works or what it serves. In the open: how many links, to how many
 different domains, how many sit in text the AI reads, and how many domains the skill's docs never
 mention. Behind the toggle: a table grouped by domain, one row per link, with the file and line
-and who reads that file (the AI, people, scripts, or test data). A long link is shortened on the
-page; its Copy button copies the whole address. Runs made before this list existed show domains.
+and who reads that file (the AI, people, scripts, or test data), and a Not concerned column. A
+long link is shortened on the page; its Copy button copies the whole address. A box marks the
+address, so every row with the same address takes the same mark. Runs made before this list
+existed show domains.
 
 ### Hidden text
 
-Text the AI receives that a person reading the file on screen would not see: hidden comments,
-invisible characters, text colored like its background, image descriptions, and the like, with
-how many are in files the AI reads. It also counts the other direction for images and PDFs:
+Text the AI receives that a person reading the file on screen would not see. First the count of
+places, and how many are in files the AI reads, which opens the list of every hidden place (where,
+linked to this run's copy of the file, and how it hides); then their kinds: hidden comments,
+invisible characters, text colored like its background, image descriptions, and the like. Hidden text that
+also reads like an instruction is called out in a yellow box: its count opens the list of those
+places, each linked to its card on the review page. It also counts the other direction for images and PDFs:
 text inside an image, or drawn on a PDF page but missing from the PDF's text layer (a picture
 of an instruction), which a model that reads the page as an image sees. A location in a PDF,
 DOCX, or image reads "file (extracted text, page N, line M)": the line in the text Walkdown read
-from it, since such a file has no lines of its own. Then lines that read differently once look-alike or invisible
-characters are swapped for plain ones (most are typographic quotes and dashes), stretches in a
+from it, since such a file has no lines of its own. Then lines that hold invisible characters or letters
+from another alphabet that look like plain ones (the two kinds that can make a line say something
+other than what a person sees), counted by kind. Typography (curly quotes, dashes, ellipses,
+non-breaking spaces, symbols) is left off this page; the full report lists every changed line.
+Then stretches in a
 non-Latin script, and passages in another language written in the same alphabet (Spanish, German,
 and so on). The risky-ask patterns read English only, so a passage in any other language is one
-to read yourself; the full report lists each one. Hidden text that also reads like an
-instruction gets a card.
+to read yourself; the full report lists each one.
 
 ### Committed secrets
 
 Lines that look like a password, key, or token saved in the files, which scanner found them, and
 what was set aside (lines in test data; hashes, variable names, plain words, local test passwords).
-The value is never shown: open the file to check it. When no scanner ran, the section says it was
+One row per place, linked to its review card. The value is never shown: open the file to check it. When no scanner ran, the section says it was
 not checked.
 
 ### Risky asks and things to check
@@ -140,8 +211,10 @@ do the flagged thing; how many actions that should ask you first have no step as
 the ones the text forbids counted apart; and how many read-only lines the AI follows are backed by
 a tool setting, stated in the text only, or owned by a tools list that can write.
 
-**Things to check.** The headlines, with how many places each covers; the cards are on the review
-page. Hidden text and secrets are left to their own sections.
+**Things to check.** The headlines, with how many places each covers. Each headline opens its
+places: the location linked to its review card, the quote, and the "A reviewer model's reading
+questions this" line when a model read questions it. Hidden text and secrets are left to their own
+sections.
 
 | Headline | What it means |
 |---|---|
@@ -167,25 +240,6 @@ front of a model. They are all in `full.md`.
 
 When a model ran (stage 6), one line says how many model reads (experimental) are on the review
 page, with a link to how accurate they measured: [MODEL-ACCURACY.md](MODEL-ACCURACY.md).
-
-### First pass: what the places could lead to
-
-For someone deciding whether to use the repository: the same places, grouped by what they could
-lead to, in a fixed order: **Runs code** (hooks and commands you are asked to run), **Reads
-secrets, calls out, or shares** (credentials, network calls, data sent elsewhere), **Lasting
-changes or permissions** (settings, profiles, permissions, actions that are hard to undo), and
-**Wording only** (everything else). Each group gives its count and its first headlines; the
-review page has every card. Nothing inside a group is ranked.
-
-### Questions before use
-
-The questions the findings raise, in place of a verdict: **permissions to hold back** (agents
-with no tools list, a shell, writing files, the web, hooks, MCP servers, each with where it is
-listed), **what to try first** (the parts of the repository with the most places to check, test
-folders left out), and **before you leave it running unattended** (the places that run code or
-make lasting changes, lines telling the AI it need not ask, read-only claims a tools list
-contradicts, hidden instructions, committed secrets). Only questions with evidence in this run
-appear. The answers are yours.
 
 ### Changes since an earlier run
 
@@ -234,7 +288,7 @@ found what looks like a secret, no lines around the place are shown.
 When a model read of the line says it is not an instruction (a prohibition, a description, a
 quote, the words in another sense), the card says so in one line: "A reviewer model's reading
 questions this", with who read it and the score. The finding stays; the same line appears under
-the item on the summary page. Each card ends with one line on what only running the skill can
+the place on `details.html`. Each card ends with one line on what only running the skill can
 show for that kind of place ("Only running it shows whether the AI acts on this line"); cards
 that state a fixed fact, such as a committed secret, have none. A line that tells the AI to stay
 read-only in a skill whose own tools list can write is a place of its own: "Says read-only, but
@@ -257,17 +311,25 @@ when you open it, so the list holds still while you mark them again). Back, Next
 unmarked move within the pass you are in; the index lists the model reads under their own
 heading.
 
+## Your marks
+
+The marks on `review.html` and the Not concerned boxes on `details.html` are one set. They are
+yours: Walkdown never sets one, and a mark changes no finding and nothing in `full.md`.
+
 Marks are kept in your browser as you go. To keep them with the run, use "Download marks.json"
-at the end and save the file in the run folder, next to the page. Re-rendering the reports
-(`python stages/08-report/run.py --rerender <run folder>`) reads it back into the page. A card
-holding one finding keeps its id across re-renders; marks saved on separate cards before they were
-merged into one do not carry over. Marks do not carry over to a new run of the same repository.
+(at the end of `review.html`, or in the bar at the top of `details.html`) and save the file in
+the run folder, next to the pages. Each download holds the marks from both pages that the run
+already had, so saving from either one keeps the other's. "Load a marks file" reads a saved file
+into the page you are on. Re-rendering the reports
+(`python stages/08-report/run.py --rerender <run folder>`) reads the file into all three pages;
+`summary.html` counts your Not concerned marks.
 
-## summary.md
-
-The same content as text. Each stage has one **status line** (counts, with what they were
-counted over) and up to five **points** under it. Lines such as "+4 more in the full report" or
-"3 more hits on these patterns in test data" say what was left off and where it is.
+**Marks carry over.** A new run of the same repository with no `marks.json` of its own starts
+from the newest earlier run's marks. Each mark names what was flagged (the file and the text of
+the line, or the address, or the file and the reason), never the line number alone, so a mark
+follows its line when lines move and drops away when the line itself changes. A carried mark says
+which run it is from until you change it, and `review.html` says how many earlier marks match
+nothing in this run. Files saved before 2026-10-20 still load, matched by place id.
 
 ## full.md
 

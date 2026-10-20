@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml/badge.svg)](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml)
 
-**Status: alpha, version 0.1.0** ([CHANGELOG](CHANGELOG.md)). It runs end to end and produces a report you can read. Parts of it are
+**Status: alpha, version 0.2.0** ([CHANGELOG](CHANGELOG.md)). It runs end to end and produces a report you can read. Parts of it are
 experimental, and they are marked as such below.
 
 Walkdown examines the instruction layer of AI skills and agents: the SKILL.md files, agent
@@ -28,8 +28,8 @@ If you try it, I would like to hear about any of these:
 - **Wrong flags.** Run it on a skill or agent repository you know well. What did it flag that
   is not a concern?
 - **Misses.** What did it not catch that you would expect an audit like this to find?
-- **The report.** Read `summary.html`. Was it clear what to look at, and what would you
-  do next? If the answer is nothing, why?
+- **The report.** Read `summary.html`, then `details.html`. Was it clear what to look at, and
+  what would you do next? If the answer is nothing, why?
 - **The approach.** Walkdown gives no verdict and no score, only evidence. Does that help you,
   or does it leave you without an answer you needed?
 
@@ -44,10 +44,9 @@ One command runs every stage and writes a run folder:
 
 ```
 RepoResults/<name>/<date>_<hash7>/
-  summary.html    the page for people: the lethal trifecta, files, outside links, hidden text, secrets, places to check
-  summary-v1.html the earlier summary page, kept while the new one settles
+  summary.html    one page: the security concerns found, what it can do, questions before use
+  details.html    every section in full, with a Not concerned box on every row
   review.html     one card per place to check, one at a time, for you to mark
-  summary.md      the same summary as text
   full.md         every finding, with file and line
   LOG.md          what ran, when, and each stage's validation stamp
   data/           everything the reports were built from: each stage's raw findings, limits, working files
@@ -180,8 +179,8 @@ stage against an answer sheet the stage code never reads:
 python grader/grader.py all
 ```
 
-The same tests and graders run on GitHub on every push (Ubuntu 24.04 and 26.04, Python 3.12
-and 3.13, with Tesseract), shown by the badge at the top. Each audit runs the grader first, and the result is the stage's validation stamp in `LOG.md`. A
+The same tests and graders run on GitHub on every push (Ubuntu 24.04 and 26.04 with Python 3.12
+and 3.13, macOS 15 and Windows Server 2025 with Python 3.13; Tesseract and Playwright installed), shown by the badge at the top. Each audit runs the grader first, and the result is the stage's validation stamp in `LOG.md`. A
 stage that fails its fixtures says so in the report. A stamp is reused while the code and
 fixtures are unchanged (LOG.md says when it was measured); `--revalidate` measures afresh.
 

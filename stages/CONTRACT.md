@@ -73,7 +73,7 @@ emits it.
 | Check | One finding per | Fields |
 |---|---|---|
 | `inv.pin` | run (`file`: null) | `source`, `hash`: git commit or sha256 of the input, `hash_kind`: `git` or `sha256`, `files`, `bytes` |
-| `inv.file` | file | `ext`, `bytes`, `lines` (text files), `exec`: bool, `encoding`, `bom`: bool, `type`: detected content type, `sha256`: the file's content hash (added 2026-10-04, for version drift), `entry_point`: null or the kind (`skill`, `agent`, `command`, `hook-config`, `manifest`, `mcp-config`, `readme`, `ci`, `project-instructions` (CLAUDE.md, AGENTS.md, GEMINI.md, .cursorrules and the like; added 2026-09-29)) |
+| `inv.file` | file | `ext`, `bytes`, `lines` (text files), `exec`: bool, `encoding`, `bom`: bool, `type`: detected content type, `sha256`: the file's content hash (added 2026-10-04, for version drift), `sha256_lf` and `sha256_crlf`: a text file's content hashed with every line ending as LF and as CRLF (added 2026-10-20, so a file whose line endings alone changed is not counted as edited; absent for binary and UTF-16 or UTF-32 files), `entry_point`: null or the kind (`skill`, `agent`, `command`, `hook-config`, `manifest`, `mcp-config`, `readme`, `ci`, `project-instructions` (CLAUDE.md, AGENTS.md, GEMINI.md, .cursorrules and the like; added 2026-09-29)) |
 | `struct.description` | frontmatter `description` field | `text`: the description, verbatim |
 | `struct.agent-tools` | agent / command definition | `tools`: list of granted tool names; `description`: stated job |
 | `struct.hooks` | hook entry (event + matcher) | `event`, `matcher`, `command` |

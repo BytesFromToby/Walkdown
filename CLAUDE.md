@@ -24,11 +24,11 @@ makes language / script shift its own signal (CHARTER scope section).
 
 ---
 
-## Status (2026-10-18)
+## Status (2026-10-20)
 
 **Alpha, public:** https://github.com/BytesFromToby/Walkdown (released from a separate copy;
 see "Public repo" below). All eight stages run end to end from one command; every stage has
-fixtures, a grader stamp, specs, and tests (743). Stage 6 (model reads) is optional and
+fixtures, a grader stamp, specs, and tests (764). Stage 6 (model reads) is optional and
 experimental. Four repositories audited (superpowers, Plumbline, claude-familiar, backlog) plus
 the self-audit. Every check the method calls for is built (HTML as a browser draws it was the
 last, 2026-10-20). Two optional tools affect results: Tesseract (OCR of images and PDF pages) and
@@ -40,7 +40,9 @@ fixed items, open design items C14 to C18, and the ordered plan). Stage 6 decisi
 
 **Scope decision (2026-09-13, standing):** the tool renders **no verdict**. It reviews,
 surfaces possible issues, and shows its evidence; the customer decides what to do. The report
-is the handoff: a summary page for most readers and a full report with all the detail.
+is the handoff: a one-page summary for someone deciding whether to use a repository, a details
+page with every section for someone improving it, and a full report with all the evidence
+(owner, 2026-10-20; `stages/08-report/specs/REPORTS.md`).
 
 **History:** renamed from Load-Bearing on 2026-09-25 and arranged into numbered stages,
 deterministic to soft; built stage by stage from 2026-09-25 (see "Next" below for the record).
@@ -243,10 +245,12 @@ audited repository's author has seen theirs.
    plugin root. The grader honors a skip that names its carrier.
 
 Stage 6 working notes and open decisions: `pre-planning/soft/` (README lists D1 to D5).
-Reports: `summary.html` at the top of a run folder is the page for people, and `review.html`
-walks its places one at a time for the reader to mark (2026-10-12, review C21; since
-2026-10-02 the reports and LOG.md sit at the top and everything else under `data/`;
-`docs/RUN-FOLDER.md`). Re-render with `python stages/08-report/run.py --rerender RepoResults/<repo>/<run>`.
+Reports: `summary.html` at the top of a run folder is the one page (security concerns by kind,
+what it can do, questions before use), `details.html` has every section with a Not concerned box
+on every row, and `review.html` walks the places one at a time for the reader to mark; marks are
+one set and carry over to the next run (2026-10-20; `stages/08-report/specs/REPORTS.md`). Since
+2026-10-02 the reports and LOG.md sit at the top and everything else under `data/`
+(`docs/RUN-FOLDER.md`). Re-render with `python stages/08-report/run.py --rerender RepoResults/<repo>/<run>`.
 Public docs: `docs/READING-THE-REPORT.md`, `docs/HOW-IT-WORKS.md`, `docs/RUN-FOLDER.md`.
 
 *Git repo since 2026-09-25 (local, `main`). Each stage is built on its own branch

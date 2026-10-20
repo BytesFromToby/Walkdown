@@ -92,3 +92,18 @@ def test_empty_folder(tmp_path):
 def test_missing_folder(tmp_path):
     code, out, _ = run(tmp_path / "nope")
     assert code != 0 and out.strip() == b""
+
+
+def test_text_hashes_ignore_line_endings():
+    """2026-10-20: the same text with LF or CRLF line endings has the same sha256_lf and
+    sha256_crlf; UTF-16 text gets none."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("walkdown_s01_run_eol",
+                                                  Path(__file__).resolve().parents[1] / "run.py")
+    runner = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(runner)
+    a = runner.text_hashes(b"one\ntwo\n", "utf-8")
+    b = runner.text_hashes(b"one\r\ntwo\r\n", "utf-8")
+    assert a == b and set(a) == {"sha256_lf", "sha256_crlf"} and a["sha256_lf"] != a["sha256_crlf"]
+    assert a["sha256_lf"] == hashlib.sha256(b"one\ntwo\n").hexdigest()
+    assert runner.text_hashes("one\n".encode("utf-16"), "utf-16") == {}
