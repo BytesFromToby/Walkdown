@@ -30,6 +30,13 @@ marks, this run's own or carried from an earlier run (`marks.SPEC.md`). The plac
      kinds." When the reader marked some Not concerned: "(<M> of them marked Not concerned)".
    - With none: "Walkdown found none of the security concerns it looks for." The page's one
      qualifier is in the footer.
+   - When a step produced no output (`not_run`), never "found none": 'This run did not complete:
+     the step "<name>" did not run' (or '<n> steps did not run, starting with "<name>"'), then
+     either "so Walkdown cannot say whether this repository has the security concerns it looks
+     for." or, with concerns from the steps that ran, "In the steps that ran, Walkdown found
+     security concerns: ..." (2026-10-21, an outside tester: an empty .venv crashed stage 1 and
+     the page read as clean). A step that ran but skipped part of the repository stays in the
+     line at the bottom (owner, 2026-10-21).
 3. **Security concerns.** One row per concern kind that has a place, in this fixed order
    (`CONCERNS`). Each place falls in exactly one row; a place is taken by the first row that fits:
    1. **Hidden text that reads like an instruction** (kind `hidden+phrase`).
@@ -94,7 +101,8 @@ escaped, print on one or two pages.
 ## Done when (tests in `tests/test_summary_html.py`)
 
 1. With concerns, the headline gives places and kinds; with none, it says none and that
-   nothing found does not mean safe (`test_headline_with_and_without_concerns`).
+   nothing found does not mean safe (`test_headline_with_and_without_concerns`); with a step
+   that did not run, it says the run did not complete (`test_a_run_missing_a_step_never_reads_as_clean`).
 2. Rows appear in the fixed order, only for kinds with places; each place is in exactly one row;
    wording-only places are one line (`test_rows_in_fixed_order_each_place_once`).
 3. Each row has its count, one example linked to its review card, and a link to the details

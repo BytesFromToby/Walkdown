@@ -83,8 +83,25 @@ def rows(r, places, marks=None) -> list[dict]:
     return out
 
 
-def headline(rs) -> str:
+def not_run(runs_ok) -> list[str]:
+    """The steps that produced no output in this run, by their plain names."""
+    return [D.PLAIN_STAGE[st] for st in R.ORDER[:6] if st not in runs_ok]
+
+
+def headline(rs, missing=()) -> str:
+    """`missing`: steps that did not run (`not_run`). A run missing a step never says it found
+    none (2026-10-21, an outside tester: an empty .venv crashed stage 1 and the page said "found
+    none"); the step-did-not-work line stays at the bottom for a step that ran but skipped part
+    (owner, 2026-10-21)."""
     n = sum(len(x["places"]) for x in rs)
+    if missing:
+        steps = (f'the step "{missing[0]}" did not run' if len(missing) == 1 else
+                 f'{len(missing)} steps did not run, starting with "{missing[0]}"')
+        if rs:
+            return (f"This run did not complete: {steps}. In the steps that ran, Walkdown found "
+                    f"security concerns: {R.n(n, 'place')}, of {R.n(len(rs), 'kind')}.")
+        return (f"This run did not complete: {steps}, so Walkdown cannot say whether this "
+                "repository has the security concerns it looks for.")
     if rs:
         nc = sum(x["not_concerned"] for x in rs)
         return (f"Walkdown found security concerns in this repository: {R.n(n, 'place')}, of "
@@ -184,7 +201,8 @@ def render_page(meta, r, stamps, notes, runs_ok, marks=None) -> str:
     wording = sum(1 for it in places if concern(it) is None)
     head = D.header(meta, r, links=(("details.html", "Details"), ("review.html", "Review each place →")))
     body = [head,
-            f'<section class="block lead" id="headline"><p class="headline">{esc(headline(rs))}</p></section>',
+            f'<section class="block lead" id="headline"><p class="headline">'
+            f'{esc(headline(rs, not_run(runs_ok)))}</p></section>',
             concerns_block(rs, wording, model), capability(r), D.before_use(r, places),
             warning(failed_steps(stamps, runs_ok, r, notes)), f'<footer><p>{esc(FOOTER)}</p></footer>']
     return ("<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"

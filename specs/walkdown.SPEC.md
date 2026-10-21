@@ -25,13 +25,20 @@ The front door: one command from a folder or a git URL to a finished run and a b
   FETCH_HEAD`, `clean -fdx`; 2026-10-03). `--keep` audits whatever is there without updating;
   `--fresh` deletes the clone and clones again. A folder there that is not a clone of this URL
   is an error (exit 2) unless `--keep`.
-- Runs `stages/08-report/run.py <target> --repo <name> ...` with the project virtualenv's
-  python when `.venv/` exists, else the current interpreter.
+- Runs `stages/08-report/run.py <target> --repo <name> ...` with the interpreter Walkdown was
+  started with when it can import every core module (`CORE_MODULES`: requirements.txt less
+  pytest), else the project virtualenv's when that can (2026-10-21: an empty `.venv` in the
+  Walkdown folder was preferred over a working interpreter, and every stage failed). It prints
+  `Using Python at <path>` on stderr first. When neither can, it runs nothing: it names the
+  interpreter and the modules it lacks, with the `pip install -r requirements.txt` line, exit 2.
 - Prints the **brief** to stdout, in `summary.html`'s terms (owner, 2026-10-21): files examined
   and the pin; "What it can do:" with the three trifecta legs as checkboxes, what they mean
   together (`summary_html.TOGETHER`), and the install grants; the summary's headline sentence,
   then one line per concern kind with its place count, in the summary's order, and the
-  wording-only line (`summary_html.headline`, `rows`, `WORDING`); stage 6 model reads on their
+  wording-only line (`summary_html.headline`, `rows`, `WORDING`). When a step produced no output
+  the headline says the run did not complete and never that it found none, and the next line
+  says why the first such step stopped: the error's type, plus the module of a missing import,
+  never the rest of its message (`stage_error`, from `data/<stage>.notes.txt`). Stage 6 model reads on their
   own lines marked experimental (2026-10-03); each stage's validation stamp from LOG.md; the
   paths of `summary.html`, `details.html` (2026-10-20), `review.html` (2026-10-12), and
   `full.md`; the summary's footer (`summary_html.FOOTER`).
@@ -53,3 +60,5 @@ The front door: one command from a folder or a git URL to a finished run and a b
 3. The brief carries legs, grants, the summary's headline and concern rows with counts, the
    wording-only line, stamps, report paths, and the summary's footer.
 4. No text planted in the audited repository's findings appears in the brief.
+5. A run whose steps did not run says it did not complete, never "found none", with the first step's error type and missing module, and no text from the error's path or message.
+6. The launching interpreter is used when it has the core modules, even with a `.venv` in the Walkdown folder; with no usable interpreter, what it lacks is named.

@@ -6,6 +6,14 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- A run that did not complete never reads as clean. When a step produced no output,
+  `summary.html` and the brief say "This run did not complete" and name the step, never "found
+  none", and the brief says why it stopped (the error's type, and the module of a missing
+  import). `walkdown.py` runs the stages with the Python it was started with when that has
+  Walkdown's packages, and only then tries the Walkdown folder's `.venv`: an empty `.venv` there
+  had been preferred over a working Python, and every step failed (found by an outside tester).
+  It says `Using Python at <path>`, and with no usable Python it runs nothing and names what is
+  missing.
 - Stage 2, image OCR: a large image is read whole as well as in tiles. Tiles alone cut a word
   in large type that straddles a tile edge: re-auditing claude-familiar, its banner's title
   "Claude Familiar" read as "Claude Fami" where the earlier code read it whole. A line read by

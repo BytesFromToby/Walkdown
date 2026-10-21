@@ -51,6 +51,8 @@ def _run_dir(tmp_path):
                          "present": False, "evidence": []},
                         {"check": "cap.grant", "file": None, "line": None, "grant": "network",
                          "evidence": []}])
+    for stage in ("02-reader", "03-graph", "06-soft"):  # a complete run has every step's output
+        f(stage, [])
     (d / "LOG.md").write_text("| 01-inventory | a | b | c | x | PASS (gate 1/1) |\n", "utf-8")
     return d
 
@@ -93,3 +95,30 @@ def test_brief_reads_the_current_layout(tmp_path):
     b = wd.brief(d)
     assert "[x] Can read your data" in b and str(d / "summary.html") in b
     assert "Walkdown found security concerns in this repository:" in b
+
+
+def test_a_crashed_run_says_it_did_not_complete(tmp_path):
+    """2026-10-21, an outside tester: every stage "not run", yet the brief said found none."""
+    d = tmp_path / "RepoResults" / "demo" / "2026-10-21_failed"
+    (d / "data").mkdir(parents=True)
+    (d / "LOG.md").write_text("| 01-inventory | a | b | c | x | not run |\n", "utf-8")
+    (d / "data" / "01-inventory.notes.txt").write_text(
+        f"Traceback (most recent call last):\n  File \"/x/{SENTINEL}/a.py\", line 1\n"
+        "ModuleNotFoundError: No module named 'yaml'\n", "utf-8")
+    b = wd.brief(d)
+    assert "found none" not in b and SENTINEL not in b
+    assert 'This run did not complete: 6 steps did not run, starting with "What ships"' in b
+    assert "What ships stopped with ModuleNotFoundError (No module named 'yaml')." in b
+    (d / "data" / "01-inventory.notes.txt").write_text(f"ValueError: bad thing in {SENTINEL}/x.md\n", "utf-8")
+    b = wd.brief(d)
+    assert "What ships stopped with ValueError." in b and SENTINEL not in b  # type only
+
+
+def test_python_with_the_packages_is_preferred(tmp_path, monkeypatch):
+    monkeypatch.setattr(wd, "ROOT", tmp_path)  # an empty .venv in the Walkdown folder
+    (tmp_path / ".venv" / "bin").mkdir(parents=True)
+    (tmp_path / ".venv" / "bin" / "python").write_text("", "utf-8")
+    assert wd.python_exe() == (wd.sys.executable, [])  # the launching python has the packages
+    monkeypatch.setattr(wd, "missing_modules", lambda py: ["yaml"] if py == wd.sys.executable else None)
+    exe, lacks = wd.python_exe()
+    assert exe == wd.sys.executable and lacks == ["yaml"]  # neither works: say what is missing
