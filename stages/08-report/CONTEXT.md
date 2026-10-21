@@ -1,4 +1,4 @@
-# Stage 8: Report (v1)
+# Stage 8: Report
 
 **Question:** none. Stage 8 assembles; it detects nothing and concludes nothing.
 **Output:** a run folder (`docs/RUN-FOLDER.md`; layout in `layout.py`): `summary.html` (one
@@ -45,36 +45,42 @@ python stages/08-report/run.py <input_dir> --repo <name> [--results <dir>] [--da
 - No verdict, no score, no severity, no ranking. Trifecta 3 of 3 is stated with
   the fixed qualifier.
 - Every count resolves to file:line in the full report.
-- A stage whose validation stamp is not PASS says so on its status line and
-  points to section 7. A zero from an unvalidated stage is never shown as clean.
-- Benign share: no stage labels hits benign in v1 (that is stage 6), so every
-  hit count says "benign share not measured".
-- Points of attention (summary) are chosen by fixed rules, never by judgment:
-  1. stage 1: hook rows (event, command); files over the reader window.
+- A stage whose validation stamp is not PASS says so on its status line in `full.md` and
+  points to section 7; `details.html` puts a pill on Other details, and `summary.html` names the
+  step under its headline. A zero from an unvalidated stage is never shown as clean.
+- Benign share: a hit count carries one only when stage 6 labels ran (C15, 2026-10-03).
+- The places to check (`details_html.first_items`: listed on `details.html`, one card each on
+  `review.html`, sorted into concern kinds on `summary.html`) are chosen by fixed rules, never
+  by judgment:
+  1. stage 1: hook rows (event, command).
   2. stage 2: `hidden+phrase` pairs on lines addressed to the model (stage 4
      `audience` not `human`); human-facing ones (issue and PR template comments)
      are counted, not listed (2026-09-29).
   3. stage 3: `orphan+phrase` and `dynamic+phrase` pairs (load-only files).
   4. stage 4: hits on the **zero-base-rate patterns** PHRASES lists as the ones
-     to run first on an unknown repo (`POINT_PATTERNS` in `render.py`).
-  5. stage 5: `hook+phrase` pairs (an instruction in a script a context-injecting
-     hook runs), then hook injection paths.
-  At most 5 per stage in the summary, then "+N more in the full report".
+     to run first on an unknown repo (`POINT_PATTERNS` in `render.py`); term conflicts and
+     redefined safety words; likely committed secrets; flagged text past the reader window;
+     a flagged sentence repeated across files; rubric actions whose confirmation is redefined,
+     or prohibited with no confirmation step.
+  5. stage 5: test data and images a model-read file points at; read-only lines a tools list
+     contradicts; `hook+phrase` pairs (an instruction in a script a context-injecting hook runs).
+  6. stage 6, when a model ran: sweep passages, relational reads, and "do" reads, as model
+     reads (experimental) in their own pass.
+  Nothing is capped or ranked; files over the reader window are under Worth a look in Files.
 - Load bytes are shown per host config, from stage 5's `cap.load-bytes` (one per
   hook config since 2026-09-29): when a plugin ships one hook per host, only one
   runs, so a sum double counts.
-- Recommendations: only from fixed templates (`RECOMMENDATIONS` in
-  `render.py`), each conditional, each naming a narrower alternative, listed in
+- Recommendations: only from fixed templates (`render.recommendations`), each conditional, each naming a narrower alternative, listed in
   stage then document order. A finding with no template gets none. One per file
   and template: a block of matching lines is one change. A permission-flag hit
   that edits a settings allow-list (`permissions.allow`, `allowedTools`,
   `settings.json`) gets its own template, not the skip-permissions one (2026-09-29,
   Case 003).
-- Pair points (stages 2 and 3) list only lines the model reads (stage 4 audience
+- Pair places (stages 2 and 3) list only lines the model reads (stage 4 audience
   `model` or `subagent`); pairs in scripts (`tool`) and human-facing files are
-  counted, not listed. Stage 4 points list model, subagent, and tool lines (a
+  counted, not listed. Stage 4 places list model, subagent, and tool lines (a
   zero-base-rate pattern in code is a capability locator) and count human-facing
-  ones.
+  ones and test data.
 
 ## Deviations from RUN-LAYOUT (v1)
 
@@ -97,7 +103,7 @@ python stages/08-report/run.py <input_dir> --repo <name> [--results <dir>] [--da
 Stage 6 runs in the pipeline after stage 5, with the backends the user passes
 (`--label`, `--compare`, `--relational`). Section 6 names every backend and whether
 it is remote, counts labels and agreement, and lists relational reads and confident
-`do` reads as points of attention (p >= 0.9 since 2026-10-01; 0.7 to 0.9 counted as
+`do` reads as places to check, the model reads (p >= 0.9 since 2026-10-01; 0.7 to 0.9
 near the line). Answers never change sections 1 to 5.
 
 ## The summary as HTML, and re-rendering (2026-09-30)
@@ -115,7 +121,8 @@ a line to LOG.md. Report design changes no longer need a full re-run.
 
 ## The review page (2026-10-12, review C21)
 
-`review_html.py` writes `review.html`: every place the summary's "Things to check" lists,
+`review_html.py` writes `review.html`: every place the summary's "Things to check" lists
+(now under Risky asks and the other sections of `details.html`),
 then the stage 6 model reads, one card at a time. Each card shows the line with three lines
 either side from the run's own `normalized/text/` copy (never the audited folder), the matched
 words, and what was flagged in plain words (`plain.py`, one entry per `patterns.yaml` row,

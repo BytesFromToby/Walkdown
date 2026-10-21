@@ -33,7 +33,8 @@ Status: built.
 - **`limits(...)`, `limits_doc(...)` -> `data/07-limits.md`**: stage 7: stages that failed or are
   not validated, skip findings, stage notes naming a limit, unread and unscanned files, then
   `STANDING_LIMITS`. Every line, nothing folded.
-- **`glance(...)` -> `(skipped, not needed)`**: the pages' short account of what was not checked:
+- **`glance(...)` -> `(skipped, not needed)`**: `details.html`'s short account of what was not
+  checked (Other details):
   one plain item per check this run skipped that applies to this repository (a stage that did
   not run; model reads as one item; a missing optional tool whose file kind stage 1 saw,
   `TOOL_NOTES` and `file_kinds`; other skip reasons grouped with a file count; per-file skips one
@@ -47,7 +48,8 @@ Status: built.
 ## Shared tables and words
 
 - `LEG_NAMES` ("Can read your data", "Can take outside input", "Can send data out"), `LEG_DEFS`,
-  `TRIFECTA_ALL`, `TRIFECTA_SOME`; `NOT_WHAT`; `CAPABILITY_ONLY` and `CAPABILITY_ONLY_SHORT`
+  `TRIFECTA_ALL`, `TRIFECTA_SOME` (worded 2026-10-21 so neither sentence takes back the
+  other, and with no comparison to other repositories); `NOT_WHAT`; `CAPABILITY_ONLY` and `CAPABILITY_ONLY_SHORT`
   ("capability only"); `DO_MEANS` (what a "do" score means and does not).
 - `POINT_PATTERNS`, `SUBGROUPS`, `HEADINGS`, `ORDER`.
 - Signal levels (soft D1): each stage 4 point names its patterns with their base rate over the

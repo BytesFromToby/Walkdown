@@ -76,9 +76,6 @@ structures a host loads on its own: skills, agents, hooks, manifests, MCP server
 | `inv.license` | each license file (`LICENSE`, `COPYING`, ...) and declared license field (frontmatter, `package.json`, plugin manifests, `pyproject.toml`, `Cargo.toml`), with the license its wording matches | what you may do with the repo is set by its license; a skill inside can ship a different one. Matching wording is a lookup, not legal advice |
 | `struct.census` | structural flags: a file past the reader window (2,000 lines or 50 KB), a line over 500 characters, an extension that disagrees with the content, a byte-order mark, an archive, a symlink | text past a reviewer's window, or a file pretending to be another type, is where things hide |
 
-**Usually seen in a well-built repo.** A few entry points, short descriptions, agents granted
-the tools their job needs, and hooks that do what their name says.
-
 **Worth a closer look.** Hooks on events that run before any input (`SessionStart`,
 `UserPromptSubmit`); an agent that inherits every tool; files over the reader window;
 `ext-magic-mismatch` (a `.md` that is really an image); manifests that disagree.
@@ -109,11 +106,8 @@ an image).
 | `read.metadata` | text in metadata fields (image EXIF, document properties) | metadata travels with the file and some hosts pass it on |
 | `read.unread` | files the reader could not read, and why | a file nobody read is not a clean file |
 
-**Usually seen.** Some HTML comments in Markdown (notes to maintainers), no zero-width or
-bidirectional characters, nothing unread.
-
-**Worth a closer look.** Hidden text that also matches a phrase pattern (the summary lists these
-as "Hidden when rendered, and reads like an instruction"); zero-width characters inside words;
+**Worth a closer look.** Hidden text that also matches a phrase pattern (listed as places to
+check, as "Hidden when rendered, and reads like an instruction"); zero-width characters inside words;
 white-on-white or `display:none` text.
 
 **In the report.** Hidden text that reads like an instruction is the first concern on
@@ -147,11 +141,8 @@ and section 7 says so.
 | `graph.unlisted` | skills, agents, or commands on disk that their manifest leaves out, for the kinds it names (a manifest's paths are read from its plugin root) | a reviewer reads the manifest to learn what a plugin holds; a host that finds components by folder can still load the one it leaves out |
 | `graph.unscanned` | files that may hold references but were not scanned | where the graph is blind |
 
-**Usually seen.** Few orphans, dangling references mostly in code (imports the scanner cannot
-resolve) and a handful in prose.
-
 **Worth a closer look.** An orphan or a file loaded only dynamically that also matches a phrase
-pattern (the summary lists these); dangling references in prose instructions.
+pattern (listed as places to check); dangling references in prose instructions.
 
 **In the report.** Section 3. The graph is incomplete by construction (what a wildcard pattern
 matches is resolved as of the review), and the report says so.
@@ -222,11 +213,7 @@ data). **Rare** means in none of them, **uncommon** in one, **common** in two or
 pattern means more when it hits. The table is `stages/08-report/baserates.json`, rebuilt as the
 corpus grows; the repository being audited is never counted against itself.
 
-**Usually seen.** Many hits. Forceful style ("YOU MUST", "never skip") is common and
-recommended; most hits in a well-built skill are its own stated job (a deploy skill mentions
-pushing). The benign share is the point of keeping every hit.
-
-**Worth a closer look.** Rare patterns in model-read files (the summary lists them); hosts the
+**Worth a closer look.** Rare patterns in model-read files (listed as places to check); hosts the
 docs never name; prohibited-tier actions with no confirmation step; a safety word redefined; a
 word defined two different ways.
 
@@ -234,8 +221,9 @@ word defined two different ways.
 lines a model reads were read as instructions and how many as descriptions, quotes, or other
 uses (REPORTING rule 2: a count comes with its benign share).
 
-**In the report.** Section 4: counts per group in the status line, split by audience, rare-pattern hits and the
-part 2 highlights as points, every hit grouped by check in `full.md`.
+**In the report.** Section 4 of `full.md`: counts per group in the status line, split by
+audience, and every hit grouped by check. Rare-pattern hits and the part 2 highlights are places
+to check, listed under Risky asks on `details.html` and walked on `review.html`.
 
 ---
 
@@ -263,8 +251,8 @@ can be made to leak. Walkdown checks each leg and lists the evidence.
 Bash counts toward reading data and running code, never toward sending data out on its own. An
 agent with no tools list can use every tool, so it counts toward all three legs; the report marks
 that as capability only: what it could use, with no evidence that it does.
-**All three legs are common in well-built repositories**: an agent that reads files, uses the
-web, and pushes commits has all three. The combination raises risk; it is not an issue alone.
+Each leg is ordinary on its own. A tool with all three can be steered by text from outside into
+sending your data away.
 
 ### Install grants (`cap.grant`)
 
@@ -286,9 +274,6 @@ web, and pushes commits has all three. The combination raises risk; it is not an
 | `cap.limit` | read-only wording a model reads, paired with what could back it: a restricting setting on the same line, the tools list of the skill or agent that owns the file, and other routes in the same skill that can write. Backed, contradicted by the owner's tools list, or stated in the text only (a static read cannot see whether a setting is used at run time) |
 | `cap.pair` | two findings worth more together: hidden text with a phrase hit, an orphan with a phrase hit, a load-only file with a phrase hit, an instruction in a script a context-injecting hook runs, test data a model-read file references |
 | `cap.testdata` | how many findings were set aside as test data, and where |
-
-**Usually seen.** Some legs, a context-injection grant (every skill has a description),
-agents with narrow tools.
 
 **Worth a closer look.** Exec-at-load with context injection (a hook that puts text in front of
 the model before you type); an instruction in a script such a hook runs; elevated grants; agents
@@ -379,7 +364,9 @@ It lists: stages that did not finish or did not pass validation; checks skipped 
 optional tool; files unread or not scanned; the test-data rule and how much it set aside; and
 the standing limits (English only, static only, known shapes).
 
-**In the report.** Section 7 of both summaries, and `data/07-limits.md`.
+**In the report.** Section 7 of `full.md`, Other details on `details.html`, and
+`data/07-limits.md`. A step that did not run or did not pass validation is also named under the
+headline of `summary.html`.
 
 ## Stage 8: Report
 

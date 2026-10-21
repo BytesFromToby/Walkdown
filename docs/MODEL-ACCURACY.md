@@ -38,8 +38,8 @@ meaning rewrite the code): 9 of 39.
 | 0.6 to 0.8 | 13 of 25 |
 | below 0.6 | 28 of 82 |
 
-The summary lists a line as a real instruction only at p >= 0.9, and calls 0.7 to 0.9 "near
-the line". On the real lines, every "do" read at 0.8 or more was right: 9 of 9.
+The reports list a line as a real instruction (a model read, on the review page) only at
+p >= 0.9, and call 0.7 to 0.9 "near the line". On the real lines, every "do" read at 0.8 or more was right: 9 of 9.
 
 What a "do" read means: at any score, it says the line tells the AI to do the flagged thing. It does not say the thing is harmful; that depends on what the skill is for, and on the rest of the report. The review cards say so beside each score.
 

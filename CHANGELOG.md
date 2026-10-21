@@ -6,7 +6,15 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
-Nothing yet.
+- The brief uses the summary page's terms: its headline, one line per concern kind with a count,
+  the wording-only line, what the three boxes mean together, and its footer.
+- The trifecta line under the boxes no longer says "It is not an issue on its own", and no page,
+  doc, or the walkdown skill compares a repository with other repositories ("three checked boxes
+  are common in well-built repositories" is gone, and so are HOW-IT-WORKS's "Usually seen"
+  notes on what a typical repository shows).
+- Docs: HOW-IT-WORKS names the page each kind of finding appears on (`summary.html`,
+  `details.html`, `review.html`, `full.md`), and the README says the brief lists the paths to
+  every report.
 
 ## 0.2.0 (2026-10-20)
 

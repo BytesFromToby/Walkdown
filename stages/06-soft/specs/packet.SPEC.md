@@ -17,7 +17,7 @@ reads the input only to take line text; it asks no model.
 
 ## Lines
 
-`build(reports, input_dir, data, pattern_notes)` returns the label questions then the relational ones.
+`build(reports, input_dir, data, notes)` (`notes`: the `pattern_notes` above) returns the label questions then the relational ones.
 
 `Lines(input_dir, reports["01"])` reads a file's lines once: bytes decoded with
 the encoding stage 1 recorded for it (`inv.file` `encoding`; utf-8 when absent or

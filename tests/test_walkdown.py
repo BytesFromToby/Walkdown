@@ -59,10 +59,14 @@ def test_brief_has_the_facts_and_none_of_the_repository_text(tmp_path):
     b = wd.brief(_run_dir(tmp_path))
     assert SENTINEL not in b
     assert "[x] Can read your data" in b and "[ ] Can send data out" in b and "Install grants: network." in b
-    assert "What ships: Runs commands on its own (1)" in b and "stage 1:" not in b
-    assert "A word is defined more than one way (1)" in b and "Redefines a safety word (1)" in b
+    # summary.html's terms (owner, 2026-10-21): its headline, concern kinds, wording line, footer
+    assert "Walkdown found security concerns in this repository: 1 place, of 1 kind." in b
+    assert "  Runs code (1)" in b and "stage 1:" not in b
+    assert "3 more places are wording only:" in b and "Things to check" not in b
+    assert "Each one is ordinary on its own." in b and "capability only" not in b
     assert "01-inventory What ships: PASS" in b and "02-reader What the model actually reads: not run" in b
-    assert "summary.html" in b and "details.html" in b and "full.md" in b and "No verdict and no score." in b
+    assert "summary.html" in b and "details.html" in b and "full.md" in b
+    assert b.rstrip().endswith("Finding nothing does not mean a repository is safe.")
 
 
 def test_existing_folder_that_is_not_the_clone_is_never_touched(tmp_path, monkeypatch):
@@ -88,4 +92,4 @@ def test_brief_reads_the_current_layout(tmp_path):
         f.rename(d / "data" / f.name)
     b = wd.brief(d)
     assert "[x] Can read your data" in b and str(d / "summary.html") in b
-    assert "Things to check: " in b and "place" in b and "heading" in b
+    assert "Walkdown found security concerns in this repository:" in b

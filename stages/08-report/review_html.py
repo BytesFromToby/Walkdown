@@ -1,7 +1,7 @@
 """The review page: walk the flagged places one at a time and mark each. Spec: specs/review_html.SPEC.md.
 
-Review C21 (owner, 2026-10-08; built 2026-10-12). The places are the summary's "Things to
-check" (details_html.first_items), one card each, then the stage 6 model reads. A card shows
+Review C21 (owner, 2026-10-08; built 2026-10-12). The places are the places to check
+(details_html.first_items), one card each, then the stage 6 model reads. A card shows
 the line with three lines either side, taken from the text this run read
 (data/normalized/text/), what was flagged in plain words (plain.py), and three marks:
 Concerned, Not concerned, Not sure. Walkdown makes no call on any place; the reader does, on
@@ -63,7 +63,7 @@ WHY = {
                          "takes it only after the user confirms. No confirmation appears in the "
                          "same step.",
 }
-WHY_SAYS_NOTE = {"hook+phrase"}  # kinds whose WHY already says what the summary's note says
+WHY_SAYS_NOTE = {"hook+phrase"}  # kinds whose WHY already says what the item's note says
 PIN_NOTE = ("These are two models' readings (one flagged the passage, a second pointed at the "
             "line), not a pattern match.")
 MODEL_NOTE = ("This is one model's reading, not a pattern match. Models can be wrong, and reading "

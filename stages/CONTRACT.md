@@ -165,7 +165,8 @@ C25; `stages/04-phrases/specs/negation.SPEC.md`). The hit itself is unchanged.
 ### Stage 5: capability (`05-capability`)
 
 Derived from stages 1 to 4; no new detection. `evidence` is a list of
-`{stage, check, file, line, why}` pointing at the input findings.
+`{stage, check, file, line, why}` pointing at the input findings; `check` is `graph.edge` when the
+evidence is an edge in stage 3's `graph.json` (a file that loads or names another).
 
 | Check | One finding per | Fields |
 |---|---|---|

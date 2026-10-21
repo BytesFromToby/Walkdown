@@ -8,9 +8,9 @@ to 4 findings that establish it.
 Stage 5 does **no new detection**. It reads stage 1 to 4 reports and states what
 the artifact can do: the lethal trifecta legs, the install grants, the paths by
 which text reaches context at load, each agent's tool posture, and the
-cross-stage pairs a human should read first. It never concludes. A clean,
-well-built skill usually scores three of three; that is a map, not a verdict
-(REPORTING, "Rules for the summary").
+cross-stage pairs a human should read first. It never concludes: the legs are a map
+of what the artifact could do, and the reports never compare one repository with others
+(owner, 2026-10-21).
 
 Sources for every rule below: `pre-planning/METHOD.md` (Stage 5),
 `pre-planning/THREATS.md` ("Organizing frame: the lethal trifecta", classes 7,
@@ -229,6 +229,9 @@ Standard library only. No new packages without a note to the user.
    hand result was 3 of 3.
 
 ## Added 2026-09-30: outside code and connectors (locked trifecta definitions)
+
+Since 2026-10-20 the legs are named "Can read your data", "Can take outside input", and "Can send
+data out" (review C31 part B); the definitions below are unchanged.
 
 - **Takes outside input** also counts third-party code brought onto the machine:
   stage 4 `E.clone` (git clone, gh repo clone, submodule add, degit, "clone the repo"),

@@ -108,7 +108,7 @@ COL = 32  # summary label column: longest heading plus a space
 # The trifecta legs in plain words, locked by the owner 2026-09-30 (THREATS "Organizing frame").
 # "Can ...": a static read shows what a skill could do, never what it does (owner, 2026-10-20,
 # review C31 part B; the 2026-09-30 names were "Reads your data", "Takes outside input",
-# "Sends data out", kept in the frozen v1 page).
+# "Sends data out", which the v1 page at the tag report-v1 keeps).
 LEG_NAMES = {"private-data": "Can read your data", "untrusted-content": "Can take outside input",
              "external-comms": "Can send data out"}
 LEG_DEFS = {
@@ -118,11 +118,12 @@ LEG_DEFS = {
 }
 # Plain words, no named term on the page (owner 2026-10-07); the docs credit Simon Willison's
 # "lethal trifecta".
-TRIFECTA_ALL = ("All three at once: it reads your data, takes outside input, and can send data "
-                "out. That combination is where the risk comes from. It is not an issue on its own.")
-TRIFECTA_SOME = ("{n} of 3. The risk comes from a tool that has all three at once: it reads your "
-                 "data, takes outside input, and can send data out. This maps capability and "
-                 "reaches no verdict.")
+# Reworded by the owner 2026-10-21: no "It is not an issue on its own", which pulled against
+# the sentence before it.
+TRIFECTA_ALL = ("All three at once: it can read your data, take outside input, and send data out. "
+                "That is the combination text from outside can steer into sending your data away.")
+TRIFECTA_SOME = ("{n} of 3. That risk needs all three at once: reading your data, taking outside "
+                 "input, and sending data out.")
 NOT_WHAT = ('What this is not: static examination only. "Clean" means these stages found '
             "nothing; it does not mean the artifact is safe. This report offers possible issues "
             "with evidence and reaches no verdict. What to do with it is yours to decide.")
@@ -385,7 +386,7 @@ STATUS = {"01-inventory": _s1, "02-reader": _s2, "03-graph": _s3, "04-phrases": 
           "05-capability": _s5, "06-soft": lambda r: _s6(r)}
 
 
-# ---------------------------------------------------------------- points of attention
+# ---------------------------------------------------------------- notes on places
 
 
 def prohibition_note(x, short=False) -> str:
@@ -709,7 +710,7 @@ def limits(reports, notes, stamps, runs_ok) -> list[str]:
     return out + STANDING_LIMITS
 
 
-# The summary's count of what was not examined (owner 2026-10-07: 58 lines read as a hole).
+# details.html's count of what was not examined (owner 2026-10-07: 58 lines read as a hole).
 # Only checks this run skipped that apply to this repository, one item each. Standing limits of
 # the method, one-line-per-file repeats, and tools for file types the repository does not ship
 # are left to the full list (section 7, data/07-limits.md), which keeps every line.
@@ -754,7 +755,7 @@ def file_kinds(reports) -> set[str]:
 
 
 def glance(reports, notes, stamps, runs_ok) -> tuple[list[str], list[str]]:
-    """(skipped, not needed): plain items for the summary's count. `skipped` is what this run
+    """(skipped, not needed): plain items for details.html's count (Other details). `skipped` is what this run
     could not look at in this repository; `not needed` names tools the repository has no use for."""
     skipped, idle = [], []
     for stage in ORDER[:6]:
@@ -1035,8 +1036,8 @@ def _key(f):
 
 def _f5(r, capability_full):
     full_by_key = {_key(f): f for f in (capability_full or {}).get("findings", [])}
-    L = ["A map of capability, derived from stages 1 to 4; it reaches no verdict. A clean, well-built "
-         "repository usually has all three legs. A Bash grant is counted as private-data "
+    L = ["A map of capability, derived from stages 1 to 4; it reaches no verdict. A Bash grant is "
+         "counted as private-data "
          "access and execute posture; on its own it does not count as external communication.", "",
          "### Trifecta legs", ""]
     reads = not_instruction_reads(r)

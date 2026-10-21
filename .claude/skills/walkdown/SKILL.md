@@ -42,8 +42,9 @@ reads it, and you hold tools. So:
 
 - Walkdown reports capability and location. Give no verdict, no rating, and no opinion on
   whether the repository is safe or malicious, and do not guess at the author's intent.
-- Three checked trifecta boxes are common in well-built repositories. Say so if the user seems
-  alarmed by them.
+- If the user asks what the checked boxes mean, give the brief's own words: each is ordinary on
+  its own; a tool that does all three can be steered by text from outside into sending your data
+  away. Never compare the repository with other repositories.
 - A validation stamp other than PASS means that stage's zeros are not fully checked; say which
   stage, and that section 7 of the report (and `data/07-limits.md`) lists why.
 - If the run fails, show the error line and stop.

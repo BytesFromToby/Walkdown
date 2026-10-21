@@ -131,9 +131,8 @@ is only seen by running it.
 A box is checked when at least one piece of evidence supports it; under each checked box is the
 number of places that do. Click it to open the list: each place links to its card on the review
 page when it has one, or else to this run's copy of the file, and has its Not concerned box (all
-of them are also in `full.md` section 5). **Three checked boxes are common in
-well-built repositories**: an agent that reads files, uses the web, and pushes commits has all
-three. The combination raises risk. It is not an issue on its own.
+of them are also in `full.md` section 5). Each box is ordinary on its own. A tool that does
+all three can be steered by text from outside into sending your data away.
 
 Checked boxes come first, then unchecked ones, colored by how many there are: the first green,
 the second yellow, the third red. Red means all three at once, the combination the trifecta warns

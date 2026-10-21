@@ -3,7 +3,7 @@
     python stages/08-report/baserates.py <name>=<input_dir> [...] [--out baserates.json]
 
 Runs stages 1 and 4 on each corpus repo and counts, per pattern, the lines it hit outside
-human-facing files (the same lines the summary's points draw from). The table is a published fact about each
+human-facing files (the same lines the places to check draw from). The table is a published fact about each
 pattern, recomputed as the corpus grows; it judges no artifact (CHARTER, signal levels).
 """
 from __future__ import annotations

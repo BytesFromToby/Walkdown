@@ -129,11 +129,13 @@ def stamps(log_text: str) -> dict:
 
 def brief(run_dir: Path) -> str:
     """A plain summary of a finished run, from Walkdown's own words only: no quote, file name,
-    or other text from the audited repository."""
+    or other text from the audited repository. It uses summary.html's terms: the same headline,
+    concern kinds, wording-only line, and footer (owner, 2026-10-21)."""
     sys.path.insert(0, str(STAGE8))
     import layout  # noqa: E402
     import render as R  # noqa: E402
     import details_html  # noqa: E402
+    import summary_html  # noqa: E402
     reports = {}
     data, out = layout.data_dir(run_dir), layout.report_dir(run_dir)
     for stage in STAGE_NAMES:
@@ -146,20 +148,23 @@ def brief(run_dir: Path) -> str:
     every = details_html.first_items(reports)
     items = [it for it in every if it["stage"] != 6]
     model = [it for it in every if it["stage"] == 6]
-    by_title = collections.Counter((it["stage"], own_words(it["title"])) for it in items)
     by_model = collections.Counter(own_words(it["title"]) for it in model)
     pin = (R.fnd(reports, "01-inventory", "inv.pin") or [{}])[0]
     L = [f"Walkdown brief: {run_dir.parent.name}",
          f"Files examined: {pin.get('files', '?')}. Pinned: {pin.get('hash_kind', '?')} "
          f"{str(pin.get('hash', '?'))[:12]}.", "",
-         "What it can do (capability only; there is no verdict):"]
+         "What it can do:"]
     for k, name in R.LEG_NAMES.items():
         L.append(f"  [{'x' if legs.get(k) else ' '}] {name}")
+    L.append(f"  {summary_html.TOGETHER}")
     L.append(f"  Install grants: {', '.join(grants) if grants else 'none'}.")
-    L += ["", f"Things to check: {len(items)} place{'s' if len(items) != 1 else ''} "
-              f"under {len(by_title)} heading{'s' if len(by_title) != 1 else ''}."]
-    L += [f"  {details_html.PLAIN_STAGE[R.ORDER[s - 1]]}: {t} ({n})"
-          for (s, t), n in sorted(by_title.items())] or ["  none"]
+    rs = summary_html.rows(reports, items)
+    wording = sum(1 for it in items if summary_html.concern(it) is None)
+    L += ["", summary_html.headline(rs)]
+    L += [f"  {x['name']} ({len(x['places'])})" for x in rs]
+    if wording:
+        n = R.n(wording, "more place" if rs else "place")
+        L.append("  " + summary_html.WORDING.format(n=n, be="is" if wording == 1 else "are"))
     if model:
         L += ["", f"Model reads (experimental, stage 6): {len(model)} place"
                   f"{'s' if len(model) != 1 else ''}. A model's reading can be wrong."]
@@ -170,8 +175,7 @@ def brief(run_dir: Path) -> str:
           f"Every section in full: {out / 'details.html'}",
           f"Walk through each place and mark it: {out / 'review.html'}",
           f"Every finding with file and line: {out / 'full.md'}", "",
-          'No verdict and no score. "Nothing found" means these stages found nothing; it does '
-          "not mean the repository is safe."]
+          summary_html.FOOTER]
     return "\n".join(L)
 
 

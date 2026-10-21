@@ -15,7 +15,7 @@ out is `stages/08-report/baserates.json` (committed; render.py reads it).
   `stages=["01-inventory", "04-phrases"]`); `{name, hash (inv.pin), lines: {pattern id:
   lines hit}}`.
 - `count(report04)`: phrase findings only, skipped ones excluded, audience not `human`
-  (the lines the summary's points draw from); a line hit by a pattern under two checks
+  (the lines the places to check draw from); a line hit by a pattern under two checks
   counts once.
 - `rate(table, pattern, exclude_hash)`: the rate over the repos other than the one being
   audited (matched by hash): `repos`, `repos_hit`, `lines`, `level`. None without a table.

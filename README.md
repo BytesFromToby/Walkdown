@@ -57,7 +57,7 @@ The documentation:
 | Read | For |
 |---|---|
 | [docs/READING-THE-REPORT.md](docs/READING-THE-REPORT.md) | how to read the reports, part by part |
-| [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) | every stage and check: what it looks for, why, what to expect, where it shows |
+| [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) | every stage and check: what it looks for, why, and where it shows |
 | [docs/RUN-FOLDER.md](docs/RUN-FOLDER.md) | every file a run leaves, LOG.md, and the raw data |
 | [docs/MODEL-ACCURACY.md](docs/MODEL-ACCURACY.md) | how accurate the optional model reads measured, and how far to trust them |
 
@@ -114,8 +114,9 @@ python walkdown.py path/to/a/folder
 
 A URL is cloned into `ReposToExamine/<repo>` (running it again updates that clone to the
 latest commit; `--keep` audits it as it is); a folder is examined where it is. The run lands in
-`RepoResults/<repo>/`, and the command ends with a short brief: the trifecta legs, what to look
-at first, each stage's validation stamp, and the path to `summary.html`. Open that page.
+`RepoResults/<repo>/`, and the command ends with a short brief in the summary page's terms: the
+trifecta legs, the security concerns by kind, each stage's validation stamp, and the paths to the
+reports. Open `summary.html` first.
 
 ### Version drift
 

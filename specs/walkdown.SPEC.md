@@ -27,10 +27,14 @@ The front door: one command from a folder or a git URL to a finished run and a b
   is an error (exit 2) unless `--keep`.
 - Runs `stages/08-report/run.py <target> --repo <name> ...` with the project virtualenv's
   python when `.venv/` exists, else the current interpreter.
-- Prints the **brief** to stdout: files examined and the pin; the three trifecta legs as
-  checkboxes and the install grants; the "things to check" places counted by section (in
-  plain words, never "stage N"; 2026-10-07) and headline, with stage 6 model reads on their own lines marked experimental (2026-10-03); each stage's validation stamp from LOG.md; the paths of `summary.html`, `details.html`
-  (2026-10-20), `review.html` (2026-10-12), and `full.md`; the no-verdict line.
+- Prints the **brief** to stdout, in `summary.html`'s terms (owner, 2026-10-21): files examined
+  and the pin; "What it can do:" with the three trifecta legs as checkboxes, what they mean
+  together (`summary_html.TOGETHER`), and the install grants; the summary's headline sentence,
+  then one line per concern kind with its place count, in the summary's order, and the
+  wording-only line (`summary_html.headline`, `rows`, `WORDING`); stage 6 model reads on their
+  own lines marked experimental (2026-10-03); each stage's validation stamp from LOG.md; the
+  paths of `summary.html`, `details.html` (2026-10-20), `review.html` (2026-10-12), and
+  `full.md`; the summary's footer (`summary_html.FOOTER`).
 - After the brief, version drift against the previous run of the same name (`stages/08-report/specs/drift.SPEC.md`): counts only, plus the path of `changes.md`; one line when the version is the same and nothing differs; with the same version and a difference, a header saying every difference comes from Walkdown (`drift.since`, 2026-10-19); never fails the audit (2026-10-04). `walkdown.py diff <old> <new>` compares any two runs.
 - Exit code: the stage 8 runner's; 2 for a bad target or a failed clone.
 
@@ -46,5 +50,6 @@ The front door: one command from a folder or a git URL to a finished run and a b
 
 1. URLs and folders are told apart, and names derived, as above.
 2. Validation stamps are read from LOG.md's table.
-3. The brief carries legs, grants, counted headlines, stamps, and report paths.
+3. The brief carries legs, grants, the summary's headline and concern rows with counts, the
+   wording-only line, stamps, report paths, and the summary's footer.
 4. No text planted in the audited repository's findings appears in the brief.

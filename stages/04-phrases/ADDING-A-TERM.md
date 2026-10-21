@@ -40,7 +40,7 @@ fixed order. Follow it for every add, every narrowing, and every retirement (rev
    `test_narrowed`, the class still firing in `test_narrowed_rows_still_fire_on_their_class`.
 
 5. **Plain words.** Add the row to `PLAIN` in `stages/08-report/plain.py`: what the words are, then
-   "The worry: ...". The review page and the summary show it to readers. `tests/test_plain.py`
+   "The worry: ...". The review page shows it to readers. `stages/08-report/tests/test_plain.py`
    fails until every row has one and every entry names a row.
 
 6. **Grade everything.** `python grader/grader.py all` and `python -m pytest`. One stage is not

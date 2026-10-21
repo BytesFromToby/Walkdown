@@ -74,7 +74,8 @@ HOOK_NOTES = {
 
 
 def first_items(r) -> list[dict]:
-    """Everything the summary's points of attention name, as plain items, stage order."""
+    """The places to check, as plain items, stage order: listed on details.html, one card each on
+    review.html, sorted into concern kinds on summary.html."""
     out = []
     for h in [h for h in R.fnd(r, "01-inventory", "struct.hooks") if not R.is_test_data(h.get("file"))]:
         out.append(_item(1, "Runs commands on its own", h["file"],

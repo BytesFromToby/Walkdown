@@ -28,14 +28,17 @@ makes language / script shift its own signal (CHARTER scope section).
 
 **Alpha, public:** https://github.com/BytesFromToby/Walkdown (released from a separate copy;
 see "Public repo" below). All eight stages run end to end from one command; every stage has
-fixtures, a grader stamp, specs, and tests (764). Stage 6 (model reads) is optional and
-experimental. Four repositories audited (superpowers, Plumbline, claude-familiar, backlog) plus
-the self-audit. Every check the method calls for is built (HTML as a browser draws it was the
-last, 2026-10-20). Two optional tools affect results: Tesseract (OCR of images and PDF pages) and
+fixtures, a grader stamp, specs, and tests (765). Stage 6 (model reads) is optional and
+experimental. Repositories audited include superpowers, Plumbline, claude-familiar, and backlog,
+plus the self-audit, and several more since 2026-10-16 (named only in their own runs, which stay
+private). Every check the method calls for is built (HTML as a browser draws it was the last,
+2026-10-20). Two optional tools affect results: Tesseract (OCR of images and PDF pages) and
 Playwright with its Chromium (HTML as a browser draws it); gitleaks has a pip fallback.
+Version 0.2.0 (release 16, 2026-10-20).
 
 Where things stand and what is next: `pre-planning/REVIEW-2026-10-03.md` (the latest review:
-fixed items, open design items C14 to C18, and the ordered plan). Stage 6 decisions:
+fixed items, design items C14 onward, and the ordered plan). The reports and their specs:
+`stages/08-report/specs/REPORTS.md`. Stage 6 decisions:
 `pre-planning/soft/README.md` (D1, D2, D4, D5 settled; D3 waits on the owner's labeling).
 
 **Scope decision (2026-09-13, standing):** the tool renders **no verdict**. It reviews,
@@ -74,7 +77,7 @@ CLAUDE.md            you are here: what the project is, and the map
 README.md            the public front page; CREDITS.md, LICENSE, NOTICE, THIRD-PARTY-NOTICES.md
 walkdown.py          the front door: a URL or folder in, a run folder and a brief out
 .claude/skills/      the walkdown skill (run it from Claude Code)
-docs/                public docs: READING-THE-REPORT, HOW-IT-WORKS, RUN-FOLDER
+docs/                public docs: READING-THE-REPORT, HOW-IT-WORKS, RUN-FOLDER, MODEL-ACCURACY
 stages/
   01-inventory/      each stage: CONTEXT.md (contract), scripts, specs/<name>.SPEC.md, tests/
   02-reader/
@@ -113,7 +116,7 @@ factory, not the run.
   (THREATS / PHRASES) and `stages/CONTRACT.md`, never from `Fixtures/ANSWERS/`.
 - **Deterministic stages first** (1 to 5). Stage 6's model is the user's choice
   (recommend local; final decision deferred).
-- **Optional dependencies** (Tesseract, gitleaks) never fail a run and never pass
+- **Optional dependencies** (Tesseract, Playwright, gitleaks) never fail a run and never pass
   silently: a skipped check is listed in stage 7.
 - The two early scripts once in `tools/` were rebuilt as stages 2 and 4 and removed (2026-10-03).
 
@@ -131,11 +134,11 @@ dated. Then, by concern:
 | What this is and is not | `pre-planning/CHARTER.md` |
 | Who it is for, and what they do with a finding | `pre-planning/CUSTOMERS.md` |
 | How the audit runs (the ordered stages) | `pre-planning/METHOD.md` |
-| What files a run leaves on disk, and the run log | `pre-planning/RUN-LAYOUT.md` |
+| What files a run leaves on disk, and the run log | `docs/RUN-FOLDER.md` (current); `pre-planning/RUN-LAYOUT.md` (design history) |
 | Which open-source tools to wire in (buy vs. build, licenses) | `pre-planning/TOOLING.md` |
 | What it looks for | `pre-planning/THREATS.md` (classes), `pre-planning/PHRASES.md` (pattern sets + base rates) |
 | How classes map to stages + fixtures | `pre-planning/COVERAGE.md` |
-| How results are reported | `pre-planning/REPORTING.md` |
+| How results are reported | `stages/08-report/specs/REPORTS.md` (current); `pre-planning/REPORTING.md` (design history) |
 | How an attacker would beat it | `pre-planning/RED-TEAM.md` |
 | Real-world cases the method is measured against | `pre-planning/INCIDENTS.md` |
 | The 15s / 45s spoken pitch | `pre-planning/PITCH.md` |
