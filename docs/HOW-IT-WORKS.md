@@ -118,7 +118,7 @@ its text layer lacks are listed, as when a page shows a picture of an instructio
 missing, section 7 says so. Playwright, when installed with its Chromium, draws each HTML file
 as a browser would, with the page's own scripts off and nothing fetched from the network, and
 lists what static style cannot see: text in a closed `<details>` section, moved off the page,
-clipped or covered by another element, hidden by an `@media` rule, or colored like the page through a CSS variable (carrier
+clipped or covered by another element, hidden or colored like the page by an `@media` rule (carrier
 `rendered`, with `how`), and text a style sheet adds with `::before` or `::after`, which a
 person sees and the model never receives. When it is missing, section 7 says so. The language
 check needs nothing installed; it reads prose only (not code comments, config values, or HTML),

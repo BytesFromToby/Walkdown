@@ -1,7 +1,7 @@
 # render_html.py: spec (added 2026-10-20)
 
 HTML as a browser draws it. Stage 2's static reader (`read_html.py`) works out what is painted
-from inline style and `<style>` rules; a browser also applies `@media` rules, CSS variables,
+from inline style and `<style>` rules; a browser also applies `@media` rules (and the CSS variables set inside them),
 selectors the static matcher cannot run, positioning, clipping, and elements drawn over others,
 and shows text that a style sheet adds with `::before` and `::after`. This module draws each
 HTML file in a headless Chromium and reports what a person would and would not see. It was the
@@ -86,7 +86,7 @@ the notes say so.
    and reports generated text as `B-only`.
 4. The request filter lets through only `file:` URLs inside the input folder.
 5. With Playwright present: text off the page, clipped, hidden by `@media`, colored like the page
-   through a CSS variable, covered, and in a closed `<details>` (its summary visible) is found with
+   through a CSS variable set in an `@media` rule, covered, and in a closed `<details>` (its summary visible) is found with
    the right `how`; text a `::after` adds is
    `B-only`; visible text and text far down a long page are not reported; a page script that
    would reveal or add text does not run.

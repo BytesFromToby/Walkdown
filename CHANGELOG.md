@@ -9,7 +9,9 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 - Stage 2, HTML render: the check for Playwright's browser now asks for the exact build this
   Playwright launches (from its own `browsers.json`), not any Chromium. A Chromium left by
   another Playwright version had passed the check, then every HTML file failed to draw; now
-  each gets a skip that names the build wanted and the install line.
+  each gets a skip that names the build wanted and the install line. Since static style resolves
+  CSS variables, the page-colored variable line in the render fixture is a static-style finding
+  (`rd-static-var`); the drawn reading's variable row is now a color set inside `@media`.
 - Stage 3, fewer false broken references. A path written as the end of a real one
   (`rules/carousel-rules.md` for `_shared/rules/carousel-rules.md`) now resolves to it, marked
   partial (and ambiguous when several match). A broken reference into a folder the repository
