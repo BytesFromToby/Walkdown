@@ -2,6 +2,9 @@
 Spec: specs/pairs.SPEC.md."""
 from __future__ import annotations
 
+import re
+import unicodedata
+
 from injection import hook_scripts
 from legs import entry
 from rules import CARRIER_PATTERNS, HOOK_INSTRUCTION_PATTERNS, INJECTION_EVENTS, PAIRS
@@ -26,6 +29,26 @@ def _hook_emitters(reports: dict, graph: dict | None) -> dict[str, dict]:
         for s in scripts:
             out.setdefault(s, h)
     return out
+
+
+def _plain(s: str) -> str:
+    """For comparing a match with hidden text: NFKC, invisible characters dropped, lower case,
+    white space collapsed."""
+    s = unicodedata.normalize("NFKC", s or "")
+    s = "".join(c for c in s if unicodedata.category(c) != "Cf")
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+
+def _inside(hit: dict, div: dict) -> bool:
+    """A hidden span covers a hit only when a matched word is in the hidden text itself, not
+    merely on the same source line (2026-10-21, an outside tester: a "Never publish" line in a
+    visible <pre> paired with a hidden "Copy" button on that line). A hit with no matches kept
+    keeps the line rule."""
+    words = [_plain(m.get("text")) for m in hit.get("matches") or [] if m.get("text")]
+    if not words:
+        return True
+    hidden = _plain(div.get("text"))
+    return any(w and w in hidden for w in words)
 
 
 def _pos(f: dict):
@@ -75,7 +98,8 @@ def pairs(reports: dict, graph: dict | None = None) -> list[dict]:
         # an en dash or a "×" folds too, and a hit that matches the raw line is not hidden
         # by it (2026-10-09, caveman: 30 of 38 hidden pairs were typographic folds)
         cover = [entry("02", f, why) for lo, hi, f, why in hidden.get((file, kind_at), [])
-                 if lo <= line <= hi and (f.get("check") != "read.fold" or h.get("folded"))]
+                 if lo <= line <= hi and (h.get("folded") if f.get("check") == "read.fold"
+                                          else _inside(h, f))]
         carrier_only = set(h.get("patterns") or []) <= CARRIER_PATTERNS
         if cover and not carrier_only:
             halves["hidden+phrase"] = cover

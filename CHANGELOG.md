@@ -6,6 +6,11 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Stage 5: hidden text pairs with a phrase hit only when the hit's matched words are in the
+  hidden text itself, not merely on the same source line. A visible `<pre>` instruction had
+  paired with a button label on that line and counted as "Hidden text that reads like an
+  instruction" (found by an outside tester). On superpowers all 11 such pairs stay; on
+  claude-familiar the one that goes was a link's path paired with a badge's alt text.
 - Stage 2, HTML: CSS variables are resolved (`var(--x)` and its fallback, inherited as in CSS)
   in text and background colors, and a color or background that cannot be read (a variable
   nobody defines, a gradient, an image) makes no hiding claim. White button text on a
