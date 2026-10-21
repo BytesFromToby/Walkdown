@@ -71,3 +71,23 @@ def test_other_title_reported_as_document_title():
     page = "<html><head>\n<title>Tab only</title>\n</head><body><p>Body</p></body></html>"
     ds = read_html.read_html(page)["divergences"]
     assert [(d["carrier"], d["line"], d["text"]) for d in ds] == [("document-title", 2, "Tab only")]
+
+
+def _hidden(html):
+    return [(d["carrier"], d["text"]) for d in read_html.read_html(html)["divergences"]]
+
+
+def test_css_variables_resolve_and_unknown_backgrounds_make_no_claim():
+    """2026-10-21, an outside tester: white "Copy" on a var(--acc) green button was reported
+    white-on-white against the page."""
+    button = ('<html><head><style>:root{--acc:#2e7d32} body{background:#fff} '
+              'button{background:var(--acc);color:#fff}</style></head>'
+              '<body><pre>Never publish.</pre><button>Copy</button></body></html>')
+    assert _hidden(button) == []
+    real = '<html><head><style>:root{--bg:#fff} p{color:var(--bg)}</style></head><body><p>Hidden ask</p></body></html>'
+    assert _hidden(real) == [("white-on-white", "Hidden ask")]
+    fallback = '<html><head><style>p{color:var(--nope, #fff)}</style></head><body><p>Hidden ask</p></body></html>'
+    assert _hidden(fallback) == [("white-on-white", "Hidden ask")]
+    for bg in ("var(--nope)", "linear-gradient(#000,#333)", "url(x.png)"):
+        page = f'<html><head><style>div{{background:{bg};color:#fff}}</style></head><body><div>Text</div></body></html>'
+        assert _hidden(page) == [], bg

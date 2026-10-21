@@ -6,6 +6,11 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Stage 2, HTML: CSS variables are resolved (`var(--x)` and its fallback, inherited as in CSS)
+  in text and background colors, and a color or background that cannot be read (a variable
+  nobody defines, a gradient, an image) makes no hiding claim. White button text on a
+  `var(--acc)` green had been reported as white-on-white against the page (found by an outside
+  tester); text colored like the page through a variable is still reported.
 - A run that did not complete never reads as clean. When a step produced no output,
   `summary.html` and the brief say "This run did not complete" and name the step, never "found
   none", and the brief says why it stopped (the error's type, and the module of a missing
