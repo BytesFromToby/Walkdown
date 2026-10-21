@@ -6,6 +6,9 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- With the Tesseract program installed but not the `pytesseract` package, skipped OCR was not
+  reported: it now shows under Other details on `details.html`, and at the bottom of
+  `summary.html` when the repository has images or PDFs.
 - `summary.html`: the line naming a step that did not work moved to the bottom of the page, and a
   missing optional tool (OCR, Playwright) is named there only when the repository has files that
   tool reads. A fresh install without them no longer opens every summary with a warning.

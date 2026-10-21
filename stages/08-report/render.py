@@ -723,6 +723,9 @@ HTML_EXTS = {"html", "htm", "xhtml"}
 TOOL_NOTES = [
     ("tesseract", "Text inside images (OCR)", ("image",), "Tesseract not installed"),
     ("tesseract", "PDF pages drawn and read (OCR)", ("pdf",), "Tesseract not installed"),
+    # the program installed without its Python package (fresh-install test, 2026-10-21)
+    ("pytesseract", "Text inside images (OCR)", ("image",), "pytesseract not installed"),
+    ("pytesseract", "PDF pages drawn and read (OCR)", ("pdf",), "pytesseract not installed"),
     ("not built: PDF render", "PDF pages drawn and read as images", ("pdf",), "not built yet"),
     ("html render:", "HTML as a browser draws it", ("html",), "Playwright not installed"),  # since 2026-10-20
     ("not built: HTML render", "HTML as a browser draws it", ("html",), "not built yet"),

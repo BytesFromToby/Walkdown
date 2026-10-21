@@ -497,3 +497,19 @@ def test_full_says_how_a_drawn_page_hides_text():
     f = full(META, r, PASS, {}, set(r))
     assert "plan.html:315: A-only, carrier rendered (collapsed), method render:" in f
     assert "a.html:4: A-only, carrier display:none, method static-style:" in f
+
+
+def test_tool_items_know_both_ways_ocr_goes_missing():
+    """Fresh-install test, 2026-10-21: with the Tesseract program but no pytesseract, stage 2's
+    note starts "pytesseract not installed"; it counts as OCR skipped when the repository has an
+    image, and as not needed when it has none."""
+    r = reports()
+    for start in ("tesseract not installed", "pytesseract not installed"):
+        notes = {"02-reader": [f"{start}: images and PDF pages are skipped for OCR"]}
+        assert R.tool_items(r, notes)[0] == []
+        assert "Text inside images (OCR)" in R.tool_items(r, notes)[1]
+        r2 = reports()
+        r2["01-inventory"]["findings"].append({"check": "inv.file", "file": "a.png", "line": None,
+                                               "ext": "png", "type": "image/png"})
+        assert [w for w, _ in R.tool_items(r2, notes)[0]] == ["Text inside images (OCR)"]
+        assert any(x.startswith("Text inside images (OCR): ") for x in R.glance(r2, notes, PASS, set(r2))[0])
