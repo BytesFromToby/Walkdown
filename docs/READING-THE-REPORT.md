@@ -48,9 +48,10 @@ security concerns it looks for.", and the section below says "Nothing to point o
 page's footer says the one thing to keep in mind: Walkdown reads the files without running
 anything, leaves the judgment to you, and finding nothing does not mean a repository is safe.
 
-When a step did not work in this run (it did not run, or it did not pass its fixture check), a
-line under the headline names it: a step that did not work can miss places, so the page may show
-fewer than there are. Other details on `details.html` says why.
+When a step did not work in this run (it did not run, or it failed its fixture check), a line at
+the bottom of the page names it: a step that did not work can miss places, so the page may show
+fewer than there are. Other details on `details.html` says why. A missing optional tool (OCR,
+HTML as a browser draws it) is named there only when this repository has files that tool reads.
 
 **Security concerns.** One row per kind that has places, always in this order:
 

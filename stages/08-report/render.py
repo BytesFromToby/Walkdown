@@ -754,6 +754,23 @@ def file_kinds(reports) -> set[str]:
     return kinds
 
 
+def tool_items(reports, notes) -> tuple[list[tuple[str, str]], list[str]]:
+    """Stage 2's notes on optional tools: ([(what, why)] for a missing tool whose file kind this
+    repository has, [what] for one it has no use for). Read by `glance` and by summary.html's
+    warning (owner, 2026-10-21: an INCOMPLETE stage 2 matters only when the repository has files
+    the missing tool reads)."""
+    kinds = file_kinds(reports)
+    applies, unused = [], []
+    for line in notes.get("02-reader", []):
+        for start, what, serves, why in TOOL_NOTES:
+            if line.startswith(start):
+                if serves is None or kinds & set(serves):
+                    applies.append((what, why))
+                else:
+                    unused.append(what)
+    return applies, unused
+
+
 def glance(reports, notes, stamps, runs_ok) -> tuple[list[str], list[str]]:
     """(skipped, not needed): plain items for details.html's count (Other details). `skipped` is what this run
     could not look at in this repository; `not needed` names tools the repository has no use for."""
@@ -769,13 +786,9 @@ def glance(reports, notes, stamps, runs_ok) -> tuple[list[str], list[str]]:
             skipped.append("Model reads (optional): not run")
         elif soft:
             skipped.append(f"Model reads (optional): {n(len(soft), 'question')} skipped")
-    for line in notes.get("02-reader", []):
-        for start, what, serves, why in TOOL_NOTES:
-            if line.startswith(start):
-                if serves is None or kinds & set(serves):
-                    skipped.append(f"{what}: {why}")
-                else:
-                    idle.append(f"{what}: none in this repository")
+    applies, unused = tool_items(reports, notes)
+    skipped += [f"{what}: {why}" for what, why in applies]
+    idle += [f"{what}: none in this repository" for what in unused]
     for stage in ORDER[:6]:
         per_file: collections.Counter = collections.Counter()
         in_tests = 0

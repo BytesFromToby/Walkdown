@@ -33,6 +33,9 @@ Status: built.
 - **`limits(...)`, `limits_doc(...)` -> `data/07-limits.md`**: stage 7: stages that failed or are
   not validated, skip findings, stage notes naming a limit, unread and unscanned files, then
   `STANDING_LIMITS`. Every line, nothing folded.
+- **`tool_items(reports, notes)` -> `([(what, why)], [what])`**: stage 2's notes on optional
+  tools, split by whether this repository has files the tool reads (`TOOL_NOTES`, `file_kinds`).
+  Read by `glance` and by `summary.html`'s warning (2026-10-21).
 - **`glance(...)` -> `(skipped, not needed)`**: `details.html`'s short account of what was not
   checked (Other details):
   one plain item per check this run skipped that applies to this repository (a stage that did

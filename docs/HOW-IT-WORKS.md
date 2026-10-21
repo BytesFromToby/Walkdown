@@ -365,8 +365,8 @@ optional tool; files unread or not scanned; the test-data rule and how much it s
 the standing limits (English only, static only, known shapes).
 
 **In the report.** Section 7 of `full.md`, Other details on `details.html`, and
-`data/07-limits.md`. A step that did not run or did not pass validation is also named under the
-headline of `summary.html`.
+`data/07-limits.md`. A step that did not run or did not pass validation is also named at the
+bottom of `summary.html` (a missing optional tool only when this repository has files it reads).
 
 ## Stage 8: Report
 

@@ -6,6 +6,11 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- `summary.html`: the line naming a step that did not work moved to the bottom of the page, and a
+  missing optional tool (OCR, Playwright) is named there only when the repository has files that
+  tool reads. A fresh install without them no longer opens every summary with a warning.
+- README: OCR needs the `pytesseract` package as well as the Tesseract program, and what an
+  INCOMPLETE stage 2 stamp means without the optional tools (found in a fresh-install test).
 - The brief uses the summary page's terms: its headline, one line per concern kind with a count,
   the wording-only line, what the three boxes mean together, and its footer.
 - The trifecta line under the boxes no longer says "It is not an issue on its own", and no page,

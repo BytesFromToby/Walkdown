@@ -47,7 +47,8 @@ python stages/08-report/run.py <input_dir> --repo <name> [--results <dir>] [--da
 - Every count resolves to file:line in the full report.
 - A stage whose validation stamp is not PASS says so on its status line in `full.md` and
   points to section 7; `details.html` puts a pill on Other details, and `summary.html` names the
-  step under its headline. A zero from an unvalidated stage is never shown as clean.
+  step at the bottom of the page (an INCOMPLETE stage 2 only when the missing tool reads files
+  the repository has). A zero from an unvalidated stage is never shown as clean.
 - Benign share: a hit count carries one only when stage 6 labels ran (C15, 2026-10-03).
 - The places to check (`details_html.first_items`: listed on `details.html`, one card each on
   `review.html`, sorted into concern kinds on `summary.html`) are chosen by fixed rules, never

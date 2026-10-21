@@ -4,7 +4,7 @@ specs/summary_html.SPEC.md.
 What Walkdown found that could be dangerous, by fixed kinds in a fixed order; what the repository
 can do; the questions before use. Everything else, what was not checked included (owner,
 2026-10-20), is in details.html and review.html, except a step that did not work: that is named
-under the headline, since the page's counts lean on it. Same facts as the other reports; nothing here detects or judges, and nothing is
+at the bottom of the page, since the page's counts lean on it. Same facts as the other reports; nothing here detects or judges, and nothing is
 picked by how bad it seems (owner, 2026-10-20).
 """
 from __future__ import annotations
@@ -142,20 +142,30 @@ def capability(r) -> str:
                       '<p class="note"><a href="details.html#trifecta">The places behind each box</a>.</p>')
 
 
-def failed_steps(stamps, runs_ok) -> list[str]:
+def failed_steps(stamps, runs_ok, r=None, notes=None) -> list[str]:
     """Steps that did not work in this run (owner, 2026-10-20): a step with no output, or one whose
-    fixture check did not pass. A run made without validation has no stamps and adds none here."""
+    fixture check failed. An INCOMPLETE stamp counts only when a missing optional tool reads files
+    this repository has (`render.tool_items`; owner, 2026-10-21): without them it changes nothing
+    here, and Other details on details.html lists it. A run made without validation has no
+    stamps and adds none here."""
     out = []
     for st in R.ORDER[:6]:
+        name = D.PLAIN_STAGE[st]
         if st not in runs_ok:
-            out.append(f"{D.PLAIN_STAGE[st]} did not run")
+            out.append(f"{name} did not run")
+        elif st in (stamps or {}) and stamps[st].result == "INCOMPLETE":
+            gaps = R.tool_items(r or {}, notes or {})[0] if st == "02-reader" else []
+            if gaps:
+                out.append(f"{name} skipped part of this repository: "
+                           + "; ".join(f"{w[:1].lower()}{w[1:]}, {y}" for w, y in gaps))
         elif st in (stamps or {}) and stamps[st].result != "PASS":
-            out.append(f"{D.PLAIN_STAGE[st]} did not pass its fixture check ({stamps[st].result})")
+            out.append(f"{name} did not pass its fixture check ({stamps[st].result})")
     return out
 
 
 def warning(steps) -> str:
-    """One line under the headline, only when a step did not work."""
+    """One line at the bottom of the page, above the footer, only when a step did not work
+    (owner, 2026-10-21)."""
     if not steps:
         return ""
     return (f'<section class="block warn" id="warning"><p><b>Not every step worked in this run.</b> '
@@ -165,7 +175,8 @@ def warning(steps) -> str:
 
 def render_page(meta, r, stamps, notes, runs_ok, marks=None) -> str:
     """`stamps`, `notes`, `runs_ok` are taken as details.html takes them. What was not checked is
-    on that page only (owner, 2026-10-20); a step that did not work is named here (`warning`)."""
+    on that page only (owner, 2026-10-20); a step that did not work is named at the bottom of this
+    one (`warning`)."""
     every = D.first_items(r)
     places = [it for it in every if it["stage"] != 6]
     model = sum(1 for it in every if it["stage"] == 6)
@@ -174,9 +185,8 @@ def render_page(meta, r, stamps, notes, runs_ok, marks=None) -> str:
     head = D.header(meta, r, links=(("details.html", "Details"), ("review.html", "Review each place →")))
     body = [head,
             f'<section class="block lead" id="headline"><p class="headline">{esc(headline(rs))}</p></section>',
-            warning(failed_steps(stamps, runs_ok)),
             concerns_block(rs, wording, model), capability(r), D.before_use(r, places),
-            f'<footer><p>{esc(FOOTER)}</p></footer>']
+            warning(failed_steps(stamps, runs_ok, r, notes)), f'<footer><p>{esc(FOOTER)}</p></footer>']
     return ("<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n"
             f"<title>{esc('Walkdown summary: ' + meta['repo'])}</title>\n" + D.FONTS

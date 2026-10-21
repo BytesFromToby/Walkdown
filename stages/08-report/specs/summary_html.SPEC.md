@@ -30,11 +30,6 @@ marks, this run's own or carried from an earlier run (`marks.SPEC.md`). The plac
      kinds." When the reader marked some Not concerned: "(<M> of them marked Not concerned)".
    - With none: "Walkdown found none of the security concerns it looks for." The page's one
      qualifier is in the footer.
-   Then, only when a step did not work (`failed_steps`, `warning`): "Not every step worked in
-   this run.", each such step by its plain name with "did not run" (no output) or "did not pass its
-   fixture check (<result>)", that a step that did not work can miss places so the page may show
-   fewer than there are, and a link to Other details on `details.html`. A run made without
-   validation has no stamps and gets no line for them.
 3. **Security concerns.** One row per concern kind that has a place, in this fixed order
    (`CONCERNS`). Each place falls in exactly one row; a place is taken by the first row that fits:
    1. **Hidden text that reads like an instruction** (kind `hidden+phrase`).
@@ -67,7 +62,15 @@ marks, this run's own or carried from an earlier run (`marks.SPEC.md`). The plac
    evidence, in its three groups, under one lede: "These are the questions the findings raise for
    someone deciding whether to use this repository. The answers, and what to do about them, are
    yours." With no questions: "No questions from these findings." and no lede.
-6. **Footer** (`FOOTER`), the page's one qualifier, in plain words: "Walkdown reads a
+6. **A step that did not work**, only then (`failed_steps`, `warning`; at the bottom, owner
+   2026-10-21): "Not every step worked in this run.", each such step by its plain name with "did
+   not run" (no output), "did not pass its fixture check (<result>)" (FAIL or ERROR), or, for an
+   INCOMPLETE stage 2, "skipped part of this repository: <what>, <why>" when a missing optional
+   tool reads files this repository has (`render.tool_items`); an INCOMPLETE stamp with no such
+   files adds nothing. Then that a step that did not work can miss places so the page may show
+   fewer than there are, and a link to Other details on `details.html`. A run made without
+   validation has no stamps and gets no line for them.
+7. **Footer** (`FOOTER`), the page's one qualifier, in plain words: "Walkdown reads a
    repository's files without running anything. It points out what it finds and leaves the
    judgment to you. Finding nothing does not mean a repository is safe." (`details.html` and
    `full.md` keep `render.NOT_WHAT`.)
@@ -100,9 +103,9 @@ escaped, print on one or two pages.
 4. Model reads are one line and never concerns (`test_model_reads_are_one_line_and_never_concerns`).
 5. The capability row and the questions; no not-checked line
    (`test_capability_and_questions_and_no_not_checked`, `test_questions_before_use_follow_the_evidence`).
-6. A step that did not run or did not pass its fixture check is named under the headline;
-   with every step working, or no stamps, there is no warning
-   (`test_a_step_that_did_not_work_is_named_under_the_headline`).
+6. A step that did not run or failed its fixture check is named at the bottom; an INCOMPLETE
+   stage 2 only when the repository has files the missing tool reads; with every step working,
+   or no stamps, there is no warning (`test_a_step_that_did_not_work_is_named_at_the_bottom`).
 7. No verdict words; artifact text escaped (`test_no_verdict_words_and_escaping`). Checked by eye
    on a Plumbline run (2026-10-20): about two laptop screens, nothing wider than the page.
 
@@ -117,5 +120,8 @@ escaped, print on one or two pages.
   warning under the headline names a step that did not work (owner). Then fewer caveats (owner,
   on the first run with no concerns): "it looks for" in the headline, no "nothing found" line
   there, "Nothing to point out here." and no ledes on empty sections, no "no verdict and no score"
-  sentence, and a plain footer as the page's one qualifier. Under the three boxes, what they mean
+  sentence, and a plain footer as the page's one qualifier. 2026-10-21 (owner, after a fresh
+  install showed the warning on every run without the optional tools): the warning moved to the
+  bottom, and an INCOMPLETE stage 2 counts only when the missing tool reads files the repository
+  has. Under the three boxes, what they mean
   together, and no lede above them (owner).
