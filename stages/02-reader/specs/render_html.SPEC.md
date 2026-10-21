@@ -14,8 +14,13 @@ last check listed as "not built".
 
 Optional: Playwright and its Chromium (`pip install playwright`, then
 `python -m playwright install chromium-headless-shell`). `available()` checks without starting a
-browser: the package is importable and a Chromium is installed (or `PLAYWRIGHT_BROWSERS_PATH`
-is `0`, the bundled browsers). Without them every HTML file gets a skip.
+browser: the package is importable and the Chromium build it launches is installed, read from
+the package's own `browsers.json` (`chromium_headless_shell-<revision>`; 2026-10-21: any
+Chromium was enough before, so a build for another Playwright version passed the check and then
+failed on every page). A Chromium for another version gives its own reason. When
+`browsers.json` cannot be read, any Chromium counts, as before; `PLAYWRIGHT_BROWSERS_PATH` `0`
+means the bundled browsers. Without them every HTML file gets a skip. A browser that does not
+start gives a skip whose reason is the error's first line only.
 
 ## How a page is drawn
 
@@ -74,7 +79,7 @@ the notes say so.
 
 ## Done when (tests in `tests/test_render_html.py`)
 
-1. `available` is false without the package or without a Chromium, with the reason.
+1. `available` is false without the package or without a Chromium, with the reason; with a Chromium build for another Playwright version it is false and says so, and with the build `browsers.json` names it is true.
 2. `line_of` finds the line by the whole text, by its start, and across tags and entities, and
    gives null when the text is not in the source.
 3. `divergences` merges one element's text, leaves out what static style found (either way),

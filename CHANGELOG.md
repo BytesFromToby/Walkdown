@@ -6,6 +6,10 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Stage 2, HTML render: the check for Playwright's browser now asks for the exact build this
+  Playwright launches (from its own `browsers.json`), not any Chromium. A Chromium left by
+  another Playwright version had passed the check, then every HTML file failed to draw; now
+  each gets a skip that names the build wanted and the install line.
 - Stage 3, fewer false broken references. A path written as the end of a real one
   (`rules/carousel-rules.md` for `_shared/rules/carousel-rules.md`) now resolves to it, marked
   partial (and ambiguous when several match). A broken reference into a folder the repository

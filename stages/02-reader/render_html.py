@@ -10,6 +10,7 @@ request that is not a file inside the input folder is aborted, and nothing is do
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import re
 import sys
@@ -140,15 +141,42 @@ def _browsers_dirs() -> list[Path]:
     return [Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "ms-playwright"]
 
 
+INSTALL = "python -m playwright install chromium-headless-shell"
+
+
+def expected_build(spec) -> str | None:
+    """The browser folder this Playwright launches headless (`chromium_headless_shell-<rev>`), from
+    the package's own browsers.json; None when it cannot be read."""
+    try:
+        pkg = Path(spec.origin).parent / "driver" / "package" / "browsers.json"
+        for b in json.loads(pkg.read_text(encoding="utf-8"))["browsers"]:
+            if b.get("name") == "chromium-headless-shell":
+                return f"chromium_headless_shell-{b['revision']}"
+    except Exception:
+        return None
+    return None
+
+
 def available() -> tuple[bool, str]:
-    """Cheap check, no browser started: the package is importable and a Chromium is installed."""
-    if importlib.util.find_spec("playwright") is None:
+    """Cheap check, no browser started: the package is importable and the Chromium build it
+    launches is installed. Any Chromium was enough before 2026-10-21; a build from another
+    Playwright version passed the check and then failed to start on every page."""
+    spec = importlib.util.find_spec("playwright")
+    if spec is None:
         return False, "playwright not installed"
     if os.environ.get("PLAYWRIGHT_BROWSERS_PATH") == "0":
         return True, "playwright with its bundled browsers"
-    if not any(d.is_dir() and any(p.name.startswith("chromium") for p in d.iterdir())
-               for d in _browsers_dirs()):
-        return False, "playwright's Chromium not installed (python -m playwright install chromium-headless-shell)"
+    dirs = [d for d in _browsers_dirs() if d.is_dir()]
+    want = expected_build(spec)
+    if want is not None:
+        if any((d / want).is_dir() for d in dirs):
+            return True, "playwright"
+        if any(p.name.startswith("chromium") for d in dirs for p in d.iterdir()):
+            return False, (f"playwright's Chromium is a build for another Playwright version "
+                           f"(this one needs {want}; {INSTALL})")
+        return False, f"playwright's Chromium not installed ({INSTALL})"
+    if not any(p.name.startswith("chromium") for d in dirs for p in d.iterdir()):
+        return False, f"playwright's Chromium not installed ({INSTALL})"
     return True, "playwright"
 
 
@@ -249,7 +277,8 @@ class Session:
             try:
                 self._start()
             except Exception as exc:
-                raise RenderError(f"browser did not start: {type(exc).__name__}: {exc}"[:200])
+                first = str(exc).strip().splitlines()[0] if str(exc).strip() else ""
+                raise RenderError(f"browser did not start: {type(exc).__name__}: {first}"[:200])
         ctx = self._browser.new_context(java_script_enabled=False, offline=True, viewport=VIEWPORT,
                                         accept_downloads=False, service_workers="block")
         try:
