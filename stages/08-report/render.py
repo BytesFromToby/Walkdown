@@ -242,8 +242,10 @@ def _s3(r):
     unl = len(fnd(r, "03-graph", "graph.unlisted"))
     tail = (f" {n(unl, 'skill, agent, or command', 'skills, agents, or commands')} on disk that "
             f"their manifest leaves out." if unl else "") + tail
+    away = sum(1 for d in dang if d.get("folder_missing"))
+    away_s = f"; {away:,} of them into a folder the repository does not have" if away else ""
     return (f"{n(entries, 'entry point')}. {n(orph, 'orphan')}. "
-            f"{n(len(dang), 'dangling reference')}{' (' + cs + ')' if cs else ''}. "
+            f"{n(len(dang), 'dangling reference')}{' (' + cs + away_s + ')' if cs else ''}. "
             f"{n(dyn, 'dynamic load')}: {n(loaded, 'file')} loaded only through one (named by "
             f"nothing), {n(mentioned, 'file')} reached only through a mention of a folder or wildcards."
             f"{tail}")
@@ -948,7 +950,11 @@ def _f3(r, _):
                "still load them)", fnd(r, "03-graph", "graph.unlisted"),
                lambda f: f"{f['file']}: {f.get('kind')} not named by {f.get('manifest')}, which "
                          f"names {f.get('listed')} of the {f.get('on_disk')} on disk")
-    L += _list("Dangling references", fnd(r, "03-graph", "graph.dangling"),
+    dang = fnd(r, "03-graph", "graph.dangling")
+    L += _list("Dangling references", [d for d in dang if not d.get("folder_missing")],
+               lambda f: f"{loc(f)}: {code(f.get('target'))} ({f.get('context')})")
+    L += _list("Dangling references into a folder the repository does not have (often one the "
+               "workflow creates when it runs)", [d for d in dang if d.get("folder_missing")],
                lambda f: f"{loc(f)}: {code(f.get('target'))} ({f.get('context')})")
     L += _list("Not scanned for references", fnd(r, "03-graph", "graph.unscanned"),
                lambda f: f"{f['file']}: {f.get('reason')}")

@@ -180,7 +180,8 @@ def build_report(input_dir: Path, inv: dict) -> tuple[dict, dict]:
             if res.status == "file":
                 for t in res.targets:
                     add_edge(rel, f.line, t, "static", f.form, ref.written, f.context,
-                             ambiguous=res.ambiguous, case_mismatch=res.case_mismatch)
+                             ambiguous=res.ambiguous, case_mismatch=res.case_mismatch,
+                             partial=res.partial)
             elif res.status in ("dir", "glob"):
                 if (rel, f.line, ref.written) in dynamic or (rel, f.line, ref.path) in dynamic:
                     continue
@@ -193,7 +194,8 @@ def build_report(input_dir: Path, inv: dict) -> tuple[dict, dict]:
                 if key not in dangling:
                     dangling[key] = {"check": "graph.dangling", "file": rel, "line": f.line,
                                      "target": ref.written, "context": f.context,
-                                     "form": f.form}
+                                     "form": f.form,
+                                     "folder_missing": resolver.folder_missing(base, ref.path)}
 
     # A dynamic edge is a load when a config or manifest names the folder, a
     # script scans it, or an instruction file (skill, agent, command) gives the

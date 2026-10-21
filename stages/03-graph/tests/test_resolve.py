@@ -58,3 +58,17 @@ def test_invalid_bracket_class_is_literal():
     rx = glob_regex("decisions/[YYYY-MM-DD]*.md")
     assert rx.match("decisions/[YYYY-MM-DD]_x.md")
     assert glob_regex("a/[ab].md").match("a/b.md")
+
+
+def test_partial_paths_resolve_and_missing_folders():
+    """2026-10-21, an outside tester: rules/carousel-rules.md for _shared/rules/..., and output/."""
+    from resolve import Resolver
+    r = Resolver(["README.md", "_shared/rules/carousel-rules.md", "references/a.md"])
+    res = r.resolve("README.md", "rules/carousel-rules.md", "path")
+    assert res.status == "file" and res.targets == ["_shared/rules/carousel-rules.md"] and res.partial
+    assert r.resolve("README.md", "./rules/carousel-rules.md", "path").status == "missing"
+    two = Resolver(["a/rules/x.md", "b/rules/x.md"]).resolve("README.md", "rules/x.md", "path")
+    assert two.targets == ["a/rules/x.md", "b/rules/x.md"] and two.ambiguous and two.partial
+    assert r.folder_missing("README.md", "output/post.md")
+    assert not r.folder_missing("README.md", "references/gone.md")
+    assert not r.folder_missing("README.md", "gone.md")

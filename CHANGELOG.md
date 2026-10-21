@@ -6,6 +6,12 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Stage 3, fewer false broken references. A path written as the end of a real one
+  (`rules/carousel-rules.md` for `_shared/rules/carousel-rules.md`) now resolves to it, marked
+  partial (and ambiguous when several match). A broken reference into a folder the repository
+  does not have at all (often `output/`, made when the workflow runs) is listed on its own.
+  Measured on six repositories: 14 to 578 fewer broken references each, no orphan hidden by a
+  new link (found by an outside tester).
 - Stage 5: hidden text pairs with a phrase hit only when the hit's matched words are in the
   hidden text itself, not merely on the same source line. A visible `<pre>` instruction had
   paired with a button label on that line and counted as "Hidden text that reads like an

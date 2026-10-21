@@ -69,7 +69,7 @@ incomplete by construction (count of dynamic loads).
 `--out <dir>`: also writes `<dir>/graph.json`: `nodes` (`path`, `entry`: kind
 or null, `depth`: int or null), `edges` (`from`, `line`, `to`, `kind`
 `static` / `dynamic`, `form`, `text`: the reference as written, `context`,
-`source` on dynamic edges, plus `ambiguous` / `case_mismatch` when true), `complete` (false when any
+`source` on dynamic edges, plus `ambiguous` / `case_mismatch` / `partial` (a partial path, 2026-10-21) when true), `complete` (false when any
 dynamic load exists), and `limits` (the stderr v1 note). The folder is created
 if needed. An `--out` inside `<input_dir>` is refused (exit 2).
 
