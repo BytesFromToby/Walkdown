@@ -6,6 +6,43 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- Stage 2, HTML render: the check for Playwright's browser now asks for the exact build this
+  Playwright launches (from its own `browsers.json`), not any Chromium. A Chromium left by
+  another Playwright version had passed the check, then every HTML file failed to draw; now
+  each gets a skip that names the build wanted and the install line. Since static style resolves
+  CSS variables, the page-colored variable line in the render fixture is a static-style finding
+  (`rd-static-var`); the drawn reading's variable row is now a color set inside `@media`.
+- Stage 3, fewer false broken references. A path written as the end of a real one
+  (`rules/carousel-rules.md` for `_shared/rules/carousel-rules.md`) now resolves to it, marked
+  partial (and ambiguous when several match). A broken reference into a folder the repository
+  does not have at all (often `output/`, made when the workflow runs) is listed on its own.
+  Measured on six repositories: 14 to 578 fewer broken references each, no orphan hidden by a
+  new link (found by an outside tester).
+- Stage 5: hidden text pairs with a phrase hit only when the hit's matched words are in the
+  hidden text itself, not merely on the same source line. A visible `<pre>` instruction had
+  paired with a button label on that line and counted as "Hidden text that reads like an
+  instruction" (found by an outside tester). On superpowers all 11 such pairs stay; on
+  claude-familiar the one that goes was a link's path paired with a badge's alt text.
+- Stage 2, HTML: CSS variables are resolved (`var(--x)` and its fallback, inherited as in CSS)
+  in text and background colors, and a color or background that cannot be read (a variable
+  nobody defines, a gradient, an image) makes no hiding claim. White button text on a
+  `var(--acc)` green had been reported as white-on-white against the page (found by an outside
+  tester); text colored like the page through a variable is still reported.
+- A run that did not complete never reads as clean. When a step produced no output,
+  `summary.html` and the brief say "This run did not complete" and name the step, never "found
+  none", and the brief says why it stopped (the error's type, and the module of a missing
+  import). `walkdown.py` runs the stages with the Python it was started with when that has
+  Walkdown's packages, and only then tries the Walkdown folder's `.venv`: an empty `.venv` there
+  had been preferred over a working Python, and every step failed (found by an outside tester).
+  It says `Using Python at <path>`, and with no usable Python it runs nothing and names what is
+  missing.
+- Stage 2, image OCR: a large image is read whole as well as in tiles. Tiles alone cut a word
+  in large type that straddles a tile edge: re-auditing claude-familiar, its banner's title
+  "Claude Familiar" read as "Claude Fami" where the earlier code read it whole. A line read by
+  the whole view and a tile is kept once. Re-audit of the four audited repositories at their
+  audited commits, old code against new: no finding count, trifecta leg, or install grant
+  changed; the new checks found nothing there (no language passages in 4,860 paragraphs, no
+  unlisted components, no PDFs; three images now scanned for phrases, no hits).
 - With the Tesseract program installed but not the `pytesseract` package, skipped OCR was not
   reported: it now shows under Other details on `details.html`, and at the bottom of
   `summary.html` when the repository has images or PDFs.

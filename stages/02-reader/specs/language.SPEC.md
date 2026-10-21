@@ -65,6 +65,10 @@ at least `MIN_WORDS` words), `short` (the rest, too short to judge).
 
 ## Measured (2026-10-18)
 
+The four audited repositories at their audited commits (superpowers v6.3.0, Plumbline
+`28295e9`, claude-familiar `6ce7504`, backlog `b449d9f`): 165 files checked, 4,860 paragraphs
+judged, 0 hits.
+
 English base rate: obra/superpowers, anthropics/skills, and wshobson/agents (1,109 prose
 files, 37,248 paragraphs, 20,574 long enough to judge) plus this repository's docs, stages,
 and fixtures (306 files): 6 hits before the distinct-word rule, all a repeated acronym or

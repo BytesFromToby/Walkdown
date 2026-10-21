@@ -12,6 +12,7 @@ class Result:
     targets: list[str] = field(default_factory=list)
     ambiguous: bool = False
     case_mismatch: bool = False
+    partial: bool = False  # a path that is the end of a longer one (spec, 3b)
     pattern: str | None = None
 
 
@@ -144,4 +145,19 @@ class Resolver:
                 if hits:
                     return Result("file", sorted(hits), ambiguous=len(hits) > 1,
                                   case_mismatch=not exact)
+            if "/" in clean and not want_dir and not path.startswith(("./", "../")) and root_try:
+                tail = "/" + (root_try if exact else root_try.lower())
+                hits = [n for n in self.nodes if (n if exact else n.lower()).endswith(tail)]
+                if hits:  # "rules/x.md" written for "_shared/rules/x.md" (spec, 3b)
+                    return Result("file", sorted(hits), ambiguous=len(hits) > 1,
+                                  case_mismatch=not exact, partial=True)
         return Result("missing")
+
+    def folder_missing(self, from_rel: str, path: str) -> bool:
+        """True when the folder `path` points into exists neither beside the referring file nor
+        at the root: a folder the repository does not have (spec)."""
+        folder = posixpath.dirname(path.rstrip("/"))
+        if not folder:
+            return False
+        tries = [_norm(posixpath.dirname(from_rel), folder), _norm("", folder)]
+        return not any(t in self.dirs or t == "" for t in tries if t is not None)

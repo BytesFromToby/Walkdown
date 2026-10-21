@@ -99,7 +99,7 @@ emits it.
 |---|---|---|
 | `graph.entry` | entry point used | `kind`: the stage 1 entry kind |
 | `graph.orphan` | file reachable from no entry point | (none beyond `file`) |
-| `graph.dangling` | reference to a path that does not exist | `target`: the missing path; `context`: `prose`, `code`, `link`, `comment`, or `config` |
+| `graph.dangling` | reference to a path that does not exist | `target`: the missing path; `context`: `prose`, `code`, `link`, `comment`, or `config`; `folder_missing`: true when the folder it points into exists nowhere in the repository (added 2026-10-21) |
 | `graph.unlisted` | component on disk its manifest leaves out (added 2026-10-18) | `manifest`; `kind`: `skill`, `agent`, or `command`; `listed`: how many of that kind the manifest lists; `on_disk`: how many are under its root |
 | `graph.dynamic` | glob, directory scan, or pattern read | `pattern`; `resolves`: files it matches today; `source`: `glob`, `directory`, or `code`; `load`: bool (a load versus a mention) |
 | `graph.depth` | reachable file | `depth`: hops from the nearest entry point; `from`: parent on the path the depth came from; `via`: `static` (depth over direct references), `dynamic` (reached only through a load: a config folder, a code scan, an instruction-file glob), or `mention` (reached only through a folder or glob mentioned elsewhere) |

@@ -22,6 +22,13 @@ Reading A is all DOM text plus comments and the attributes `alt`, `title`,
   attribute, `opacity:0`, or `font-size:0`; or its text color (inherited,
   default black) `hides` against its effective background (nearest ancestor
   or self with a background color, default white) per `colors.py`.
+- CSS variables (2026-10-21): custom properties (`--name`) inherit down the tree as in CSS,
+  and `var(--name)` / `var(--name, fallback)` in `color`, `background`, or `background-color`
+  resolves against them. A color or background an element declares that still cannot be read
+  (a variable nobody defines, a gradient, an image, `currentColor`) is **unknown**, inherited as
+  such, and an unknown color or background never makes a color claim: Walkdown cannot say the
+  text is hidden when it cannot say what is under it (an outside tester's
+  `button{background:var(--acc);color:#fff}` was reported white-on-white against the page).
 - `<head>` content, `<title>`, `<script>`, `<template>`, and `<noscript>` are
   not painted. `<style>` content is CSS, not text, and is in neither reading.
 
@@ -46,6 +53,7 @@ readings).
 
 1. A class rule `display:none` and an inline `display:none` hide their text, reported with the element's line.
 2. White-on-white via a class rule setting `color` and `background` is reported as `white-on-white`; visible text is not reported.
+7. White text on a button whose background is `var(--acc)` (a green defined on `:root`) is not reported; text colored `var(--bg)` with `--bg` white on a white page is `white-on-white`; a background that is a gradient, an image, or an undefined variable makes no color claim.
 3. `alt`, `title`, and `aria-label` values and comments are reported with their carriers and lines.
 4. `visibility:hidden` on a parent with a `visible` child reports only the parent's own text.
 5. A `<title>` equal to a painted heading is not reported; any other `<title>` is reported as `document-title`.

@@ -104,10 +104,56 @@ def _computed_styles(soup) -> dict[int, dict[str, str]]:
     return styles
 
 
-def _bg_of(decl: dict) -> tuple | None:
+UNKNOWN = "unknown"  # a color or background that cannot be read: no color claim (spec)
+VAR = re.compile(r"var\(\s*(--[\w-]+)\s*(?:,\s*([^()]*(?:\([^()]*\)[^()]*)*))?\)")
+NO_PAINT = {"none", "inherit", "initial", "unset", "revert", "transparent"}
+
+
+def resolve_vars(value: str, custom: dict, depth: int = 0) -> str | None:
+    """`value` with each var(--x[, fallback]) replaced from the inherited custom properties;
+    None when a variable is not defined and has no fallback."""
+    if "var(" not in value:
+        return value
+    if depth > 8:
+        return None
+    missing = []
+
+    def sub(m):
+        v = custom.get(m.group(1))
+        if v is None:
+            v = m.group(2)
+        if v is None:
+            missing.append(m.group(1))
+            return ""
+        return v
+    out = VAR.sub(sub, value)
+    return None if missing else resolve_vars(out, custom, depth + 1)
+
+
+def _color_of(value: str | None, custom: dict):
+    """A declared color: the parsed color, UNKNOWN when it cannot be read, None when not set."""
+    if not value:
+        return None
+    v = resolve_vars(value, custom)
+    if v is None:
+        return UNKNOWN
+    if v.strip().lower() in ("inherit", "unset"):
+        return None
+    c = colors.parse(v)
+    return UNKNOWN if c is None else c
+
+
+def _bg_of(decl: dict, custom: dict | None = None):
+    """The background an element declares: a color, UNKNOWN (an image, a gradient, a variable
+    nobody defines), or None (not set, or nothing painted)."""
     for prop in ("background-color", "background"):
         v = decl.get(prop)
         if not v:
+            continue
+        v = resolve_vars(v, custom or {})
+        if v is None or re.search(r"url\(|gradient\(", v, re.I):
+            return UNKNOWN
+        if v.strip().lower() in NO_PAINT:
             continue
         c = colors.parse(v)
         if c is None:
@@ -117,6 +163,8 @@ def _bg_of(decl: dict) -> tuple | None:
                     break
         if c is not None and c[3] > 0:
             return c
+        if c is None:
+            return UNKNOWN
     return None
 
 
@@ -173,10 +221,13 @@ def read_html(text: str) -> dict:
         fs = decl.get("font-size", "").strip().lower()
         if fs:
             st["size0"] = bool(ZERO_SIZE.match(fs))
-        c = colors.parse(decl.get("color")) if decl.get("color") else None
+        custom = {k: v for k, v in decl.items() if k.startswith("--")}
+        if custom:
+            st["vars"] = {**st["vars"], **custom}
+        c = _color_of(decl.get("color"), st["vars"])
         if c is not None:
             st["color"] = c
-        bg = _bg_of(decl)
+        bg = _bg_of(decl, st["vars"])
         if bg is not None:
             st["bg"] = bg
 
@@ -199,7 +250,7 @@ def read_html(text: str) -> dict:
                     text_items.append((("visibility:hidden", id(el)), "visibility:hidden", line, t))
                 elif st["size0"]:
                     text_items.append((("font-size:0", id(el)), "font-size:0", line, t))
-                elif colors.hides(st["color"], st["bg"]):
+                elif UNKNOWN not in (st["color"], st["bg"]) and colors.hides(st["color"], st["bg"]):
                     carrier = colors.carrier(st["color"], st["bg"])
                     text_items.append(((carrier, id(el)), carrier, line, t))
                 else:
@@ -208,7 +259,7 @@ def read_html(text: str) -> dict:
                 walk(child, st)
 
     root_state = {"hard": None, "vis": "visible", "size0": False, "color": BLACK,
-                  "bg": colors.WHITE}
+                  "bg": colors.WHITE, "vars": {}}
     top = Tag(name="[document]")
     for child in list(soup.children):
         if isinstance(child, Comment):

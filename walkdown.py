@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import importlib.util
 import json
 import re
 import shutil
@@ -61,12 +62,38 @@ def repo_name(target: str) -> str:
     return NAME_OK.sub("-", last).strip("-.") or "repo"
 
 
-def python_exe() -> str:
-    """The project virtualenv's python when there is one, else this interpreter."""
+# The import names of requirements.txt's packages, less pytest: what every stage needs to run.
+CORE_MODULES = ("yaml", "charset_normalizer", "pdfminer", "pypdf", "pypdfium2", "bs4", "lxml",
+                "PIL", "regex", "confusable_homoglyphs", "detect_secrets")
+MISSING = ("import importlib.util, sys; "
+           "print(' '.join(m for m in sys.argv[1:] if importlib.util.find_spec(m) is None))")
+
+
+def missing_modules(python: str) -> list[str] | None:
+    """The core modules `python` cannot import; None when it does not run at all."""
+    if Path(python).resolve() == Path(sys.executable).resolve():
+        return [m for m in CORE_MODULES if importlib.util.find_spec(m) is None]
+    try:
+        p = subprocess.run([python, "-c", MISSING, *CORE_MODULES], capture_output=True, text=True,
+                           timeout=60)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return p.stdout.split() if p.returncode == 0 else None
+
+
+def python_exe() -> tuple[str, list[str]]:
+    """The interpreter that runs the stages, and what it lacks: the one Walkdown was started
+    with when it has every core module, else the project virtualenv's when that has them
+    (2026-10-21, an outside tester: an empty .venv in the Walkdown folder was preferred over the
+    working python they ran, and every stage failed). With neither, this interpreter and what
+    it lacks."""
+    here = missing_modules(sys.executable) or []
+    if not here:
+        return sys.executable, []
     for p in (ROOT / ".venv" / "Scripts" / "python.exe", ROOT / ".venv" / "bin" / "python"):
-        if p.is_file():
-            return str(p)
-    return sys.executable
+        if p.is_file() and missing_modules(str(p)) == []:
+            return str(p), []
+    return sys.executable, here
 
 
 def _git(dest: Path, *args) -> subprocess.CompletedProcess:
@@ -127,6 +154,24 @@ def stamps(log_text: str) -> dict:
     return out
 
 
+ERROR_LINE = re.compile(r"^(\w+(?:Error|Exception|Exit))\b(?::\s*(No module named '[\w.]+'))?")
+
+
+def stage_error(data: Path, stage: str) -> str:
+    """Why a stage produced no output, in Walkdown's words: the error's type, and the module for
+    a missing import, never the rest of its message (it can carry a path from the audited
+    repository)."""
+    try:
+        lines = (data / f"{stage}.notes.txt").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return f"{STAGE_NAMES[stage]}: no output and no error recorded; see LOG.md."
+    for line in reversed(lines):
+        m = ERROR_LINE.match(line.strip())
+        if m:
+            return f"{STAGE_NAMES[stage]} stopped with {m.group(1)}" + (f" ({m.group(2)})." if m.group(2) else ".")
+    return f"{STAGE_NAMES[stage]}: no output; its messages are in data/{stage}.notes.txt."
+
+
 def brief(run_dir: Path) -> str:
     """A plain summary of a finished run, from Walkdown's own words only: no quote, file name,
     or other text from the audited repository. It uses summary.html's terms: the same headline,
@@ -160,7 +205,10 @@ def brief(run_dir: Path) -> str:
     L.append(f"  Install grants: {', '.join(grants) if grants else 'none'}.")
     rs = summary_html.rows(reports, items)
     wording = sum(1 for it in items if summary_html.concern(it) is None)
-    L += ["", summary_html.headline(rs)]
+    missing = summary_html.not_run(set(reports))
+    L += ["", summary_html.headline(rs, missing)]
+    if missing:
+        L += [f"  {stage_error(data, stage)}" for stage in STAGE_NAMES if stage not in reports][:1]
     L += [f"  {x['name']} ({len(x['places'])})" for x in rs]
     if wording:
         n = R.n(wording, "more place" if rs else "place")
@@ -232,7 +280,14 @@ def main(argv=None) -> int:
     if not target.is_dir():
         print(f"error: not a folder or a git URL: {a.target}", file=sys.stderr)
         return 2
-    cmd = [python_exe(), str(STAGE8 / "run.py"), str(target), "--repo", name]
+    python, lacks = python_exe()
+    if lacks:
+        print(f"error: Python at {python} cannot import {', '.join(lacks)}; install Walkdown's "
+              f"packages first: {python} -m pip install -r {ROOT / 'requirements.txt'}",
+              file=sys.stderr)
+        return 2
+    print(f"Using Python at {python}", file=sys.stderr)
+    cmd = [python, str(STAGE8 / "run.py"), str(target), "--repo", name]
     for k in ("label", "compare", "relational", "sweep", "pinpoint"):
         if getattr(a, k):
             cmd += [f"--{k}", getattr(a, k)]

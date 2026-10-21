@@ -12,7 +12,13 @@ every proper prefix of a node path.
 
 `resolve(from_rel, path, shape) -> Result`, where `path` and `shape` come from
 `tokens.Ref`. `Result` has `status`, `targets` (sorted node paths),
-`ambiguous` (bool), `case_mismatch` (bool), `pattern` (for `glob` and `dir`).
+`ambiguous` (bool), `case_mismatch` (bool), `partial` (bool), `pattern` (for `glob` and `dir`).
+
+`folder_missing(from_rel, path) -> bool`: the folder a path points into exists neither from the
+referring file's folder nor from the root (a path with no folder part is never missing one).
+Stage 3 marks a dangling reference with it, so a report can tell "into a folder the repository
+does not have" (often one the workflow creates when it runs, such as `output/`) from a file
+missing beside its siblings (2026-10-21).
 
 `status` is one of:
 
@@ -35,7 +41,11 @@ Order of attempts, first hit wins:
    A node file gives `file`; a folder gives `dir`.
 3. A bare name (no `/`, shape `bare` or `link`): every node whose basename is
    equal. Several give `ambiguous` true.
-4. The same three tries case-insensitively (never for globs): a hit gives
+3b. A partial path (it has a `/`, does not end in one, and does not start with `./` or `../`):
+   every node whose path ends with `/` plus it, `partial` true; several give `ambiguous` true
+   (2026-10-21, an outside tester: a README's `rules/carousel-rules.md` for
+   `_shared/rules/carousel-rules.md` was reported dangling).
+4. The same tries case-insensitively (never for globs): a hit gives
    `case_mismatch` true.
 5. `missing`.
 
@@ -54,3 +64,5 @@ A path ending in `/` resolves only to a folder.
 4. `extra/` is `dir` with every file under it, recursively; `extra/*.md` is `glob` matching direct children only; `extra/**/*.md` matches nested ones.
 5. `../../x.md` from `a/b.md` is `outside`; `../x.md` from `a/b.md` is root `x.md`.
 6. An unknown path is `missing`; a glob with no match is `glob` with no targets.
+7. `rules/carousel-rules.md` with only `_shared/rules/carousel-rules.md` present resolves to it, `partial` true; `./rules/carousel-rules.md` stays `missing`; two such files give both, `ambiguous` true.
+8. `folder_missing`: `output/post.md` with no `output/` folder anywhere is true; `references/gone.md` beside an existing `references/` is false; a bare `gone.md` is false.

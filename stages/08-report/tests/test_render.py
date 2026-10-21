@@ -513,3 +513,18 @@ def test_tool_items_know_both_ways_ocr_goes_missing():
                                                "ext": "png", "type": "image/png"})
         assert [w for w, _ in R.tool_items(r2, notes)[0]] == ["Text inside images (OCR)"]
         assert any(x.startswith("Text inside images (OCR): ") for x in R.glance(r2, notes, PASS, set(r2))[0])
+
+
+def test_dangling_into_a_missing_folder_is_its_own_list():
+    """2026-10-21, an outside tester: output/ paths the workflow creates read as plain noise."""
+    r = reports()
+    r["03-graph"]["findings"] += [
+        {"check": "graph.dangling", "file": "SKILL.md", "line": 4, "target": "output/post.md",
+         "context": "prose", "folder_missing": True},
+        {"check": "graph.dangling", "file": "SKILL.md", "line": 5, "target": "references/gone.md",
+         "context": "prose", "folder_missing": False}]
+    f = full(META, r, PASS, {}, set(r))
+    assert "2 dangling references (2 prose; 1 of them into a folder the repository does not have)." in f
+    gone = f.index("### Dangling references (1)")
+    away = f.index("### Dangling references into a folder the repository does not have")
+    assert "references/gone.md" in f[gone:away] and "output/post.md" in f[away:]

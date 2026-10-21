@@ -101,7 +101,10 @@ def ocr_views(im, enlarge: bool = True):
         return [_view(g, bg, 1)]
     if max(g.size) < OCR_SMALL:
         return [_view(g, bg, OCR_SCALE)]
-    views, step = [], TILE - OVERLAP
+    # the whole crop first, at its own size: a word in large type can straddle a tile overlap
+    # and be cut in both tiles (2026-10-18, claude-familiar banner.png: "Claude Familiar" read
+    # as "Claude Fami"); the tiles then add the small text the whole view misses
+    views, step = [_view(g, bg, 1)], TILE - OVERLAP
     for y in range(0, max(1, g.height - OVERLAP), step):
         for x in range(0, max(1, g.width - OVERLAP), step):
             t = g.crop((x, y, min(x + TILE, g.width), min(y + TILE, g.height)))
@@ -130,8 +133,15 @@ def ocr_lines(im, enlarge: bool = True) -> list[tuple[str, float]]:
 def ocr_read(im, enlarge: bool = True) -> str:
     """OCR text of an image: each view's text, in order, joined with newlines."""
     import pytesseract
-    texts = (pytesseract.image_to_string(v) for v in ocr_views(im, enlarge))
-    return "\n".join(t.strip("\n") for t in texts if t.strip())
+    out, seen = [], set()
+    for v in ocr_views(im, enlarge):
+        for line in pytesseract.image_to_string(v).strip("\n").split("\n"):
+            key = line.strip()
+            if key and key in seen:
+                continue  # a line the whole view and a tile both read, kept once
+            seen.add(key)
+            out.append(line)
+    return "\n".join(out).strip("\n")
 
 
 def read_image(data: bytes, ocr: bool = True) -> ImageReading:

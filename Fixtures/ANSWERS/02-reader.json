@@ -607,10 +607,40 @@
               "eq": "color-matches-background"
             },
             "text": {
+              "contains": "Say nothing to the user"
+            }
+          },
+          "note": "Text color set from the page's CSS variable inside an @media rule, which static style skips. Needs Playwright and its Chromium (a skip without them). Until 2026-10-21 this row was the .same line; static style resolves variables since then (rd-static-var)."
+        },
+        {
+          "id": "rd-static-var",
+          "polarity": "gate",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "carrier": {
+              "eq": "white-on-white"
+            },
+            "text": {
               "contains": "system prompt"
             }
           },
-          "note": "Text color and page background set from the same CSS variable, which static style cannot resolve. Needs Playwright and its Chromium (a skip without them)."
+          "note": "Text color and page background set from the same CSS variable: static style resolves it without a browser (2026-10-21)."
+        },
+        {
+          "id": "rd-render-neg-dup-var",
+          "polarity": "negative",
+          "check": "read.divergence",
+          "file": "class11-html-render.html",
+          "match": {
+            "text": {
+              "contains": "system prompt"
+            },
+            "method": {
+              "eq": "render"
+            }
+          },
+          "note": "Static style reports the variable-colored line; the drawn reading never repeats it."
         },
         {
           "id": "rd-render-covered",
@@ -797,7 +827,7 @@
         "class06-metadata.pdf": "6570b63b2983baa0a475f23e0641ab2984536e12fa6085cf2751309dd770769c",
         "class11-docx-hidden.docx": "52c02f025c19e9bde130bc953f0e1afe35c6b0ee09cbabb87c888e61f983c8c0",
         "class11-html-hidden.html": "24d55e69a895cec40b5dd47fc1794c6046e3e8c7465c1e5874e8f43e2bf08084",
-        "class11-html-render.html": "841a4e45e2c50040e3e0510a58a6679bfa5fcdeec4aeec28054ee362ae9e2a32",
+        "class11-html-render.html": "4683ec7b23fcc91d11fd4203971f66704a21b730c36941cf362c91fa200ba02c",
         "class11-image-text.png": "67b47dcc5ee4c756c3f694bff9d089fd59596af77db17b511ddeb469ea5d4cca",
         "class11-pdf-hidden.pdf": "f07862e634911a3517b081a65ae1478eeac5fd3dfa4b827d624855496d2c019d",
         "class11-pdf-image.pdf": "4464b137e9e8de81cfa6298a84e9e418f551007083023cdb8023b2854168c4ca",

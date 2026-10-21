@@ -176,3 +176,22 @@ def test_a_step_that_did_not_work_is_named_at_the_bottom():
     assert "What this touches did not run" in w and 'href="details.html#other"' in w
     assert h.index('id="beforeuse"') < h.index('id="warning"') < h.index("<footer>")
     assert 'id="warning"' not in page(r, stamps={})  # no validation, no stamps to judge by
+
+
+def test_a_run_missing_a_step_never_reads_as_clean():
+    """2026-10-21, an outside tester: an empty .venv crashed stage 1, every step said not run,
+    and the page said "found none"."""
+    import summary_html as S2
+    bare = reports(hooks=0)
+    bare["04-phrases"]["findings"] = []
+    import html as H
+    h = S2.render_page(META, {}, {}, {}, set())
+    t = H.unescape(section(h, "headline"))
+    assert "found none" not in t
+    assert 'This run did not complete: 6 steps did not run, starting with "What ships"' in t
+    assert "cannot say whether" in t
+    one = S2.headline([], ["Needs a human read"])
+    assert one.startswith('This run did not complete: the step "Needs a human read" did not run')
+    rs = [{"places": [1, 2], "not_concerned": 0}]
+    assert "In the steps that ran, Walkdown found security concerns: 2 places, of 1 kind." in \
+        S2.headline(rs, ["What this touches"])

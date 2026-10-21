@@ -705,9 +705,12 @@ def stats(r) -> str:
         dang = R.fnd(r, "03-graph", "graph.dangling")
         if dang:
             ctx = collections.Counter(d.get("context", "?") for d in dang)
+            away = sum(1 for d in dang if d.get("folder_missing"))
             lines.append(f"Broken file references: {len(dang):,} paths written in the files point at files "
                          "that are not in the folder (" + ", ".join(f"{v:,} in {k}" for k, v in
-                                                                 ctx.most_common()) + ").")
+                                                                 ctx.most_common()) + ")"
+                         + (f"; {away:,} of them point into a folder the repository does not have, "
+                            "often one the workflow creates when it runs" if away else "") + ".")
         lines.append("Some files are named only when code runs, so the map can miss links.")
     inner = "".join(_p(x) for x in lines if x)
     body = (f'<p class="headline">{esc(head)}</p>{callout}'
