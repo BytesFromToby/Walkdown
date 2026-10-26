@@ -35,8 +35,12 @@ marks, this run's own or carried from an earlier run (`marks.SPEC.md`). The plac
      either "so Walkdown cannot say whether this repository has the security concerns it looks
      for." or, with concerns from the steps that ran, "In the steps that ran, Walkdown found
      security concerns: ..." (2026-10-21, an outside tester: an empty .venv crashed stage 1 and
-     the page read as clean). A step that ran but skipped part of the repository stays in the
-     line at the bottom (owner, 2026-10-21).
+     the page read as clean).
+   - With none, and a step that ran did not pass its fixture check (`failed_checks`: any result
+     but PASS and INCOMPLETE), never plain "found none": "Walkdown found none of the security
+     concerns it looks for, but not every step worked, so it may have missed some." (owner,
+     2026-10-25, review C40: a FAIL had sat under "found none", with the warning at the bottom).
+     With concerns, the headline stays as above and the warning at the bottom names the step.
 3. **Security concerns.** One row per concern kind that has a place, in this fixed order
    (`CONCERNS`). Each place falls in exactly one row; a place is taken by the first row that fits:
    1. **Hidden text that reads like an instruction** (kind `hidden+phrase`).
@@ -71,10 +75,12 @@ marks, this run's own or carried from an earlier run (`marks.SPEC.md`). The plac
    yours." With no questions: "No questions from these findings." and no lede.
 6. **A step that did not work**, only then (`failed_steps`, `warning`; at the bottom, owner
    2026-10-21): "Not every step worked in this run.", each such step by its plain name with "did
-   not run" (no output), "did not pass its fixture check (<result>)" (FAIL or ERROR), or, for an
-   INCOMPLETE stage 2, "skipped part of this repository: <what>, <why>" when a missing optional
-   tool reads files this repository has (`render.tool_items`); an INCOMPLETE stamp with no such
-   files adds nothing. Then that a step that did not work can miss places so the page may show
+   not run" (no output) or "did not pass its fixture check (<result>)" (FAIL, ERROR, or any
+   result but PASS and INCOMPLETE). Two things never reach this page (owner, 2026-10-25): a step
+   with nothing in this repository to test, and a fixture check that did not run because an
+   optional tool is not installed (an INCOMPLETE stamp, on any stage, whether or not the
+   repository has files that tool reads). `details.html` (Other details) and `full.md` still list
+   both. Then that a step that did not work can miss places so the page may show
    fewer than there are, and a link to Other details on `details.html`. A run made without
    validation has no stamps and gets no line for them.
 7. **Footer** (`FOOTER`), the page's one qualifier, in plain words: "Walkdown reads a
@@ -102,7 +108,9 @@ escaped, print on one or two pages.
 
 1. With concerns, the headline gives places and kinds; with none, it says none and that
    nothing found does not mean safe (`test_headline_with_and_without_concerns`); with a step
-   that did not run, it says the run did not complete (`test_a_run_missing_a_step_never_reads_as_clean`).
+   that did not run, it says the run did not complete (`test_a_run_missing_a_step_never_reads_as_clean`);
+   with none and a step that failed its fixture check, it says it may have missed some, and an
+   INCOMPLETE stamp leaves "found none" as it is (`test_a_failed_check_never_reads_as_clean`).
 2. Rows appear in the fixed order, only for kinds with places; each place is in exactly one row;
    wording-only places are one line (`test_rows_in_fixed_order_each_place_once`).
 3. Each row has its count, one example linked to its review card, and a link to the details
@@ -112,8 +120,9 @@ escaped, print on one or two pages.
 5. The capability row and the questions; no not-checked line
    (`test_capability_and_questions_and_no_not_checked`, `test_questions_before_use_follow_the_evidence`).
 6. A step that did not run or failed its fixture check is named at the bottom; an INCOMPLETE
-   stage 2 only when the repository has files the missing tool reads; with every step working,
-   or no stamps, there is no warning (`test_a_step_that_did_not_work_is_named_at_the_bottom`).
+   stamp on any stage is not, even when the repository has files the missing tool reads; with
+   every step working, or no stamps, there is no warning
+   (`test_a_step_that_did_not_work_is_named_at_the_bottom`).
 7. No verdict words; artifact text escaped (`test_no_verdict_words_and_escaping`). Checked by eye
    on a Plumbline run (2026-10-20): about two laptop screens, nothing wider than the page.
 
@@ -133,3 +142,8 @@ escaped, print on one or two pages.
   bottom, and an INCOMPLETE stage 2 counts only when the missing tool reads files the repository
   has. Under the three boxes, what they mean
   together, and no lede above them (owner).
+- 2026-10-25 (owner, after an outside tester's report, review C40): what reaches this page is a
+  step that did not run or a step that ran and failed its fixture check; with no concerns, a
+  failed check changes the headline. A step with nothing to test and a check skipped for a
+  missing optional tool stay in `details.html` and `full.md` (this ends the 2026-10-21 stage 2
+  line, "skipped part of this repository", and with it the "pDF" and "hTML" in that line).

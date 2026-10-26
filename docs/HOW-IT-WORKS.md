@@ -48,7 +48,7 @@ Most checks care about who reads a file. Walkdown decides it from the path:
 | model | SKILL.md, CLAUDE.md, reference docs, anything not matched below | instructions the model reads |
 | subagent | files under `agents/` or `commands/`, `*prompt*.md` | instructions a dispatched agent reads |
 | tool | scripts (`.py`, `.sh`, `.js`, ...), hook configs, build and lock files | code; counted, read by tools |
-| human | README, CHANGELOG, LICENSE, INSTALL, guides, anything under `docs/` or `.github/` | written for people; counted, kept out of capability |
+| human | README, CHANGELOG, LICENSE, NOTICE and other license files (THIRD_PARTY_NOTICES, COPYING, CREDITS), INSTALL, guides, anything under `docs/` or `.github/` | written for people; counted, kept out of capability |
 | test-data | anything under `tests/`, `fixtures/`, `__tests__/`, `testdata/`, `spec/` and the like, or named `test_*.py`, `*.test.*`, `*.spec.*`, `conftest.py`, `*.fixtures.*` | never loaded on install; counted, kept out of capability and the pages |
 
 Human-facing and test-data hits are still recorded and listed in the full report. They are
@@ -99,7 +99,7 @@ an image).
 
 | Check | What it records | Why it matters |
 |---|---|---|
-| `read.divergence` | text in one reading and not the other, and how it hides: HTML comment, `display:none`, white-on-white, zero-width characters, bidirectional controls, soft hyphens, alt or title text, hidden Office runs | an instruction the reviewer cannot see is still an instruction to the model |
+| `read.divergence` | text in one reading and not the other, and how it hides: HTML comment, `display:none`, white-on-white, zero-width characters, bidirectional controls, soft hyphens, Unicode tag characters (with the text they spell), alt or title text, hidden Office runs | an instruction the reviewer cannot see is still an instruction to the model |
 | `read.fold` | lines that change when invisible and look-alike characters are folded away | "ig​no​re" with zero-width spaces reads as "ignore" to a model; stage 4 matches the folded text |
 | `read.script` | runs of non-Latin script | the phrase patterns are English; a non-English run is unread by stage 4 |
 | `read.language` | prose passages in Latin script that read as another language: one language's common short words (`el`, `und`, `och`) outnumber the English ones, or heavy accents with no English. It never names the language | the same: Spanish in a Markdown list is unread by stage 4, and a clean result on it means nothing |
@@ -158,7 +158,12 @@ things instructions depend on (hosts, confirmations, conditions, definitions).
 About 125 patterns (`stages/04-phrases/patterns.yaml`), each citing the threat class or phrase
 set it comes from (`pre-planning/THREATS.md`, `pre-planning/PHRASES.md`). Each hit records the
 line verbatim, the pattern ids, the matched words, and the file's audience. Matching runs on the
-folded line, so hidden characters do not break a match. In Markdown, each line is also matched joined with the next
+folded line, so hidden characters do not break a match: zero-width and other invisible
+characters are dropped, look-alike letters read as the letters they imitate, accents on Latin
+letters are dropped (`ignóre` reads `ignore`), and a sentence written in Unicode tag characters
+reads as the text it spells. Readable text hidden in base64 is decoded and matched too, and the
+hit says so. A frontmatter value written over several lines (`description: >-`) is matched as
+one. In Markdown, each line is also matched joined with the next
 lines of its paragraph (up to four lines), so an instruction hard-wrapped across lines is caught;
 that hit is cited at the line where it starts, quotes every line, and is kept only when no
 single line or shorter run hits it. The reverse holds too: a pattern that makes an exception
@@ -188,14 +193,14 @@ Part 2 builds tables from instruction text (model and subagent files, plus front
 
 | Check | What it records |
 |---|---|
-| `endpoint.host` | every network host named anywhere, whether the docs name it, and where it appears (instructions, docs, code), with each whole address as written; nothing is opened |
+| `endpoint.host` | every network host named anywhere, whether the docs name it, and where it appears (instructions, docs, code), with each whole address as written; a host written with look-alike letters (`gіthub.com` with a Cyrillic `і`) is listed as written and marked with the host it imitates and its punycode; nothing is opened |
 | `rubric.action` | each guarded action in instruction text, its tier (prohibited or confirm-first), and whether a confirmation step exists, is negated, or is itself a redefinition |
 | `cond.branch` | conditional sentences, by kind: harness, clock, version, state, environment, absence, error |
 | `term.def` | definitions in instruction text |
 | `term.conflict` | a word defined differently in two or more places |
 | `term.safety` | a definition of a safety word (confirm, safe, approve, ...) |
 | `pos.density` | in a long file a model reads: where the flagged lines sit (first 10%, middle, last 10%) and how many are past the reader window (2,000 lines or 50 KB), where a reviewer's viewer may stop |
-| `secret.found` | a line that looks like a committed secret (an API key, a password), found by gitleaks when installed, otherwise detect-secrets; the value is never shown, and other findings on that line have their quote replaced |
+| `secret.found` | a line that looks like a committed secret (an API key, a password), found by gitleaks when installed, otherwise detect-secrets, plus an Anthropic key by its shape; the value is never shown, and other findings on that line have their quote replaced. A hash, a test-host password, a variable name, a plain word, or a placeholder such as `abc123...` is marked likely not a secret and kept off the summary |
 | `rep.sentence` | a sentence repeated across files a model reads; repetition adds weight, so a flagged sentence in several files is listed |
 | `limit.setting` | a flag or setting that restricts what tools an agent can use, in any file: `--tools` with a list, `--disallowedTools` or a JSON deny list, a `--sandbox` mode, a `--permission-mode`; what it rules out (writing, shell, network) and whether it allows writing. `--allowedTools` is not counted: it pre-approves tools and leaves the rest available. A fact for stage 5, never a risk |
 
@@ -213,7 +218,9 @@ data). **Rare** means in none of them, **uncommon** in one, **common** in two or
 pattern means more when it hits. The table is `stages/08-report/baserates.json`, rebuilt as the
 corpus grows; the repository being audited is never counted against itself.
 
-**Worth a closer look.** Rare patterns in model-read files (listed as places to check); hosts the
+**Worth a closer look.** Rare patterns, the shape of sending data out (a private source, a
+sending verb, and a destination in one line), and credentials named on a line that sends, in
+model-read files (listed as places to check); hosts the
 docs never name; prohibited-tier actions with no confirmation step; a safety word redefined; a
 word defined two different ways.
 
@@ -222,7 +229,7 @@ lines a model reads were read as instructions and how many as descriptions, quot
 uses (REPORTING rule 2: a count comes with its benign share).
 
 **In the report.** Section 4 of `full.md`: counts per group in the status line, split by
-audience, and every hit grouped by check. Rare-pattern hits and the part 2 highlights are places
+audience, and every hit grouped by check. Those hits and the part 2 highlights are places
 to check, listed under Risky asks on `details.html` and walked on `review.html`.
 
 ---
@@ -366,7 +373,8 @@ the standing limits (English only, static only, known shapes).
 
 **In the report.** Section 7 of `full.md`, Other details on `details.html`, and
 `data/07-limits.md`. A step that did not run or did not pass validation is also named at the
-bottom of `summary.html` (a missing optional tool only when this repository has files it reads).
+bottom of `summary.html`, and in its headline when it found nothing. A missing optional tool is
+not named there.
 
 ## Stage 8: Report
 

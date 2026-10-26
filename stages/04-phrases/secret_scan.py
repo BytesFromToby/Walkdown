@@ -15,6 +15,7 @@ import tempfile
 from pathlib import Path
 
 from audience import _build_file
+from foldtext import base64_texts
 
 SKIPPED = "no secret scanner available (install gitleaks, or detect-secrets from requirements.txt)"
 
@@ -26,7 +27,15 @@ HASH_KEY = re.compile(r"""["']?\b(?:[\w-]*[_-])?(sha(1|224|256|384|512)?|md5|has
                       r"""commit|oid|fingerprint)\b["']?\s*[:=]""", re.I)
 LOCAL_URL = re.compile(r"://[^/\s:@]+:[^@\s]*@(localhost|127\.0\.0\.1|\[::1\]|"
                        r"([\w.-]+\.)?example\.(com|net|org)|[\w.-]+\.(local|test|invalid|example|localhost))(?=[:/?#\s\"'`]|$)", re.I)
+BASE64_TEXT = "base64 that decodes to readable text, not a key"  # review C42
 URL_KINDS = {"Basic Auth Credentials", "Secret Keyword"}
+# An example value, never a real one (2026-10-25, review C43: ClientSecret: "abc123..." in a
+# README reached the summary as a committed secret).
+PLACEHOLDER = re.compile(r".*(\.\.\.|…)|<[^<>]+>|your\b.*|your[-_].*|[x*.]{3,}|abc123.*|changeme|"
+                         r"placeholder|dummy|example|redacted", re.I)
+# Key shapes no installed scanner may know (2026-10-25, review C43: detect-secrets has no rule
+# for Anthropic keys, and a real-looking one in prose was missed; gitleaks has one).
+KEY_SHAPES = {"Anthropic API Key": re.compile(r"\bsk-ant-(?:api|admin)\d{2}-[A-Za-z0-9_-]{32,}")}
 
 
 def likely_not_secret(line: str, kinds: list[str]) -> str | None:
@@ -36,6 +45,8 @@ def likely_not_secret(line: str, kinds: list[str]) -> str | None:
     ks = set(kinds)
     if ks <= ENTROPY and HASH_KEY.search(line):
         return "a hash under a key named for one"
+    if ks <= ENTROPY and base64_texts(line):
+        return BASE64_TEXT
     if ks <= URL_KINDS and LOCAL_URL.search(line):
         return "a password in a URL for a local test address"
     if ks == {"Secret Keyword"}:
@@ -45,7 +56,23 @@ def likely_not_secret(line: str, kinds: list[str]) -> str | None:
             return "a variable name, not a value"
         if re.fullmatch(r"[a-z]+([-_][a-z]+)*", value) or " " in value:
             return "a plain word or prose, not a value"
+        if PLACEHOLDER.fullmatch(value):
+            return "a placeholder, not a value"
     return None
+
+
+def _shapes(root: Path, rels: set[str]) -> list[dict]:
+    """KEY_SHAPES on every line of the scanned files: kind and place, never the value."""
+    out = []
+    for rel in sorted(rels):
+        try:
+            text = (root / rel).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for n, line in enumerate(text.splitlines(), 1):
+            out += [{"file": rel, "line": n, "kind": kind, "engine": "walkdown"}
+                    for kind, rx in KEY_SHAPES.items() if rx.search(line)]
+    return out
 
 
 def _gitleaks(root: Path, rels: set[str]) -> list[dict] | None:
@@ -109,8 +136,10 @@ def scan(root, files: dict[str, str]) -> list[dict]:
     hits = _gitleaks(root, rels)
     if hits is None:
         hits = _detect_secrets(root, rels)
+    skip = []
     if hits is None:
-        return [{"check": "secret.found", "file": None, "line": None, "skipped": SKIPPED}]
+        skip, hits = [{"check": "secret.found", "file": None, "line": None, "skipped": SKIPPED}], []
+    hits = hits + _shapes(root, rels)
     merged: dict[tuple, dict] = {}
     lines: dict[str, list[str]] = {}
     for h in hits:
@@ -130,4 +159,4 @@ def scan(root, files: dict[str, str]) -> list[dict]:
         why = likely_not_secret(text, m["kinds"])
         if why:
             m["likely_not_secret"] = why
-    return [merged[k] for k in sorted(merged, key=lambda k: (k[0], k[1] or 0))]
+    return skip + [merged[k] for k in sorted(merged, key=lambda k: (k[0], k[1] or 0))]

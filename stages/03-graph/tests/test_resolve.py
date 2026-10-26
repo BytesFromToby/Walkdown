@@ -72,3 +72,12 @@ def test_partial_paths_resolve_and_missing_folders():
     assert r.folder_missing("README.md", "output/post.md")
     assert not r.folder_missing("README.md", "references/gone.md")
     assert not r.folder_missing("README.md", "gone.md")
+
+
+def test_percent_escapes_are_decoded_when_missing():
+    """Review C43 (an outside tester, 2026-10-25): a Markdown link writes a space as %20."""
+    res = Resolver(["my skill/SKILL.md", "a%20b.md", "README.md"])
+    got = res.resolve("README.md", "my%20skill/SKILL.md", "link")
+    assert got.status == "file" and got.targets == ["my skill/SKILL.md"]
+    assert res.resolve("README.md", "a%20b.md", "link").targets == ["a%20b.md"]  # as written first
+    assert res.resolve("README.md", "gone%20x.md", "link").status == "missing"

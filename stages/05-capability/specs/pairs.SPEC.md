@@ -19,7 +19,7 @@ line-placed and text-line-placed findings never cover each other:
 |---|---|---|
 | `orphan+phrase` | the file has a `graph.orphan` finding | stage 3 `graph.orphan` (`why` `orphan file`) |
 | `dynamic+phrase` | the file's `graph.depth` has `via` `dynamic` | stage 3 `graph.depth` (`why` `reached only by a dynamic load`) |
-| `hidden+phrase` | a `read.divergence` in the same file with `reading` `A-only` covers the line (from its `line` through `line` + the number of line breaks in its `text`) and holds one of the hit's matched words in its `text` (both NFKC, invisible characters dropped, lower case, white space collapsed; a hit with no `matches` keeps the line rule; 2026-10-21, an outside tester: a visible `<pre>` instruction paired with a hidden button label on the same source line), or a `read.fold` is on the same file and line and the hit is `folded: true` (it matches only the folded text; 2026-10-09) | each covering stage 2 finding (`why` `hidden text: <carrier>` or `folded line`) |
+| `hidden+phrase` | a `read.divergence` in the same file with `reading` `A-only` covers the line (from its `line` through `line` + the number of line breaks in its `text`) and holds one of the hit's matched words in its `text` (both NFKC, tag characters read as the ASCII they spell (2026-10-25, review C42), other invisible characters dropped, lower case, white space collapsed; a hit with no `matches` keeps the line rule; 2026-10-21, an outside tester: a visible `<pre>` instruction paired with a hidden button label on the same source line), or a `read.fold` is on the same file and line and the hit is `folded: true` (it matches only the folded text; 2026-10-09) | each covering stage 2 finding (`why` `hidden text: <carrier>` or `folded line`) |
 
 The first evidence entry is the phrase hit itself (`stage` `04`, its check,
 file, line, `why` `phrase hit`).
@@ -61,3 +61,4 @@ ordered by file, line (null first), text line, phrase check, then `PAIRS` order.
    same hit under a `PostToolUse` hook, or in a script no hook runs, or a hit on
    another pattern, does not. `pairs(reports, graph)` takes stage 3's graph.
 9. A hit whose matched word is on the divergence's line but not in its hidden text gives no `hidden+phrase`; a word split by a zero-width character in the hidden text still pairs.
+10. A sentence in tag characters pairs with the hit read from it (review C42; `test_tag_characters_pair_with_the_words_they_spell`).

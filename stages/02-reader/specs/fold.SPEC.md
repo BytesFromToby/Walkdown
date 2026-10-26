@@ -49,7 +49,9 @@ fact that the raw line carries text a human cannot see (class 4, class 11).
 finding for a line holding invisible characters: `reading` `A-only`, `text`
 the raw line verbatim, `carrier` the kinds present joined by `+` in the order
 zero-width, bidi, soft-hyphen, tag-chars, `method` `static-style`, and
-`chars` (the code points as `U+XXXX`).
+`chars` (the code points as `U+XXXX`). When the line holds tag characters U+E0020-U+E007E,
+`decoded` is the ASCII they spell, each run joined by a space (2026-10-25, review C42, an
+outside tester: the report listed 69 code points and never the sentence they spelled).
 
 ## Must never
 
@@ -67,7 +69,7 @@ zero-width, bidi, soft-hyphen, tag-chars, `method` `static-style`, and
 6. ASCII characters with ASCII homoglyphs (`l`, `1`, `0`, `m`) are never changed.
 7. A line holding tag characters spelling ASCII (U+E0069 U+E0067 ...) folds with them stripped and each listed in `removed`; the visible text around them is kept.
 8. U+2028, U+2029, and U+0085 inside a line are each replaced by one space and listed in `removed`; the fold of a multi-line text keeps its line count.
-9. `hidden_chars` names zero-width, bidi, soft-hyphen, and tag characters; `invisible_finding` carries the raw line and the joined carrier.
+9. `hidden_chars` names zero-width, bidi, soft-hyphen, and tag characters; `invisible_finding` carries the raw line and the joined carrier, and `decoded` with the ASCII a tag run spells (none without tags).
 
 ## NUL (2026-10-09)
 

@@ -24,17 +24,17 @@ makes language / script shift its own signal (CHARTER scope section).
 
 ---
 
-## Status (2026-10-20)
+## Status (2026-10-26)
 
 **Alpha, public:** https://github.com/BytesFromToby/Walkdown (released from a separate copy;
 see "Public repo" below). All eight stages run end to end from one command; every stage has
-fixtures, a grader stamp, specs, and tests (765). Stage 6 (model reads) is optional and
+fixtures, a grader stamp, specs, and tests (796). Stage 6 (model reads) is optional and
 experimental. Repositories audited include superpowers, Plumbline, claude-familiar, and backlog,
 plus the self-audit, and several more since 2026-10-16 (named only in their own runs, which stay
 private). Every check the method calls for is built (HTML as a browser draws it was the last,
 2026-10-20). Two optional tools affect results: Tesseract (OCR of images and PDF pages) and
 Playwright with its Chromium (HTML as a browser draws it); gitleaks has a pip fallback.
-Version 0.2.0 (release 16, 2026-10-20).
+Version 0.2.1 (release 20, 2026-10-26).
 
 Where things stand and what is next: `pre-planning/REVIEW-2026-10-03.md` (the latest review:
 fixed items, design items C14 onward, and the ordered plan). The reports and their specs:

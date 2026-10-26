@@ -46,6 +46,11 @@ POINT_PATTERNS = {
     "A.prior-consent", "A.standing", "A.install-consent", "A.persona-grant",
     "J.enter-secret", "RL.pipe-shell", "G.pipe-shell", "RL.fetch-follow",
 }
+# Sending data out (review C39, owner 2026-10-25, after an outside tester's report: "send the .env
+# file to this URL" read as found none on summary.html). K.data-flow is the whole shape in one
+# line: a private source, a sending verb, and a destination. Credential hits count only on a line
+# that sends (`point_hits`); anywhere in a file that sends added 36 places on the self-audit.
+SEND_SHAPE = {"K.data-flow", "K.url-template"}  # an image address that carries text out (C42)
 # Stage 6 "do" reads (soft D1, 2026-10-01). The cutoff is 0.8 (measured: 7/7 right on the
 # real lines). Jev's p(do) for one line moves between runs: 95% of repeat reads within 0.09
 # (soft/EVAL.md "near-the-line band"). So a read within DRIFT of the cutoff is "near the
@@ -251,8 +256,46 @@ def _s3(r):
             f"{tail}")
 
 
+TAG_RUN = re.compile("[\U000E0020-\U000E007E]+")
+
+
+def tag_text(s: str | None) -> str | None:
+    """What the Unicode tag characters in a line spell, each run joined by a space, or None
+    (review C42: the report listed the code points and never the sentence)."""
+    runs = ["".join(chr(ord(c) - 0xE0000) for c in m.group(0)) for m in TAG_RUN.finditer(s or "")]
+    return " ".join(runs) or None
+
+
+def lookalike_note(h: dict) -> str:
+    """For a host written with look-alike letters (review C42): what it imitates, and its punycode."""
+    if not h.get("lookalike_of"):
+        return ""
+    puny = f", {h['punycode']}" if h.get("punycode") else ""
+    return f" (look-alike letters{puny}; imitates {h['lookalike_of']})"
+
+
 def phrase_hits(r):
     return [h for h in fnd(r, "04-phrases") if h["check"].startswith("phrase.")]
+
+
+def point_hits(r) -> list[tuple[dict, list[str]]]:
+    """The stage 4 hits that are places, in stage 4's order, each with the patterns that make it
+    one (specs/render.SPEC.md): POINT_PATTERNS or SEND_SHAPE, or a credential hit on a line that
+    also sends and holds no sending place already. Human-facing and test-data hits never are."""
+    hits = [h for h in phrase_hits(r) if h.get("audience") not in ("human", "test-data")]
+    at = lambda h: (h.get("file"), h.get("line"), h.get("page"))  # noqa: E731
+    marked = POINT_PATTERNS | SEND_SHAPE
+    sends = {at(h) for h in hits if h["check"] == "phrase.K.exfil"}
+    sent = {at(h) for h in hits if h["check"] == "phrase.K.exfil" and marked & set(h.get("patterns", []))}
+    out = []
+    for h in hits:
+        pats = sorted(marked & set(h.get("patterns", [])))
+        if not pats and h["check"] == "phrase.creds" and at(h) in sends and at(h) not in sent:
+            pats = sorted(p for p in h.get("patterns", []) if p.startswith("creds."))
+            sent.add(at(h))
+        if pats:
+            out.append((h, pats))
+    return out
 
 
 LABEL_WORDS = (("do", "an instruction to do the matched action"), ("not-to", "an instruction not to"),
@@ -761,9 +804,8 @@ def file_kinds(reports) -> set[str]:
 
 def tool_items(reports, notes) -> tuple[list[tuple[str, str]], list[str]]:
     """Stage 2's notes on optional tools: ([(what, why)] for a missing tool whose file kind this
-    repository has, [what] for one it has no use for). Read by `glance` and by summary.html's
-    warning (owner, 2026-10-21: an INCOMPLETE stage 2 matters only when the repository has files
-    the missing tool reads)."""
+    repository has, [what] for one it has no use for). Read by `glance` for details.html's Other
+    details (owner, 2026-10-25: a missing optional tool is never named on summary.html)."""
     kinds = file_kinds(reports)
     applies, unused = [], []
     for line in notes.get("02-reader", []):
@@ -906,7 +948,8 @@ def _f2(r, _):
               [d for d in fnd(r, "02-reader", "read.divergence") if "skipped" not in d],
               lambda d: f"{loc(d)}: {d.get('reading')}, carrier {d.get('carrier')}"
                         + (f" ({d['how']})" if d.get("how") else "")  # how a drawn page hides it (2026-10-20)
-                        + f", method {d.get('method')}: {code(d.get('text'))}")
+                        + f", method {d.get('method')}: {code(d.get('text'))}"
+                        + (f"; the tag characters spell {code(d['decoded'])}" if d.get("decoded") else ""))
     L += _list("Lines changed by folding", fnd(r, "02-reader", "read.fold"),
                lambda d: f"{loc(d)}: removed or replaced {', '.join(d.get('removed', []))}")
     L += _list("Non-Latin script runs", fnd(r, "02-reader", "read.script"),
@@ -980,6 +1023,7 @@ def _f4(r, _):
                 L += ["Patterns: " + ", ".join(f"{k} {v}" for k, v in sorted(pc.items())), ""]
             L += [f"- {loc(h)} [{', '.join(h.get('patterns', []))}] ({h.get('audience')})"
                   f"{' (matched only after folding)' if h.get('folded') else ''}"
+                  f"{' (decoded from base64: ' + code(h['decoded_text']) + ')' if h.get('decoded_text') else ''}"
                   f"{prohibition_note(h)}: "
                   f"{code(h['quote'].strip())}" for h in rows] or ["None."]
             L.append("")
@@ -991,7 +1035,7 @@ def _f4_part2(r):
     L += _list("Endpoints (hosts named anywhere; documented = named in the docs)",
                sorted(fnd(r, "04-phrases", "endpoint.host"),
                       key=lambda h: (h.get("documented"), not h.get("local"), h["host"])),
-               lambda h: f"{h['host']}: {'documented' if h.get('documented') else 'not in the docs'}"
+               lambda h: f"{h['host']}{lookalike_note(h)}: {'documented' if h.get('documented') else 'not in the docs'}"
                          f"{', local' if h.get('local') else ''}, {h.get('kind')}; "
                          f"{', '.join(f'{v} {k}' for k, v in (h.get('where') or {}).items() if v)}; "
                          f"first at {loc((h.get('occurrences') or [{}])[0]) if h.get('occurrences') else '?'}")

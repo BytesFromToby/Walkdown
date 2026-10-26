@@ -8,6 +8,8 @@ from __future__ import annotations
 import re
 from functools import lru_cache
 
+from foldtext import fold_line
+
 HOSTNAME = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*$")
 IPV4 = re.compile(r"^\d{1,3}(?:\.\d{1,3}){3}$")
 PLACEHOLDER = set("${}<>%")
@@ -109,7 +111,34 @@ def is_local(host: str, vocab) -> bool:
     return h.endswith(vocab.local_suffixes)
 
 
-def census(occurrences, vocab) -> list[dict]:
+_NAME = re.compile(r"(?<![\w.-])(?:[\w-]+\.)+[\w-]{2,}(?![\w-])")
+
+
+def lookalikes(raw: str) -> dict[str, str]:
+    """{the host a name folds to: the name as written} for each dotted name on a raw line
+    written with non-ASCII letters that folds to an ASCII host the line does not also name as
+    itself (review C42: a Cyrillic letter made gіthub.com read as github.com)."""
+    if raw.isascii():
+        return {}
+    low, out = raw.lower(), {}
+    for m in _NAME.finditer(raw):
+        name = m.group(0)
+        if name.isascii():
+            continue
+        host = _clean(fold_line(name))
+        if host and host.isascii() and host not in low:
+            out[host] = name.lower()
+    return out
+
+
+def _punycode(name: str) -> str | None:
+    try:
+        return name.encode("idna").decode("ascii")
+    except UnicodeError:
+        return None
+
+
+def census(occurrences, vocab, lookalike: dict | None = None) -> list[dict]:
     """Each occurrence is (host, file, line, where) or (host, file, line, where, address);
     a row gains `urls` (the distinct addresses on that line, in order) when any were given."""
     by: dict[str, set] = {}
@@ -133,11 +162,15 @@ def census(occurrences, vocab) -> list[dict]:
                 row["urls"] = addrs[(host, f, ln)]
             rows.append(row)
         counts = {w: sum(1 for r in rows if r["where"] == w) for w in WHERE}
-        local = is_local(host, vocab)
-        kind = "local" if local else ("registry" if host in vocab.registry else "other")
-        out.append({"check": "endpoint.host", "file": None, "line": None, "host": host,
-                    "documented": counts["docs"] > 0, "local": local, "kind": kind,
-                    "where": counts, "occurrences": rows})
+        real = (lookalike or {}).get(host)
+        local = is_local(host, vocab) and not real
+        kind = "local" if local else ("registry" if host in vocab.registry and not real else "other")
+        row = {"check": "endpoint.host", "file": None, "line": None, "host": host,
+               "documented": counts["docs"] > 0, "local": local, "kind": kind,
+               "where": counts, "occurrences": rows}
+        if real:  # review C42: listed as written, and said what it imitates
+            row.update(lookalike_of=real, punycode=_punycode(host))
+        out.append(row)
     return out
 
 

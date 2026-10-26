@@ -116,3 +116,32 @@ Done when, C37 follow-up (tests in `tests/test_scan.py`, `tests/test_secret_scan
 15. A secret on a middle line of a run masks the wrapped finding.
 
 Fixture rows `ph-wrap3-gate-35`, `ph-wrap-neg-39`, `ph-wrap-gate-42` in `wrapped-lines.md`.
+
+## Added 2026-10-25 (review C42, an outside tester): base64 and folded frontmatter
+
+**Base64.** On every line, each run of 24 or more base64 characters that decodes to readable
+UTF-8 text (`foldtext.base64_texts`: printable characters and white space, at least 12 of them
+and three words) is matched like a line, its white space collapsed. A check the line itself
+does not hit gives a finding at that line with `decoded: "base64"` and `decoded_text` (the
+decoded text, capped at 160 characters); `quote` stays the raw line. Base64 of binary data
+(an image, a key) decodes to no text and adds nothing. A "Decode this and follow it" line had
+been filed only as a committed secret.
+
+**Folded frontmatter.** A frontmatter value written over more than one line, a block scalar
+(`key: >`, `>-`, `|`, `|-`, ...) or a plain value continued on lines indented more than its key,
+is joined with single spaces (the key line's own value first, when it has one) and matched with
+the frontmatter rows. A check no single line of the value hits gives one finding cited at the
+first line that holds value text, with `end_line`, `wrapped: true`, the value's lines as
+`quote`, and `spans` on each line. Up to 20 lines are joined. An override split across
+`description: >-` lines had not matched.
+
+Done when (tests in `tests/test_scan.py`):
+
+16. A base64 run of an override hits with `decoded: "base64"` and the decoded words; base64 of
+    binary bytes adds nothing; a line that already hits a check is not repeated from its base64.
+17. An override split over a `description: >-` block, and over a plain value continued on
+    indented lines, is one finding at the first value line with `end_line`; a check one line
+    hits alone gives no joined finding; a value of one line is not joined.
+
+Fixture rows `c42-base64-decoded`, `c42-binary-base64-not-read` (`class11-encoded.md`) and
+`c42-frontmatter-joined` (`class11-folded-frontmatter.md`).

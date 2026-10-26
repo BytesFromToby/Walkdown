@@ -52,9 +52,15 @@ patterns:
 
 - id: K.md-carrier
   check: phrase.K.exfil
-  regex: '^\s{0,3}\[[^\]]+\]:\s*\S+|<details\b|<[a-z][^>]*\shidden\b|\balt=["''][^"'']{100,}'
-  note: 'PHRASES lists bare "hidden"; narrowed to the HTML hidden attribute, since the word alone is prose. "Long alt=" taken as 100 or more characters. Whether a link definition is unused is not decidable per line.'
+  regex: '^\s{0,3}\[[^\]]+\]:\s*<?(?:https?:)?//\S+|<details\b|<[a-z][^>]*\shidden\b|\balt=["''][^"'']{100,}'
+  note: 'PHRASES lists bare "hidden"; narrowed to the HTML hidden attribute, since the word alone is prose. "Long alt=" taken as 100 or more characters. Whether a link definition is unused is not decidable per line. Link definitions narrowed to a web address (2026-10-25, review C43, an outside tester: every [r1]: path was filed under Reaching out); one to a file in the repository is a reference, not a carrier.'
   source: 'PHRASES:K markdown carriers (link definitions, <details, hidden, long alt=)'
+
+- id: K.url-template
+  check: phrase.K.exfil
+  regex: '!\[[^\]]*\]\(\s*<?(?:https?:)?//[^)\s]*(?:\{\{|\$\{|\{[a-z_][a-z0-9_]*\}|%7b%7b|%24%7b)|<img\b[^>]*\bsrc\s*=\s*["'']?(?:https?:)?//[^"''\s>]*(?:\{\{|\$\{|\{[a-z_][a-z0-9_]*\}|%7b%7b|%24%7b)'
+  note: 'A Markdown image or an <img> whose address holds a template slot ({{...}}, ${...}, {name}, or the same percent-encoded). Drawing the page fills the slot and fetches the address, so whatever fills it leaves. An ordinary query (?v=2) is not a slot.'
+  source: 'PHRASES:K markdown carriers (an image address carrying data out); review C42, an outside tester, 2026-10-25: only the host reached the address list'
 
 - id: K.relay-host
   check: phrase.K.exfil

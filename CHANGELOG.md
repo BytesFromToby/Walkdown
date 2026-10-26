@@ -4,8 +4,58 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 `python walkdown.py --version`, and recorded in every run's LOG.md with the git commit
 ("+modified" when the code had uncommitted changes).
 
-## Unreleased
+## 0.2.1 (2026-10-26)
 
+Fixes from an outside tester's report, and the changes merged on GitHub after release 19,
+published in public release 20. Newest first.
+
+- Hidden and disguised text is read before matching (found by an outside tester). A
+  sentence written in Unicode tag characters is read as the text it spells, and the report
+  says what it spells; it had been deleted. Readable text hidden in base64 is decoded and
+  matched, and the hit says so; the line is no longer filed as a committed secret. Accents on
+  Latin letters are dropped before matching ("ignóre" reads "ignore"). A frontmatter value
+  written over several lines (`description: >-`) is matched as one. A host written with
+  look-alike letters is listed as written, marked with the host it imitates and its punycode;
+  it had been listed as the real host. A new search term, an image address with a template
+  slot (`![](https://x/p.png?q={{conversation}})`), is a place under "Reads secrets, calls out,
+  or shares". On nine audited repositories nothing changed but one frontmatter hit.
+- Less noise on the summary, more secrets found (found by an outside tester). License and
+  notice files by other common names (`THIRD_PARTY_NOTICES`, `COPYING`, `CREDITS`, ...) are
+  written for people, like `LICENSE`: on a large public skills repository their license text
+  had been the example for two concern kinds. A documentation value such as `"abc123..."`, `<your-key>`, or
+  `********` is marked as a placeholder, not a committed secret. An Anthropic API key is found
+  by its shape whichever scanner is installed (detect-secrets has no rule for one). A link
+  definition (`[r1]: path`) counts under Reaching out only when it points at a web address. A
+  link written with `%20` for a space resolves, so its target is no longer a broken reference
+  and an orphan. Recounted on nine audited repositories: five unchanged; on the other four,
+  fewer link-definition hits, and on one, 103 to 97 places with no license-file places or
+  placeholder secrets left on its summary.
+- Setup and URLs (found by an outside tester on Windows). Started with a Python that lacks
+  Walkdown's packages, `walkdown.py` now runs itself again with the `.venv` one before doing
+  anything, so version drift and `walkdown.py diff` work there too (they had failed with "No
+  module named 'yaml'"). Git never waits for a login: a repository that is not there, or is
+  private, stops at once and says so; clones have long paths on and a 10-minute limit; no git
+  is said in plain words. A GitHub folder link (`.../tree/<branch>/<folder>`) clones the
+  repository at that branch and audits the folder; a file link, or a file, says to give a
+  folder. The README has separate Windows and macOS/Linux commands, all with the `.venv`
+  Python, names git and Python 3.12 or 3.13, and notes Windows long paths; the walkdown skill
+  asks before installing Walkdown's packages when there is no `.venv`.
+- summary.html: a line that sends data out is a place. A skill telling the AI to send the `.env`
+  file and `~/.aws/credentials` to a URL read as "found none" while full.md cited both lines: the
+  pages listed only stage 4's rarest patterns. Now the sending shape (a private source, a
+  sending verb, and a destination in one line) is always a place, and a credential named on a
+  line that sends is one unless that line is a sending place already. Measured on eight earlier runs: four
+  unchanged, the others 1 to 18 more places, all under "Reads secrets, calls out, or shares".
+  Found by an outside tester.
+- summary.html and the brief: when Walkdown found none of the security concerns it looks for
+  but a step that ran did not pass its fixture check, the headline says "but not every step
+  worked, so it may have missed some." A failed check had sat under "found none", named only at
+  the bottom of the page (found by an outside tester). A check that did not run because an
+  optional tool is not installed (INCOMPLETE) is no longer named on summary.html at all, on any
+  stage and whether or not the repository has files that tool reads; Other details on
+  details.html and full.md still list what it left unread. The brief follows: its list of every
+  stage's stamp is one line, "Fixture checks: no step failed." or "Not every step worked in this
+  run:" with each step that did not run or failed its check, and never names a missing tool.
 - Stage 2, HTML render: the check for Playwright's browser now asks for the exact build this
   Playwright launches (from its own `browsers.json`), not any Chromium. A Chromium left by
   another Playwright version had passed the check, then every HTML file failed to draw; now

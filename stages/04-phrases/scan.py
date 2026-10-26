@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from foldtext import fold_line, split_lines
+from foldtext import base64_texts, fold_line, split_lines
 from negation import anchor, negation
 from patterns import CHECKS
 
@@ -228,6 +228,89 @@ def undone_by_next_line(rel: str, lines: list[str], findings: list[dict], rows, 
     return kept, undone
 
 
+def base64_findings(rel: str, lines: list[str], rows, audience: str, fm: set[int],
+                    line_checks: dict[int, set]) -> list[dict]:
+    """A check that readable text hidden in base64 on a line hits and the line itself does not
+    (review C42, 2026-10-25): cited at the line, `decoded: "base64"`, `decoded_text`."""
+    out = []
+    for n, raw in enumerate(lines, start=1):
+        if len(raw) < 24:
+            continue
+        for text in base64_texts(raw):
+            folded = fold_line(" ".join(text.split()))
+            found = _hits(rel, folded, rows, audience, n in fm)
+            for check in sorted(found, key=_ORDER.__getitem__):
+                if check in line_checks.setdefault(n, set()):
+                    continue
+                f = _finding(rel, n, raw, folded, rows, audience, n in fm, check, found[check])
+                f.update(folded=False, decoded="base64", decoded_text=text[:MATCH_CAP])
+                out.append(f)
+                line_checks[n].add(check)
+    return out
+
+
+_FM_KEY = re.compile(r"^(\s*)[\w.-]+:(?:\s+(.*))?$")
+_BLOCK = re.compile(r"^[|>][+-]?\d?\s*(#.*)?$")
+FM_MAX_JOIN = 20
+
+
+def frontmatter_values(lines: list[str], fm: set[int]) -> list[tuple[int, list[tuple[int, str]]]]:
+    """Each frontmatter value written over more than one line: (key line, [(line, value text)]),
+    the key line's own value first when it has one. A block scalar (`key: >-`, `key: |`) or a
+    plain value continued on lines indented more than its key (review C42)."""
+    out = []
+    nums = sorted(n for n in fm if lines[n - 1].strip() not in ("---", "..."))
+    i = 0
+    while i < len(nums):
+        n = nums[i]
+        m = _FM_KEY.match(lines[n - 1])
+        if not m:
+            i += 1
+            continue
+        indent, value = len(m.group(1)), (m.group(2) or "").strip()
+        parts = [] if not value or _BLOCK.match(value) else [(n, value)]
+        j = i + 1
+        while j < len(nums) and nums[j] == nums[j - 1] + 1:
+            raw = lines[nums[j] - 1]
+            if raw.strip() and len(raw) - len(raw.lstrip()) <= indent:
+                break
+            if raw.strip():
+                parts.append((nums[j], raw.strip()))
+            j += 1
+        if len(parts) > 1:
+            out.append((n, parts[:FM_MAX_JOIN]))
+        i = max(j, i + 1)
+    return out
+
+
+def frontmatter_findings(rel: str, lines: list[str], rows, audience: str, fm: set[int],
+                         line_checks: dict[int, set]) -> list[dict]:
+    """A check that a frontmatter value joined over its lines hits and none of its lines hits
+    alone (review C42): cited at the first value line, `end_line`, `wrapped`, `spans`."""
+    out = []
+    for _key, parts in frontmatter_values(lines, fm):
+        text, pieces = "", []
+        for ln, part in parts:
+            if text:
+                text += " "
+            raw = lines[ln - 1]
+            pieces.append((ln, len(text), raw.index(part), len(part)))
+            text += part
+        folded = fold_line(text)
+        found = _hits(rel, folded, rows, audience, True)
+        inner = set().union(*(line_checks.get(ln, set()) for ln, _ in parts))
+        s, e = parts[0][0], parts[-1][0]
+        for check in sorted(found, key=_ORDER.__getitem__):
+            if check in inner:
+                continue
+            f = _finding(rel, s, text, folded, rows, audience, True, check, found[check])
+            for m in f["matches"]:
+                m["spans"] = _line_spans(m, text, pieces)
+            f.update(quote="\n".join(lines[s - 1:e]), end_line=e, wrapped=True)
+            out.append(f)
+    return out
+
+
 def scan_text(rel: str, text: str, rows, audience: str, undone: list | None = None) -> list[dict]:
     """`undone`, when given, collects the line hits a next line cancelled (C37 follow-up)."""
     lines = split_lines(text)
@@ -246,5 +329,7 @@ def scan_text(rel: str, text: str, rows, audience: str, undone: list | None = No
     for f in findings:
         line_checks.setdefault(f["line"], set()).add(f["check"])
     findings += wrapped_findings(rel, lines, rows, audience, fm, line_checks)
+    findings += frontmatter_findings(rel, lines, rows, audience, fm, line_checks)
+    findings += base64_findings(rel, lines, rows, audience, fm, line_checks)
     findings.sort(key=lambda f: (f["line"], bool(f.get("wrapped")), _ORDER[f["check"]]))
     return findings

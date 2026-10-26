@@ -60,6 +60,11 @@ def _item(stage, title, where, quote=None, note=None, lead=None, kind=None, src=
     """`lead`: words shown once before the card's notes, however many are merged. `kind` and
     `src` (the finding the item came from) are for the review page (review_html.py, 2026-10-12);
     this page does not show them."""
+    spelled = R.tag_text(quote)  # review C42: say what hidden tag characters spell
+    if spelled:
+        note = f"The hidden tag characters spell: \u201c{spelled}\u201d." + (f" {note}" if note else "")
+    if (src or {}).get("decoded_text"):  # review C42: an instruction hidden in base64
+        note = f"Decoded from base64: \u201c{src['decoded_text']}\u201d." + (f" {note}" if note else "")
     return {"stage": stage, "title": title, "where": where, "quote": quote, "note": note,
             "lead": lead, "kind": kind, "src": src}
 
@@ -92,10 +97,7 @@ def first_items(r) -> list[dict]:
                else "Loaded only by a folder or use of wildcards, named by nothing")
         out.append(_item(3, why + ", and it reads like an instruction", R.loc(p), p["quote"].strip(),
                          kind=p["pair"], src=p))
-    hits = [h for h in R.phrase_hits(r) if R.POINT_PATTERNS & set(h.get("patterns", []))
-            and h.get("audience") not in ("human", "test-data")]
-    for h in hits:
-        pats = sorted(R.POINT_PATTERNS & set(h["patterns"]))
+    for h, pats in R.point_hits(r):
         title = _family(pats)
         if h.get("negated"):  # review C25: kept, and said how it is stated
             title += (", stated as a prohibition with an exception" if h.get("carve_out")
@@ -745,9 +747,11 @@ def links(r) -> str:
             f"{ai:,} in text the AI reads. "
             f"{R.n(undoc, 'domain')} the skill's docs never mention.")
     trs = []
+    by_host = {h["host"]: h for h in hosts}
     for host in sorted({x["host"] for x in rows}):
         mine = [x for x in rows if x["host"] == host]
-        trs.append(f'<tr class="dom"><th colspan="4">{esc(host)} <span class="count">{len(mine)}</span></th></tr>')
+        look = R.lookalike_note(by_host.get(host, {}))  # review C42
+        trs.append(f'<tr class="dom"><th colspan="4">{esc(host)}{esc(look)} <span class="count">{len(mine)}</span></th></tr>')
         for x in sorted(mine, key=lambda x: (x["file"] or "", x["line"] or 0, x["url"])):
             shown = x["url"] if len(x["url"]) <= LINK_SHOW else x["url"][:LINK_SHOW - 1] + "…"
             where = f"{x['file']}:{x['line']}" if x.get("line") is not None else (x["file"] or "")

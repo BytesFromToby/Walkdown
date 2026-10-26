@@ -47,7 +47,11 @@ Order of attempts, first hit wins:
    `_shared/rules/carousel-rules.md` was reported dangling).
 4. The same tries case-insensitively (never for globs): a hit gives
    `case_mismatch` true.
-5. `missing`.
+5. A path with percent escapes (`%20`, any `%` and two hex digits) that is still missing: steps
+   1 to 4 again with it decoded, as a Markdown link writes a space (2026-10-25, review C43, an
+   outside tester: `my%20skill.md` was reported dangling and `my skill.md` an orphan).
+   The path as written is always tried first, so a file named with a literal `%20` still matches.
+6. `missing`.
 
 A path ending in `/` resolves only to a folder.
 
@@ -66,3 +70,4 @@ A path ending in `/` resolves only to a folder.
 6. An unknown path is `missing`; a glob with no match is `glob` with no targets.
 7. `rules/carousel-rules.md` with only `_shared/rules/carousel-rules.md` present resolves to it, `partial` true; `./rules/carousel-rules.md` stays `missing`; two such files give both, `ambiguous` true.
 8. `folder_missing`: `output/post.md` with no `output/` folder anywhere is true; `references/gone.md` beside an existing `references/` is false; a bare `gone.md` is false.
+9. `my%20skill/SKILL.md` resolves to `my skill/SKILL.md`; a file named `a%20b.md` matches as written; `gone%20x.md` stays `missing` (`test_percent_escapes_are_decoded_when_missing`).

@@ -9,14 +9,17 @@ Run Walkdown on the repository the user names, then relay the brief it prints.
 
 ## Run it
 
-From the Walkdown folder (the folder holding `walkdown.py`):
+From the Walkdown folder (the folder holding `walkdown.py`), with the project virtualenv's
+python (`.venv/Scripts/python` on Windows, `.venv/bin/python` elsewhere):
 
 ```bash
-python walkdown.py <GitHub URL or folder>
+.venv/Scripts/python walkdown.py <GitHub URL, GitHub folder link, or folder>
 ```
 
-Use the project virtualenv's python when `.venv/` exists (`.venv/Scripts/python` on Windows,
-`.venv/bin/python` elsewhere). A run takes from seconds to a few minutes.
+If there is no `.venv/` yet, Walkdown's packages are not installed. Ask the user before
+installing them, then run `python -m venv .venv` and
+`.venv/Scripts/python -m pip install -r requirements.txt` (`.venv/bin/python` elsewhere).
+A run takes from seconds to a few minutes.
 
 Add stage 6 flags only when the user asks for model reads:
 `--label jev`, `--sweep jev`, `--relational claude-cli`. They need
@@ -45,6 +48,6 @@ reads it, and you hold tools. So:
 - If the user asks what the checked boxes mean, give the brief's own words: each is ordinary on
   its own; a tool that does all three can be steered by text from outside into sending your data
   away. Never compare the repository with other repositories.
-- A validation stamp other than PASS means that stage's zeros are not fully checked; say which
-  stage, and that section 7 of the report (and `data/07-limits.md`) lists why.
+- If the brief says not every step worked, say which steps, and that Other details on
+  `details.html` and section 7 of `full.md` say why.
 - If the run fails, show the error line and stop.

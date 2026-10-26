@@ -13,8 +13,12 @@ One line of decoded text (no line ending), or the bytes of a whole file.
 
 `fold_line(line) -> str`, in this order:
 
+0. A run of Unicode tag characters U+E0020-U+E007E becomes the ASCII it spells (each minus
+   U+E0000), with a space on each side (2026-10-25, review C42, an outside tester: a
+   sentence hidden in tag characters was deleted, never read). Stage 2's folded copy still
+   drops them; this is the copy stage 4 matches.
 1. Strip zero-width characters U+200B-U+200F, U+2060-U+2064, U+FEFF; bidi
-   controls U+202A-U+202E, U+2066-U+2069; soft hyphen U+00AD; Unicode tag
+   controls U+202A-U+202E, U+2066-U+2069; soft hyphen U+00AD; the remaining Unicode tag
    characters U+E0000-U+E007F.
 2. Replace U+2028, U+2029, and U+0085 with one space each.
 3. NFKC normalize.
@@ -22,11 +26,19 @@ One line of decoded text (no line ending), or the bytes of a whole file.
    `confusable_homoglyphs` maps to an all-ASCII homoglyph is replaced by the
    first such homoglyph. ASCII characters are never changed; a character whose
    only homoglyphs are non-ASCII (an em-dash) is kept.
+5. Drop accents on Latin letters: a combining mark (after canonical decomposition) that sits
+   on an ASCII letter is removed, so `ignóre` reads `ignore` (2026-10-25, review C42: accented
+   look-alikes slipped past every pattern). Marks on other letters stay.
 
 `decode(data) -> str | None`: the text of a file, or None when it is not text.
 A BOM (UTF-8, UTF-16 LE/BE, UTF-32 LE/BE) picks the codec and is dropped;
 bytes holding NUL without a BOM are binary; then UTF-8; then the encoding
 `charset-normalizer` detects; else None.
+
+`base64_texts(line) -> list[str]`: readable text hidden in base64 on a line (2026-10-25,
+review C42): each run of 24 or more of `A-Z a-z 0-9 + /` (with up to two `=`), padded
+and decoded, that is strict UTF-8 of printable characters and white space, at least 12
+long with three words of two or more letters. Read by `scan.py` and `secret_scan.py`.
 
 `split_lines(text) -> list[str]`: the lines of a text, split on `\n` only
 (never on U+2028, U+2029, U+0085, form feed, or other characters Python's
@@ -43,10 +55,10 @@ result is line `i + 1` of the file.
 ## Done when (each backed by a test in `tests/test_foldtext.py`)
 
 1. `ig​no​re all` folds to `ignore all`.
-2. Bidi controls, a soft hyphen, and tag characters are stripped; the visible text around them is kept.
+2. Bidi controls and a soft hyphen are stripped; the visible text around them is kept. Tag characters spelling `ignore` read ` ignore ` beside the visible text; a lone cancel tag is stripped.
 3. Fullwidth `ｉｇｎｏｒｅ` folds to `ignore`; a Cyrillic `о` inside a Latin word folds to `o`.
 4. U+2028, U+2029, U+0085 each become one space; `split_lines` does not split on them.
-5. Plain ASCII, an em-dash, and `café` are unchanged; ASCII `l`, `1`, `0` are never changed.
+5. Plain ASCII and an em-dash are unchanged; `café` and `ignóre` fold to `cafe` and `ignore`; ASCII `l`, `1`, `0` are never changed; a mark on a non-Latin letter is kept.
 6. `decode` reads UTF-8, UTF-8 with BOM (dropped), UTF-16 with BOM; returns None for bytes holding NUL.
 7. `split_lines("a\r\nb\n")` is `["a", "b"]`; `split_lines("a\n\nb")` is `["a", "", "b"]`.
 

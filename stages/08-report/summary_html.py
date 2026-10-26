@@ -88,11 +88,19 @@ def not_run(runs_ok) -> list[str]:
     return [D.PLAIN_STAGE[st] for st in R.ORDER[:6] if st not in runs_ok]
 
 
-def headline(rs, missing=()) -> str:
-    """`missing`: steps that did not run (`not_run`). A run missing a step never says it found
-    none (2026-10-21, an outside tester: an empty .venv crashed stage 1 and the page said "found
-    none"); the step-did-not-work line stays at the bottom for a step that ran but skipped part
-    (owner, 2026-10-21)."""
+def failed_checks(results) -> list[str]:
+    """The steps that ran and did not pass their fixture check, by their plain names. `results`:
+    {stage: result word} for the stages that ran. INCOMPLETE is never counted (owner, 2026-10-25):
+    a check that did not run for a missing optional tool stays in details.html and full.md."""
+    return [D.PLAIN_STAGE[st] for st in R.ORDER[:6]
+            if st in results and results[st] not in ("PASS", "INCOMPLETE")]
+
+
+def headline(rs, missing=(), failed=()) -> str:
+    """`missing`: steps that did not run (`not_run`); `failed`: steps that ran and failed their
+    fixture check (`failed_checks`). A run missing a step never says it found none (2026-10-21,
+    an outside tester: an empty .venv crashed stage 1 and the page said "found none"), and with
+    no concerns a failed check is said here, not only at the bottom (owner, 2026-10-25, C40)."""
     n = sum(len(x["places"]) for x in rs)
     if missing:
         steps = (f'the step "{missing[0]}" did not run' if len(missing) == 1 else
@@ -106,6 +114,9 @@ def headline(rs, missing=()) -> str:
         nc = sum(x["not_concerned"] for x in rs)
         return (f"Walkdown found security concerns in this repository: {R.n(n, 'place')}, of "
                 f"{R.n(len(rs), 'kind')}." + (f" ({nc} of them marked Not concerned.)" if nc else ""))
+    if failed:
+        return ("Walkdown found none of the security concerns it looks for, but not every step "
+                "worked, so it may have missed some.")
     return "Walkdown found none of the security concerns it looks for."
 
 
@@ -159,24 +170,29 @@ def capability(r) -> str:
                       '<p class="note"><a href="details.html#trifecta">The places behind each box</a>.</p>')
 
 
-def failed_steps(stamps, runs_ok, r=None, notes=None) -> list[str]:
-    """Steps that did not work in this run (owner, 2026-10-20): a step with no output, or one whose
-    fixture check failed. An INCOMPLETE stamp counts only when a missing optional tool reads files
-    this repository has (`render.tool_items`; owner, 2026-10-21): without them it changes nothing
-    here, and Other details on details.html lists it. A run made without validation has no
-    stamps and adds none here."""
+def results(stamps, runs_ok) -> dict:
+    """{stage: result word} for the stages that ran and have a stamp."""
+    return {st: s.result for st, s in (stamps or {}).items() if st in runs_ok}
+
+
+def failed_steps(stamps, runs_ok) -> list[str]:
+    """Steps that did not work in this run (owner, 2026-10-20): a step with no output, or one that
+    ran and failed its fixture check. Never a step with nothing here to test, or a check that did
+    not run for a missing optional tool (INCOMPLETE, any stage; owner, 2026-10-25): Other details
+    on details.html lists those. A run made without validation has no stamps and adds none here."""
+    return not_working(results(stamps, runs_ok), runs_ok)
+
+
+def not_working(res, runs_ok) -> list[str]:
+    """`failed_steps` from {stage: result word}; the brief reads LOG.md's stamps this way."""
+    failed = set(failed_checks(res))
     out = []
     for st in R.ORDER[:6]:
         name = D.PLAIN_STAGE[st]
         if st not in runs_ok:
             out.append(f"{name} did not run")
-        elif st in (stamps or {}) and stamps[st].result == "INCOMPLETE":
-            gaps = R.tool_items(r or {}, notes or {})[0] if st == "02-reader" else []
-            if gaps:
-                out.append(f"{name} skipped part of this repository: "
-                           + "; ".join(f"{w[:1].lower()}{w[1:]}, {y}" for w, y in gaps))
-        elif st in (stamps or {}) and stamps[st].result != "PASS":
-            out.append(f"{name} did not pass its fixture check ({stamps[st].result})")
+        elif name in failed:
+            out.append(f"{name} did not pass its fixture check ({res[st]})")
     return out
 
 
@@ -202,9 +218,9 @@ def render_page(meta, r, stamps, notes, runs_ok, marks=None) -> str:
     head = D.header(meta, r, links=(("details.html", "Details"), ("review.html", "Review each place →")))
     body = [head,
             f'<section class="block lead" id="headline"><p class="headline">'
-            f'{esc(headline(rs, not_run(runs_ok)))}</p></section>',
+            f'{esc(headline(rs, not_run(runs_ok), failed_checks(results(stamps, runs_ok))))}</p></section>',
             concerns_block(rs, wording, model), capability(r), D.before_use(r, places),
-            warning(failed_steps(stamps, runs_ok, r, notes)), f'<footer><p>{esc(FOOTER)}</p></footer>']
+            warning(failed_steps(stamps, runs_ok)), f'<footer><p>{esc(FOOTER)}</p></footer>']
     return ("<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n"
             f"<title>{esc('Walkdown summary: ' + meta['repo'])}</title>\n" + D.FONTS

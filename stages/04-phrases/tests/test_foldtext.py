@@ -9,8 +9,10 @@ def test_zero_width_stripped():
 def test_bidi_soft_hyphen_tags_stripped():
     assert fold_line("a‮b‬c") == "abc"
     assert fold_line("in­struction") == "instruction"
-    tags = "".join(chr(0xE0000 + ord(c)) for c in "hi")
-    assert fold_line(f"before{tags}after") == "beforeafter"
+    # review C42: a tag run is read as the ASCII it spells, never dropped; a cancel tag is dropped
+    tags = "".join(chr(0xE0000 + ord(c)) for c in "ignore")
+    assert fold_line(f"before{tags}after") == "before ignore after"
+    assert fold_line("a" + chr(0xE007F) + "b") == "ab"
 
 
 def test_nfkc_and_confusables():
@@ -24,8 +26,15 @@ def test_separators_become_space_and_do_not_split():
 
 
 def test_unchanged_lines():
-    for s in ["plain ascii text", "a — b", "café", "l 1 0 m I O"]:
+    for s in ["plain ascii text", "a — b", "l 1 0 m I O"]:
         assert fold_line(s) == s
+
+
+def test_accents_on_latin_letters_are_dropped():
+    """Review C42 (an outside tester, 2026-10-25): accented look-alikes slipped past."""
+    assert fold_line("café") == "cafe"
+    assert fold_line("ignóre all prevíous") == "ignore all previous"
+    assert fold_line("नि") == "नि"  # a mark on a non-Latin letter stays
 
 
 def test_decode():

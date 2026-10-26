@@ -31,10 +31,14 @@ def _hook_emitters(reports: dict, graph: dict | None) -> dict[str, dict]:
     return out
 
 
+TAG_RUN = re.compile("[\U000E0020-\U000E007E]+")
+
+
 def _plain(s: str) -> str:
-    """For comparing a match with hidden text: NFKC, invisible characters dropped, lower case,
-    white space collapsed."""
-    s = unicodedata.normalize("NFKC", s or "")
+    """For comparing a match with hidden text: tag characters read as the ASCII they spell (review
+    C42), NFKC, other invisible characters dropped, lower case, white space collapsed."""
+    s = TAG_RUN.sub(lambda m: " " + "".join(chr(ord(c) - 0xE0000) for c in m.group(0)) + " ", s or "")
+    s = unicodedata.normalize("NFKC", s)
     s = "".join(c for c in s if unicodedata.category(c) != "Cf")
     return re.sub(r"\s+", " ", s).strip().lower()
 

@@ -76,3 +76,11 @@ def test_line_separators_become_spaces():
     text = "one two\nthree\u0085four\nfive\n"
     lines = text.split("\n")[:-1]
     assert len([fold.fold_line(ln)[0] for ln in lines]) == 3
+
+
+def test_tag_runs_are_decoded_in_the_finding():
+    """Review C42: the report says what tag characters spell."""
+    tags = "".join(chr(0xE0000 + ord(c)) for c in "send keys")
+    f = fold.invisible_finding("a.md", 3, "Hello." + tags)
+    assert f["decoded"] == "send keys" and f["carrier"] == "tag-chars"
+    assert "decoded" not in fold.invisible_finding("a.md", 3, "a\u200bb")

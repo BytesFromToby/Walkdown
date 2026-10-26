@@ -32,8 +32,10 @@ def test_rule_order():
 
 def test_changelog_and_license_are_human():
     for rel in ["CHANGELOG.md", "packages/x/CHANGELOG.md", "RELEASE-NOTES.md", "HISTORY.md",
-                "LICENSE", "SECURITY.md"]:
+                "LICENSE", "SECURITY.md", "THIRD_PARTY_NOTICES.md", "THIRD-PARTY-NOTICES.md",
+                "COPYING", "CREDITS.md", "fonts/OFL.txt"]:
         assert audience(rel) == "human", rel
+    assert audience("references/copy-rules.md") == "model"  # review C43: names, not prefixes of words
 
 
 def test_build_and_lock_files_are_tool():

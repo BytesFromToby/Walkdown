@@ -1,6 +1,7 @@
 """Folded copy and invisible-character detection. Spec: specs/fold.SPEC.md."""
 from __future__ import annotations
 
+import re
 import unicodedata
 from functools import lru_cache
 
@@ -13,6 +14,8 @@ STRIP = ZERO_WIDTH | BIDI | SOFT_HYPHEN | TAGS | NUL
 SEPARATORS = {" ", " ", "\u0085"}  # replaced by a space, never a new line
 
 KIND_ORDER = ["zero-width", "bidi", "soft-hyphen", "tag-chars", "nul"]
+# A run of tag characters spells ASCII (each minus U+E0000): the report says what (review C42).
+TAG_RUN = re.compile("[\U000E0020-\U000E007E]+")
 
 
 def cp(ch: str) -> str:
@@ -93,7 +96,11 @@ def invisible_finding(file: str, line_no: int | None, raw: str) -> dict | None:
     if not hits:
         return None
     kinds = {k for _, k in hits}
-    return {"check": "read.divergence", "file": file, "line": line_no,
-            "reading": "A-only", "text": raw,
-            "carrier": "+".join(k for k in KIND_ORDER if k in kinds),
-            "method": "static-style", "chars": [cp(ch) for ch, _ in hits]}
+    out = {"check": "read.divergence", "file": file, "line": line_no,
+           "reading": "A-only", "text": raw,
+           "carrier": "+".join(k for k in KIND_ORDER if k in kinds),
+           "method": "static-style", "chars": [cp(ch) for ch, _ in hits]}
+    runs = ["".join(chr(ord(c) - 0xE0000) for c in m.group(0)) for m in TAG_RUN.finditer(raw)]
+    if runs:
+        out["decoded"] = " ".join(runs)
+    return out

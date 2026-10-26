@@ -9,7 +9,12 @@ HUMAN_PREFIXES = ("readme", "install", "contributing", "code_of_conduct", "chang
                   "notice", "authors", "security",
                   # getting-started guides for people (2026-09-30, Plumbline DIRECTIONS.md)
                   "directions", "usage", "quickstart", "getting_started", "getting-started",
-                  "tutorial", "guide", "howto", "how-to", "faq")
+                  "tutorial", "guide", "howto", "how-to", "faq",
+                  # license and notice files by other common names (2026-10-25, review C43: license
+                  # text in THIRD_PARTY_NOTICES.md was read as instructions)
+                  "third_party_notices", "third-party-notices", "thirdpartynotices",
+                  "third_party_licenses", "third-party-licenses", "copying", "copyright", "patents",
+                  "credits", "attribution", "ofl.")
 HUMAN_DIRS = {"docs", ".github"}
 SUBAGENT_DIRS = {"agents", "commands"}
 SCRIPT_EXTS = {"py", "sh", "bash", "zsh", "js", "mjs", "cjs", "ts", "ps1", "psm1", "cmd",

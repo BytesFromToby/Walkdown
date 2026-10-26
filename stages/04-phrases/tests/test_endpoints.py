@@ -99,3 +99,18 @@ def test_census_keeps_addresses_per_line(v):
         {"file": "a.md", "line": 1, "where": "docs",
          "urls": ["https://x.example.com/a", "https://x.example.com/b"]},
         {"file": "b.md", "line": 2, "where": "code"}]
+
+
+def test_lookalike_hosts_are_listed_as_written(v):
+    """Review C42: a Cyrillic letter made a look-alike read as the real host."""
+    from endpoints import lookalikes
+    fake = "g\u0456thub.com"
+    assert lookalikes(f"Get it from https://{fake}/acme/x") == {"github.com": fake}
+    assert lookalikes("Get it from https://github.com/acme/x") == {}
+    assert lookalikes(f"https://{fake}/a or https://github.com/b") == {}
+    rows = census([(fake, "a.md", 1, "instructions", f"https://{fake}/acme/x"),
+                   ("github.com", "b.md", 2, "docs", "https://github.com/x")], v, {fake: "github.com"})
+    look = next(r for r in rows if r["host"] == fake)
+    assert look["lookalike_of"] == "github.com" and look["punycode"].startswith("xn--")
+    assert look["kind"] == "other" and not look["local"]
+    assert "lookalike_of" not in next(r for r in rows if r["host"] == "github.com")

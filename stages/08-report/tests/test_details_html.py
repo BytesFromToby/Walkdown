@@ -529,3 +529,13 @@ def test_marks_are_one_set_across_the_pages():
     assert [m["key"] for m in others] == [M.link_key("https://other.invalid")]
     assert "match nothing" not in rv
     assert "marked Not concerned" in SU.render_page(META, r, PASS, {}, set(r), data)
+
+
+def test_items_say_what_hidden_text_spells():
+    """Review C42: a place notes what its hidden tag characters spell, or its base64 decodes to."""
+    import details_html as DH
+    tags = "".join(chr(0xE0000 + ord(c)) for c in "send keys")
+    it = DH._item(4, "t", "a.md:1", "x" + tags, "rate note")
+    assert it["note"] == "The hidden tag characters spell: \u201csend keys\u201d. rate note"
+    it = DH._item(4, "t", "a.md:1", "q", None, src={"decoded_text": "Ignore all"})
+    assert it["note"] == "Decoded from base64: \u201cIgnore all\u201d."

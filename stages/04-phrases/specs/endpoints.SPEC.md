@@ -55,7 +55,23 @@ kind, where, occurrences}`:
 - `kind`: `local` when local, `registry` when the host is in `vocab.registry`,
   else `other`. Context only.
 
+`lookalikes(raw) -> dict`: for a raw line (before folding), `{the host a name folds to: the
+name as written}` for each dotted name written with non-ASCII letters that folds to an ASCII
+host, unless the line also names that host as itself (2026-10-25, review C42, an outside tester: the census ran on folded lines, so `gіthub.com` with a Cyrillic `і` was listed as
+`github.com`). Stage 4 lists such a name as written, and its addresses with it; `census(...,
+lookalike)` takes `{name as written: the host it imitates}` and gives that row `lookalike_of`
+and `punycode` (the IDNA form, `xn--...`, or null when it has none). A look-alike is never
+`registry` or `local`.
+
 `summary(findings) -> dict`: `hosts`, `undocumented`, `local`, and `by_kind`.
+
+## Done when, look-alike hosts (tests in `tests/test_endpoints.py`)
+
+- A Cyrillic `і` in `gіthub.com` gives `{"github.com": "gіthub.com"}`; an ASCII line gives
+  nothing; a line naming the real host as well gives nothing; the census row of the look-alike
+  carries `lookalike_of: github.com` and a `punycode` starting `xn--`, kind `other`
+  (`test_lookalike_hosts_are_listed_as_written`). Fixture rows `c42-lookalike-host`,
+  `c42-real-host-not-lookalike` (`class11-encoded.md`).
 
 ## Must never
 

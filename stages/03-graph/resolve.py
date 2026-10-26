@@ -4,6 +4,9 @@ from __future__ import annotations
 import posixpath
 import re
 from dataclasses import dataclass, field
+from urllib.parse import unquote
+
+PERCENT = re.compile(r"%[0-9A-Fa-f]{2}")
 
 
 @dataclass
@@ -111,6 +114,14 @@ class Resolver:
         return []
 
     def resolve(self, from_rel: str, path: str, shape: str) -> Result:
+        res = self._resolve(from_rel, path, shape)
+        if res.status == "missing" and PERCENT.search(path):  # a Markdown link's %20 (spec, 5)
+            decoded = self._resolve(from_rel, unquote(path), shape)
+            if decoded.status != "missing":
+                return decoded
+        return res
+
+    def _resolve(self, from_rel: str, path: str, shape: str) -> Result:
         from_dir = posixpath.dirname(from_rel)
         want_dir = path.endswith("/")
         clean = path.rstrip("/")

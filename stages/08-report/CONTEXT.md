@@ -46,9 +46,11 @@ python stages/08-report/run.py <input_dir> --repo <name> [--results <dir>] [--da
   the fixed qualifier.
 - Every count resolves to file:line in the full report.
 - A stage whose validation stamp is not PASS says so on its status line in `full.md` and
-  points to section 7; `details.html` puts a pill on Other details, and `summary.html` names the
-  step at the bottom of the page (an INCOMPLETE stage 2 only when the missing tool reads files
-  the repository has). A zero from an unvalidated stage is never shown as clean.
+  points to section 7; `details.html` puts a pill on Other details, and `summary.html` names a
+  step that did not run or failed its fixture check at the bottom of the page, and in the
+  headline when it found nothing (owner, 2026-10-25). A check skipped for a missing optional tool
+  (INCOMPLETE) stays in `details.html` and `full.md`. A zero from an unvalidated stage is never
+  shown as clean.
 - Benign share: a hit count carries one only when stage 6 labels ran (C15, 2026-10-03).
 - The places to check (`details_html.first_items`: listed on `details.html`, one card each on
   `review.html`, sorted into concern kinds on `summary.html`) are chosen by fixed rules, never
@@ -59,7 +61,9 @@ python stages/08-report/run.py <input_dir> --repo <name> [--results <dir>] [--da
      are counted, not listed (2026-09-29).
   3. stage 3: `orphan+phrase` and `dynamic+phrase` pairs (load-only files).
   4. stage 4: hits on the **zero-base-rate patterns** PHRASES lists as the ones
-     to run first on an unknown repo (`POINT_PATTERNS` in `render.py`); term conflicts and
+     to run first on an unknown repo (`POINT_PATTERNS` in `render.py`), the sending shape
+     (`K.data-flow`), and credential hits on a line that sends (`render.point_hits`; owner,
+     2026-10-25, review C39); term conflicts and
      redefined safety words; likely committed secrets; flagged text past the reader window;
      a flagged sentence repeated across files; rubric actions whose confirmation is redefined,
      or prohibited with no confirmation step.

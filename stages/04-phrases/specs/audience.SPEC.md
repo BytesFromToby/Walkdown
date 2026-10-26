@@ -19,7 +19,11 @@ tag describes the file, never the reader's intent.
 1. `human`: the base name starts with `README`, `INSTALL`, `CONTRIBUTING`,
    `CODE_OF_CONDUCT`, `CHANGELOG`, `CHANGES`, `HISTORY`, `RELEASE-NOTES`,
    `RELEASE_NOTES`, `RELEASES`, `LICENSE`, `LICENCE`, `NOTICE`, `AUTHORS`, or
-   `SECURITY` (any case; the second group added 2026-09-29), or any folder in the path is `docs` or
+   `SECURITY` (any case; the second group added 2026-09-29), or a license or notice file by
+   another common name (`THIRD_PARTY_NOTICES`, `THIRD-PARTY-NOTICES`, `THIRDPARTYNOTICES`,
+   `THIRD_PARTY_LICENSES`, `THIRD-PARTY-LICENSES`, `COPYING`, `COPYRIGHT`, `PATENTS`, `CREDITS`,
+   `ATTRIBUTION`, `OFL.`; 2026-10-25, review C43: license text in `THIRD_PARTY_NOTICES.md` was
+   the summary's example for two concern kinds), or any folder in the path is `docs` or
    `.github`.
 2. `subagent`: any folder in the path is `agents` or `commands`, or the base
    name matches `*prompt*.md` (any case).
@@ -53,7 +57,9 @@ references (stage 5 `specs/testdata.SPEC.md`).
 3. `hooks/session-start` given in `scripts`, `hooks/hooks.json` given in `hook_configs`, and `tools/a.py` are `tool`.
 4. `skills/x/SKILL.md` and `notes.md` are `model`.
 5. Rule order holds: `docs/agents/x.md` is `human`; `agents/run.py` is `subagent`.
-6. `CHANGELOG.md`, `RELEASE-NOTES.md`, `HISTORY.md`, `LICENSE`, `SECURITY.md` are `human` (2026-09-29).
+6. `CHANGELOG.md`, `RELEASE-NOTES.md`, `HISTORY.md`, `LICENSE`, `SECURITY.md` are `human` (2026-09-29);
+   so are `THIRD_PARTY_NOTICES.md`, `THIRD-PARTY-NOTICES.md`, `COPYING`, `CREDITS.md`, `OFL.txt`
+   (2026-10-25), and `references/copy-rules.md` is not.
 7. Package, lock, and build configuration files (`BUILD_FILES`, `BUILD_GLOBS`:
    `package.json`, lockfiles, `tsconfig*.json`, `Dockerfile`, ...) are `tool`;
    plugin manifests stay `model` (added 2026-09-29, Case 004).

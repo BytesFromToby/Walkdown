@@ -155,27 +155,51 @@ def test_questions_before_use_follow_the_evidence():
 
 
 def test_a_step_that_did_not_work_is_named_at_the_bottom():
-    """Owner, 2026-10-20 and 2026-10-21: no Not checked section, but a step that did not run or
-    failed its fixture check is named at the bottom of the page, above the footer; an INCOMPLETE
-    stage 2 is named only when this repository has files the missing tool reads."""
+    """Owner, 2026-10-20, 2026-10-21 and 2026-10-25: no Not checked section, but a step that did
+    not run or failed its fixture check is named at the bottom of the page, above the footer. A
+    check that did not run for a missing optional tool (INCOMPLETE) is never named here, even when
+    the repository has files that tool reads."""
     r = full_set()
     assert 'id="warning"' not in page(r)
     incomplete = dict(PASS, **{"02-reader": Stamp("INCOMPLETE", "1/2", "1/1", skipped=["rd-img-ocr"])})
     ocr = {"02-reader": ["tesseract not installed: images and PDF pages are skipped for OCR"]}
-    assert 'id="warning"' not in page(r, stamps=incomplete, notes=ocr)  # no image here: nothing missed
-    r["01-inventory"]["findings"].append({"check": "inv.file", "file": "a.png", "line": None, "ext": "png",
-                                          "type": "image/png"})
-    h = page(r, stamps=incomplete, notes=ocr)
+    for f in ("a.png", "b.pdf"):
+        r["01-inventory"]["findings"].append({"check": "inv.file", "file": f, "line": None,
+                                              "ext": f[-3:], "type": "image/png" if f.endswith("png")
+                                              else "application/pdf"})
+    assert 'id="warning"' not in page(r, stamps=incomplete, notes=ocr)
+    other = dict(PASS, **{"03-graph": Stamp("INCOMPLETE", "1/2", "1/1", skipped=["g-x"])})
+    assert 'id="warning"' not in page(r, stamps=other)
+    failed = dict(incomplete, **{"04-phrases": Stamp("FAIL", "1/2", "1/1")})
+    h = page(r, stamps=failed, notes=ocr, runs_ok=set(R.ORDER[:6]) - {"05-capability"})
     w = section(h, "warning")
     assert "Not every step worked in this run." in w
-    assert "What the model actually reads skipped part of this repository: text inside images (OCR), " \
-           "Tesseract not installed" in w
-    failed = dict(PASS, **{"04-phrases": Stamp("FAIL", "1/2", "1/1")})
-    w = section(page(r, stamps=failed, runs_ok=set(R.ORDER[:6]) - {"05-capability"}), "warning")
     assert "What the text asks for did not pass its fixture check (FAIL)" in w
     assert "What this touches did not run" in w and 'href="details.html#other"' in w
+    assert "What the model actually reads" not in w and "OCR" not in w
     assert h.index('id="beforeuse"') < h.index('id="warning"') < h.index("<footer>")
     assert 'id="warning"' not in page(r, stamps={})  # no validation, no stamps to judge by
+
+
+def test_a_failed_check_never_reads_as_clean():
+    """Owner, 2026-10-25 (review C40): with no concerns, a step that ran and failed its fixture
+    check changes the headline; an INCOMPLETE stamp does not."""
+    import html as H
+    bare = reports(hooks=0)
+    bare["04-phrases"]["findings"] = []
+    failed = dict(PASS, **{"03-graph": Stamp("FAIL", "1/2", "1/1")})
+    t = H.unescape(section(page(bare, stamps=failed), "headline"))
+    assert ("Walkdown found none of the security concerns it looks for, but not every step worked, "
+            "so it may have missed some.") in t
+    assert "What loads what did not pass its fixture check (FAIL)" in section(page(bare, stamps=failed), "warning")
+    incomplete = dict(PASS, **{"02-reader": Stamp("INCOMPLETE", "1/2", "1/1", skipped=["rd-img-ocr"])})
+    t = H.unescape(section(page(bare, stamps=incomplete), "headline"))
+    assert t.strip().endswith("Walkdown found none of the security concerns it looks for.</p>")
+    t = H.unescape(section(page(full_set(), stamps=failed), "headline"))
+    assert "Walkdown found security concerns in this repository: 6 places, of 5 kinds." in t
+    assert "missed" not in t  # with concerns, the step is named at the bottom only
+    assert S.failed_checks({"01-inventory": "PASS", "02-reader": "INCOMPLETE", "04-phrases": "ERROR"}) \
+        == ["What the text asks for"]
 
 
 def test_a_run_missing_a_step_never_reads_as_clean():

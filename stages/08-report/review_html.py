@@ -153,7 +153,7 @@ def _patterns(it, qpats) -> list[str]:
                 else src.get("patterns") or [])
         out += [p for p in pats if p not in out]
     if it.get("kind") == "phrase":
-        point = sorted(R.POINT_PATTERNS & set(out))
+        point = sorted(p for p in out if p in R.POINT_PATTERNS | R.SEND_SHAPE or p.startswith("creds."))
         out = point + [p for p in out if p not in point]
     return out
 

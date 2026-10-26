@@ -114,7 +114,7 @@ matches one, so saving from either page keeps the other page's marks.
 ## Helpers other outputs read
 
 `first_items`, `unique`, `grouped`: the places, read by `review.html`, `summary.html`, and the
-brief in `walkdown.py`. `mark_rows`: read by `review.html`. `action_group`, `before_use`, `header` (with its links), `_allows`,
+brief in `walkdown.py`; its stage 4 phrase places are `render.point_hits` (2026-10-25, C39). `mark_rows`: read by `review.html`. `action_group`, `before_use`, `header` (with its links), `_allows`,
 `GENERAL`, `_place_ids`, and the page's CSS: read by `summary.html`.
 
 ## Must never
@@ -159,6 +159,17 @@ brief in `walkdown.py`. `mark_rows`: read by `review.html`. `action_group`, `bef
     driven in a browser (2026-10-20): ticking, unticking with a note, the per-section counts, a
     Concerned mark from the review page named beside its box, the download; no horizontal scroll
     at phone width.
+
+
+## Added 2026-10-25 (review C42, an outside tester)
+
+- A place whose quote holds tag characters notes what they spell ("The hidden tag characters
+  spell: ..."), and a stage 4 place decoded from base64 notes the decoded text ("Decoded from
+  base64: ..."), before any other note (`_item`); review cards show the same notes.
+- Outside links: a domain written with look-alike letters says so on its row, with its
+  punycode and the host it imitates (`render.lookalike_note`).
+
+Done when: `test_items_say_what_hidden_text_spells`.
 
 ## History
 

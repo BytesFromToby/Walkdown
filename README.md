@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml/badge.svg)](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml)
 
-**Status: alpha, version 0.2.0** ([CHANGELOG](CHANGELOG.md)). It runs end to end and produces a report you can read. Parts of it are
+**Status: alpha, version 0.2.1** ([CHANGELOG](CHANGELOG.md)). It runs end to end and produces a report you can read. Parts of it are
 experimental, and they are marked as such below.
 
 Walkdown examines the instruction layer of AI skills and agents: the SKILL.md files, agent
@@ -79,23 +79,42 @@ choose at run time. No model in the pipeline holds tools.
 
 ## Install
 
-Built and tested on Python 3.13; older versions are untested.
+You need Python 3.12 or 3.13 (both are tested; older versions are not) and, to audit a URL,
+git. In the Walkdown folder:
 
-```bash
+Windows (PowerShell or Command Prompt):
+
+```powershell
 python -m venv .venv
-.venv/Scripts/python -m pip install -r requirements.txt      # Windows
-.venv/bin/python -m pip install -r requirements.txt          # macOS / Linux
+.venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-That is all stages 1 to 5 and the report need. Optional extras:
+macOS and Linux:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+```
+
+The other commands in this README are written for macOS and Linux; on Windows write
+`.venv\Scripts\python` where they say `.venv/bin/python`.
+
+On Windows, keep the Walkdown folder on a short path outside OneDrive (for example
+`C:\src\Walkdown`): in a deep folder, git can stop with "Filename too long".
+`git config --global core.longpaths true` lifts that limit for every repository. The
+repositories Walkdown audits are cloned with long paths on.
+
+That is all stages 1 to 5 and the report need. Optional extras, installed into the same `.venv`:
 
 - **Tesseract** (OCR of text in images and on PDF pages, stage 2): the program itself
   (Windows `winget install UB-Mannheim.TesseractOCR`, macOS `brew install tesseract`, Linux
-  `apt install tesseract-ocr`) and its Python wrapper, `pip install pytesseract==0.3.13`; both
+  `apt install tesseract-ocr`) and its Python wrapper,
+  `.venv/bin/python -m pip install pytesseract==0.3.13`; both
   are needed. Without it, that text is listed as not examined. PDF pages are drawn by `pypdfium2`,
   which `requirements.txt` installs.
-- **Playwright** (HTML as a browser draws it, stage 2): `pip install playwright==1.64.0`, then
-  `python -m playwright install chromium-headless-shell`. Pages are drawn with their own scripts
+- **Playwright** (HTML as a browser draws it, stage 2):
+  `.venv/bin/python -m pip install playwright==1.64.0`, then
+  `.venv/bin/python -m playwright install chromium-headless-shell`. Pages are drawn with their own scripts
   off and nothing fetched from the network. Without it, HTML is read from static style only and
   the rest is listed as not examined.
 
@@ -111,17 +130,31 @@ for what that tool reads are skipped, and everything else in stage 2 is still ch
 
 ## Run an audit
 
-Give it a GitHub URL or a folder:
+Give it a GitHub URL, a link to a folder in a GitHub repository, or a folder on your machine.
+Windows:
 
-```bash
-python walkdown.py https://github.com/<owner>/<repo>
-python walkdown.py path/to/a/folder
+```powershell
+.venv\Scripts\python walkdown.py https://github.com/<owner>/<repo>
+.venv\Scripts\python walkdown.py https://github.com/<owner>/<repo>/tree/<branch>/<folder>
+.venv\Scripts\python walkdown.py path\to\a\folder
 ```
 
+macOS and Linux:
+
+```bash
+.venv/bin/python walkdown.py https://github.com/<owner>/<repo>
+.venv/bin/python walkdown.py https://github.com/<owner>/<repo>/tree/<branch>/<folder>
+.venv/bin/python walkdown.py path/to/a/folder
+```
+
+Started with another Python, Walkdown switches to the `.venv` one when that has its packages.
+
 A URL is cloned into `ReposToExamine/<repo>` (running it again updates that clone to the
-latest commit; `--keep` audits it as it is); a folder is examined where it is. The run lands in
+latest commit; `--keep` audits it as it is). A folder link clones the repository at that branch
+and audits only that folder. A repository that is not there, or is private, stops at once:
+Walkdown never asks for a login. A folder is examined where it is. The run lands in
 `RepoResults/<repo>/`, and the command ends with a short brief in the summary page's terms: the
-trifecta legs, the security concerns by kind, each stage's validation stamp, and the paths to the
+trifecta legs, the security concerns by kind, whether any step failed its fixture checks, and the paths to the
 reports. Open `summary.html` first.
 
 ### Version drift
@@ -136,7 +169,7 @@ A repository that is fine when you install it can change later; this is how you 
 changed. To compare any two runs:
 
 ```bash
-python walkdown.py diff RepoResults/<name>/<old run> RepoResults/<name>/<new run>
+.venv/bin/python walkdown.py diff RepoResults/<name>/<old run> RepoResults/<name>/<new run>
 ```
 
 ### From a chat
@@ -165,7 +198,7 @@ can work through):
 Re-render an existing run's report after a change to the report code (maintainers):
 
 ```bash
-python stages/08-report/run.py --rerender RepoResults/<name>/<run>
+.venv/bin/python stages/08-report/run.py --rerender RepoResults/<name>/<run>
 ```
 
 `ReposToExamine/` and `RepoResults/` are kept out of git. Copies of other people's repositories,
@@ -176,14 +209,14 @@ and reports about them, stay on your machine.
 Every script has a spec (`stages/NN-*/specs/`) and pytest tests written from it:
 
 ```bash
-python -m pytest -q
+.venv/bin/python -m pytest -q
 ```
 
 Every stage also has fixtures, small repositories with known contents, and a grader scores the
 stage against an answer sheet the stage code never reads:
 
 ```bash
-python grader/grader.py all
+.venv/bin/python grader/grader.py all
 ```
 
 The same tests and graders run on GitHub on every push (Ubuntu 24.04 and 26.04 with Python 3.12

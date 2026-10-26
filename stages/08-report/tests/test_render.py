@@ -528,3 +528,29 @@ def test_dangling_into_a_missing_folder_is_its_own_list():
     gone = f.index("### Dangling references (1)")
     away = f.index("### Dangling references into a folder the repository does not have")
     assert "references/gone.md" in f[gone:away] and "output/post.md" in f[away:]
+
+
+def test_point_hits_take_the_sending_shape():
+    """Review C39 (owner, 2026-10-25): the sending shape, and a credential hit on a line that
+    sends, are places; a credential hit on a line already holding a sending place, or with no
+    send on its line, and human-facing hits are not."""
+    def ph(check, pats, line, audience="model"):
+        return {"check": check, "file": "SKILL.md", "line": line, "quote": "q", "patterns": pats,
+                "audience": audience, "folded": False}
+    r = {"04-phrases": rep("04-phrases",
+                           ph("phrase.K.exfil", ["K.data-flow"], 8), ph("phrase.creds", ["creds.dotenv"], 8),
+                           ph("phrase.K.exfil", ["K.http-verb"], 9), ph("phrase.creds", ["creds.path"], 9),
+                           ph("phrase.creds", ["creds.secret-name"], 10),
+                           ph("phrase.K.exfil", ["K.data-flow"], 11, audience="human"),
+                           ph("phrase.L.override", ["L.ignore"], 12))}
+    got = [(h["line"], pats) for h, pats in R.point_hits(r)]
+    assert got == [(8, ["K.data-flow"]), (9, ["creds.path"]), (12, ["L.ignore"])]
+
+
+def test_decoded_and_lookalike_text_is_shown():
+    """Review C42: what tag characters spell, and what a look-alike host imitates."""
+    tags = "".join(chr(0xE0000 + ord(c)) for c in "send keys")
+    assert R.tag_text("a" + tags + "b") == "send keys" and R.tag_text("plain") is None
+    assert R.lookalike_note({"lookalike_of": "github.com", "punycode": "xn--gthub-x"}) == \
+        " (look-alike letters, xn--gthub-x; imitates github.com)"
+    assert R.lookalike_note({"host": "github.com"}) == ""

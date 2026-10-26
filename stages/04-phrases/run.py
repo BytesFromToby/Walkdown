@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -108,15 +109,18 @@ def part2_counts(p2: list[dict]) -> dict:
 
 
 SECRET_MASK = "[line not shown: it holds what looks like a secret; open the file to see it]"
-TEXT_FIELDS = ("quote", "definition", "condition", "body")
+TEXT_FIELDS = ("quote", "definition", "condition", "body", "decoded_text")
 
 
 def mask_secret_lines(findings: list[dict]) -> None:
     """A report must not repeat a secret it found (2026-10-04): every text field of a finding
     on a line where secret.found fired is replaced by SECRET_MASK, matched words included.
     The location stays."""
+    # a line whose secret is only base64 that decodes to readable text holds no key: its text
+    # is the instruction a reader needs (review C42)
     lines = {(f["file"], f["line"]) for f in findings
-             if f.get("check") == "secret.found" and "skipped" not in f}
+             if f.get("check") == "secret.found" and "skipped" not in f
+             and f.get("likely_not_secret") != secret_scan.BASE64_TEXT}
     for f in findings:
         if f.get("check") == "secret.found":
             continue
@@ -166,6 +170,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
     not_scanned: list[dict] = []
     scanned = 0
     rb, cond, defs, occ, lims = [], [], [], [], []
+    lookalike: dict[str, str] = {}  # name as written -> the host it imitates (review C42)
     undone: list[dict] = []  # line hits the next line cancelled (C37 follow-up)
     texts: dict[str, tuple] = {}  # rel -> (audience, raw lines, bytes): position and repetition
     for row in files:
@@ -212,7 +217,11 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
         lims.extend(restrictions.limit_file(rel, raw, folded, aud))  # review C32
         for n, line in enumerate(folded, start=1):
             where = "instructions" if n in instr else "docs" if aud == "human" else "code"
+            look = endpoints.lookalikes(raw[n - 1])  # review C42: never listed as the real host
             for host, addr in endpoints.addresses_in_line(line, vocab):
+                if host in look:
+                    lookalike[look[host]] = host
+                    host, addr = look[host], re.sub(re.escape(host), look[host], addr, count=1, flags=re.I)
                 occ.append((host, rel, n, where, addr))
 
     per_check = {c: 0 for c in CHECKS}
@@ -221,7 +230,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
         per_check[f["check"]] += 1
         for pid in f["patterns"]:
             per_pattern[pid] += 1
-    p2 = (rb + endpoints.census(occ, vocab) + cond + defs + terms.conflicts(defs)
+    p2 = (rb + endpoints.census(occ, vocab, lookalike) + cond + defs + terms.conflicts(defs)
           + terms.safety(defs, vocab)
           + position.density(texts, findings) + position.repetition(texts, findings)
           + secret_scan.scan(input_dir, {rel: t[0] for rel, t in texts.items()}) + lims)

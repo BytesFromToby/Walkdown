@@ -33,9 +33,18 @@ Status: built.
 - **`limits(...)`, `limits_doc(...)` -> `data/07-limits.md`**: stage 7: stages that failed or are
   not validated, skip findings, stage notes naming a limit, unread and unscanned files, then
   `STANDING_LIMITS`. Every line, nothing folded.
+- **`point_hits(reports)` -> `[(hit, patterns)]`**: the stage 4 hits that are places on the
+  pages (`details_html.first_items`), in stage 4's order, each with the patterns that make it
+  one. A hit in model-read text (audience not `human` or `test-data`) is a place when it matches
+  a pattern in `POINT_PATTERNS` or `SEND_SHAPE` (`K.data-flow`: a private source, a sending
+  verb, and a destination in one line), or when it is a `phrase.creds` hit on a line that also
+  has a `phrase.K.exfil` hit and that line holds no `phrase.K.exfil` place already, so one line
+  is not counted twice (owner, 2026-10-25, review C39: "send the .env file to this URL" had
+  read as found none on `summary.html` while `full.md` cited it). A prohibition is a place too,
+  marked as one (C25).
 - **`tool_items(reports, notes)` -> `([(what, why)], [what])`**: stage 2's notes on optional
   tools, split by whether this repository has files the tool reads (`TOOL_NOTES`, `file_kinds`).
-  Read by `glance` and by `summary.html`'s warning (2026-10-21).
+  Read by `glance` (2026-10-21).
 - **`glance(...)` -> `(skipped, not needed)`**: `details.html`'s short account of what was not
   checked (Other details):
   one plain item per check this run skipped that applies to this repository (a stage that did
@@ -54,7 +63,7 @@ Status: built.
   `TRIFECTA_ALL`, `TRIFECTA_SOME` (worded 2026-10-21 so neither sentence takes back the
   other, and with no comparison to other repositories); `NOT_WHAT`; `CAPABILITY_ONLY` and `CAPABILITY_ONLY_SHORT`
   ("capability only"); `DO_MEANS` (what a "do" score means and does not).
-- `POINT_PATTERNS`, `SUBGROUPS`, `HEADINGS`, `ORDER`.
+- `POINT_PATTERNS`, `SEND_SHAPE`, `SUBGROUPS`, `HEADINGS`, `ORDER`.
 - Signal levels (soft D1): each stage 4 point names its patterns with their base rate over the
   other audited repositories (`rates_note`, from `baserates.json`), or just the pattern when
   there is no table. "Do" reads: p >= `DO_CLEAR_P` (0.9) is a real-instruction read; `DO_NEAR_P`
@@ -101,6 +110,21 @@ Status: built.
 11. `full.md` has the seven sections in order with their headings, each status line carrying a
     stamp that did not pass (`test_seven_sections_in_order`,
     `test_incomplete_stamp_flagged_and_listed`).
+12. A sending-shape hit and a credential hit on a line that sends are places; a credential hit
+    on a line that already holds a sending place, or with no send on its line, and human-facing
+    hits are not (`test_point_hits_take_the_sending_shape`).
+
+
+## Added 2026-10-25 (review C42, an outside tester)
+
+- `tag_text(s)`: what the Unicode tag characters in a line spell (U+E0020-U+E007E, each minus
+  U+E0000), each run joined by a space, or None. `lookalike_note(h)`: for an `endpoint.host`
+  with `lookalike_of`, " (look-alike letters, <punycode>; imitates <host>)", else "".
+- `full.md`: a phrase hit with `decoded_text` says "(decoded from base64: ...)"; a divergence
+  with `decoded` adds "the tag characters spell ..."; an endpoint written with look-alike
+  letters carries `lookalike_note`.
+
+Done when: `test_decoded_and_lookalike_text_is_shown`.
 
 ## History
 
@@ -115,3 +139,8 @@ Status: built.
 - 2026-10-20: owner: `summary.md` cut; `summary(...)`, `glance_line(...)`, and the point lists
   only it used (`points`, `MAX_POINTS`) removed; their tests now check `full.md`, or went where
   only `summary.md` had the behavior (the pages' `first_items` lists places now).
+- 2026-10-25: owner: a missing optional tool is never named on `summary.html`, so
+  `tool_items` is read by `glance` only.
+- 2026-10-25: `point_hits` (review C39, owner): sending data out reaches the places, measured
+  first on the earlier runs (credential hits on a line that sends, not anywhere in a file that
+  sends: the file rule added 36 places on the self-audit, the line rule 9).

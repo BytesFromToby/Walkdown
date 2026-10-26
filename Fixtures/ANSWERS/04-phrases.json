@@ -71,6 +71,40 @@
           "line": 18
         },
         {
+          "id": "ph-01-gate-21-linkdef-url",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 21,
+          "match": {
+            "patterns": {
+              "includes": "K.md-carrier"
+            }
+          },
+          "note": "A link definition to a web address can carry data out in its query (review C43, 2026-10-25)."
+        },
+        {
+          "id": "ph-01-negative-22-linkdef-local",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 22,
+          "note": "A link definition to a file in the repository is a reference, not a carrier (review C43, an outside tester: every [r1]: path was filed under Reaching out)."
+        },
+        {
+          "id": "ph-01-gate-23-linkdef-local-hidden",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 23,
+          "match": {
+            "patterns": {
+              "includes": "K.md-carrier"
+            }
+          },
+          "note": "Narrowing survival: a local link definition on a line that also has the hidden attribute still fires."
+        },
+        {
           "id": "ph-02-gate-6",
           "polarity": "gate",
           "check": "phrase.creds",
@@ -1146,15 +1180,131 @@
             }
           },
           "note": "The twin: the next line continues with an object, so the line hit stands."
+        },
+        {
+          "id": "c42-tags-decoded",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-encoded.md",
+          "line": 4,
+          "match": {
+            "patterns": {
+              "includes": "L.ignore"
+            }
+          },
+          "note": "A sentence written in Unicode tag characters is read as the ASCII it spells (review C42, an outside tester, 2026-10-25)."
+        },
+        {
+          "id": "c42-base64-decoded",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-encoded.md",
+          "line": 5,
+          "match": {
+            "decoded": {
+              "eq": "base64"
+            }
+          },
+          "note": "Readable text inside base64 is decoded and matched (review C42, an outside tester, 2026-10-25)."
+        },
+        {
+          "id": "c42-accent-folded",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-encoded.md",
+          "line": 6,
+          "note": "Accents on Latin letters are dropped before matching (review C42, an outside tester, 2026-10-25)."
+        },
+        {
+          "id": "c42-image-template",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "class11-encoded.md",
+          "line": 7,
+          "match": {
+            "patterns": {
+              "includes": "K.url-template"
+            }
+          },
+          "note": "An image address with a template slot can carry the conversation out when rendered (review C42, an outside tester, 2026-10-25)."
+        },
+        {
+          "id": "c42-lookalike-host",
+          "polarity": "gate",
+          "check": "endpoint.host",
+          "match": {
+            "lookalike_of": {
+              "eq": "github.com"
+            }
+          },
+          "note": "A host written with look-alike letters is listed as itself and marked, never as the real host (review C42, an outside tester, 2026-10-25)."
+        },
+        {
+          "id": "c42-binary-base64-not-read",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class11-encoded.md",
+          "line": 11,
+          "note": "Base64 of binary bytes is not text and adds no hit."
+        },
+        {
+          "id": "c42-accent-benign",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class11-encoded.md",
+          "line": 12,
+          "note": "Accented prose with no instruction stays quiet once folded."
+        },
+        {
+          "id": "c42-image-plain-query",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "class11-encoded.md",
+          "line": 13,
+          "match": {
+            "patterns": {
+              "includes": "K.url-template"
+            }
+          },
+          "note": "An image address with an ordinary query is not a template slot."
+        },
+        {
+          "id": "c42-real-host-not-lookalike",
+          "polarity": "negative",
+          "check": "endpoint.host",
+          "match": {
+            "lookalike_of": {
+              "eq": "github.com"
+            },
+            "host": {
+              "eq": "github.com"
+            }
+          },
+          "note": "The real github.com is never marked as a look-alike."
+        },
+        {
+          "id": "c42-frontmatter-joined",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-folded-frontmatter.md",
+          "line": 4,
+          "match": {
+            "patterns": {
+              "includes": "L.ignore"
+            }
+          },
+          "note": "A folded frontmatter value split over lines is matched as one (review C42, an outside tester, 2026-10-25)."
         }
       ],
       "deferred": [],
       "fixtures": {
-        "class01-exfiltration.md": "42dbfdd1f6abdc4cd1924d5399f4c16f3b1fb09ff5120234da2824430de9aec3",
+        "class01-exfiltration.md": "60ee1f222ffd2cbd7543d83b0522351c75857c0a67ce7325b40cea7c341f3e8b",
         "class02-credentials.md": "8338a544fd991234c7b181ccf26fd81e0df056c167cc492a2aa9f7fe47f25d9b",
         "class03-remote-load.md": "92456ac6f7e89f387c0fabd56de42894b67942e6c860c5cd2c993656ec52e135",
         "class05-override.md": "5cd9fb5cbf17bc41ddf99b36d561d1eadfc8dfa1d3e2a3323e605391059d0d35",
         "class07-execution-privilege.md": "3c6c5c5499029967dbba4e8284931a89d6c1c8bf5d52d7bcd5d5188ce20cb10c",
+        "class11-encoded.md": "608ca75c717c8ec0263fedf9fc9f063455fb5c45c5cb9313d4dc9e298534550e",
+        "class11-folded-frontmatter.md": "b50e633c1dd1d268d8a8ffda930205bbb80f203a6f35c2a480bbd23e825c0d5e",
         "class11-nul-split.md": "d83c80b271907b4f449e0d582a32545f7f5dea8931639712fc21bc140a5ba698",
         "class13-claimed-consent.md": "a700f94420c3d4650029146fc98d230d96d0bc0e69f73a206c9684a0c661a23b",
         "class14-definitional-hijacking.md": "09d9075c6828b07d6d74d65d0e9ee4668b40917628d5f0ffc14d4286686dfe29",
