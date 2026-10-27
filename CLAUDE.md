@@ -28,13 +28,13 @@ makes language / script shift its own signal (CHARTER scope section).
 
 **Alpha, public:** https://github.com/BytesFromToby/Walkdown (released from a separate copy;
 see "Public repo" below). All eight stages run end to end from one command; every stage has
-fixtures, a grader stamp, specs, and tests (796). Stage 6 (model reads) is optional and
+fixtures, a grader stamp, specs, and tests (855). Stage 6 (model reads) is optional and
 experimental. Repositories audited include superpowers, Plumbline, claude-familiar, and backlog,
 plus the self-audit, and several more since 2026-10-16 (named only in their own runs, which stay
 private). Every check the method calls for is built (HTML as a browser draws it was the last,
 2026-10-20). Two optional tools affect results: Tesseract (OCR of images and PDF pages) and
 Playwright with its Chromium (HTML as a browser draws it); gitleaks has a pip fallback.
-Version 0.2.1 (release 20, 2026-10-26).
+Version 0.3.0 (release 21, 2026-10-27).
 
 Where things stand and what is next: `pre-planning/REVIEW-2026-10-03.md` (the latest review:
 fixed items, design items C14 onward, and the ordered plan). The reports and their specs:
@@ -248,8 +248,8 @@ audited repository's author has seen theirs.
    plugin root. The grader honors a skip that names its carrier.
 
 Stage 6 working notes and open decisions: `pre-planning/soft/` (README lists D1 to D5).
-Reports: `summary.html` at the top of a run folder is the one page (security concerns by kind,
-what it can do, questions before use), `details.html` has every section with a Not concerned box
+Reports: `summary.html` at the top of a run folder is the builder's one page (will it trigger, what it costs
+against `--context`, what ships, will it run elsewhere, is it ready for any AI (`--hosts`), do the tools fit the job, is it current and clean, is it safe, what it can do; 2026-10-27), `details.html` has every section with a Not concerned box
 on every row, and `review.html` walks the places one at a time for the reader to mark; marks are
 one set and carry over to the next run (2026-10-20; `stages/08-report/specs/REPORTS.md`). Since
 2026-10-02 the reports and LOG.md sit at the top and everything else under `data/`

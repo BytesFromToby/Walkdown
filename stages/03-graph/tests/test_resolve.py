@@ -19,7 +19,15 @@ def test_folder_then_root():
 
 def test_ambiguous_bare():
     res = r("README.md", "helpers.md", "bare")
-    assert res.targets == ["a/helpers.md", "b/helpers.md"] and res.ambiguous
+    assert res.targets == ["a/helpers.md", "b/helpers.md"] and res.ambiguous and res.by_name
+
+
+def test_by_name_only_when_found_elsewhere():
+    """Slice 5 (2026-10-27): a bare name found beside the referrer or at the root is not by_name."""
+    assert not r("a/x.md", "b.md", "bare").by_name  # a/b.md, beside it
+    assert not r("skills/x/SKILL.md", "README.md", "bare").by_name  # at the root
+    res = r("extra/sub/two.md", "one.md", "bare")
+    assert res.targets == ["extra/one.md"] and res.by_name
 
 
 def test_case_mismatch():

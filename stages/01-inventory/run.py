@@ -169,6 +169,8 @@ def build_report(input_dir: str | Path) -> dict:
                "bytes": facts.bytes, "lines": facts.lines, "exec": facts.exec,
                "encoding": facts.encoding, "bom": facts.bom, "type": facts.type,
                "entry_point": entry_kind, "exec_source": e.exec_source, "sha256": digest, **eol}
+        if e.eol_committed:
+            row["eol_committed"] = e.eol_committed
         if e.kind == "symlink":
             row["target"] = e.target
         file_rows.append(row)

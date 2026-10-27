@@ -1,0 +1,72 @@
+# The AI hosts Walkdown reports on, and what each reads from a repository (plan for builders,
+# slice 3, owner 2026-10-26). One row per host with its source and the date checked; a host that
+# changes is a data edit here. Paths are relative to the repository; `**/` means at any depth.
+# `hooks` says whose a hook file stage 1 found is (a file no other host claims is Claude Code's).
+
+checked: 2026-10-26
+
+hosts:
+  claude:
+    name: Claude Code
+    instructions: [CLAUDE.md, "**/CLAUDE.md", CLAUDE.local.md, .claude/CLAUDE.md, ".claude/rules/*.md"]
+    fallback: [AGENTS.md]          # read only when there is no CLAUDE.md
+    skills: [.claude/skills]       # and a plugin's skills/ (beside .claude-plugin/plugin.json)
+    plugin_skills: true
+    mcp: [.mcp.json]
+    hooks: [.claude/settings.json, .claude/settings.local.json, hooks/hooks.json, "**/hooks/hooks.json"]
+    source: https://code.claude.com/docs/en/memory and https://code.claude.com/docs/en/skills
+  codex:
+    name: Codex
+    instructions: [AGENTS.md, "**/AGENTS.md"]
+    skills: [.agents/skills]
+    mcp: []
+    hooks: []
+    source: https://learn.chatgpt.com/docs/build-skills
+  gemini:
+    name: Gemini CLI
+    instructions: [GEMINI.md, "**/GEMINI.md"]
+    note: reads AGENTS.md too when its settings name it (context.fileName)
+    skills: [.gemini/skills, .agents/skills]
+    mcp: [.gemini/settings.json]
+    hooks: []
+    source: https://geminicli.com/docs/cli/gemini-md.md and https://geminicli.com/docs/cli/skills/
+  cursor:
+    name: Cursor
+    instructions: [".cursor/rules/*.mdc", "**/.cursor/rules/*.mdc", AGENTS.md, "**/AGENTS.md", .cursorrules]
+    skills: [.agents/skills, .cursor/skills, .claude/skills, .codex/skills]
+    mcp: [.cursor/mcp.json]
+    hooks: [.cursor/hooks.json, .cursor/environment.json]   # environment.json: its cloud agents
+    source: https://cursor.com/docs/context/rules, https://cursor.com/docs/skills, https://cursor.com/docs/agent/hooks
+  copilot:
+    name: GitHub Copilot
+    instructions: [.github/copilot-instructions.md, ".github/instructions/*.instructions.md", AGENTS.md, "**/AGENTS.md", CLAUDE.md, GEMINI.md]
+    skills: [.github/skills, .claude/skills, .agents/skills]
+    mcp: [.vscode/mcp.json]
+    hooks: [".github/hooks/*.json"]
+    source: https://docs.github.com/en/copilot/reference/customization-cheat-sheet
+  windsurf:
+    name: Windsurf
+    instructions: [".windsurf/rules/*.md", AGENTS.md, "**/AGENTS.md", .windsurfrules]
+    skills: []
+    mcp: []
+    hooks: []
+    source: https://docs.windsurf.com/windsurf/cascade/memories.md
+  agents-md:
+    name: Other tools that read AGENTS.md
+    short: other AGENTS.md readers   # in a list of hosts
+    instructions: [AGENTS.md, "**/AGENTS.md"]
+    skills: []
+    mcp: []
+    hooks: []
+    source: https://agents.md/
+
+# Instruction files kept for one host each; two in one folder are compared (host.drift).
+copies: [CLAUDE.md, AGENTS.md, GEMINI.md, .github/copilot-instructions.md, .cursorrules, .windsurfrules, .clinerules]
+
+# The frontmatter keys of the Agent Skills format; outside Claude Code (claude.ai, the Skills API)
+# a skill with any other key is refused.
+skill_keys: [name, description, license, compatibility, metadata, allowed-tools]
+
+# Claude Code's own words and tool names: other hosts see them as written.
+claude_words: ["$ARGUMENTS", "${CLAUDE_PLUGIN_ROOT}", "$CLAUDE_PLUGIN_ROOT", "${CLAUDE_PROJECT_DIR}", "$CLAUDE_PROJECT_DIR"]
+claude_tools: [WebFetch, WebSearch, TodoWrite, NotebookEdit, MultiEdit, AskUserQuestion]

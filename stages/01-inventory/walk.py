@@ -20,6 +20,7 @@ class Entry:
     target: str | None = None
     exec_bit: bool | None = None
     exec_source: str = "stat"
+    eol_committed: str | None = None  # git's record of the committed line endings (slice 2)
 
 
 @dataclass
@@ -148,6 +149,17 @@ def _git_walk(root: Path, notes: list[str]) -> Walk | None:
             notes.append(f"tracked file missing or replaced on disk, skipped: {rel}")
             continue
         entries.append(Entry(rel, "file", exec_bit=(mode == "100755"), exec_source="git-index"))
+    # The line endings as committed, not as this checkout wrote them: Git for Windows can turn LF
+    # into CRLF on checkout (slice 2, 2026-10-26: an audited repository's scripts are LF in git, CRLF on disk).
+    eol = _git(root, "ls-files", "--eol", "-z")
+    if eol is not None and eol.returncode == 0:
+        committed = {}
+        for rec in eol.stdout.split(b"\0"):
+            meta, _, path = rec.partition(b"\t")
+            if meta.startswith(b"i/"):
+                committed[path.decode("utf-8", "replace")] = meta.split()[0][2:].decode()
+        for e in entries:
+            e.eol_committed = committed.get(e.rel)
     entries.sort(key=lambda e: e.rel)
     tracked = {e.rel for e in entries}
     untracked = sum(1 for e in _scan(root) if e.rel not in tracked)

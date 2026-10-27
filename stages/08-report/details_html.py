@@ -330,6 +330,234 @@ def _p(text) -> str:
     return f"<p>{esc(text)}</p>"
 
 
+def context_table(r, ctx: int) -> str:
+    """The expected-context table (slice 1, 2026-10-26): each tier's tokens against the builder's
+    number and Claude's; read by summary.html too. Empty with no stage 5 tiers."""
+    rows = R.context_rows(r)
+    if not rows:
+        return ""
+    both = ctx != R.CLAUDE_CONTEXT
+    head = (f"<th>Tokens</th><th>Of {ctx:,}</th>" + (f"<th>Of {R.CLAUDE_CONTEXT:,} (Claude)</th>" if both else ""))
+    trs = "".join(f"<tr><td>{esc(label)}</td><td class=\"num\">{tok:,}</td><td class=\"num\">{esc(R.pct(tok, ctx))}</td>"
+                  + (f"<td class=\"num\">{esc(R.pct(tok, R.CLAUDE_CONTEXT))}</td>" if both else "") + "</tr>"
+                  for label, tok in rows)
+    return (f'<div class="tablewrap"><table class="ctx"><thead><tr><th>Expected context: {ctx:,} tokens</th>'
+            f"{head}</tr></thead><tbody>{trs}</tbody></table></div>")
+
+
+def cost_notes(r) -> str:
+    """Under the context table: which skill is the largest, and how the tokens were counted."""
+    c = R.cost(r)
+    out = []
+    if c["largest"]:
+        kind = c["tiers"]["skill-runs"].get("kind")
+        out.append(f"The largest {R.what(kind)} is <code>{esc(c['largest'])}</code>, of "
+                   f"{esc(R.n(c['entries'], 'skill, agent, or command', 'skills, agents, or commands'))}."
+                   + (" An agent runs in its own context." if kind == "agent" else ""))
+        away = c["tiers"].get("skill-max", {}).get("outside") or []
+        if away:
+            out.append(f"It also names {esc(R.n(len(away), 'file'))} outside its own folder; they are not "
+                       "counted here, and they do not install with the skill.")
+    out.append(esc(R.TOKEN_NOTE))
+    u = R.unknown_line(r)
+    if u:
+        out.append(esc(u))
+    return "".join(f'<p class="note">{x}</p>' for x in out)
+
+
+def ship_section(r, ctx: int) -> str:
+    """What it costs and what you ship: the context table, then every file by band and group."""
+    rows = R.fnd(r, "05-capability", "cap.ship")
+    lede = ("What an AI loads from this repository, and when, against the context you expect; then "
+            "every file by how it is used.")
+    if not rows:
+        return _section("ship", "What it costs and what you ship", lede,
+                        _empty("Not measured: this run has no file groups (it was made before they were "
+                               "counted, or stage 3 or 5 did not run)."))
+    parts = [context_table(r, ctx), cost_notes(r)]
+    for band in R.ship_bands(r):
+        inner = []
+        for g, v in band["groups"].items():
+            mine = sorted((x for x in rows if x["group"] == g), key=lambda x: x["file"])
+            lis = "".join(
+                f'<li><code>{esc(x["file"])}</code> <span class="count">{esc(R.kb(x.get("bytes") or 0))}'
+                + (f', {x["tokens"]:,} tokens' if x.get("tokens") is not None else ", not text") + "</span>"
+                + (f' <span class="from">from <code>{esc(x["reached_by"])}</code></span>' if x.get("reached_by") else "")
+                + "</li>" for x in mine)
+            inner.append(f'<details class="fold"><summary>{esc(R.SHIP_GROUPS[g])} '
+                         f'<span class="count">{_count(v["files"], "file")}, {esc(R.kb(v["bytes"]))}, '
+                         f'{v["tokens"]:,} tokens</span></summary><ul class="shiplist">{lis}</ul></details>')
+        parts.append(f'<h3>{esc(band["name"])} <span class="count">{_count(band["files"], "file")}, '
+                     f'{esc(R.kb(band["bytes"]))}, {band["tokens"]:,} tokens</span></h3>'
+                     + ("".join(inner) or _empty("None.")))
+    return _section("ship", "What it costs and what you ship", lede, "".join(parts))
+
+
+def elsewhere(r) -> str:
+    """Will it run on someone else's machine? (slice 2): every program and package with where it
+    is used and declared, and every place that ties it to one machine."""
+    n_ = R.needs_of(r)
+    title = "Will it run on someone else's machine?"
+    lede = ("What it needs that the next machine may not have, and what ties it to the machine it was "
+            "built on. Programs are the ones Walkdown recognizes.")
+    if not n_["measured"]:
+        return _section("elsewhere", title, lede, _empty("Not measured: stage 4 did not run."))
+    rows = []
+    for c in n_["commands"]:
+        dec = ", ".join(f'{d["file"]} ({d["how"]})' for d in c["declared_in"]) if c["declared"] else "not declared"
+        places = "".join(f"<li><code>{esc(R.where(u))}</code> {esc(u['how'])}</li>" for u in c["uses"])
+        rows.append(f'<li><code>{esc(c["command"])}</code> <span class="count">{esc(dec)}</span>'
+                    f'<details class="fold"><summary>{_count(len(c["uses"]), "place")}</summary><ul>{places}</ul></details></li>')
+    for p in n_["packages"]:
+        dec = ", ".join(f'{d["file"]} ({d["how"]})' for d in p["declared_in"]) if p["declared"] else "not declared"
+        rows.append(f'<li><code>{esc(p["package"])}</code> <span class="count">{esc(p["ecosystem"])}, {esc(dec)}; '
+                    f'in {esc(", ".join(p["files"]))}</span></li>')
+    body = (f'<h3>What it needs</h3><ul class="shiplist">{"".join(rows)}</ul>' if rows
+            else _empty("No program or package Walkdown recognizes."))
+    body += "<h3>What ties it to one machine</h3>"
+    for check, name, why, places in n_["port"]:
+        lis = "".join(f"<li><code>{esc(R.where(f))}</code>"
+                      + (f" {esc(f['why'])}" if f.get("why") else "")
+                      + (f" <code>{esc(f['written'])}</code>" if f.get("written") else "") + "</li>" for f in places)
+        body += (f'<details class="fold"><summary>{esc(name)} <span class="count">{len(places):,}: {esc(why)}</span>'
+                 f'</summary><ul class="shiplist">{lis}</ul></details>')
+    if not n_["port"]:
+        body += _empty("Nothing found that ties it to one machine.")
+    return _section("elsewhere", title, lede, body)
+
+
+def trigger(r, ctx: int) -> str:
+    """Will it trigger? (slice 4): every entry with its mode, and every place by kind."""
+    tr = R.trigger_of(r)
+    title = "Will it trigger?"
+    lede = ("How each skill, agent, and command triggers, and what in its frontmatter a host does not "
+            "read or take. Each rule is dated, with its source, in stages/04-phrases/trigger.yaml; "
+            "the published guidance is kept apart from host rules.")
+    if not tr["measured"]:
+        return _section("trigger", title, lede, _empty(
+            "Not measured: this run has no trigger findings (stage 4 did not run, or the run was made "
+            "before they were counted)."))
+    body = f"<p>{esc(R.entries_line(tr))}</p>" + "".join(f"<p>{esc(x)}</p>" for x in R.listing_lines(tr, ctx))
+    if tr["entries"]:
+        lis = "".join(f'<li><code>{esc(e["file"])}</code> <span class="count">{esc(e["kind"])}, {esc(e["mode"])}'
+                      + (f': {esc(e["why"])}' if e.get("why") else "")
+                      + (f'; description {e["description_chars"]:,} characters' if e["description_chars"] else "")
+                      + "</span></li>" for e in tr["entries"])
+        body += (f'<details class="fold"><summary>{R.n(len(tr["entries"]), "entry", "entries")}</summary>'
+                 f'<ul class="shiplist">{lis}</ul></details>')
+    for kind, name, why, places in tr["kinds"]:
+        lis = "".join(f"<li><code>{esc(R.trig_parts(kind, f)[0])}</code> {esc(R.trig_parts(kind, f)[1])}</li>"
+                      for f in places)
+        body += (f'<details class="fold"><summary>{esc(name)} <span class="count">{len(places):,}: {esc(why)}</span>'
+                 f'</summary><ul class="shiplist">{lis}</ul></details>')
+    if tr["entries"] and not tr["kinds"]:
+        body += _empty("Every entry has frontmatter its host reads and follows the rules.")
+    return _section("trigger", title, lede, body)
+
+
+def clean(r) -> str:
+    """Is it current and clean? (slice 6): every place by kind, with its line."""
+    cl = R.clean_of(r)
+    title = "Is it current and clean?"
+    lede = ("Unfinished text, dated claims, pinned model IDs, and older tool names, as facts with locations: "
+            "Walkdown never says a date is past, a model retired, or a TODO matters. The patterns are dated, "
+            "with sources, in stages/04-phrases/clean.yaml.")
+    if not cl["measured"]:
+        return _section("clean", title, lede, _empty(
+            "Not measured: this run has no current-and-clean findings (stage 4 did not run, or the run was "
+            "made before they were counted)."))
+    body = ""
+    for kind, name, why, places in cl["kinds"]:
+        lis = "".join(f"<li><code>{esc(R.clean_parts(kind, f, True)[0])}</code> {esc(R.clean_parts(kind, f, True)[1])}</li>"
+                      for f in places)
+        body += (f'<details class="fold"><summary>{esc(name)} <span class="count">'
+                 f'{esc(R.clean_count(kind, places, cl["models"]))}: {esc(why)}</span></summary>'
+                 f'<ul class="shiplist">{lis}</ul></details>')
+    if not cl["kinds"]:
+        body = _empty("No unfinished text, dated claims, pinned model IDs, or older tool names.")
+    return _section("clean", title, lede, body)
+
+
+def fit(r) -> str:
+    """Do the tools fit the job? (slice 5): every place by kind, and every hook."""
+    ft = R.fit_of(r)
+    title = "Do the tools fit the job?"
+    lede = ("Each skill, agent, and command's own words, over what it reads, against the tools it grants; "
+            "and how often each hook runs. Families and hook facts are dated, with sources, in "
+            "stages/05-capability/fit.yaml.")
+    if not ft["measured"]:
+        return _section("fit", title, lede, _empty(
+            "Not measured: this run has no tool-fit findings (stages 4 and 5 did not run, or the run was "
+            "made before they were counted)."))
+    c = ft["checked"]
+    body = (f"<p>{R.n(c['entries'], 'entry', 'entries')} checked: {c['with_grants']} with a tools list, "
+            f"{R.n(c['inheriting'], 'agent')} with none.</p>")
+    for kind, name, why, places in ft["kinds"]:
+        lis = "".join(f"<li><code>{esc(R.fit_parts(kind, f)[0])}</code> {esc(R.fit_parts(kind, f)[1])}</li>"
+                      for f in places)
+        body += (f'<details class="fold"><summary>{esc(name)} <span class="count">{len(places):,}: {esc(why)}</span>'
+                 f'</summary><ul class="shiplist">{lis}</ul></details>')
+    if not ft["kinds"]:
+        body += _empty("Every tool granted is one the words ask for, and nothing asks for a tool it lacks.")
+    if ft["hooks"]:
+        lis = "".join(f"<li><code>{esc(R.where(h))}</code> {esc(R.hook_text(h))}</li>" for h in ft["hooks"])
+        body += (f'<details class="fold"><summary>{R.n(len(ft["hooks"]), "hook")}</summary>'
+                 f'<ul class="shiplist">{lis}</ul></details>')
+    return _section("fit", title, lede, body)
+
+
+def ready(r, targets=()) -> str:
+    """Is it ready for any AI? (slice 3): every host's files here, the skills no host reads where
+    they sit, every copy kept for two hosts, and every one-host feature."""
+    rd = R.ready_of(r)
+    title = "Is it ready for any AI?"
+    lede = ("Which AI hosts read this repository's files where they sit, whether copies kept for two "
+            "hosts say the same thing, and what in text meant for any AI only one host understands. "
+            "What each host reads is dated, with sources, in stages/04-phrases/hosts.yaml.")
+    if not rd["measured"]:
+        return _section("ready", title, lede, _empty(
+            "Not measured: this run has no host findings (stage 4 did not run, or the run was made "
+            "before they were counted)."))
+    body = ""
+    if targets:
+        body += ('<h3>For the hosts you named</h3><ul class="shiplist">'
+                 + "".join(f"<li>{esc(x)}</li>" for x in R.todo(r, targets)) + "</ul>")
+    body += "<h3>Hosts</h3>"
+    for c in rd["coverage"]:
+        files = ([(f, "instructions") for f in c["instructions"]] + [(f, "skill") for f in c["skill_files"]]
+                 + [(f, "MCP config") for f in c["mcp"]] + [(f, "hooks") for f in c["hooks"]])
+        line = R.host_line(c)
+        if files:
+            lis = "".join(f"<li><code>{esc(f)}</code> {esc(k)}</li>" for f, k in files)
+            body += (f'<details class="fold"><summary>{esc(c["name"])} <span class="count">'
+                     f'{esc(line.split(": ", 1)[1])}</span></summary><ul class="shiplist">{lis}</ul></details>')
+        else:
+            body += f"<p>{esc(line)}</p>"
+    if rd["loose"]:
+        lis = "".join(f"<li><code>{esc(s)}</code></li>" for s in rd["loose"])
+        body += ('<h3>Skills to install</h3><p>No host reads these where they sit; a host reads them once '
+                 'they are installed (copied into its skill folder, or added as a plugin).</p>'
+                 f'<details class="fold"><summary>{_count(len(rd["loose"]), "skill")}</summary>'
+                 f'<ul class="shiplist">{lis}</ul></details>')
+    body += "<h3>Copies kept for two hosts</h3>"
+    if rd["drift"]:
+        lis = "".join(f'<li><code>{esc(d["file"])}</code> and <code>{esc(d["other"])}</code> '
+                      f'<span class="count">{esc(d["relation"])}'
+                      + (f': {R.n(d["only_here"], "line")} only in the first, {d["only_there"]} only in the second'
+                         if d["relation"] == "differ" else "") + "</span></li>" for d in rd["drift"])
+        body += f'<ul class="shiplist">{lis}</ul>'
+    else:
+        body += _empty("No folder has instruction files for two hosts.")
+    body += "<h3>One-host features</h3>"
+    for kind, name, why, places in rd["features"]:
+        lis = "".join(f"<li><code>{esc(R.where(f))}</code> <code>{esc(f['what'])}</code></li>" for f in places)
+        body += (f'<details class="fold"><summary>{esc(name)} <span class="count">{len(places):,}: {esc(why)}</span>'
+                 f'</summary><ul class="shiplist">{lis}</ul></details>')
+    if not rd["features"]:
+        body += _empty("No one-host feature found.")
+    return _section("ready", title, lede, body)
+
+
 def _empty(text) -> str:
     return f'<p class="empty">{esc(text)}</p>'
 
@@ -1146,9 +1374,18 @@ def render_page(meta, r, stamps, notes, runs_ok, changes_since=None, cap_full=No
     items = [it for it in every if it["stage"] != 6]
     model_items = [it for it in every if it["stage"] == 6]
     cards = _cards_by_key(r)
-    body = [header(meta, r), marks_bar(r, cap_full, marks, carried), trifecta(r, cap_full, text_href), stats(r),
+    body = [header(meta, r), marks_bar(r, cap_full, marks, carried),
+            trigger(r, meta.get("context") or R.DEFAULT_CONTEXT),  # slice 4, 2026-10-26: first
+            ship_section(r, meta.get("context") or R.DEFAULT_CONTEXT),  # slice 1, 2026-10-26
+            elsewhere(r),  # slice 2, 2026-10-26
+            ready(r, meta.get("hosts") or []),  # slice 3, 2026-10-26
+            fit(r),  # slice 5, 2026-10-26
+            clean(r),  # slice 6, 2026-10-27
+            trifecta(r, cap_full, text_href),
+            before_use(r, [it for it in raw if it["stage"] != 6]),  # moved from summary.html (owner, 2026-10-26)
+            stats(r),
             links(r), hidden(r, raw, cards, text_href), secrets(r, raw, cards),
-            risky(r, items, model_items, raw, cards),  # First pass and the questions are on summary.html now
+            risky(r, items, model_items, raw, cards),
             changes(changes_since), recs(r), other(r, stamps, notes, runs_ok),
             f'<footer><p>{esc(R.NOT_WHAT)}</p></footer>']
     return ("<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
@@ -1365,6 +1602,12 @@ details.leg-ev li a, details.leg-ev li code { font: .78rem/1.4 var(--mono); }
 .quote { margin: .5rem 0 0; padding: .55rem .8rem; background: var(--quote-bg); border-radius: 3px; font: .82rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 9rem; overflow: auto; }
 .more { color: var(--muted); }
 .tablewrap { overflow-x: auto; }
+table.ctx { border-collapse: collapse; margin: .2rem 0 .6rem; }
+table.ctx th, table.ctx td { padding: .3rem .7rem .3rem 0; text-align: left; border-bottom: 1px solid var(--line); }
+table.ctx td.num, table.ctx th + th { text-align: right; font-variant-numeric: tabular-nums; }
+ul.shiplist { margin: .2rem 0 .6rem; padding-left: 1.1rem; }
+ul.shiplist .from, ul.shiplist .count { color: var(--muted); }
+p.note { color: var(--muted); margin: .3rem 0; max-width: 75ch; }
 table.links { width: 100%; border-collapse: collapse; font-size: .85rem; }
 table.links th, table.links td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
 table.links thead th { font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }

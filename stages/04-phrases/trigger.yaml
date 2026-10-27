@@ -1,0 +1,99 @@
+# What makes a skill, agent, or command trigger, and the rules each host applies to its
+# frontmatter (plan for builders, slice 4, owner 2026-10-26). Each fact names its source and the
+# date it was checked; a host that changes is a data edit here.
+
+checked: 2026-10-26
+sources:
+  skills: https://code.claude.com/docs/en/skills
+  subagents: https://code.claude.com/docs/en/sub-agents
+  tools: https://code.claude.com/docs/en/tools-reference
+  spec: https://agentskills.io/specification
+  guidance: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
+
+# The frontmatter keys Claude Code knows. Commands work as skills, so they take the skill keys.
+keys:
+  skill: [name, description, when_to_use, argument-hint, arguments, disable-model-invocation,
+          user-invocable, allowed-tools, disallowed-tools, model, effort, context, agent,
+          background, hooks, paths, shell, metadata, license, compatibility]
+  agent: [name, description, tools, disallowedTools, model, permissionMode, color, effort,
+          isolation, memory, maxTurns, autoCompactWindow, skills, mcpServers, hooks, background,
+          omitClaudeMd, initialPrompt, experimental]
+
+# Documented values. `model` also takes a full model id (model_id) and `inherit`.
+values:
+  agent:
+    model: [sonnet, opus, haiku, fable, inherit]
+    color: [red, blue, green, yellow, purple, orange, pink, cyan]
+    permissionMode: [default, acceptEdits, auto, dontAsk, bypassPermissions, plan, manual]
+    effort: [low, medium, high, xhigh, max]
+    isolation: [worktree]
+    memory: [user, project, local]
+  skill:
+    model: [sonnet, opus, haiku, fable, inherit]
+    effort: [low, medium, high, xhigh, max]
+    context: [fork]
+    shell: [bash, powershell]
+model_id: "^claude-[a-z0-9.-]+$"
+# Booleans: true, false, yes, no, on, off, 1, 0 in any case (Claude Code v2.1.218+).
+booleans:
+  skill: [disable-model-invocation, user-invocable, background]
+  agent: [background, omitClaudeMd]
+
+# Claude Code's built-in tools, exact strings; MCP tools are mcp__<server>__<tool>.
+tools: [Agent, Artifact, AskUserQuestion, Bash, CronCreate, CronDelete, CronList, Edit,
+        EndConversation, EnterPlanMode, EnterWorktree, ExitPlanMode, ExitWorktree, Glob, Grep,
+        ListAgents, ListMcpResourcesTool, LSP, Monitor, NotebookEdit, PowerShell,
+        PushNotification, Read, ReadMcpResourceTool, RemoteTrigger, ReportFindings,
+        ScheduleWakeup, SendFeedback, SendMessage, SendUserFile, ShareOnboardingGuide, Skill,
+        SubagentHandback, TaskCreate, TaskGet, TaskList, TaskStop, TaskUpdate, TodoWrite,
+        ToolSearch, WaitForMcpServers, WebFetch, WebSearch, Workflow, Write]
+# Names not in the current list; the docs do not say whether they still work.
+older_tools:
+  Task: Agent
+  MultiEdit: Edit
+  TaskOutput: Read     # removed in v2.1.277
+
+# Agent Skills spec: name 1-64, lowercase letters, digits, single hyphens, none at either end,
+# the folder's name. claude.ai uploads and the Skills API: no reserved words, no XML tags.
+name:
+  max: 64
+  pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+  reserved: [anthropic, claude]
+agent_name_max: 256
+description_max: 1024
+listing_chars: 1536          # description plus when_to_use, per entry, in Claude Code's listing
+listing_share: 0.01          # the whole listing: about 1% of the model's context
+agent_warning_tokens: 15000  # subagent descriptions together
+
+# Published guidance (best practices): say what it does and when to use it; third person.
+when_patterns:
+  - "\\bwhen(ever)?\\b"
+  - "\\buse (it |this |them )?(for|to|proactively|after|before|on|with|if)\\b"
+  - "\\binvok"
+  - "\\btrigger"
+  - "\\bif (the )?user\\b"
+  # measured 2026-10-26 on an audited plugin: "Run once at the start", "Spawned by the orchestrator for its phase"
+  - "\\b(run|use|call|start)s? (it |this |them )?(once |only |first )?(at|after|before|during|on|whenever)\\b"
+  - "\\b(spawned|called|run|used|invoked) by\\b"
+person_patterns:
+  first: ["^I\\b", "[.!?]\\s+I\\b", "\\bI (can|will|am|help|do)\\b", "\\bI'(m|ll)\\b"]
+  second: ["^you\\b", "\\byou can use (this|it)\\b"]
+
+# Descriptions that overlap (owner, 2026-10-26: Walkdown's own measure, not a host's): a pair
+# shares at least overlap_share of the shorter one's content words and at least overlap_min.
+# Only within one listing (Claude Code lists skills and commands together, subagents apart), and
+# a word in more than common_share of a listing's descriptions is set aside once it holds
+# common_min or more: words every entry shares cannot steer Claude to the wrong one (measured
+# 2026-10-26: one plugin's agents share their boilerplate).
+overlap_share: 0.5
+overlap_min: 4
+common_share: 0.5
+common_min: 4
+stopwords: [about, after, again, all, also, and, any, are, ask, asked, asks, before, being, both,
+            but, can, could, does, doing, each, every, for, from, has, have, help, helps, how,
+            into, its, just, like, make, makes, may, more, most, must, need, needs, not, one,
+            only, other, out, own, should, skill, skills, some, such, than, that, the, their,
+            them, then, there, these, they, this, those, through, use, used, uses, using, user,
+            users, very, want, wants, was, way, what, when, whenever, where, which, while, who,
+            why, will, with, within, without, would, you, your, agent, agents, command, task,
+            tasks, work, works]

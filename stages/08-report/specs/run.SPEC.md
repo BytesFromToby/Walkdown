@@ -10,8 +10,8 @@ Status: built.
 ```
 python stages/08-report/run.py <input_dir> --repo <name> [--results <dir>] [--date YYYY-MM-DD]
     [--label B] [--compare B] [--relational B] [--sweep B] [--pinpoint B] [--both]
-    [--revalidate] [--no-validate]
-python stages/08-report/run.py --rerender <run_dir> [--no-validate]
+    [--revalidate] [--no-validate] [--context N] [--hosts a,b]
+python stages/08-report/run.py --rerender <run_dir> [--no-validate] [--context N] [--hosts a,b]
 ```
 
 - `--results`: the parent of `<repo>/`; default `RepoResults/`.
@@ -20,6 +20,14 @@ python stages/08-report/run.py --rerender <run_dir> [--no-validate]
 - `--revalidate`: run the grader even when a stamp for the same code, fixtures, and stage 6
   choices is cached (`validate.SPEC.md`).
 - `--no-validate`: skip the grader (no stamps). For tests only; a real run always validates.
+- `--context`: the expected context in tokens (`32k`, `200k`, `8192`; `render.parse_context`),
+  default 32,000 (plan for builders, slice 1, owner 2026-10-26). Written in `LOG.md` as
+  "Expected context: N tokens"; a re-render keeps the run's own unless `--context` is given.
+- `--hosts`: the AI hosts the builder builds for (`claude`, `codex`, `gemini`, `cursor`, `copilot`,
+  `windsurf`, `agents-md`; `render.parse_hosts`), exit 2 on an unknown name; written to `LOG.md` as
+  "Target hosts: ..." ("none named" without it); a re-render keeps the run's own unless `--hosts`
+  is given (slice 3, 2026-10-26).
+  Anything else is an error, exit 2.
 
 ## Behavior
 
@@ -51,6 +59,11 @@ failure); 2 for a missing input, a results folder inside the input, or a bad `--
 - Detect, judge, or advise on installing.
 
 ## Done when (tests in `tests/test_run.py`)
+
+0. `--context 8k` reaches `LOG.md` and the pages; a re-render keeps it, and `--context 200k` on a
+   re-render changes it; `--context lots` is exit 2 (`test_context_is_kept_and_can_change`).
+   `--hosts codex,cursor` reaches `LOG.md` and the pages; a re-render keeps it, `--hosts gemini`
+   changes it; `--hosts vim` is exit 2 (`test_hosts_are_kept_and_can_change`).
 
 1. On a tiny repository with `--no-validate`: exit 0; the run folder is `<date>_<hash7>` and holds
    the stage outputs in `data/`, `LOG.md`, and exactly the reports at the top; the input is

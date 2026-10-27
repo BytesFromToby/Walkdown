@@ -1,0 +1,32 @@
+# What loads into an AI's context, and when: the facts stage 5's cost.py counts with.
+# Each fact names its source and the date it was checked. A host that changes is a data edit
+# here (plan for builders, slice 0, 2026-10-26).
+
+bytes_per_token: 4          # an estimate for English text, stated on every page that shows tokens
+description_listing_chars: 1536
+import_hops: 4
+
+facts:
+  - fact: >-
+      Every skill's name and description load at startup (about 100 tokens each); the whole
+      SKILL.md loads when the skill is activated (under 5,000 tokens and 500 lines
+      recommended); other files load only when needed; references one level deep from SKILL.md.
+    source: https://agentskills.io/specification
+    checked: 2026-10-26
+  - fact: >-
+      Claude Code keeps skill descriptions in context every session and loads the full skill
+      only when invoked, where it stays across turns; description plus when_to_use is cut at
+      1,536 characters in the skill listing; scripts are run, not loaded.
+    source: https://code.claude.com/docs/en/skills
+    checked: 2026-10-26
+  - fact: >-
+      A subagent's description loads at session start; its body is its own system prompt,
+      loaded only when it runs, in its own context.
+    source: https://code.claude.com/docs/en/sub-agents
+    checked: 2026-10-26
+  - fact: >-
+      CLAUDE.md loads at launch every session; @path imports expand at load, up to four hops;
+      .claude/rules files without paths load at launch, path-scoped ones on demand; AGENTS.md
+      loads when there is no CLAUDE.md.
+    source: https://code.claude.com/docs/en/memory
+    checked: 2026-10-26

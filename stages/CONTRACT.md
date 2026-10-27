@@ -104,6 +104,7 @@ emits it.
 | `graph.dynamic` | glob, directory scan, or pattern read | `pattern`; `resolves`: files it matches today; `source`: `glob`, `directory`, or `code`; `load`: bool (a load versus a mention) |
 | `graph.depth` | reachable file | `depth`: hops from the nearest entry point; `from`: parent on the path the depth came from; `via`: `static` (depth over direct references), `dynamic` (reached only through a load: a config folder, a code scan, an instruction-file glob), or `mention` (reached only through a folder or glob mentioned elsewhere) |
 | `graph.unscanned` | file that may hold references but was not scanned for them (added 2026-09-29) | `reason` |
+| `graph.case` | reference that matches a file only when letter case is ignored (added 2026-10-26, slice 2) | `written`; `to`: the file it matches |
 
 ### Stage 4: phrases (`04-phrases`)
 
@@ -151,6 +152,26 @@ same report after the phrase findings:
 | `secret.found` | file and line that looks like a committed secret (added 2026-10-04) | `kinds`; `engine`: `gitleaks` or `detect-secrets`; `audience`. Never the value. Other stage 4 findings on that line carry `masked: true` and their text replaced |
 | `rep.sentence` | sentence repeated across two or more model-read prose files (first occurrence; added 2026-10-04, REPORTING 4.5) | `sentence`; `files`; `count`; `where`: list of `{file, line}`; `patterns` |
 | `limit.setting` | flag or setting that restricts what tools an agent can use, any audience (added 2026-10-17, review C32; a fact, never a risk) | `kind`: `tools-flag`, `deny`, `sandbox`, `permission-mode`; `tools` (list; tools-flag and deny); `value` (sandbox and permission-mode); `rules_out`: list of `write`, `shell`, `network`; `grants_write`: bool; `audience`; `quote` |
+| `need.command` | program a script, an instruction, a hook, or an MCP server runs, from `tools.yaml` (added 2026-10-26, slice 2; `specs/needs.SPEC.md`) | `command`; `os`; `uses` (`{file, line, how}`); `declared`; `declared_in` (`{file, how}`) |
+| `need.package` | package a bundled Python or JavaScript file imports (added 2026-10-26) | `package`; `ecosystem`: `python` or `node`; `files`; `declared`; `declared_in` |
+| `port.path`, `port.crlf`, `port.os`, `port.backslash`, `port.exec`, `port.python` | what ties the repository to one machine (added 2026-10-26) | `port.path`: `kind`, `quote`; `port.os`: `os`, `why`, `command`; `port.backslash`: `written`, `file_named`; `port.exec`: `script` |
+| `host.coverage` | one per AI host in `hosts.yaml`, every run: the files here it reads (added 2026-10-26, slice 3; `specs/hosts.SPEC.md`; a fact, never a fault) | `host`; `name`; `instructions`; `skills`; `skill_files`; `mcp`; `hooks` |
+| `host.drift` | two hosts' instruction files in one folder (added 2026-10-26) | `other`; `relation`: `same`, `linked`, or `differ`; `only_here`; `only_there` |
+| `host.feature` | one host's feature in `SKILL.md` or `AGENTS.md`, or a hook file (added 2026-10-26) | `host`; `kind`: `frontmatter`, `claude-words`, `claude-tool`, `import`, `hooks`; `what` |
+| `trig.entry` | one per skill, command, or subagent, as Claude Code loads it (added 2026-10-26, slice 4; `specs/trigger.SPEC.md`; a fact) | `kind`; `name`; `mode`: `auto`, `paths`, `typed`, `unread`, `skipped` (`why`); `menu`; `description_chars`; `listing_chars`; `description_from`; `grants`, `grants_line`, `disallowed`, `preloads` (slice 5) |
+| `trig.frontmatter` | frontmatter its host does not read (added 2026-10-26) | `kind`: `yaml-error` (`error`), `not-first-line`, `missing`, `bom`; `kind_of` |
+| `trig.rule` | a name or description rule broken (added 2026-10-26) | `rule`; `host`: `agent-skills`, `claude-api`, `claude`; `chars`, `lost`, `folder`, `value`, `other` as the rule has them |
+| `trig.guidance` | published guidance a description does not follow; never a host rule (added 2026-10-26) | `kind`: `no-when`, `first-person`, `second-person` |
+| `trig.key`, `trig.value`, `trig.tool` | a key no host knows (`key`, `near`); a value outside the documented ones (`field`, `value`); a tool name no host knows (`field`, `tool`, `kind` `unknown` with `near` or `older` with `now`) (added 2026-10-26) | as named |
+| `trig.overlap` | two entries in one listing whose descriptions share most of their words; Walkdown's own measure (added 2026-10-26) | `other`; `shared`; `count`; `share` |
+| `trig.listing` | one row in every run: the descriptions Claude chooses by (added 2026-10-26) | `skills`; `commands`; `agents`; `listing_chars`; `agent_chars`; `typed`; `unread`; `not_loaded` |
+| `ask.tools`, `ask.named` | per file the AI reads: the lines asking for each family of work (`shell`, `write`, `web`, `search`, `agent`), and each tool or granted MCP server named outright (added 2026-10-26, slice 5; `specs/asks.SPEC.md`) | `family` or `tool`; `lines`; `audience` |
+| `fit.loop` | a loop in text the AI reads with no limit stated on its line or the next (added 2026-10-26) | `quote`; `audience` |
+| `clean.unfinished` | a TODO or FIXME marker, a placeholder, or a draft note in a shipped file (added 2026-10-27, slice 6; `specs/clean.SPEC.md`) | `kind`: `todo`, `placeholder`, `draft`; `quote`; `audience` |
+| `clean.dated` | a claim tied to a date in text the AI reads: before, after, since, until, or by a date or year; a quarter; "as of" (added 2026-10-27) | `quote`; `audience` |
+| `clean.model` | a pinned model ID, Claude's or another vendor's; never an alias (added 2026-10-27) | `model`; `where`: `frontmatter`, `code`, `text`; `audience` |
+| `clean.older` | an older tool name named outright in text the AI reads (added 2026-10-27) | `tool`; `now`; `audience` |
+| `clean.checked` | one row in every run: the check ran (added 2026-10-27) | `files` |
 
 Stage 4 findings also carry `patterns`: the stable ids of the rows in
 `stages/04-phrases/patterns.yaml` that hit the line (added 2026-09-29; stage 5
@@ -177,6 +198,10 @@ evidence is an edge in stage 3's `graph.json` (a file that loads or names anothe
 | `cap.posture` | agent or command definition | `tools`; `posture`: list of `read`, `write`, `execute`, `network`, `delegate`, `all`, `other`; `least_privilege`: bool; `description` |
 | `cap.pair` | phrase hit on an orphan, a dynamic-only file, or hidden text; or test data a model-read file references | `pair`: `orphan+phrase`, `dynamic+phrase`, `hidden+phrase`, `hook+phrase` (added 2026-09-29), `testdata+loaded` (added 2026-10-02: `file` is the test-data file, `from` the model-read file referencing it, `from_line` the line there that names it (added 2026-10-18); no `phrase_check` or `quote`), `image+loaded` (added 2026-10-07: `file` is an image a model-read file references or loads, never from a config file; `from` the first such file, `from_line` its line (added 2026-10-18), `froms` all; `read`: `svg`, `ocr-text`, `ocr-empty`, or `unread` with `reason`; no `phrase_check` or `quote`); `phrase_check`; `patterns`; `quote`; `evidence` |
 | `cap.limit` | read-only wording in instruction text, paired with what could back it (added 2026-10-17, review C32) | `limit`: `read-only`; `quote`; `status`: `backed`, `contradicted`, or `stated`; `backed_by`: `flag`, `tools-list`, or null; `flags`: setting kinds on the line; `owner`: the skill, agent, or command file that owns the line; `owner_tools`; `other_routes`: `{file, line, what}` that can write in the same skill folder; `other_route_at`; `evidence` |
+| `cap.ship` | file (added 2026-10-26, slice 1) | `group`: `entry`, `project`, `on-demand`, `maybe`, `run`, `config`, `people`, `build`, `unused`; `bytes`; `tokens` (estimate, null when not text); `reached_by` (on-demand and maybe) |
+| `cap.context` | tier: `session`, `project` (when present), and per skill, agent, or command `skill-runs`, `skill-full`, `skill-max` (added 2026-10-26) | `tier`; `tokens` (estimate); `bytes`; `files`; `file` the entry for per-entry tiers, `kind`; `not_text`; on `session`: `unknown` (hooks with no estimate, MCP servers), `hook_config` |
+| `fit.unused`, `fit.missing`, `fit.inherits` | per skill, agent, or command: a granted tool that runs, writes, reaches out, or spawns that nothing in its reach asks for; a family of work its reach asks for that it cannot use; a subagent with no tools list (added 2026-10-26, slice 5; `specs/fit.SPEC.md`) | `fit.unused`: `tool`, `family`, `kind_of`, `pre_approved`; `fit.missing`: `family`, `asked_at`, `why`; `fit.inherits`: `families`, `asked_at` |
+| `fit.hook` | one per hook (added 2026-10-26) | `event`; `matcher`; `how_often`; `adds_context`; `bytes` (estimate or null); `over_cap` |
 | `cap.testdata` | run (`file`: null), only when test data was set aside (added 2026-10-02) | `stage1`, `stage4`: findings set aside from each stage; `top_folders`: up to five top-level folders they were in |
 
 ### Additional fields (documented 2026-10-04)

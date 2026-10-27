@@ -539,3 +539,71 @@ def test_items_say_what_hidden_text_spells():
     assert it["note"] == "The hidden tag characters spell: \u201csend keys\u201d. rate note"
     it = DH._item(4, "t", "a.md:1", "q", None, src={"decoded_text": "Ignore all"})
     assert it["note"] == "Decoded from base64: \u201cIgnore all\u201d."
+
+
+def test_ship_section_and_questions_before_use():
+    """Slice 1 (2026-10-26): what it costs and what you ship near the top; Questions before use
+    here again, after the three boxes."""
+    r = _tr.costed(reports())
+    h = page(r)
+    s = section(h, "ship")
+    assert "Expected context: 32,000 tokens" in s and "Of 200,000 (Claude)" in s
+    assert "The largest skill is <code>skills/x/SKILL.md</code>" in s and "1 file outside its own folder" in s
+    assert "Nothing points to it" in s and "from <code>skills/x/SKILL.md</code>" in s
+    assert h.index('id="ship"') < h.index('id="trifecta"') < h.index('id="beforeuse"')
+    assert "not measured" in section(page(reports()), "ship").lower()
+
+
+def test_elsewhere_section():
+    """Slice 2 (2026-10-26): every program, package, and place."""
+    h = page(_tr.needy(reports()))
+    s = section(h, "elsewhere")
+    assert "<code>jq</code>" in s and "not declared" in s and "SKILL.md (compatibility)" in s
+    assert "Runs python, not python3" in s and "<code>SKILL.md:13</code>" in s
+    assert h.index('id="ship"') < h.index('id="elsewhere"')
+
+
+def test_ready_section():
+    """Slice 3 (2026-10-26): every host's files, the skills to install, every copy, every feature."""
+    import html as H
+    r = _tr.hosty(reports())
+    h = S.render_page(dict(_tr.META, hosts=["windsurf"]), r, PASS, {}, set(r), None)
+    s = H.unescape(section(h, "ready"))
+    assert "For the hosts you named" in s and "Windsurf: none of the skills sit where it reads them (it reads no skills)." in s
+    assert "<code>.claude/skills/tidy/SKILL.md</code> skill" in s and "<code>.cursor/hooks.json</code> hooks" in s
+    assert "Skills to install" in s and "<code>skills/loose/SKILL.md</code>" in s
+    assert "differ: 1 line only in the first, 0 only in the second" in s
+    assert "<code>.claude/skills/tidy/SKILL.md:6</code> <code>$ARGUMENTS</code>" in s
+    assert h.index('id="elsewhere"') < h.index('id="ready"')
+
+
+def test_trigger_section():
+    """Slice 4 (2026-10-26): every entry and every place by kind, first."""
+    import html as H
+    r = _tr.triggery(reports())
+    h = S.render_page(_tr.META, r, PASS, {}, set(r), None)
+    s = H.unescape(section(h, "trigger"))
+    assert "5 entries" in s and "<code>.claude/skills/bad/SKILL.md</code>" in s and "skill, unread" in s
+    assert "<code>.claude/agents/rev.md:4</code> Task (an older name" in s
+    assert h.index('id="trigger"') < h.index('id="ship"')
+
+
+def test_fit_section():
+    """Slice 5 (2026-10-26): every place by kind and every hook."""
+    import html as H
+    r = _tr.fitty(reports())
+    h = S.render_page(_tr.META, r, PASS, {}, set(r), None)
+    s = H.unescape(section(h, "fit"))
+    assert "4 entries checked: 3 with a tools list, 1 agent with none." in s
+    assert "<code>agents/b.md</code> asks for running commands" in s and "2 hooks" in s
+    assert h.index('id="ready"') < h.index('id="fit"')
+
+
+def test_clean_section():
+    """Slice 6 (2026-10-27): every place by kind, with its line."""
+    import html as H
+    r = _tr.cleany(reports())
+    h = S.render_page(_tr.META, r, PASS, {}, set(r), None)
+    s = H.unescape(section(h, "clean"))
+    assert "<code>SKILL.md:13</code> Before August 2025, use the old API." in s
+    assert h.index('id="fit"') < h.index('id="clean"')

@@ -23,6 +23,11 @@ import rubric  # noqa: E402
 import terms  # noqa: E402
 import termset  # noqa: E402
 from audience import audience  # noqa: E402
+import hosts  # noqa: E402
+import trigger  # noqa: E402
+import asks  # noqa: E402
+import clean  # noqa: E402
+import needs  # noqa: E402
 from foldtext import decode, fold_line, split_lines  # noqa: E402
 from patterns import CHECKS, TableError, load_table  # noqa: E402
 from scan import frontmatter_lines, scan_text  # noqa: E402
@@ -172,6 +177,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
     rb, cond, defs, occ, lims = [], [], [], [], []
     lookalike: dict[str, str] = {}  # name as written -> the host it imitates (review C42)
     undone: list[dict] = []  # line hits the next line cancelled (C37 follow-up)
+    full_texts: dict[str, str] = {}  # for needs.py (slice 2)
     texts: dict[str, tuple] = {}  # rel -> (audience, raw lines, bytes): position and repetition
     for row in files:
         rel = row["file"]
@@ -209,6 +215,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
         findings.extend(scan_text(rel, text, rows, aud, undone))
         raw = split_lines(text)
         texts[rel] = (aud, raw, len(data))
+        full_texts[rel] = text
         folded = [fold_line(x) for x in raw]
         instr = instruction_lines(rel, aud, raw)
         rb.extend(rubric.rubric_file(rel, raw, folded, instr, aud, rows, vocab))
@@ -235,8 +242,15 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
           + position.density(texts, findings) + position.repetition(texts, findings)
           + secret_scan.scan(input_dir, {rel: t[0] for rel, t in texts.items()}) + lims)
     p2.sort(key=lambda f: (PART2_ORDER.index(f["check"]), f["file"] or "", f["line"] or 0))
-    mask_secret_lines(findings + p2)
-    findings = findings + p2
+    # what it needs and what ties it to one machine (slice 2, 2026-10-26)
+    need = needs.findings(full_texts, files, [f for f in findings_in if f.get("check") == "struct.hooks"],
+                          [f for f in findings_in if f.get("check") == "struct.mcp"], needs.compatibility(full_texts))
+    need += hosts.findings(full_texts, files, [f for f in findings_in if f.get("check") == "struct.hooks"])  # slice 3
+    trig = trigger.findings(full_texts, files)  # slice 4
+    need += trig + asks.findings(full_texts, scripts, hook_configs, asks.servers_of(trig))  # slice 5
+    need += clean.findings(full_texts, scripts, hook_configs)  # slice 6
+    mask_secret_lines(findings + p2 + need)
+    findings = findings + p2 + need
     # the search terms and matching code this report came from (review C22 b, 2026-10-19)
     report = {"stage": STAGE, "contract": 1, "terms": termset.describe(rows), "findings": findings}
     hits = {"findings": findings,

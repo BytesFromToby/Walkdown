@@ -174,7 +174,54 @@ def compare(old: dict, new: dict) -> dict:
     def pairs(r):
         return {(x.get("pair"), x["file"], _norm(x.get("quote"))) for x in _f(r, "05-capability", "cap.pair")}
     c["pairs_added"] = sorted(pairs(new) - pairs(old))
+    c["cost"] = {"old": cost_of(old), "new": cost_of(new)}  # slice 6, 2026-10-27
     return c
+
+
+NOT_USED = ("people", "build", "unused")  # render.SHIP_BANDS "Not used at run time"
+COST_PARTS = (("session", "every session"), ("project", "every session in this folder"),
+              ("largest", "largest at its fullest"))
+
+
+def cost_of(r) -> dict | None:
+    """Slice 1's numbers in one run (tokens, estimated): every session, every session in the
+    folder, the entry with the most at its fullest (ties to the first by path), and what is not
+    used at run time; None for a run made before they were counted."""
+    ctx = _f(r, "05-capability", "cap.context")
+    if not ctx:
+        return None
+    tier = {x.get("tier"): x for x in ctx if x.get("tier") in ("session", "project")}
+    top = sorted((x for x in ctx if x.get("tier") == "skill-max"), key=lambda x: (-x["tokens"], x["file"] or ""))
+    unused = [x for x in _f(r, "05-capability", "cap.ship") if x.get("group") in NOT_USED]
+    return {"session": tier["session"]["tokens"] if "session" in tier else None,
+            "project": tier["project"]["tokens"] if "project" in tier else None,
+            "largest": top[0]["tokens"] if top else None, "largest_file": top[0]["file"] if top else None,
+            "not_used_files": len(unused), "not_used_tokens": sum(x.get("tokens") or 0 for x in unused)}
+
+
+def cost_changed(c) -> bool:
+    o, n = (c.get("cost") or {}).get("old"), (c.get("cost") or {}).get("new")
+    keys = ("session", "project", "largest", "not_used_files", "not_used_tokens")
+    return bool(o and n) and any(o[k] != n[k] for k in keys)
+
+
+def cost_line(c) -> str | None:
+    """The cost since the earlier run, counts only (no file name: the brief shows it)."""
+    o, n = (c.get("cost") or {}).get("old"), (c.get("cost") or {}).get("new")
+    if n is None:
+        return None
+    if o is None:
+        return "costs not comparable: the earlier run was made before they were counted"
+    parts = []
+    for key, word in COST_PARTS:
+        a, b = o[key], n[key]
+        if a != b:
+            parts.append(f"{word} {a:,} -> {b:,} tokens ({b - a:+,})" if a is not None and b is not None
+                         else f"{word} {'none' if a is None else f'{a:,} tokens'} -> {'none' if b is None else f'{b:,} tokens'}")
+    if (o["not_used_files"], o["not_used_tokens"]) != (n["not_used_files"], n["not_used_tokens"]):
+        parts.append(f"not used at run time {_plural(o['not_used_files'], 'file')} -> {_plural(n['not_used_files'], 'file')} "
+                     f"({o['not_used_tokens']:,} -> {n['not_used_tokens']:,} tokens)")
+    return "cost: " + "; ".join(parts) if parts else None
 
 
 # what each count is called in the brief and the summary line, in reading order
@@ -211,7 +258,7 @@ def same_repo(old, new) -> bool:
 def differs(c) -> bool:
     """Any difference in what the two runs recorded."""
     return (any(c.get(k) for k, _ in COUNTS if k != "files_eol")  # line endings alone are no difference
-            or any(c.get(k) for k in OTHER_DIFFS))
+            or any(c.get(k) for k in OTHER_DIFFS) or cost_changed(c))
 
 
 def on_disk(c) -> int:
@@ -272,6 +319,9 @@ def summary_lines(c) -> list[str]:
         parts.append(f"{model_read_hits(c)} of the new phrase hits in text a model reads")
     if parts:
         lines.append(", ".join(parts))
+    cl = cost_line(c)  # slice 6
+    if cl:
+        lines.append(cl)
     tl = terms_line(c.get("terms") or {})
     if tl:
         lines.append(tl)
@@ -305,6 +355,17 @@ def render(old_dir, new_dir, old, new, c) -> str:
         nonlocal L
         if rows:
             L += [f"## {title} ({len(rows)})", ""] + [f"- {fmt(r)}" for r in rows] + [""]
+    o, n = (c.get("cost") or {}).get("old"), (c.get("cost") or {}).get("new")
+    if o and n and cost_changed(c):  # slice 6, 2026-10-27
+        L += ["## What it costs (estimated tokens)", "", "| | Earlier | Now | Change |", "|---|---|---|---|"]
+        for key, word in COST_PARTS + (("not_used_tokens", "not used at run time"),):
+            a, b = o[key], n[key]
+            fmt = lambda v: "none" if v is None else f"{v:,}"  # noqa: E731
+            L.append(f"| {word[0].upper() + word[1:]} | {fmt(a)} | {fmt(b)} | "
+                     f"{'' if a is None or b is None else f'{b - a:+,}'} |")
+        if o.get("largest_file") != n.get("largest_file"):
+            L.append(f"\nThe largest entry was {o.get('largest_file')}; now {n.get('largest_file')}.")
+        L.append("")
     section("Trifecta legs that changed", c["legs_changed"],
             lambda r: f"{LEG_WORDS.get(r[0], r[0])}: {'yes' if r[1] else 'no'} -> {'yes' if r[2] else 'no'}")
     section("Install grants added", c["capgrants_added"], str)
@@ -392,7 +453,7 @@ def since(old_dir, new_dir) -> dict:
     out = layout.report_dir(new_dir) / REPORT
     out.write_text(render(old_dir, new_dir, old, new, c), encoding="utf-8")
     return {"same": same, "differs": True, "lines": summary_lines(c), "report": out,
-            "on_disk": on_disk(c), "header": same_words(c) if same else None}
+            "on_disk": on_disk(c), "header": same_words(c) if same else None, "cost_line": cost_line(c)}
 
 
 def main(argv=None) -> int:

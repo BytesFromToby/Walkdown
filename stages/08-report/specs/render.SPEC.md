@@ -126,6 +126,93 @@ Status: built.
 
 Done when: `test_decoded_and_lookalike_text_is_shown`.
 
+## Added 2026-10-27 (plan for builders, slice 6): is it current and clean
+
+- `clean_of(r)`: stage 4's `clean.*` as `kinds` in `CLEAN_KINDS` order, the distinct model IDs, and
+  `measured` when the run has `clean.checked`. `clean_parts(kind, f, quote=False)`: (where, what);
+  with `quote` the line's text (details and full.md only). `clean_count`: a row's count, the models
+  row with how many distinct.
+- `full.md` section 4 ends with "Current and clean" (`clean_lines`), after "Ready for any AI".
+
+Done when: `test_clean_helpers`.
+
+## Added 2026-10-26 (plan for builders, slice 5): do the tools fit the job
+
+- `fit_of(r)`: stage 5's `fit.unused`, `fit.missing`, `fit.inherits`, `fit.hook`, stage 4's
+  `fit.loop`, and stage 5's contradicted `cap.limit` rows as `kinds` in `FIT_KINDS` order (hooks:
+  those that run on every prompt or tool call); `measured` when the run has `fit.checked`.
+  `fit_parts(kind, f)`: (where, what) in words (`FAMILY_TEXT`); `hook_text(h)`: how often a hook
+  runs, its output's tokens when it becomes context, the cap, or that it is not known for that host.
+  `brief_fit_counts`.
+- `full.md` section 5 ends with "Do the tools fit the job" (`fit_lines`): entries checked, every
+  place, and the other hooks.
+
+Done when: `test_fit_helpers`.
+
+## Added 2026-10-26 (plan for builders, slice 4): will it trigger
+
+- `BYTES_PER_TOKEN` from stage 5's `loading.yaml`; `TRIGGER_TABLE` is stage 4's `trigger.yaml`.
+- `trigger_of(r)`: stage 4's `trig.*`, `measured` when the run has a `trig.listing`, and `kinds`:
+  `TRIG_KINDS` in order (not read, agents not loaded, rules, keys, values, tools, overlaps, cut in
+  the listing, guidance), each with its name, why, and places. `trig_parts(kind, f)`: (where, what)
+  in words; `trig_place` joins them. `entries_line(tr)`: skills and commands by mode, then agents.
+  `listing_lines(tr, ctx)`: the descriptions' tokens against about 1% of the expected context and
+  of 200,000, saying when they do not fit at the expected one; agents against Claude Code's warning.
+  `brief_trigger_counts(tr)`: places that break a host rule, guidance rows, overlapping pairs.
+- `full.md` section 4 gains "Will it trigger" (`trigger_lines`) before "Ready for any AI".
+
+Done when: `test_trigger_helpers`.
+
+## Added 2026-10-26 (plan for builders, slice 3): is it ready for any AI
+
+- `HOST_KEYS` (from stage 4's `hosts.yaml`); `parse_hosts(s)` takes `claude,codex` (any case, each
+  once, in order) and raises `ValueError` on an unknown or empty name; `hosts_of(log)` reads
+  "Target hosts: ..." from a run's `LOG.md` ("none named" is []); `log` writes it.
+- `ready_of(r)`: stage 4's `host.coverage`, `host.drift` (and those that differ), `host.feature`
+  by kind (`FEATURE_KINDS`: name and why), every `SKILL.md` outside test data, and the `loose`
+  ones no host reads where they sit. `host_line(c)`: a host's files here, or "none of its files (it
+  reads ...)" from `hosts.yaml`. `drift_line(d, cov)`: a differing pair and who reads each.
+- `todo(r, targets)`: per host named, in order: no instruction file it reads; none of the skills
+  where it reads them (only when some host reads skills in place); the places written for Claude
+  Code only, counted by kind; other hosts' hook files; "nothing missing." when none; then each
+  differing pair where the named hosts read different sides.
+- `full.md` section 4 ends with "Ready for any AI" (`ready_lines`): the to-do list for the hosts
+  named, every host, the skills to install, every copy, every feature.
+
+Done when: `test_ready_helpers`.
+
+## Added 2026-10-26 (plan for builders, slice 2)
+
+- `PORT_KINDS`: the kinds of place that tie a repository to one machine, in order, each with its
+  name and why it breaks elsewhere (stage 4's `port.*`, stage 3's `graph.case`). `needs_of(r)`:
+  the programs, packages, what is not declared, and the places by kind; `graph.case` only from
+  files that run or the AI reads (not test data, not files for people).
+- `full.md` section 1 ends with "What it needs" (each program and package, declared where or
+  not, and where used) and "What ties it to one machine" (every place by kind; `needs_lines`).
+
+Done when: `test_needs_lines`.
+
+## Added 2026-10-26 (plan for builders, slice 1): what it costs and what ships
+
+- `DEFAULT_CONTEXT` (32,000) and `CLAUDE_CONTEXT` (200,000); `parse_context(s)` takes `32k`,
+  `200k`, `8192`, `8k`, `1m` (k is 1,000) and raises `ValueError` on anything else;
+  `context_of(log)` reads "Expected context: N tokens" from a run's `LOG.md`; `log` writes it.
+- `cost(r)`: stage 5's `session` and `project` tiers and the entry with the most at its fullest
+  (`skill-max`; ties to the first by path) with its tiers. `context_rows(r)`: the table rows in
+  order (every session once installed; every session in this folder, when there are project
+  files; when the largest skill runs; with everything it names; with its wildcard and folder
+  loads, when that adds anything). `pct(tokens, context)`: a whole percent, or "under 1%".
+- `ship_bands(r)`: the three bands (Loads into the AI: `entry`, `project`, `on-demand`, `maybe`;
+  Used another way: `run`, `config`; Not used at run time: `people`, `build`, `unused`), each
+  with its groups' file counts, bytes, and tokens. `left_out(r)`: what leaving out the `unused`
+  and `build` files would save. `SHIP_GROUPS` names each group; `TOKEN_NOTE` says how tokens were
+  counted; `unknown_line(r)` counts what only running shows.
+- `full.md` section 5 gains "What it costs and what ships": the tiers against the run's expected
+  context and 200,000, every skill, agent, or command by tier (with what a skill names outside
+  its folder), and every file by band and group with size, tokens, and what reaches it.
+
+Done when: `test_context_and_ship_helpers`.
+
 ## History
 
 - 2026-09-29: built (stage 8 v1): `summary.md`, `full.md`, recommendations, limits, log.

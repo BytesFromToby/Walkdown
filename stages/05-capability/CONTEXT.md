@@ -197,6 +197,8 @@ reference. `specs/images.SPEC.md`.
 | `cap.load-bytes` | hook config (`file` the config), or run (`file` null) when none injects at load | `bytes`; `basis`; `unknown_parts` |
 | `cap.posture` | agent or command definition | `tools`; `posture`: list; `least_privilege`: bool; `description` |
 | `cap.pair` | phrase hit on an orphan, a dynamic-only file, or hidden text | `pair`; `phrase_check`; `patterns`; `quote`; `evidence` |
+| `cap.ship` | file (added 2026-10-26, slice 1) | `group`: `entry`, `project`, `on-demand`, `maybe`, `run`, `config`, `people`, `build`, `unused`; `bytes`; `tokens` (estimate, null when not text); `reached_by` (on-demand and maybe) |
+| `cap.context` | tier: `session`, `project` (when present), and per skill, agent, or command `skill-runs`, `skill-full`, `skill-max` (added 2026-10-26) | `tier`; `tokens` (estimate); `bytes`; `files`; `file` the entry for per-entry tiers, `kind`; `not_text`; on `session`: `unknown` (hooks with no estimate, MCP servers), `hook_config` |
 
 ## Dependencies
 
@@ -256,3 +258,10 @@ write; stated otherwise. Other routes in the same skill folder that can write (a
 grants writing, an agent with no tools list or a write-capable one) are listed. It never says a
 limit is broken: a static read cannot see whether a setting is used at run time. Fixture:
 `Fixtures/05-capability/limits-repo/`. Spec: `specs/limits.SPEC.md`.
+
+## Do the tools fit the job? (added 2026-10-26)
+
+`fit.py` (`specs/fit.SPEC.md`; plan for builders, slice 5): `fit.unused`, `fit.missing`,
+`fit.inherits` from each entry's grants (stage 4 `trig.entry`) against what its reach asks for
+(stage 4 `ask.tools`, `ask.named`, over slice 1's reach), and `fit.hook` from stage 1's hooks and
+this stage's `cap.injection`. Families and hook facts are in `fit.yaml`.

@@ -1046,6 +1046,458 @@
         "skills/unbacked/references/fast-route.md": "076efd4a535db13297b30def085df4ccd04a226074bdd2119d2068f0fefdcc50",
         "skills/unbacked/SKILL.md": "45e18b248cb275de839424c3aa0b4e9fca7d1a20d6f45676456c0cc04f4bcc9c"
       }
+    },
+    {
+      "root": "cost-repo",
+      "deferred": [],
+      "fixtures": {
+        ".github/workflows/ci.yml": "4e26ecfcb3331628be05a755a3ed4d4ea90b0dae227e571fe5fa1c713ae06923",
+        "agents/helper.md": "d321f6174d194aa60dac9209f50054b1bf9c0636bc3f561dcfcf66965b486a86",
+        "CLAUDE.md": "923b3d2d320d46be8f69e2e6383b2e8ef50d353a6d37fa6341b3fcd7e975d8ea",
+        "context/rules.md": "7555fcc8614b4a2d8ede7cb8177de3313295dc4dfcdb2af6f10c773f1301e360",
+        "LICENSE": "03ced4a6181209561f0babf2b52fb0c45232c51caf9f86d669b2fe2e88aa6fd1",
+        "notes/plan.md": "4a0c8214f6d11776b658d335b3a0437d7f86b39b2a7647f5f038af93e3898ee5",
+        "README.md": "b530706acb73d80bc571224395059565b3038b2739d01de3b9f96072161a2ec6",
+        "references/a.md": "c9fa3759c8e63d5c5a978916f094c6a998d625b7c60c8796f302519ff6486d54",
+        "references/extra/b.md": "a9789db1dd6d187214314b6186cf6bc2aa286a52985f426c2416c1ee867a2855",
+        "scripts/run.py": "59c4e0e2d2a22b03e2d875ff13f8e71a3ed5b16d5c414a9eeab4165b5ba572df",
+        "SKILL.md": "56486fe861c5fe61a43097cfea793f2cff6bc4fde83084248cf5fec48e771e71",
+        "tests/test_x.py": "119f53cc1f1c10b83ff1bb667ad99d33be3cc24ac825f78edbce969e327330ed"
+      },
+      "note": "Slice 1 (2026-10-26): every file's ship group and every tier's tokens.",
+      "expect": [
+        {
+          "id": "cost-ship-SKILLmd",
+          "polarity": "gate",
+          "check": "cap.ship",
+          "file": "SKILL.md",
+          "match": {
+            "group": {
+              "eq": "entry"
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: SKILL.md is entry."
+        },
+        {
+          "id": "cost-ship-agents-helpermd",
+          "polarity": "gate",
+          "check": "cap.ship",
+          "file": "agents/helper.md",
+          "match": {
+            "group": {
+              "eq": "entry"
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: agents/helper.md is entry."
+        },
+        {
+          "id": "cost-ship-CLAUDEmd",
+          "polarity": "gate",
+          "check": "cap.ship",
+          "file": "CLAUDE.md",
+          "match": {
+            "group": {
+              "eq": "project"
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: CLAUDE.md is project."
+        },
+        {
+          "id": "cost-ship-context-rulesmd",
+          "polarity": "gate",
+          "check": "cap.ship",
+          "file": "context/rules.md",
+          "match": {
+            "group": {
+              "eq": "project"
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: context/rules.md is project."
+        },
+        {
+          "id": "cost-ship-references-amd",
+          "polarity": "gate",
+          "check": "cap.ship",
+          "file": "references/a.md",
+          "match": {
+            "group": {
+              "eq": "on-demand"
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: references/a.md is on-demand."
+        },
+        {
+          "id": "cost-ship-references-extra-bmd",
+          "polarity": "gate",
+          "check": "cap.ship",
+          "file": "references/extra/b.md",
+          "match": {
+            "group": {
+              "eq": "maybe"
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: references/extra/b.md is maybe."
+        },
+        {
+          "id": "cost-ship-scripts-runpy",
+          "polarity": "gate",
+          "check": "cap.ship",
+          "file": "scripts/run.py",
+          "match": {
+            "group": {
+              "eq": "run"
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: scripts/run.py is run."
+        },
+        {
+          "id": "cost-ship-READMEmd",
+          "polarity": "gate",
+          "check": "cap.ship",
+          "file": "README.md",
+          "match": {
+            "group": {
+              "eq": "people"
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: README.md is people."
+        },
+        {
+          "id": "cost-ship-LICENSE",
+          "polarity": "gate",
+          "check": "cap.ship",
+          "file": "LICENSE",
+          "match": {
+            "group": {
+              "eq": "people"
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: LICENSE is people."
+        },
+        {
+          "id": "cost-ship-tests-test_xpy",
+          "polarity": "gate",
+          "check": "cap.ship",
+          "file": "tests/test_x.py",
+          "match": {
+            "group": {
+              "eq": "build"
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: tests/test_x.py is build."
+        },
+        {
+          "id": "cost-ship-github-workflows-ciyml",
+          "polarity": "gate",
+          "check": "cap.ship",
+          "file": ".github/workflows/ci.yml",
+          "match": {
+            "group": {
+              "eq": "build"
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: .github/workflows/ci.yml is build."
+        },
+        {
+          "id": "cost-ship-notes-planmd",
+          "polarity": "gate",
+          "check": "cap.ship",
+          "file": "notes/plan.md",
+          "match": {
+            "group": {
+              "eq": "unused"
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: notes/plan.md is unused."
+        },
+        {
+          "id": "cost-tier-session-all",
+          "polarity": "gate",
+          "check": "cap.context",
+          "match": {
+            "tier": {
+              "eq": "session"
+            },
+            "tokens": {
+              "eq": 44
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: tokens estimated as size divided by 4, rounded up per file."
+        },
+        {
+          "id": "cost-tier-project-all",
+          "polarity": "gate",
+          "check": "cap.context",
+          "match": {
+            "tier": {
+              "eq": "project"
+            },
+            "tokens": {
+              "eq": 35
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: tokens estimated as size divided by 4, rounded up per file."
+        },
+        {
+          "id": "cost-tier-skill-runs-SKILLmd",
+          "polarity": "gate",
+          "check": "cap.context",
+          "file": "SKILL.md",
+          "match": {
+            "tier": {
+              "eq": "skill-runs"
+            },
+            "tokens": {
+              "eq": 77
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: tokens estimated as size divided by 4, rounded up per file."
+        },
+        {
+          "id": "cost-tier-skill-full-SKILLmd",
+          "polarity": "gate",
+          "check": "cap.context",
+          "file": "SKILL.md",
+          "match": {
+            "tier": {
+              "eq": "skill-full"
+            },
+            "tokens": {
+              "eq": 99
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: tokens estimated as size divided by 4, rounded up per file."
+        },
+        {
+          "id": "cost-tier-skill-max-SKILLmd",
+          "polarity": "gate",
+          "check": "cap.context",
+          "file": "SKILL.md",
+          "match": {
+            "tier": {
+              "eq": "skill-max"
+            },
+            "tokens": {
+              "eq": 117
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: tokens estimated as size divided by 4, rounded up per file."
+        },
+        {
+          "id": "cost-tier-skill-runs-agents-helpermd",
+          "polarity": "gate",
+          "check": "cap.context",
+          "file": "agents/helper.md",
+          "match": {
+            "tier": {
+              "eq": "skill-runs"
+            },
+            "tokens": {
+              "eq": 49
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: tokens estimated as size divided by 4, rounded up per file."
+        },
+        {
+          "id": "cost-tier-skill-full-agents-helpermd",
+          "polarity": "gate",
+          "check": "cap.context",
+          "file": "agents/helper.md",
+          "match": {
+            "tier": {
+              "eq": "skill-full"
+            },
+            "tokens": {
+              "eq": 49
+            }
+          },
+          "note": "slice 1 (owner, 2026-10-26): what ships and what it costs: tokens estimated as size divided by 4, rounded up per file."
+        },
+        {
+          "id": "cost-script-not-in-skill-full",
+          "polarity": "negative",
+          "check": "cap.context",
+          "file": "SKILL.md",
+          "match": {
+            "tier": {
+              "eq": "skill-full"
+            },
+            "files": {
+              "includes": "scripts/run.py"
+            }
+          },
+          "note": "Scripts are run, not loaded: never counted in a skill's context."
+        },
+        {
+          "id": "cost-unused-not-in-context",
+          "polarity": "negative",
+          "check": "cap.context",
+          "match": {
+            "files": {
+              "includes": "notes/plan.md"
+            }
+          },
+          "note": "A file nothing points to is in no tier."
+        }
+      ]
+    },
+    {
+      "root": "fit-repo",
+      "fixtures": {
+        ".claude/agents/reader.md": "f8de4e9ccc787e6c839e92160851b03d7d99fc59564a701e2963524e68f26d5a",
+        ".claude/agents/runner.md": "33f1b48cd73648247e79f2c6dd87b212129d0c42327d4f5aa31657d7fb5df316",
+        ".claude/agents/thin.md": "861275c5bc9d008832476328b4e02b7009ba9a2243a736dfa36e96494c6ed05d",
+        ".claude/agents/writer.md": "5aadde9b4442963df16ba30e03d25a3ed8d148c04912a4ea1ae0310c2cac417b",
+        ".claude/context.md": "ae39e297da0ca6c2ff07ed535dcbbff7e2f9a8d6634865f5e38aedce2e19aba0",
+        ".claude/settings.json": "42517e2e759ea05cc6fd847240ccd4ac3821e95988180758182d29348c316802",
+        ".claude/skills/fixer/SKILL.md": "1ad09169ba067444cb1ebdce75cf4798b5f9f736c587021b18ffc5ee245c8fa5",
+        "check.sh": "306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb"
+      },
+      "note": "Slice 5 (2026-10-26): tools granted and never used, tasks with no tool, agents that inherit every tool, hooks.",
+      "expect": [
+        {
+          "id": "fit-unused",
+          "polarity": "gate",
+          "check": "fit.unused",
+          "file": ".claude/agents/runner.md",
+          "match": {
+            "tool": {
+              "eq": "WebFetch"
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: granted, and nothing in its reach fetches anything."
+        },
+        {
+          "id": "fit-used-bash",
+          "polarity": "negative",
+          "check": "fit.unused",
+          "file": ".claude/agents/runner.md",
+          "match": {
+            "tool": {
+              "eq": "Bash"
+            }
+          },
+          "note": "Its words run the tests."
+        },
+        {
+          "id": "fit-missing-shell",
+          "polarity": "gate",
+          "check": "fit.missing",
+          "file": ".claude/agents/reader.md",
+          "match": {
+            "family": {
+              "eq": "shell"
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: 'run the tests' and no tool in its list runs commands."
+        },
+        {
+          "id": "fit-missing-agent",
+          "polarity": "gate",
+          "check": "fit.missing",
+          "file": ".claude/agents/reader.md",
+          "match": {
+            "family": {
+              "eq": "agent"
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: 'dispatch a subagent' and no Agent in its list."
+        },
+        {
+          "id": "fit-inherits",
+          "polarity": "gate",
+          "check": "fit.inherits",
+          "file": ".claude/agents/writer.md",
+          "match": {
+            "families": {
+              "includes": "write"
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: no tools list, so every tool; its words write a file."
+        },
+        {
+          "id": "fit-thin",
+          "polarity": "negative",
+          "check": "fit.unused",
+          "file": ".claude/agents/thin.md",
+          "note": "Its words live in the skill it reads, which runs and writes."
+        },
+        {
+          "id": "fit-skill-unused",
+          "polarity": "gate",
+          "check": "fit.unused",
+          "file": ".claude/skills/fixer/SKILL.md",
+          "match": {
+            "tool": {
+              "eq": "WebSearch"
+            },
+            "pre_approved": {
+              "eq": true
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: pre-approved and never used (allowed-tools only pre-approves)."
+        },
+        {
+          "id": "fit-skill-bash",
+          "polarity": "negative",
+          "check": "fit.unused",
+          "file": ".claude/skills/fixer/SKILL.md",
+          "match": {
+            "tool": {
+              "eq": "Bash"
+            }
+          },
+          "note": "It runs the tests."
+        },
+        {
+          "id": "fit-hook-prompt",
+          "polarity": "gate",
+          "check": "fit.hook",
+          "file": ".claude/settings.json",
+          "match": {
+            "event": {
+              "eq": "UserPromptSubmit"
+            },
+            "how_often": {
+              "eq": "every-prompt"
+            },
+            "adds_context": {
+              "eq": true
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: runs on every prompt and its output becomes context."
+        },
+        {
+          "id": "fit-hook-tool",
+          "polarity": "gate",
+          "check": "fit.hook",
+          "file": ".claude/settings.json",
+          "match": {
+            "event": {
+              "eq": "PreToolUse"
+            },
+            "how_often": {
+              "eq": "every-tool-call"
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: no matcher, so before every tool call."
+        },
+        {
+          "id": "fit-hook-session",
+          "polarity": "gate",
+          "check": "fit.hook",
+          "file": ".claude/settings.json",
+          "match": {
+            "event": {
+              "eq": "SessionStart"
+            },
+            "how_often": {
+              "eq": "once-a-session"
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: once a session."
+        }
+      ]
     }
   ]
 }

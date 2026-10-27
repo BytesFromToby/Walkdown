@@ -1298,6 +1298,8 @@
       ],
       "deferred": [],
       "fixtures": {
+        "asks-repo/.claude/skills/fixer/SKILL.md": "828faaa11cae0fc022571b64a5d74543ef3ad7e92a2e72678e365a88e8d8c9c2",
+        "asks-repo/README.md": "3a1a42a15ba78d0016a4050d3f8b0a9e14dc0733626ba8fdf59a860a71e4d4ee",
         "class01-exfiltration.md": "60ee1f222ffd2cbd7543d83b0522351c75857c0a67ce7325b40cea7c341f3e8b",
         "class02-credentials.md": "8338a544fd991234c7b181ccf26fd81e0df056c167cc492a2aa9f7fe47f25d9b",
         "class03-remote-load.md": "92456ac6f7e89f387c0fabd56de42894b67942e6c860c5cd2c993656ec52e135",
@@ -1318,6 +1320,27 @@
         "class20-anti-review.md": "54f3e20a73153777546346c9bc2a53d5d9591d7d67fdf8d45775940a2fc00986",
         "class21-conditional.md": "ee546cee1d82f3e6ec968a183f5186e81d4a137dfe0755b08406e489a84114ff",
         "class22-harness-prohibited.md": "1b189e2795f718a5f5e881079a3b34b6e096299838b9883c6e92f4c9fe7532c8",
+        "clean-repo/.claude/agents/helper.md": "0633875a719584aafe567a035a5ff3298cebf2922fb811b48ef3314838a5d2b4",
+        "clean-repo/.claude/skills/notes/SKILL.md": "975f43a62d2a78ce763773c5fd30edf8780308cfc53be4347a5393820b82a977",
+        "clean-repo/README.md": "0a7c40228b0610653f97a700855d9e7ef31ed182045cfc800a207375facd7970",
+        "clean-repo/scripts/run.py": "1b399509e5d4c875a9145343171413e8843adeb0a9c3ab1281ddc892f129ea25",
+        "clean-repo/templates/note.md": "2320963d0631ad1afd51d790d89cafe68bf292cfe4d1a5eb8f9bb6c4969f33d2",
+        "hosts-repo/.claude/skills/plain/SKILL.md": "d820cb229452b9f445fa00ec2db44fcc6863cabcfeaf1f22ed25ec29ad4f0fc8",
+        "hosts-repo/.claude/skills/tidy/SKILL.md": "662b3c00e2e12e53edfacedf8cb8c06e2e42afb5958e8e096fe4a17af4c8f7ee",
+        "hosts-repo/.cursor/rules/style.mdc": "ad4f3ffefe50d676a609ed70c21a3d77d4743a91da31e9b8983263abc37cc3ab",
+        "hosts-repo/.mcp.json": "f86a88cad8289834ee1d272391b593b6c4c9c6db3f0e59737b511fc7be540fe1",
+        "hosts-repo/AGENTS.md": "3d8683f5843a151c99807a228279183ff68744877ea1b36f5ce7de43726a9218",
+        "hosts-repo/CLAUDE.md": "5e047e69e030e37f5b359bf27964e3d270376d6f9bb6f265469ba34fc8b75077",
+        "hosts-repo/pkg/AGENTS.md": "69ab1b3b8ac5da02d54f8b5bebbf054d2210e2e8c6a1121d7b952027fa3f6e75",
+        "hosts-repo/pkg/CLAUDE.md": "69ab1b3b8ac5da02d54f8b5bebbf054d2210e2e8c6a1121d7b952027fa3f6e75",
+        "needs-repo/README.md": "d13de14a1f69af09c179d634743ac475917ad9c2508ee779647ff7516c73812f",
+        "needs-repo/references/guide.md": "e5cd73285693e4763c94ec2110c5836b6e067ad826ba32b3690214c9aeb1feae",
+        "needs-repo/requirements.txt": "dd6b7fbc59b7406cd3790e63eaedf624517d0f2218ba3257cf30aaa2c555c80e",
+        "needs-repo/scripts/fetch.py": "927516a1331494b898e15f317b50243584995b98c7036e1a7a7c27cec3a4c5a8",
+        "needs-repo/scripts/helpers.py": "68c6b0c95cedf95d760cf824f152eac7a8c260558368d0a8d6dbadb437a5eb98",
+        "needs-repo/scripts/run.sh": "0c097a24b868f200e46dfe1147ffef9ea69e17631b64972a794dad46d111d280",
+        "needs-repo/scripts/setup.ps1": "f29fbcf648abe801cbc3a6ed2044f0fabd3bd16038255996eb1928ed9ff7770d",
+        "needs-repo/SKILL.md": "d0ea9726fd4b4904ba8e2195dfe1a0d605ff5e06a05e9df5d012efd5d983f2e7",
         "negation-repo/references/brainstorm.md": "56289fad73bec42d70a21c16d9bfd42e13535ad96d0769dc0bb787bc4e5277fc",
         "negation-repo/references/confirm.md": "41112c08eb191bd6213f8daa2b162c0952c436914b1e92b47254e54a38e1ea54",
         "negation-repo/references/deploy.md": "2122d83262735508708433d02799a8156ddf98f20dc823375b27a17a2d33f01e",
@@ -1336,6 +1359,23 @@
         "secrets-repo/notes.md": "e0176ca0d9c22e171fd6cf05cfae5aafb976e9b4eadbfabf89a0cee16fbb9dd5",
         "secrets-repo/package-lock.json": "a64daf7505864c82834460ddc8ce9eaa718f584e5d4cb97658e5b0fde52aedd9",
         "secrets-repo/SKILL.md": "7c2f14b0c5eb6f4aab5c6f83a2bc66000640d3d3953989510bed24365ecbc0f6",
+        "trigger-repo/.claude/agents/notes.md": "e156341bc77c21359af4453adaf52fd572e85e5bb126166e4452b6103c92d050",
+        "trigger-repo/.claude/agents/README.md": "8b916e2154da1f94e1dca63c83df1357a5da0073b57a67196de11923e861c047",
+        "trigger-repo/.claude/agents/reviewer.md": "8a8a52291a6b8c4414b1bea107204a6b047db3d3dd7f66376444d0aeefa35ba8",
+        "trigger-repo/.claude/commands/deploy.md": "fbf6709ea50f6a8f14b8a2f1e8d8bea41a2791d310dae540778b15626b38b173",
+        "trigger-repo/.claude/skills/Bad_Name/SKILL.md": "bb626f7471c06630f5ae0d9f1f8fd2dcc4dfce36d082641c4227e0564dba4717",
+        "trigger-repo/.claude/skills/broken/SKILL.md": "9beeca0fef3a445525556b9933ae6ec8a0c7996a89d3e5e336453673cdef9232",
+        "trigger-repo/.claude/skills/check-pr/SKILL.md": "ab0e7245ae8bccb5ad8d67965f604630310ce714059f75e37b708bce4983fc8b",
+        "trigger-repo/.claude/skills/claude-helper/SKILL.md": "a9255dd6e3bc6cd9e7df0fdb15c1102d24b27cd1cc2108d7ee11dc117dbec5d7",
+        "trigger-repo/.claude/skills/helper/SKILL.md": "b1c30912e01dd82f106de4e84b12481adc536075a6e2defce7cd2e87e558bf0b",
+        "trigger-repo/.claude/skills/late/SKILL.md": "d29a20ac3d4497559f5e42af22e5f3de82a7090a5e53bb74101ebe7249e33ccf",
+        "trigger-repo/.claude/skills/long-desc/SKILL.md": "b18d1932748bd047c6e3506868614645973fee99883265ce681b53d5bf75ef16",
+        "trigger-repo/.claude/skills/long-listing/SKILL.md": "67b2e9037745bda587458b51e41e0c60a3c2dd54e638d2fe8b5a7bc6ff42536d",
+        "trigger-repo/.claude/skills/manual/SKILL.md": "8c0d1c6a6c3a9dcdff2c4156a11a3679a4a3fcd81b5c1bfae22dbe3adeecfeda",
+        "trigger-repo/.claude/skills/mismatch/SKILL.md": "c3f2526bbd169f7a90e4fa414982759747d0f623173d3e5a733b86e23221cddf",
+        "trigger-repo/.claude/skills/review-pr/SKILL.md": "c152508107e7a56f4b4eca33d34a8717e5e57c29848e45f399a8079f220fb6e4",
+        "trigger-repo/.claude/skills/tidy-notes/SKILL.md": "f14f092b124c41c4b609aee2566375b75110fe57b7888f913395092427f98329",
+        "trigger-repo/.claude/skills/typo/SKILL.md": "2380b967456505286fdf04a163917309309a42d067557f70fb50735f2c86c14c",
         "wrapped-lines.md": "3e3c6bdb4a27fbddbebe721a788153f7d03fe4f50488a97d14f68204bba91d01"
       }
     },
@@ -2211,6 +2251,1136 @@
         }
       ],
       "deferred": []
+    },
+    {
+      "root": "needs-repo",
+      "deferred": [],
+      "fixtures": {
+        "README.md": "d13de14a1f69af09c179d634743ac475917ad9c2508ee779647ff7516c73812f",
+        "references/guide.md": "e5cd73285693e4763c94ec2110c5836b6e067ad826ba32b3690214c9aeb1feae",
+        "requirements.txt": "dd6b7fbc59b7406cd3790e63eaedf624517d0f2218ba3257cf30aaa2c555c80e",
+        "scripts/fetch.py": "927516a1331494b898e15f317b50243584995b98c7036e1a7a7c27cec3a4c5a8",
+        "scripts/helpers.py": "68c6b0c95cedf95d760cf824f152eac7a8c260558368d0a8d6dbadb437a5eb98",
+        "scripts/run.sh": "0c097a24b868f200e46dfe1147ffef9ea69e17631b64972a794dad46d111d280",
+        "scripts/setup.ps1": "f29fbcf648abe801cbc3a6ed2044f0fabd3bd16038255996eb1928ed9ff7770d",
+        "SKILL.md": "d0ea9726fd4b4904ba8e2195dfe1a0d605ff5e06a05e9df5d012efd5d983f2e7"
+      },
+      "note": "Slice 2 (2026-10-26): what it needs and what ties it to one machine.",
+      "expect": [
+        {
+          "id": "needs-git-declared",
+          "polarity": "gate",
+          "check": "need.command",
+          "match": {
+            "command": {
+              "eq": "git"
+            },
+            "declared": {
+              "eq": true
+            }
+          },
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: named in the skill's compatibility field."
+        },
+        {
+          "id": "needs-gh-declared",
+          "polarity": "gate",
+          "check": "need.command",
+          "match": {
+            "command": {
+              "eq": "gh"
+            },
+            "declared": {
+              "eq": true
+            }
+          },
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: brew install gh in the README declares it."
+        },
+        {
+          "id": "needs-jq-undeclared",
+          "polarity": "gate",
+          "check": "need.command",
+          "match": {
+            "command": {
+              "eq": "jq"
+            },
+            "declared": {
+              "eq": false
+            }
+          },
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: used after a pipe in a script, declared nowhere."
+        },
+        {
+          "id": "needs-pbcopy-undeclared",
+          "polarity": "gate",
+          "check": "need.command",
+          "match": {
+            "command": {
+              "eq": "pbcopy"
+            },
+            "declared": {
+              "eq": false
+            }
+          },
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: used in an instruction block."
+        },
+        {
+          "id": "needs-python-used",
+          "polarity": "gate",
+          "check": "need.command",
+          "match": {
+            "command": {
+              "eq": "python"
+            }
+          },
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: run in an instruction block."
+        },
+        {
+          "id": "needs-make-is-a-word",
+          "polarity": "negative",
+          "check": "need.command",
+          "match": {
+            "command": {
+              "eq": "make"
+            }
+          },
+          "note": "'Make sure' in prose is a word, not the program."
+        },
+        {
+          "id": "needs-requests-declared",
+          "polarity": "gate",
+          "check": "need.package",
+          "match": {
+            "package": {
+              "eq": "requests"
+            },
+            "declared": {
+              "eq": true
+            }
+          },
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: requirements.txt names it."
+        },
+        {
+          "id": "needs-pandas-undeclared",
+          "polarity": "gate",
+          "check": "need.package",
+          "match": {
+            "package": {
+              "eq": "pandas"
+            },
+            "declared": {
+              "eq": false
+            }
+          },
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: imported, declared nowhere."
+        },
+        {
+          "id": "needs-json-standard",
+          "polarity": "negative",
+          "check": "need.package",
+          "match": {
+            "package": {
+              "eq": "json"
+            }
+          },
+          "note": "The standard library is not a package to install."
+        },
+        {
+          "id": "needs-helpers-local",
+          "polarity": "negative",
+          "check": "need.package",
+          "match": {
+            "package": {
+              "eq": "helpers"
+            }
+          },
+          "note": "A module the repository holds is not a package to install."
+        },
+        {
+          "id": "needs-crlf",
+          "polarity": "gate",
+          "check": "port.crlf",
+          "file": "scripts/run.sh",
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: a bash script with Windows line endings."
+        },
+        {
+          "id": "needs-path",
+          "polarity": "gate",
+          "check": "port.path",
+          "file": "scripts/run.sh",
+          "line": 3,
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: a personal path."
+        },
+        {
+          "id": "needs-path-placeholder",
+          "polarity": "negative",
+          "check": "port.path",
+          "file": "README.md",
+          "note": "/Users/<name>/ is a placeholder, not someone's path."
+        },
+        {
+          "id": "needs-os-ps1",
+          "polarity": "gate",
+          "check": "port.os",
+          "file": "scripts/setup.ps1",
+          "match": {
+            "os": {
+              "eq": "windows"
+            }
+          },
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: a PowerShell script."
+        },
+        {
+          "id": "needs-os-sh",
+          "polarity": "gate",
+          "check": "port.os",
+          "file": "scripts/run.sh",
+          "match": {
+            "os": {
+              "eq": "unix"
+            }
+          },
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: a bash script (Windows needs Git Bash or WSL)."
+        },
+        {
+          "id": "needs-os-pbcopy",
+          "polarity": "gate",
+          "check": "port.os",
+          "file": "SKILL.md",
+          "line": 14,
+          "match": {
+            "os": {
+              "eq": "macos"
+            }
+          },
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: pbcopy is macOS only."
+        },
+        {
+          "id": "needs-backslash",
+          "polarity": "gate",
+          "check": "port.backslash",
+          "file": "SKILL.md",
+          "line": 17,
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: a reference written with a backslash."
+        },
+        {
+          "id": "needs-python",
+          "polarity": "gate",
+          "check": "port.python",
+          "file": "SKILL.md",
+          "line": 13,
+          "note": "slice 2 (owner, 2026-10-26): will it run on someone else's machine: runs python, not python3."
+        }
+      ]
+    },
+    {
+      "root": "hosts-repo",
+      "deferred": [],
+      "fixtures": {
+        ".claude/skills/plain/SKILL.md": "d820cb229452b9f445fa00ec2db44fcc6863cabcfeaf1f22ed25ec29ad4f0fc8",
+        ".claude/skills/tidy/SKILL.md": "662b3c00e2e12e53edfacedf8cb8c06e2e42afb5958e8e096fe4a17af4c8f7ee",
+        ".cursor/rules/style.mdc": "ad4f3ffefe50d676a609ed70c21a3d77d4743a91da31e9b8983263abc37cc3ab",
+        ".mcp.json": "f86a88cad8289834ee1d272391b593b6c4c9c6db3f0e59737b511fc7be540fe1",
+        "AGENTS.md": "3d8683f5843a151c99807a228279183ff68744877ea1b36f5ce7de43726a9218",
+        "CLAUDE.md": "5e047e69e030e37f5b359bf27964e3d270376d6f9bb6f265469ba34fc8b75077",
+        "pkg/AGENTS.md": "69ab1b3b8ac5da02d54f8b5bebbf054d2210e2e8c6a1121d7b952027fa3f6e75",
+        "pkg/CLAUDE.md": "69ab1b3b8ac5da02d54f8b5bebbf054d2210e2e8c6a1121d7b952027fa3f6e75"
+      },
+      "note": "Slice 3 (2026-10-26): coverage per host, copies that drift, one-host features.",
+      "expect": [
+        {
+          "id": "hosts-claude",
+          "polarity": "gate",
+          "check": "host.coverage",
+          "match": {
+            "host": {
+              "eq": "claude"
+            },
+            "instructions": {
+              "includes": "CLAUDE.md"
+            },
+            "skills": {
+              "eq": 2
+            },
+            "mcp": {
+              "includes": ".mcp.json"
+            }
+          },
+          "note": "slice 3 (owner, 2026-10-26): is it ready for any AI: CLAUDE.md, two skills in .claude/skills, .mcp.json."
+        },
+        {
+          "id": "hosts-cursor",
+          "polarity": "gate",
+          "check": "host.coverage",
+          "match": {
+            "host": {
+              "eq": "cursor"
+            },
+            "instructions": {
+              "includes": ".cursor/rules/style.mdc"
+            },
+            "skills": {
+              "eq": 2
+            }
+          },
+          "note": "slice 3 (owner, 2026-10-26): is it ready for any AI: Cursor reads .claude/skills for compatibility."
+        },
+        {
+          "id": "hosts-copilot",
+          "polarity": "gate",
+          "check": "host.coverage",
+          "match": {
+            "host": {
+              "eq": "copilot"
+            },
+            "skills": {
+              "eq": 2
+            }
+          },
+          "note": "slice 3 (owner, 2026-10-26): is it ready for any AI: Copilot reads .claude/skills."
+        },
+        {
+          "id": "hosts-codex",
+          "polarity": "gate",
+          "check": "host.coverage",
+          "match": {
+            "host": {
+              "eq": "codex"
+            },
+            "skills": {
+              "eq": 0
+            },
+            "instructions": {
+              "includes": "AGENTS.md"
+            }
+          },
+          "note": "slice 3 (owner, 2026-10-26): is it ready for any AI: Codex reads AGENTS.md and .agents/skills, which this repository does not have."
+        },
+        {
+          "id": "hosts-drift",
+          "polarity": "gate",
+          "check": "host.drift",
+          "file": "CLAUDE.md",
+          "match": {
+            "other": {
+              "eq": "AGENTS.md"
+            },
+            "relation": {
+              "eq": "differ"
+            },
+            "only_here": {
+              "eq": 1
+            },
+            "only_there": {
+              "eq": 1
+            }
+          },
+          "note": "slice 3 (owner, 2026-10-26): is it ready for any AI: one line only in each; Claude Code reads CLAUDE.md, the others AGENTS.md."
+        },
+        {
+          "id": "hosts-copy",
+          "polarity": "gate",
+          "check": "host.drift",
+          "file": "pkg/CLAUDE.md",
+          "match": {
+            "relation": {
+              "eq": "same"
+            }
+          },
+          "note": "slice 3 (owner, 2026-10-26): is it ready for any AI: identical copies."
+        },
+        {
+          "id": "hosts-copy-not-differ",
+          "polarity": "negative",
+          "check": "host.drift",
+          "file": "pkg/CLAUDE.md",
+          "match": {
+            "relation": {
+              "eq": "differ"
+            }
+          },
+          "note": "Identical copies never differ."
+        },
+        {
+          "id": "hosts-key",
+          "polarity": "gate",
+          "check": "host.feature",
+          "file": ".claude/skills/tidy/SKILL.md",
+          "line": 4,
+          "match": {
+            "kind": {
+              "eq": "frontmatter"
+            }
+          },
+          "note": "slice 3 (owner, 2026-10-26): is it ready for any AI: a key outside the Agent Skills set; claude.ai and the Skills API refuse the skill."
+        },
+        {
+          "id": "hosts-words",
+          "polarity": "gate",
+          "check": "host.feature",
+          "file": ".claude/skills/tidy/SKILL.md",
+          "line": 9,
+          "match": {
+            "kind": {
+              "eq": "claude-words"
+            }
+          },
+          "note": "slice 3 (owner, 2026-10-26): is it ready for any AI: $ARGUMENTS."
+        },
+        {
+          "id": "hosts-tool",
+          "polarity": "gate",
+          "check": "host.feature",
+          "file": ".claude/skills/tidy/SKILL.md",
+          "line": 9,
+          "match": {
+            "kind": {
+              "eq": "claude-tool"
+            }
+          },
+          "note": "slice 3 (owner, 2026-10-26): is it ready for any AI: WebFetch."
+        },
+        {
+          "id": "hosts-plain",
+          "polarity": "negative",
+          "check": "host.feature",
+          "file": ".claude/skills/plain/SKILL.md",
+          "note": "A skill with only Agent Skills keys and plain words has no one-host feature."
+        }
+      ]
+    },
+    {
+      "root": "trigger-repo",
+      "deferred": [],
+      "fixtures": {
+        ".claude/agents/notes.md": "e156341bc77c21359af4453adaf52fd572e85e5bb126166e4452b6103c92d050",
+        ".claude/agents/README.md": "8b916e2154da1f94e1dca63c83df1357a5da0073b57a67196de11923e861c047",
+        ".claude/agents/reviewer.md": "8a8a52291a6b8c4414b1bea107204a6b047db3d3dd7f66376444d0aeefa35ba8",
+        ".claude/commands/deploy.md": "fbf6709ea50f6a8f14b8a2f1e8d8bea41a2791d310dae540778b15626b38b173",
+        ".claude/skills/Bad_Name/SKILL.md": "bb626f7471c06630f5ae0d9f1f8fd2dcc4dfce36d082641c4227e0564dba4717",
+        ".claude/skills/broken/SKILL.md": "9beeca0fef3a445525556b9933ae6ec8a0c7996a89d3e5e336453673cdef9232",
+        ".claude/skills/check-pr/SKILL.md": "ab0e7245ae8bccb5ad8d67965f604630310ce714059f75e37b708bce4983fc8b",
+        ".claude/skills/claude-helper/SKILL.md": "a9255dd6e3bc6cd9e7df0fdb15c1102d24b27cd1cc2108d7ee11dc117dbec5d7",
+        ".claude/skills/helper/SKILL.md": "b1c30912e01dd82f106de4e84b12481adc536075a6e2defce7cd2e87e558bf0b",
+        ".claude/skills/late/SKILL.md": "d29a20ac3d4497559f5e42af22e5f3de82a7090a5e53bb74101ebe7249e33ccf",
+        ".claude/skills/long-desc/SKILL.md": "b18d1932748bd047c6e3506868614645973fee99883265ce681b53d5bf75ef16",
+        ".claude/skills/long-listing/SKILL.md": "67b2e9037745bda587458b51e41e0c60a3c2dd54e638d2fe8b5a7bc6ff42536d",
+        ".claude/skills/manual/SKILL.md": "8c0d1c6a6c3a9dcdff2c4156a11a3679a4a3fcd81b5c1bfae22dbe3adeecfeda",
+        ".claude/skills/mismatch/SKILL.md": "c3f2526bbd169f7a90e4fa414982759747d0f623173d3e5a733b86e23221cddf",
+        ".claude/skills/review-pr/SKILL.md": "c152508107e7a56f4b4eca33d34a8717e5e57c29848e45f399a8079f220fb6e4",
+        ".claude/skills/tidy-notes/SKILL.md": "f14f092b124c41c4b609aee2566375b75110fe57b7888f913395092427f98329",
+        ".claude/skills/typo/SKILL.md": "2380b967456505286fdf04a163917309309a42d067557f70fb50735f2c86c14c"
+      },
+      "note": "Slice 4 (2026-10-26): how each entry triggers, frontmatter not read, rules, guidance, keys, values, tools, overlaps, the listing.",
+      "expect": [
+        {
+          "id": "trig-good-entry",
+          "polarity": "gate",
+          "check": "trig.entry",
+          "file": ".claude/skills/tidy-notes/SKILL.md",
+          "match": {
+            "kind": {
+              "eq": "skill"
+            },
+            "mode": {
+              "eq": "auto"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: a skill that follows every rule; Claude chooses it by its description."
+        },
+        {
+          "id": "trig-good-no-frontmatter",
+          "polarity": "negative",
+          "check": "trig.frontmatter",
+          "file": ".claude/skills/tidy-notes/SKILL.md",
+          "note": "No finding on a skill that follows every rule."
+        },
+        {
+          "id": "trig-good-no-rule",
+          "polarity": "negative",
+          "check": "trig.rule",
+          "file": ".claude/skills/tidy-notes/SKILL.md",
+          "note": "No finding on a skill that follows every rule."
+        },
+        {
+          "id": "trig-good-no-guidance",
+          "polarity": "negative",
+          "check": "trig.guidance",
+          "file": ".claude/skills/tidy-notes/SKILL.md",
+          "note": "No finding on a skill that follows every rule."
+        },
+        {
+          "id": "trig-good-no-key",
+          "polarity": "negative",
+          "check": "trig.key",
+          "file": ".claude/skills/tidy-notes/SKILL.md",
+          "note": "No finding on a skill that follows every rule."
+        },
+        {
+          "id": "trig-good-no-tool",
+          "polarity": "negative",
+          "check": "trig.tool",
+          "file": ".claude/skills/tidy-notes/SKILL.md",
+          "note": "No finding on a skill that follows every rule."
+        },
+        {
+          "id": "trig-good-no-value",
+          "polarity": "negative",
+          "check": "trig.value",
+          "file": ".claude/skills/tidy-notes/SKILL.md",
+          "note": "No finding on a skill that follows every rule."
+        },
+        {
+          "id": "trig-yaml",
+          "polarity": "gate",
+          "check": "trig.frontmatter",
+          "file": ".claude/skills/broken/SKILL.md",
+          "match": {
+            "kind": {
+              "eq": "yaml-error"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: an unquoted ': ' in the description; Claude Code loads the skill with no fields set."
+        },
+        {
+          "id": "trig-yaml-mode",
+          "polarity": "gate",
+          "check": "trig.entry",
+          "file": ".claude/skills/broken/SKILL.md",
+          "match": {
+            "mode": {
+              "eq": "unread"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: frontmatter not read, so Claude cannot match the description."
+        },
+        {
+          "id": "trig-late",
+          "polarity": "gate",
+          "check": "trig.frontmatter",
+          "file": ".claude/skills/late/SKILL.md",
+          "match": {
+            "kind": {
+              "eq": "not-first-line"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: a blank line before ---; the whole file is skill content."
+        },
+        {
+          "id": "trig-name-chars",
+          "polarity": "gate",
+          "check": "trig.rule",
+          "file": ".claude/skills/Bad_Name/SKILL.md",
+          "match": {
+            "rule": {
+              "eq": "name-chars"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: capitals and an underscore; the Agent Skills spec allows lowercase, digits, hyphens."
+        },
+        {
+          "id": "trig-name-folder",
+          "polarity": "gate",
+          "check": "trig.rule",
+          "file": ".claude/skills/mismatch/SKILL.md",
+          "match": {
+            "rule": {
+              "eq": "name-folder"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: the name is not its folder's."
+        },
+        {
+          "id": "trig-reserved",
+          "polarity": "gate",
+          "check": "trig.rule",
+          "file": ".claude/skills/claude-helper/SKILL.md",
+          "match": {
+            "rule": {
+              "eq": "name-reserved"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: 'claude' in a name; claude.ai uploads and the Skills API refuse it."
+        },
+        {
+          "id": "trig-desc-long",
+          "polarity": "gate",
+          "check": "trig.rule",
+          "file": ".claude/skills/long-desc/SKILL.md",
+          "match": {
+            "rule": {
+              "eq": "description-long"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: over 1,024 characters."
+        },
+        {
+          "id": "trig-cut",
+          "polarity": "gate",
+          "check": "trig.rule",
+          "file": ".claude/skills/long-listing/SKILL.md",
+          "match": {
+            "rule": {
+              "eq": "listing-cut"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: description plus when_to_use over 1,536 characters in Claude Code's listing."
+        },
+        {
+          "id": "trig-person",
+          "polarity": "gate",
+          "check": "trig.guidance",
+          "file": ".claude/skills/helper/SKILL.md",
+          "match": {
+            "kind": {
+              "eq": "first-person"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: published guidance: write descriptions in the third person."
+        },
+        {
+          "id": "trig-no-when",
+          "polarity": "gate",
+          "check": "trig.guidance",
+          "file": ".claude/skills/helper/SKILL.md",
+          "match": {
+            "kind": {
+              "eq": "no-when"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: published guidance: say when to use it."
+        },
+        {
+          "id": "trig-key",
+          "polarity": "gate",
+          "check": "trig.key",
+          "file": ".claude/skills/typo/SKILL.md",
+          "line": 4,
+          "match": {
+            "key": {
+              "eq": "allowed_tools"
+            },
+            "near": {
+              "eq": "allowed-tools"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: a key no host knows; Claude Code ignores it without an error."
+        },
+        {
+          "id": "trig-tool",
+          "polarity": "gate",
+          "check": "trig.tool",
+          "file": ".claude/skills/typo/SKILL.md",
+          "match": {
+            "tool": {
+              "eq": "Websearch"
+            },
+            "near": {
+              "eq": "WebSearch"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: tool names are exact strings."
+        },
+        {
+          "id": "trig-mcp",
+          "polarity": "negative",
+          "check": "trig.tool",
+          "file": ".claude/skills/typo/SKILL.md",
+          "match": {
+            "tool": {
+              "eq": "mcp__notes__search"
+            }
+          },
+          "note": "An MCP tool name is never flagged."
+        },
+        {
+          "id": "trig-bash",
+          "polarity": "negative",
+          "check": "trig.tool",
+          "file": ".claude/skills/typo/SKILL.md",
+          "match": {
+            "tool": {
+              "eq": "Bash(git:*)"
+            }
+          },
+          "note": "A permission rule on a known tool is never flagged."
+        },
+        {
+          "id": "trig-manual",
+          "polarity": "gate",
+          "check": "trig.entry",
+          "file": ".claude/skills/manual/SKILL.md",
+          "match": {
+            "mode": {
+              "eq": "typed"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: disable-model-invocation: Claude never loads it on its own."
+        },
+        {
+          "id": "trig-overlap",
+          "polarity": "gate",
+          "check": "trig.overlap",
+          "file": ".claude/skills/check-pr/SKILL.md",
+          "match": {
+            "other": {
+              "eq": ".claude/skills/review-pr/SKILL.md"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: two descriptions sharing most of their content words."
+        },
+        {
+          "id": "trig-no-overlap",
+          "polarity": "negative",
+          "check": "trig.overlap",
+          "file": ".claude/skills/tidy-notes/SKILL.md",
+          "note": "Unrelated descriptions never overlap."
+        },
+        {
+          "id": "trig-agent-key",
+          "polarity": "gate",
+          "check": "trig.key",
+          "file": ".claude/agents/reviewer.md",
+          "match": {
+            "key": {
+              "eq": "disallowed-tools"
+            },
+            "near": {
+              "eq": "disallowedTools"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: subagent keys are camelCase."
+        },
+        {
+          "id": "trig-agent-model",
+          "polarity": "gate",
+          "check": "trig.value",
+          "file": ".claude/agents/reviewer.md",
+          "match": {
+            "field": {
+              "eq": "model"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: not a documented model value."
+        },
+        {
+          "id": "trig-agent-color",
+          "polarity": "gate",
+          "check": "trig.value",
+          "file": ".claude/agents/reviewer.md",
+          "match": {
+            "field": {
+              "eq": "color"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: not a documented color."
+        },
+        {
+          "id": "trig-agent-task",
+          "polarity": "gate",
+          "check": "trig.tool",
+          "file": ".claude/agents/reviewer.md",
+          "match": {
+            "tool": {
+              "eq": "Task"
+            },
+            "kind": {
+              "eq": "older"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: Task is not in the current list (Agent is); the docs do not say whether it still works."
+        },
+        {
+          "id": "trig-agent-skipped",
+          "polarity": "gate",
+          "check": "trig.entry",
+          "file": ".claude/agents/notes.md",
+          "match": {
+            "mode": {
+              "eq": "skipped"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: no name, so Claude Code treats the file as documentation."
+        },
+        {
+          "id": "trig-readme",
+          "polarity": "negative",
+          "check": "trig.entry",
+          "file": ".claude/agents/README.md",
+          "note": "A file with no frontmatter beside the agents is documentation, not an entry."
+        },
+        {
+          "id": "trig-command",
+          "polarity": "gate",
+          "check": "trig.entry",
+          "file": ".claude/commands/deploy.md",
+          "match": {
+            "kind": {
+              "eq": "command"
+            },
+            "mode": {
+              "eq": "auto"
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: a command works as a skill."
+        },
+        {
+          "id": "trig-listing",
+          "polarity": "gate",
+          "check": "trig.listing",
+          "match": {
+            "skills": {
+              "eq": 11
+            },
+            "agents": {
+              "eq": 1
+            }
+          },
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: the descriptions Claude chooses by: 10 auto skills plus the command; one agent."
+        }
+      ]
+    },
+    {
+      "root": "asks-repo",
+      "deferred": [],
+      "fixtures": {
+        ".claude/skills/fixer/SKILL.md": "828faaa11cae0fc022571b64a5d74543ef3ad7e92a2e72678e365a88e8d8c9c2",
+        "README.md": "3a1a42a15ba78d0016a4050d3f8b0a9e14dc0733626ba8fdf59a860a71e4d4ee"
+      },
+      "note": "Slice 5 (2026-10-26): what the text asks a tool to do, and loops with no stated limit.",
+      "expect": [
+        {
+          "id": "ask-shell",
+          "polarity": "gate",
+          "check": "ask.tools",
+          "file": ".claude/skills/fixer/SKILL.md",
+          "match": {
+            "family": {
+              "eq": "shell"
+            },
+            "lines": {
+              "includes": 8
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: 'Run the tests' and a command in inline code."
+        },
+        {
+          "id": "ask-write",
+          "polarity": "gate",
+          "check": "ask.tools",
+          "file": ".claude/skills/fixer/SKILL.md",
+          "match": {
+            "family": {
+              "eq": "write"
+            },
+            "lines": {
+              "includes": 9
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: a writing verb with a file in the sentence."
+        },
+        {
+          "id": "ask-write-no-object",
+          "polarity": "negative",
+          "check": "ask.tools",
+          "file": ".claude/skills/fixer/SKILL.md",
+          "match": {
+            "family": {
+              "eq": "write"
+            },
+            "lines": {
+              "includes": 14
+            }
+          },
+          "note": "A writing verb with no file, folder, code, or path asks for nothing."
+        },
+        {
+          "id": "ask-web",
+          "polarity": "gate",
+          "check": "ask.tools",
+          "file": ".claude/skills/fixer/SKILL.md",
+          "match": {
+            "family": {
+              "eq": "web"
+            },
+            "lines": {
+              "includes": 10
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: fetch."
+        },
+        {
+          "id": "ask-search",
+          "polarity": "gate",
+          "check": "ask.tools",
+          "file": ".claude/skills/fixer/SKILL.md",
+          "match": {
+            "family": {
+              "eq": "search"
+            },
+            "lines": {
+              "includes": 11
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: search the web."
+        },
+        {
+          "id": "ask-agent",
+          "polarity": "gate",
+          "check": "ask.tools",
+          "file": ".claude/skills/fixer/SKILL.md",
+          "match": {
+            "family": {
+              "eq": "agent"
+            },
+            "lines": {
+              "includes": 12
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: dispatch a subagent."
+        },
+        {
+          "id": "ask-named",
+          "polarity": "gate",
+          "check": "ask.named",
+          "file": ".claude/skills/fixer/SKILL.md",
+          "match": {
+            "tool": {
+              "eq": "WebFetch"
+            },
+            "lines": {
+              "includes": 13
+            }
+          },
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: a tool named outright."
+        },
+        {
+          "id": "loop",
+          "polarity": "gate",
+          "check": "fit.loop",
+          "file": ".claude/skills/fixer/SKILL.md",
+          "line": 15,
+          "note": "slice 5 (owner, 2026-10-26): do the tools fit the job: a loop with no stated limit on its line or the next."
+        },
+        {
+          "id": "loop-limited",
+          "polarity": "negative",
+          "check": "fit.loop",
+          "file": ".claude/skills/fixer/SKILL.md",
+          "line": 17,
+          "note": "'at most 3 times' on its own line."
+        },
+        {
+          "id": "loop-next",
+          "polarity": "negative",
+          "check": "fit.loop",
+          "file": ".claude/skills/fixer/SKILL.md",
+          "line": 19,
+          "note": "'Give up after two tries' on the next line."
+        },
+        {
+          "id": "ask-readme",
+          "polarity": "negative",
+          "check": "ask.tools",
+          "file": "README.md",
+          "note": "Text written for people asks no tool for anything."
+        }
+      ]
+    },
+    {
+      "root": "clean-repo",
+      "deferred": [],
+      "fixtures": {
+        ".claude/agents/helper.md": "0633875a719584aafe567a035a5ff3298cebf2922fb811b48ef3314838a5d2b4",
+        ".claude/skills/notes/SKILL.md": "975f43a62d2a78ce763773c5fd30edf8780308cfc53be4347a5393820b82a977",
+        "README.md": "0a7c40228b0610653f97a700855d9e7ef31ed182045cfc800a207375facd7970",
+        "scripts/run.py": "1b399509e5d4c875a9145343171413e8843adeb0a9c3ab1281ddc892f129ea25",
+        "templates/note.md": "2320963d0631ad1afd51d790d89cafe68bf292cfe4d1a5eb8f9bb6c4969f33d2"
+      },
+      "note": "Slice 6 (2026-10-27): unfinished text, dated claims, pinned model IDs, older tool names.",
+      "expect": [
+        {
+          "id": "clean-todo",
+          "polarity": "gate",
+          "check": "clean.unfinished",
+          "file": ".claude/skills/notes/SKILL.md",
+          "line": 9,
+          "match": {
+            "kind": {
+              "eq": "todo"
+            }
+          },
+          "note": "slice 6 (owner, 2026-10-27): is it current and clean: a TODO marker."
+        },
+        {
+          "id": "clean-placeholder",
+          "polarity": "gate",
+          "check": "clean.unfinished",
+          "file": ".claude/skills/notes/SKILL.md",
+          "line": 10,
+          "match": {
+            "kind": {
+              "eq": "placeholder"
+            }
+          },
+          "note": "slice 6 (owner, 2026-10-27): is it current and clean: [placeholder]."
+        },
+        {
+          "id": "clean-template-var",
+          "polarity": "gate",
+          "check": "clean.unfinished",
+          "file": ".claude/skills/notes/SKILL.md",
+          "line": 11,
+          "match": {
+            "kind": {
+              "eq": "placeholder"
+            }
+          },
+          "note": "slice 6 (owner, 2026-10-27): is it current and clean: {{name}} outside a template folder."
+        },
+        {
+          "id": "clean-draft",
+          "polarity": "gate",
+          "check": "clean.unfinished",
+          "file": ".claude/skills/notes/SKILL.md",
+          "line": 12,
+          "match": {
+            "kind": {
+              "eq": "draft"
+            }
+          },
+          "note": "slice 6 (owner, 2026-10-27): is it current and clean: WIP."
+        },
+        {
+          "id": "clean-fenced",
+          "polarity": "negative",
+          "check": "clean.unfinished",
+          "file": ".claude/skills/notes/SKILL.md",
+          "line": 20,
+          "note": "A TODO in a fenced example is the example's."
+        },
+        {
+          "id": "clean-script",
+          "polarity": "gate",
+          "check": "clean.unfinished",
+          "file": "scripts/run.py",
+          "line": 1,
+          "match": {
+            "kind": {
+              "eq": "todo"
+            }
+          },
+          "note": "slice 6 (owner, 2026-10-27): is it current and clean: a FIXME in a shipped script."
+        },
+        {
+          "id": "clean-template",
+          "polarity": "negative",
+          "check": "clean.unfinished",
+          "file": "templates/note.md",
+          "note": "A template's placeholders are what it ships (owner, 2026-10-27)."
+        },
+        {
+          "id": "clean-readme",
+          "polarity": "negative",
+          "check": "clean.unfinished",
+          "file": "README.md",
+          "note": "A file written for people."
+        },
+        {
+          "id": "clean-dated",
+          "polarity": "gate",
+          "check": "clean.dated",
+          "file": ".claude/skills/notes/SKILL.md",
+          "line": 13,
+          "note": "slice 6 (owner, 2026-10-27): is it current and clean: a month and year, as in the published guidance's own example."
+        },
+        {
+          "id": "clean-as-of",
+          "polarity": "gate",
+          "check": "clean.dated",
+          "file": ".claude/skills/notes/SKILL.md",
+          "line": 14,
+          "note": "slice 6 (owner, 2026-10-27): is it current and clean: 'as of'."
+        },
+        {
+          "id": "clean-latest",
+          "polarity": "negative",
+          "check": "clean.dated",
+          "file": ".claude/skills/notes/SKILL.md",
+          "line": 15,
+          "note": "Relative words are left out (owner, 2026-10-27)."
+        },
+        {
+          "id": "clean-model-fm",
+          "polarity": "gate",
+          "check": "clean.model",
+          "file": ".claude/skills/notes/SKILL.md",
+          "line": 4,
+          "match": {
+            "model": {
+              "eq": "claude-sonnet-4-5-20250929"
+            },
+            "where": {
+              "eq": "frontmatter"
+            }
+          },
+          "note": "slice 6 (owner, 2026-10-27): is it current and clean: a pinned ID."
+        },
+        {
+          "id": "clean-model-text",
+          "polarity": "gate",
+          "check": "clean.model",
+          "file": ".claude/skills/notes/SKILL.md",
+          "line": 16,
+          "match": {
+            "model": {
+              "eq": "gpt-4o"
+            },
+            "where": {
+              "eq": "text"
+            }
+          },
+          "note": "slice 6 (owner, 2026-10-27): is it current and clean: another vendor's ID."
+        },
+        {
+          "id": "clean-model-code",
+          "polarity": "gate",
+          "check": "clean.model",
+          "file": "scripts/run.py",
+          "line": 2,
+          "match": {
+            "model": {
+              "eq": "claude-3-5-haiku-20241022"
+            },
+            "where": {
+              "eq": "code"
+            }
+          },
+          "note": "slice 6 (owner, 2026-10-27): is it current and clean: in code."
+        },
+        {
+          "id": "clean-alias",
+          "polarity": "negative",
+          "check": "clean.model",
+          "file": ".claude/agents/helper.md",
+          "note": "An alias follows the provider's version."
+        },
+        {
+          "id": "clean-older",
+          "polarity": "gate",
+          "check": "clean.older",
+          "file": ".claude/skills/notes/SKILL.md",
+          "line": 17,
+          "match": {
+            "tool": {
+              "eq": "Task"
+            },
+            "now": {
+              "eq": "Agent"
+            }
+          },
+          "note": "slice 6 (owner, 2026-10-27): is it current and clean: an older tool name in text."
+        }
+      ]
     }
   ]
 }

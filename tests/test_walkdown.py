@@ -1,6 +1,7 @@
 """Tests for walkdown.py, written from specs/walkdown.SPEC.md."""
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -236,3 +237,86 @@ def test_github_folder_links_and_files(tmp_path, monkeypatch, capsys):
     f.write_text("x", "utf-8")
     assert wd.main([str(f)]) == 2
     assert "is a file; Walkdown audits a folder" in capsys.readouterr().err
+
+
+def test_brief_cost_lines(tmp_path):
+    """Slice 1 (2026-10-26): two lines on cost, counts only, against the run's expected context."""
+    d = _run_dir(tmp_path)
+    caps = json.loads((d / "05-capability.json").read_text("utf-8"))
+    caps["findings"] += [
+        {"check": "cap.context", "file": None, "line": None, "tier": "session", "tokens": 1200, "bytes": 4800,
+         "files": [f"{SENTINEL}/SKILL.md"], "unknown": []},
+        *[{"check": "cap.context", "file": f"{SENTINEL}/SKILL.md", "line": None, "tier": t, "kind": "skill",
+           "tokens": k, "bytes": k * 4, "files": [f"{SENTINEL}/SKILL.md"], "not_text": []}
+          for t, k in (("skill-runs", 300), ("skill-full", 900), ("skill-max", 1600))],
+        {"check": "cap.ship", "file": f"{SENTINEL}/old.md", "line": None, "group": "unused", "bytes": 400, "tokens": 100}]
+    (d / "05-capability.json").write_text(json.dumps(caps), "utf-8")
+    (d / "LOG.md").write_text("Expected context: 8,000 tokens\n" + (d / "LOG.md").read_text("utf-8"), "utf-8")
+    b = wd.brief(d)
+    assert "Every session: 1,200 tokens. Largest skill at its fullest: 1,600 tokens (20% of 8,000)." in b
+    assert "Not used at run time: 1 file (100 tokens)." in b and SENTINEL not in b
+
+
+def test_brief_ready_line(tmp_path):
+    """Slice 3 (2026-10-26): one line on hosts, counts only, with the to-do count for the hosts
+    named in the run's LOG.md."""
+    sys.path.insert(0, str(ROOT / "stages" / "04-phrases"))
+    import hosts
+    d = _run_dir(tmp_path)
+    ph = json.loads((d / "04-phrases.json").read_text("utf-8"))
+    texts = {"CLAUDE.md": f"{SENTINEL}\n", "AGENTS.md": "other\n",
+             f".claude/skills/{SENTINEL}/SKILL.md": f"---\nname: x\ndescription: d\nargument-hint: [{SENTINEL}]\n---\n"}
+    ph["findings"] += hosts.findings(texts, [{"check": "inv.file", "file": f} for f in texts], [])
+    (d / "04-phrases.json").write_text(json.dumps(ph), "utf-8")
+    (d / "LOG.md").write_text("Target hosts: codex\n" + (d / "LOG.md").read_text("utf-8"), "utf-8")
+    b = wd.brief(d)
+    assert ("Ready for: 6 of 7 hosts have their files here; copies that differ: 1; one-host features: 1. "
+            "For the hosts named: 2 things missing.") in b
+    assert SENTINEL not in b
+
+
+def test_brief_trigger_line(tmp_path):
+    """Slice 4 (2026-10-26): one line on triggering, counts only, before the cost lines."""
+    sys.path.insert(0, str(ROOT / "stages" / "04-phrases"))
+    import trigger
+    d = _run_dir(tmp_path)
+    ph = json.loads((d / "04-phrases.json").read_text("utf-8"))
+    texts = {f".claude/skills/{SENTINEL}/SKILL.md": f"---\nname: x\ndescription: {SENTINEL}\n{SENTINEL}: 1\n---\n"}
+    ph["findings"] += trigger.findings(texts, [{"check": "inv.file", "file": f, "entry_point": "skill"} for f in texts])
+    (d / "04-phrases.json").write_text(json.dumps(ph), "utf-8")
+    b = wd.brief(d)
+    line = ("Will it trigger: 1 skill; 2 places that break a host rule, 1 from guidance; "
+            "0 pairs of descriptions that overlap.")
+    assert line in b and SENTINEL not in b
+    assert b.index(line) < b.index("What it can do:")
+
+
+def test_brief_fit_line(tmp_path):
+    """Slice 5 (2026-10-26): one line on tools, counts only."""
+    d = _run_dir(tmp_path)
+    caps = json.loads((d / "05-capability.json").read_text("utf-8"))
+    caps["findings"] += [
+        {"check": "fit.unused", "file": f"{SENTINEL}/a.md", "line": 4, "kind_of": "agent", "tool": SENTINEL,
+         "family": "web", "pre_approved": False},
+        {"check": "fit.hook", "file": f"{SENTINEL}.json", "line": None, "event": "PreToolUse", "host": "claude",
+         "matcher": None, "how_often": "every-tool-call", "adds_context": False, "bytes": None, "over_cap": False},
+        {"check": "fit.checked", "file": None, "line": None, "entries": 1, "with_grants": 1, "inheriting": 0}]
+    (d / "05-capability.json").write_text(json.dumps(caps), "utf-8")
+    b = wd.brief(d)
+    assert ("Tools fit: 1 granted and never used, 0 tasks with no tool, 0 loops with no stated limit; "
+            "1 hook runs on every prompt or tool call.") in b
+    assert SENTINEL not in b
+
+
+def test_brief_clean_line(tmp_path):
+    """Slice 6 (2026-10-27): one line on current and clean, counts only."""
+    d = _run_dir(tmp_path)
+    ph = json.loads((d / "04-phrases.json").read_text("utf-8"))
+    ph["findings"] += [
+        {"check": "clean.unfinished", "file": f"{SENTINEL}.md", "line": 1, "kind": "todo", "quote": SENTINEL},
+        {"check": "clean.model", "file": f"{SENTINEL}.md", "line": 2, "model": SENTINEL, "where": "text"},
+        {"check": "clean.checked", "file": None, "line": None, "files": 1}]
+    (d / "04-phrases.json").write_text(json.dumps(ph), "utf-8")
+    b = wd.brief(d)
+    assert "Current and clean: 1 unfinished, 0 dated claims, 1 pinned model ID, 0 older tool names." in b
+    assert SENTINEL not in b

@@ -80,7 +80,27 @@ def main(argv=None) -> int:
                     help="stage 6: a second read names the line behind each sweep flag (none, claude-cli)")
     ap.add_argument("--both", action="store_true",
                     help="stage 6: Jev reads each line twice (plain and marked) and averages")
+    ap.add_argument("--context", default=None,
+                    help="expected context in tokens, such as 32k, 200k, or 8192 (default 32k); "
+                         "a re-render keeps the run's own unless this is given")
+    ap.add_argument("--hosts", default=None,
+                    help="the AI hosts you build for, comma-separated (claude, codex, gemini, cursor, "
+                         "copilot, windsurf, agents-md); the report lists what each is missing; "
+                         "a re-render keeps the run's own unless this is given")
     a = ap.parse_args(argv)
+    if a.hosts is not None:
+        try:
+            a.hosts = render.parse_hosts(a.hosts)
+        except ValueError as exc:
+            print(f"error: --hosts: {exc} (names: {', '.join(render.HOST_KEYS)})", file=sys.stderr)
+            return 2
+    if a.context is not None:
+        try:
+            a.context = render.parse_context(a.context)
+        except ValueError:
+            print(f"error: --context {a.context!r} is not a token count (try 32k, 200k, or 8192)",
+                  file=sys.stderr)
+            return 2
     if a.rerender:
         return rerender(Path(a.rerender), a)
     if not a.input_dir or not a.repo:
@@ -117,7 +137,8 @@ def main(argv=None) -> int:
                                                       cache=not a.revalidate)
     meta = {"repo": a.repo, "run": run_dir.name, "date": a.date, "source": pin.get("source", str(inp)),
             "hash": h, "hash_kind": pin.get("hash_kind", "?"), "channel": pin.get("channel", "directory"),
-            "tool": tool_version(ROOT),
+            "tool": tool_version(ROOT), "context": a.context or render.DEFAULT_CONTEXT,
+            "hosts": a.hosts or [],
             "finished": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()}
     data = layout.data_dir(run_dir)
     cap_path = data / "capability.json"
@@ -149,10 +170,11 @@ def write_reports(run_dir, meta, reports, stamps, notes, runs_ok, cap_full):
     text_dir = layout.data_dir(run_dir) / "normalized" / "text"
     text_href = os.path.relpath(text_dir, out).replace(os.sep, "/")
     m = marks.for_run(run_dir)
+    ch = changes_for(run_dir)  # once: it writes changes.md
     (out / "summary.html").write_text(
-        summary_html.render_page(meta, reports, stamps, notes, runs_ok, m["data"]), encoding="utf-8")
+        summary_html.render_page(meta, reports, stamps, notes, runs_ok, m["data"], ch), encoding="utf-8")
     (out / "details.html").write_text(
-        details_html.render_page(meta, reports, stamps, notes, runs_ok, changes_for(run_dir),
+        details_html.render_page(meta, reports, stamps, notes, runs_ok, ch,
                                  cap_full, text_href, m["data"], m["carried"]),
         encoding="utf-8")
     (out / "full.md").write_text(render.full(meta, reports, stamps, notes, runs_ok, cap_full),
@@ -180,7 +202,7 @@ def changes_for(run_dir) -> dict | None:
         prev = earlier[-1]
         s = drift.since(prev, run_dir)
         return {"since": prev.name, "same": s["same"], "differs": s["differs"], "lines": s["lines"],
-                "on_disk": s.get("on_disk", 0)}
+                "on_disk": s.get("on_disk", 0), "cost_line": s.get("cost_line")}
     except Exception:  # drift is extra; it never fails a report
         return None
 
@@ -223,7 +245,11 @@ def rerender(run_dir: Path, a) -> int:
     repo = run_dir.parent.name
     meta = {"repo": repo, "run": run_dir.name, "date": run_dir.name.split("_")[0],
             "source": pin.get("source", ""), "hash": pin.get("hash", "nohash"),
-            "hash_kind": pin.get("hash_kind", "?"), "tool": tool_version(ROOT)}
+            "hash_kind": pin.get("hash_kind", "?"), "tool": tool_version(ROOT),
+            "context": a.context or render.context_of((run_dir / "LOG.md").read_text(encoding="utf-8"))
+            or render.DEFAULT_CONTEXT,
+            "hosts": a.hosts if a.hosts is not None
+            else render.hosts_of((run_dir / "LOG.md").read_text(encoding="utf-8"))}
     cap_path = data / "capability.json"
     cap_full = json.loads(cap_path.read_text(encoding="utf-8")) if cap_path.exists() else None
     write_reports(run_dir, meta, reports, stamps, notes, runs_ok, cap_full)

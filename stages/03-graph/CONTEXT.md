@@ -153,7 +153,8 @@ Breadth-first from every entry point. Entry points are depth 0.
 | `graph.dynamic` | glob, directory reference, or code scan (`file`, `line`: where it is written) | `pattern`; `resolves`: files it matches today; `source`: `glob`, `directory`, or `code`; `load`: bool (see "Load versus mention") | THREATS class 12 |
 | `graph.depth` | reachable file, entry points included (`line`: null) | `depth`; `from`: the parent on the path the depth came from (null at depth 0); `via`: `static`, `dynamic` (a load reaches it), or `mention` (only a folder or glob mention reaches it) | THREATS class 10 |
 | `graph.unlisted` | component (skill folder's `SKILL.md`, agent, command) on disk under a manifest's root that the manifest leaves out, for a kind it names (`line`: null) | `manifest`; `kind`; `listed`; `on_disk` | METHOD "Manifest versus disk" |
-| `graph.unscanned` | node that may hold references but was not scanned (PDF, DOCX, other binary documents, undecodable text) | `reason` | CLAUDE.md "never pass silently" |
+| `graph.unscanned` | node that may hold references but was not scanned (PDF, DOCX, other binary documents, undecodable text) | `reason` |
+| `graph.case` | a static reference, naming one file, that matches it only when letter case is ignored (works on Windows and macOS, breaks on Linux) | `written`, `to` | plan for builders, slice 2 (2026-10-26) | CLAUDE.md "never pass silently" |
 
 Orphans are one finding per file, whatever the file: a license, an image, a
 staged payload. Orphan is a locator. The report groups them; stage 3 does not

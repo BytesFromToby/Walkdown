@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml/badge.svg)](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml)
 
-**Status: alpha, version 0.2.1** ([CHANGELOG](CHANGELOG.md)). It runs end to end and produces a report you can read. Parts of it are
+**Status: alpha, version 0.3.0** ([CHANGELOG](CHANGELOG.md)). It runs end to end and produces a report you can read. Parts of it are
 experimental, and they are marked as such below.
 
 Walkdown examines the instruction layer of AI skills and agents: the SKILL.md files, agent
@@ -13,6 +13,11 @@ run with your permissions. It answers two questions, each answer cited to a file
 2. What does installing it grant?
 
 Ordinary security scanners read code. Here the payload is English, so they miss it.
+
+For someone building a skill or agent, the same reading answers the builder's questions too: will
+it trigger, what does it cost in an AI's context (against the context you expect), what do you
+ship that nothing uses, will it run on someone else's machine, is it ready for AI hosts other
+than Claude Code, do the tools it grants fit what its words ask for, and is it current and clean.
 
 Walkdown reports what an artifact *can* do and where that is written. It does not guess at the
 author's intent, it gives no score, and it reaches no verdict. You read the evidence and decide.
@@ -44,7 +49,8 @@ One command runs every stage and writes a run folder:
 
 ```
 RepoResults/<name>/<date>_<hash7>/
-  summary.html    one page: the security concerns found, what it can do, questions before use
+  summary.html    one page for a builder: will it trigger, what it costs, what ships, will it run
+                  elsewhere, is it ready for any AI, do the tools fit, is it current, is it safe
   details.html    every section in full, with a Not concerned box on every row
   review.html     one card per place to check, one at a time, for you to mark
   full.md         every finding, with file and line
@@ -149,11 +155,18 @@ macOS and Linux:
 
 Started with another Python, Walkdown switches to the `.venv` one when that has its packages.
 
+`--context 8k` (or `32k`, `200k`, `8192`) sets the context you expect the skill to run in, for
+example a local model's; the default is 32,000 tokens, and the reports show 200,000 beside it.
+`--hosts claude,codex,cursor` names the AI hosts you build for (any of `claude`, `codex`,
+`gemini`, `cursor`, `copilot`, `windsurf`, `agents-md`); the report then says what each is missing.
+
 A URL is cloned into `ReposToExamine/<repo>` (running it again updates that clone to the
 latest commit; `--keep` audits it as it is). A folder link clones the repository at that branch
 and audits only that folder. A repository that is not there, or is private, stops at once:
 Walkdown never asks for a login. A folder is examined where it is. The run lands in
-`RepoResults/<repo>/`, and the command ends with a short brief in the summary page's terms: the
+`RepoResults/<repo>/`, and the command ends with a short brief in the summary page's terms: how
+many skills, commands, and agents it has and how many places break a host rule, the tokens it takes every session and at its largest, the files not used at run time, what it
+needs and how much of that is not declared, how many AI hosts have their files here, tools granted and never used, unfinished text and pinned model IDs, the
 trifecta legs, the security concerns by kind, whether any step failed its fixture checks, and the paths to the
 reports. Open `summary.html` first.
 

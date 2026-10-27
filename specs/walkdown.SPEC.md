@@ -5,7 +5,7 @@ The front door: one command from a folder or a git URL to a finished run and a b
 ## Inputs
 
 `python walkdown.py <target> [--name NAME] [--fresh | --keep] [--label B] [--compare B]
-[--relational B] [--sweep B] [--pinpoint B] [--both] [--revalidate]`, `python walkdown.py --version`,
+[--relational B] [--sweep B] [--pinpoint B] [--both] [--revalidate] [--context N] [--hosts a,b]`, `python walkdown.py --version`,
 `python walkdown.py diff <old run> <new run>`
 
 - `target`: a folder, or a git URL (`http(s)://`, `git@`, `ssh://`, or ending in `.git`,
@@ -47,7 +47,24 @@ The front door: one command from a folder or a git URL to a finished run and a b
   plain words; so does a branch that is not there, and git not being installed.
 - Runs `stages/08-report/run.py <target> --repo <name> ...` with the interpreter above, and
   prints `Using Python at <path>` on stderr first.
-- Prints the **brief** to stdout, in `summary.html`'s terms (owner, 2026-10-21): files examined
+- `--context` passes through to stage 8 (the expected context; slice 1, 2026-10-26), and `--hosts`
+  (the hosts the builder builds for; slice 3).
+- Prints the **brief** to stdout, in `summary.html`'s terms (owner, 2026-10-21): files examined;
+  then one line on triggering (slice 4, `summary_html.brief_trigger_line`): "Will it trigger: <n>
+  skills, <c> commands, <a> agents; <h> places that break a host rule, <g> from guidance; <o> pairs
+  of descriptions that overlap."; then two lines on cost, counts only (`summary_html.brief_cost_lines`, slice 1): "Every session:
+  <X> tokens. Largest skill at its fullest: <Y> tokens (<Z> of <C>)." (with "Every session in
+  this folder: <P> tokens." when there are project files) and "Not used at run time: <n> files
+  (<t> tokens).", the expected context read from `LOG.md`; then one line on what it needs
+  (slice 2): "Needs: <n> programs, <m> packages; <k> not declared. Ties to one machine: <p> places.";
+  then one line on hosts (slice 3, `summary_html.brief_ready_line`): "Ready for: <h> of 7 hosts have
+  their files here; copies that differ: <d>; one-host features: <f>." with "For the hosts named:
+  <k> things missing." when `LOG.md` names target hosts;
+  then one line on tools (slice 5, `summary_html.brief_fit_line`): "Tools fit: <u> granted and never
+  used, <m> tasks with no tool, <l> loops with no stated limit; <h> hooks run on every prompt or tool
+  call."; then one line on current and clean (slice 6, `summary_html.brief_clean_line`): "Current and
+  clean: <u> unfinished, <d> dated claims, <m> pinned model IDs (<k> distinct), <o> older tool names.";
+  the changes lines gain the cost line (`drift.cost_line`) when there is an earlier run;
   and the pin; "What it can do:" with the three trifecta legs as checkboxes, what they mean
   together (`summary_html.TOGETHER`), and the install grants; the summary's headline sentence,
   then one line per concern kind with its place count, in the summary's order, and the
@@ -90,3 +107,9 @@ The front door: one command from a folder or a git URL to a finished run and a b
 8. Started with a Python without the packages, Walkdown runs itself again under the virtualenv's before cloning anything, with the same arguments, and never a second time (`test_a_python_without_the_packages_hands_over_to_the_venv`).
 9. Git runs without prompts, with long paths and a time limit; a missing or private repository, and no git, are said in plain words (`test_git_never_prompts_and_says_why_a_clone_failed`).
 10. A GitHub folder link clones the repository at its branch and audits the folder; a file link and a file are errors that say to give a folder (`test_github_folder_links_and_files`).
+11. The brief's cost lines give counts against the run's expected context and no file or skill name (`test_brief_cost_lines`).
+12. The brief's needs line gives counts only: programs, packages, how many are not declared, and places that tie it to one machine; never a package name (`test_brief_cost_lines`).
+13. The brief's hosts line gives counts only, with what the hosts named are missing (`test_brief_ready_line`).
+14. The brief's trigger line gives counts only, first, and no name or description (`test_brief_trigger_line`).
+15. The brief's tools line gives counts only (`test_brief_fit_line`).
+16. The brief's current-and-clean line gives counts only (`test_brief_clean_line`).

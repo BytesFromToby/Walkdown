@@ -23,6 +23,8 @@ python stages/03-graph/run.py <input_dir> [--inventory <file>] [--out <dir>]
   mode). Entry points: those whose `entry_point` is not null.
 - A node is scanned when it is not a symlink and its bytes decode as text
   (`invisible.decode`). Symlinks are nodes but are never read.
+- `graph.case` (`written`, `to`; 2026-10-26, slice 2) for a static reference naming one file that matches it only
+  when letter case is ignored.
 - `graph.unscanned` (with `reason`) for a node that may hold references but was
   not scanned: an `inv.file` skip (`unreadable`), a binary document (PDF, Word,
   Excel, PowerPoint, OpenDocument, RTF, EPUB, by extension or stage 1 type:
@@ -69,7 +71,11 @@ incomplete by construction (count of dynamic loads).
 `--out <dir>`: also writes `<dir>/graph.json`: `nodes` (`path`, `entry`: kind
 or null, `depth`: int or null), `edges` (`from`, `line`, `to`, `kind`
 `static` / `dynamic`, `form`, `text`: the reference as written, `context`,
-`source` on dynamic edges, plus `ambiguous` / `case_mismatch` / `partial` (a partial path, 2026-10-21) when true), `complete` (false when any
+`source` on dynamic edges, plus `ambiguous` / `case_mismatch` / `partial` (a partial path, 2026-10-21) / `by_name` (a bare
+name found only by its name elsewhere, 2026-10-27) when true, and
+`at_import` (2026-10-26, slice 1) on an edge from a project instruction file whose reference is written `@path` (at
+the start of the line or after white space, outside code spans and fenced blocks): Claude Code expands those imports
+into the file at load), `complete` (false when any
 dynamic load exists), and `limits` (the stderr v1 note). The folder is created
 if needed. An `--out` inside `<input_dir>` is refused (exit 2).
 
@@ -92,7 +98,10 @@ an unreadable `--inventory`, or a refused `--out`. Exit 1 when stage 1 fails.
 3. An unresolved bare filename in prose gives no finding; one in a code span gives `graph.dangling` with `context` `code`.
 4. `--inventory` with a saved stage 1 report gives the same findings as the subprocess path.
 5. `--out` writes `graph.json` with nodes, edges, and `complete` false when a dynamic load exists; `--out` inside the input is refused.
-6. A PDF node gives `graph.unscanned`.
+   An `@path` line in a `CLAUDE.md` gives an edge with `at_import`; the same path in a code span, or in a skill, does not
+   (`test_at_imports_in_project_instructions`).
+6. A PDF node gives `graph.unscanned`. A reference `references/Guide.md` to `references/guide.md` gives
+   `graph.case`; an exact one does not (`test_case_only_matches`, fixture row `case-guide`).
 7. A missing input folder exits non-zero with nothing on stdout; the input is byte-identical after a run.
 8. A script with `os.listdir("prompts")` gives a `graph.dynamic` with `source` `code` resolving to the files in `prompts/`.
 11. A manifest in `plugins/p/.codex-plugin/plugin.json` naming `./skills/` reaches `plugins/p/skills/`, not a top-level `skills/` (a manifest's paths are relative to its plugin root, the folder above its dot folder; the repository root stays the fallback).

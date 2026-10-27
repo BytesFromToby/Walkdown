@@ -12,7 +12,7 @@ every proper prefix of a node path.
 
 `resolve(from_rel, path, shape) -> Result`, where `path` and `shape` come from
 `tokens.Ref`. `Result` has `status`, `targets` (sorted node paths),
-`ambiguous` (bool), `case_mismatch` (bool), `partial` (bool), `pattern` (for `glob` and `dir`).
+`ambiguous` (bool), `case_mismatch` (bool), `partial` (bool), `by_name` (bool), `pattern` (for `glob` and `dir`).
 
 `folder_missing(from_rel, path) -> bool`: the folder a path points into exists neither from the
 referring file's folder nor from the root (a path with no folder part is never missing one).
@@ -40,7 +40,8 @@ Order of attempts, first hit wins:
 2. Exact, relative to the referring file's folder; then relative to the root.
    A node file gives `file`; a folder gives `dir`.
 3. A bare name (no `/`, shape `bare` or `link`): every node whose basename is
-   equal. Several give `ambiguous` true.
+   equal, `by_name` true (found only by its name elsewhere; 2026-10-27, slice 5). Several give
+   `ambiguous` true.
 3b. A partial path (it has a `/`, does not end in one, and does not start with `./` or `../`):
    every node whose path ends with `/` plus it, `partial` true; several give `ambiguous` true
    (2026-10-21, an outside tester: a README's `rules/carousel-rules.md` for

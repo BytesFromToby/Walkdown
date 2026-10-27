@@ -5,7 +5,7 @@ A run produces these reports, at the top of its run folder
 
 | File | For | What it holds |
 |---|---|---|
-| `summary.html` | deciding whether to use the repository | one page: the security concerns Walkdown found, by kind, with one example each; what it can do; questions before use |
+| `summary.html` | building a skill or agent | one page: what it costs in an AI's context, what you ship by how it is used, and whether it is safe (the security concerns by kind, with one example each; what it can do) |
 | `details.html` | improving or investigating it | every section in full, every list expandable, and a Not concerned box on every row |
 | `review.html` | walking through the places | one card per place, with the lines around it, for you to mark |
 | `full.md` | checking a point | every finding, by stage, with file and line |
@@ -28,7 +28,7 @@ earlier summary page). Re-rendering such a run removes them.
 
 ## A suggested reading order
 
-1. **`summary.html`**: the concerns, what the repository can do, and the questions to ask.
+1. **`summary.html`**: whether it triggers, what it costs, what ships, whether it runs elsewhere, whether it is ready for any AI, whether the tools fit the job, whether it is current and clean, the security concerns, and what it can do.
 2. **`review.html`**, to walk the places one at a time and mark each.
 3. **`details.html`** for everything else: the files, every outside link, every hidden place,
    and Other details, which says what the run did not check and whether every step passed its
@@ -38,15 +38,93 @@ earlier summary page). Re-rendering such a run removes them.
 
 ## summary.html
 
-One page for someone deciding whether to use the repository. It says what Walkdown found that
-could be a security concern, and where to look. It never says the repository is safe or unsafe,
-never tells you to use it or not, and gives no score.
+One page for someone building a skill or agent (since 2026-10-26; before, it was written for
+someone deciding whether to use one). It says what the repository costs in an AI's context, what
+ships, and what Walkdown found that could be a security concern. It never says the repository is
+safe or unsafe, never tells you to use it or not, and gives no score.
 
-**The headline.** "Walkdown found security concerns in this repository: N places, of K kinds."
-When you have marked some Not concerned, it says how many. With none: "Walkdown found none of the
-security concerns it looks for.", and the section below says "Nothing to point out here." The
-page's footer says the one thing to keep in mind: Walkdown reads the files without running
-anything, leaves the judgment to you, and finding nothing does not mean a repository is safe.
+**The headline.** Two sentences. The first: "N files; every session takes X tokens once
+installed, and the largest skill at its fullest Y (Z% of a C-token context)." When that is more
+than the expected context, it says so. The second: "Walkdown found security concerns in this
+repository: N places, of K kinds." When you have marked some Not concerned, it says how many.
+With none: "Walkdown found none of the security concerns it looks for.", and Is it safe? says
+"Nothing to point out here." The page's footer says the one thing to keep in mind: Walkdown reads
+the files without running anything, leaves the judgment to you, and finding nothing does not mean
+a repository is safe.
+
+**Will it trigger?** How each skill, command, and agent triggers: Claude chooses it by its
+description, only on matching files, only when typed, or it never loads. Then the descriptions'
+size against Claude Code's skill listing, which holds about 1% of the context for every installed
+skill, and one row per kind of problem: frontmatter its host does not read (YAML that does not
+parse, `---` not on the first line), agents Claude Code does not load, names and descriptions that
+break a rule (each place says whose: the Agent Skills spec, claude.ai uploads, or Claude Code),
+keys, values, and tool names no host takes (with the one it is closest to), descriptions that
+overlap so Claude may choose the wrong one, descriptions cut in the listing, and published guidance
+(say when to use it; write in the third person). The overlap measure is Walkdown's own: two
+descriptions in one listing sharing at least half the words of the shorter, and at least four,
+once the words most of the listing shares are set aside. Every rule is dated, with its source,
+in `stages/04-phrases/trigger.yaml`.
+
+**What it costs.** What an AI loads, and when, against the context you expect: every session once
+installed (each skill's, agent's, and command's description, and hook text), every session for
+whoever works in the folder (CLAUDE.md, AGENTS.md, and what they import), and the largest skill:
+when it runs, with everything it names, and with its wildcard and folder loads. Each row gives
+tokens and its share of your expected context (`--context`, default 32,000 tokens) and of 200,000
+(Claude). A skill reaches the files in its own folder (only that folder installs with it); what
+it names outside is listed, not counted. An agent runs in its own context. Tokens are estimated
+from size, about 4 bytes of English text per token; hook output and MCP servers' tool lists show
+only when they run, so they are named, not counted.
+
+**What you ship.** Every file in one of three bands: loads into the AI (skills, agents, commands,
+project instructions, files they name, files reached only by a wildcard or folder read), used
+another way (scripts it runs, configs the host reads), and not used at run time (written for
+people, build material, and files nothing points to). Then, when there are any: "If the N files
+nothing points to and the M build files were left out of what you ship: K smaller, and T tokens
+no longer within an AI's reach." That is a fact with its saving; whether to leave them out is
+yours. Every file is listed on `details.html`.
+
+**Will it run on someone else's machine?** What it uses, the programs Walkdown recognizes and the
+packages its scripts import, and what of that the repository never declares (in a dependency
+file, a skill's `compatibility` field, or an install line). Then one row per kind of place that
+ties it to the machine it was built on: personal paths, shell scripts committed with Windows
+line endings, scripts or commands for one system only, references written with backslashes,
+scripts run without the executable bit, `python` where many systems have only `python3`, and
+references whose letter case only matches on Windows and macOS. Each row gives its count, why
+it breaks elsewhere, and its first place; `details.html` lists every one.
+
+**Is it ready for any AI?** One line per AI host (Claude Code, Codex, Gemini CLI, Cursor, GitHub
+Copilot, Windsurf, and the other tools that read `AGENTS.md`): the instruction files, skills, MCP
+config, and hooks here that it reads, or what it would read. What each host reads is a dated list
+with its sources (`stages/04-phrases/hosts.yaml`). Then the skills no host reads where they sit
+(a host reads them once they are installed), copies kept for two hosts that say different things
+(`CLAUDE.md` and `AGENTS.md`, say: Claude Code reads one, the others read the other), and one row
+per kind of feature only one host understands in text meant for any AI: skill frontmatter keys
+outside the Agent Skills set (claude.ai and the Skills API refuse such a skill), Claude Code's own
+words such as `$ARGUMENTS` and its tool names, `@` imports in `AGENTS.md`, and hooks. Run with
+`--hosts claude,codex` (any of `claude`, `codex`, `gemini`, `cursor`, `copilot`, `windsurf`,
+`agents-md`) and the section starts with what each host you named is missing. Which hosts to
+support is yours; without `--hosts`, every host is a plain fact.
+
+**Do the tools fit the job?** Each skill's, agent's, and command's own words, over the files it
+reads, against the tools it grants. One row per kind: tools granted that run, write, reach out, or
+start subagents and that nothing it reads asks for (a skill's `allowed-tools` only pre-approve, so
+those are "pre-approved and never used"); work its words ask for that no tool it may use can do (a
+subagent's `tools` list is an allowlist); agents with no tools list, which get every tool and MCP
+tool; read-only claims a tool beside them contradicts; loops with no stated limit ("repeat until
+the tests pass" with no number of tries or give-up on that line or the next; a limit may be stated
+elsewhere); and hooks that run on every prompt or tool call, with how large their output is when it
+becomes context. Reading tools (Read, Grep, Glob) are never reported. The cue lists are in
+`stages/04-phrases/asks.yaml` and the tool families and hook facts in
+`stages/05-capability/fit.yaml`, dated, with sources.
+
+**Is it current and clean?** Facts with locations, never a judgment: TODO and FIXME markers,
+placeholders, and draft notes in what ships (a template's placeholders are left out); claims
+tied to a date in text the AI reads ("before August 2025, use the old API" is the published
+guidance's own example of text that becomes wrong; a bare date is a record and is left out);
+pinned model IDs, with how many are distinct (an alias such as `sonnet` follows the provider's
+recommended version, a full ID stays on one, and Walkdown never says one is retired); and older
+tool names named in text. When an earlier run of the same repository exists, "What it costs"
+adds a line with what changed since then, before and now.
 
 When a step did not work in this run (it did not run, or it did not pass its fixture check), a line at
 the bottom of the page names it: a step that did not work can miss places, so the page may show
@@ -55,7 +133,7 @@ headline says so too: "but not every step worked, so it may have missed some." A
 tool (OCR, HTML as a browser draws it) is never named on this page; Other details on
 `details.html` and `full.md` list what it left unread.
 
-**Security concerns.** One row per kind that has places, always in this order:
+**Is it safe?** One row per security concern kind that has places, always in this order:
 
 1. **Hidden text that reads like an instruction**: text the AI receives and a person does not
    see, which also matches the wording of an instruction.
@@ -76,7 +154,8 @@ counts model reads when a model ran; model reads are never concerns.
 (each is ordinary on its own; a tool that does all three can be steered by text from outside into
 sending your data away), and one line naming the general risks present, such as running commands on its own or adding text before you type.
 
-**Questions before use.** The questions the findings raise, in place of a verdict: **permissions
+**Questions before use** are on `details.html` (since 2026-10-26): the questions the findings
+raise for someone deciding whether to install it, in place of a verdict: **permissions
 to hold back** (agents with no tools list, a shell, writing files, the web, hooks, MCP servers,
 each with where it is listed), **what to try first** (the parts of the repository with the most
 places to check, test folders left out), and **before you leave it running unattended** (the

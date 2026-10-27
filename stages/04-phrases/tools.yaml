@@ -1,0 +1,126 @@
+# Programs Walkdown recognizes when a script, an instruction, a hook, or an MCP server runs
+# them (plan for builders, slice 2, owner 2026-10-26). Only these count, so an ordinary word is
+# never a program; one missing from the list is missed until it is added here. `os` marks a
+# program that exists on one system only (unix: macOS and Linux, and Windows only through Git
+# Bash or WSL). Checked 2026-10-26 against each system's own tools.
+
+checked: 2026-10-26
+
+programs:
+  git: {}
+  gh: {}
+  jq: {}
+  yq: {}
+  curl: {}
+  wget: {}
+  node: {}
+  npm: {}
+  npx: {}
+  pnpm: {}
+  yarn: {}
+  bun: {}
+  deno: {}
+  python: {}
+  python3: {}
+  py: {os: windows}
+  pip: {}
+  pip3: {}
+  pipx: {}
+  uv: {}
+  uvx: {}
+  poetry: {}
+  docker: {}
+  podman: {}
+  kubectl: {}
+  helm: {}
+  terraform: {}
+  aws: {}
+  gcloud: {}
+  az: {}
+  make: {}
+  cmake: {}
+  go: {}
+  cargo: {}
+  rustc: {}
+  java: {}
+  mvn: {}
+  gradle: {}
+  ruby: {}
+  gem: {}
+  bundle: {}
+  php: {}
+  composer: {}
+  dotnet: {}
+  ffmpeg: {}
+  ffprobe: {}
+  pandoc: {}
+  tesseract: {}
+  playwright: {}
+  rg: {}
+  fd: {}
+  fzf: {}
+  sqlite3: {}
+  psql: {}
+  mysql: {}
+  redis-cli: {}
+  openssl: {}
+  ssh: {}
+  scp: {}
+  rsync: {}
+  claude: {}
+  codex: {}
+  gemini: {}
+  pwsh: {}
+  bash: {os: unix}
+  sh: {os: unix}
+  zsh: {os: unix}
+  brew: {os: macos}
+  osascript: {os: macos}
+  pbcopy: {os: macos}
+  pbpaste: {os: macos}
+  open: {os: macos}
+  say: {os: macos}
+  xdg-open: {os: linux}
+  apt: {os: linux}
+  apt-get: {os: linux}
+  dnf: {os: linux}
+  yum: {os: linux}
+  pacman: {os: linux}
+  systemctl: {os: linux}
+  winget: {os: windows}
+  choco: {os: windows}
+  scoop: {os: windows}
+  powershell: {os: windows}
+  cmd: {os: windows}
+
+# Import names whose package to install has another name.
+package_names:
+  yaml: PyYAML
+  PIL: Pillow
+  bs4: beautifulsoup4
+  fitz: PyMuPDF
+  cv2: opencv-python
+  sklearn: scikit-learn
+  dateutil: python-dateutil
+  docx: python-docx
+  pptx: python-pptx
+  dotenv: python-dotenv
+  magic: python-magic
+  jwt: PyJWT
+  Crypto: pycryptodome
+  serial: pyserial
+  OpenSSL: pyOpenSSL
+  attr: attrs
+  google: google-api-python-client
+  pkg_resources: setuptools
+  pdfminer: pdfminer.six
+
+# Node's built-in modules (also written with a node: prefix).
+node_builtins: [assert, async_hooks, buffer, child_process, cluster, console, constants, crypto,
+  dgram, dns, domain, events, fs, http, http2, https, inspector, module, net, os, path, perf_hooks,
+  process, punycode, querystring, readline, repl, stream, string_decoder, timers, tls, trace_events,
+  tty, url, util, v8, vm, wasi, worker_threads, zlib]
+
+# Home folders that are not a person's: CI runners, containers, placeholders.
+not_personal: [runner, node, vscode, user, username, you, yourname, your-name, your_name, me,
+  name, foo, bar, example, someone, me, admin, ubuntu, root, codespace, jovyan, app]

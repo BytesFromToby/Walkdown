@@ -19,7 +19,9 @@ python stages/05-capability/run.py <input_dir> [--reports <dir>] [--out <dir>]
 
 stdout: `{"stage": "05-capability", "contract": 1, "findings": [...]}`, in this
 order: three `cap.leg`, the `cap.grant` findings, the `cap.injection` findings,
-one `cap.load-bytes`, the `cap.posture` findings, the `cap.pair` findings.
+one `cap.load-bytes`, the `cap.posture` findings, the `cap.pair` findings, and last what ships
+and what it costs: a `cap.ship` per file, then the `cap.context` tiers (`cost.py`, slice 1,
+2026-10-26; read over every file, test data included, so tests can be grouped as build material).
 Every finding carries `evidence` and `evidence_total` (the full count); on
 stdout `evidence` holds at most `EVIDENCE_CAP` (20) entries.
 

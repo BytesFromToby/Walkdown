@@ -554,3 +554,238 @@ def test_decoded_and_lookalike_text_is_shown():
     assert R.lookalike_note({"lookalike_of": "github.com", "punycode": "xn--gthub-x"}) == \
         " (look-alike letters, xn--gthub-x; imitates github.com)"
     assert R.lookalike_note({"host": "github.com"}) == ""
+
+
+def costed(r, session=1000, project=None, runs=500, full=4000, most=40000, kind="skill"):
+    """Stage 5 cost findings for a report (slice 1, 2026-10-26)."""
+    f = r["05-capability"]["findings"]
+    f.append({"check": "cap.context", "file": None, "line": None, "tier": "session", "tokens": session,
+              "bytes": session * 4, "files": ["skills/x/SKILL.md"],
+              "unknown": [{"what": "mcp", "file": ".mcp.json", "name": "notes"}]})
+    if project:
+        f.append({"check": "cap.context", "file": None, "line": None, "tier": "project", "tokens": project,
+                  "bytes": project * 4, "files": ["CLAUDE.md"], "not_text": []})
+    for t, k in (("skill-runs", runs), ("skill-full", full), ("skill-max", most)):
+        f.append({"check": "cap.context", "file": "skills/x/SKILL.md", "line": None, "tier": t, "kind": kind,
+                  "tokens": k, "bytes": k * 4, "files": ["skills/x/SKILL.md"], "not_text": [],
+                  **({"outside": ["README.md"]} if t == "skill-max" else {})})
+    for rel, g, tok in (("skills/x/SKILL.md", "entry", runs), ("skills/x/ref.md", "on-demand", 300),
+                        ("notes/old.md", "unused", 50), ("tests/t.py", "build", 20), ("README.md", "people", 100),
+                        ("run.py", "run", 10)):
+        f.append({"check": "cap.ship", "file": rel, "line": None, "group": g, "bytes": tok * 4, "tokens": tok,
+                  **({"reached_by": "skills/x/SKILL.md"} if g == "on-demand" else {})})
+    return r
+
+
+def test_context_and_ship_helpers():
+    """Slice 1 (2026-10-26): the expected context, its rows, the bands, and full.md section 5."""
+    assert [R.parse_context(x) for x in ("32k", "200K", "8192", "8k", "1m", "32,000")] == \
+        [32000, 200000, 8192, 8000, 1000000, 32000]
+    with pytest.raises(ValueError):
+        R.parse_context("lots")
+    assert R.context_of("x\nExpected context: 8,000 tokens\n") == 8000 and R.context_of("") is None
+    r = costed(reports(), project=300)
+    assert [label for label, _ in R.context_rows(r)] == [
+        "Every session, once installed (descriptions, hooks)", "Every session in this folder (project instructions)",
+        "When the largest skill runs", "That skill and everything it names", "With its wildcard and folder loads"]
+    assert R.pct(100, 32000) == "under 1%" and R.pct(64000, 32000) == "200%"
+    bands = {b["name"]: b for b in R.ship_bands(r)}
+    assert bands["Not used at run time"]["files"] == 3 and bands["Used another way"]["tokens"] == 10
+    assert R.left_out(r) == {"unused": 1, "build": 1, "bytes": 280, "tokens": 70}
+    assert R.kb(500) == "500 bytes" and R.in_sentence("Written for the AI") == "written for the AI"
+    assert "MCP server's tool list" in R.unknown_line(r)
+    f = full(dict(META, context=32000), r, PASS, {}, set(r))
+    assert "### What it costs and what ships" in f and "names 1 file outside its folder" in f
+    assert "`notes/old.md`: nothing points to it" in f
+
+
+def needy(r):
+    """Stage 4 need and port findings (sorted by name, as stage 4 writes them), and a stage 3 case
+    reference (slice 2, 2026-10-26)."""
+    r["04-phrases"]["findings"] += [
+        {"check": "need.command", "file": None, "line": None, "command": "git", "os": None, "declared": True,
+         "declared_in": [{"file": "SKILL.md", "how": "compatibility"}], "uses": [{"file": "SKILL.md", "line": 9, "how": "instructions"}]},
+        {"check": "need.command", "file": None, "line": None, "command": "jq", "os": None, "declared": False,
+         "declared_in": [], "uses": [{"file": "scripts/run.sh", "line": 4, "how": "script"}]},
+        {"check": "need.package", "file": None, "line": None, "package": "pandas", "ecosystem": "python",
+         "files": ["scripts/f.py"], "declared": False, "declared_in": []},
+        {"check": "port.crlf", "file": "scripts/run.sh", "line": None},
+        {"check": "port.python", "file": "SKILL.md", "line": 13}]
+    r.setdefault("03-graph", {"stage": "03-graph", "contract": 1, "findings": []})["findings"] += [
+        {"check": "graph.case", "file": "SKILL.md", "line": 6, "written": "references/Guide.md", "to": "references/guide.md"},
+        {"check": "graph.case", "file": "tests/x.md", "line": 2, "written": "A.md", "to": "a.md"}]
+    return r
+
+
+def test_needs_lines():
+    """Slice 2: full.md section 1 says what it needs and what ties it to one machine."""
+    L = "\n".join(R.needs_lines(needy(reports())))
+    assert "`jq`: not declared; used at scripts/run.sh:4 (script)" in L
+    assert "`git`: declared in SKILL.md (compatibility)" in L and "`pandas` (python): not declared" in L
+    assert "Shell scripts with Windows line endings (1): bash fails on them." in L
+    assert "References that match only when case is ignored (1)" in L and "tests/x.md" not in L
+
+
+def hosty(r):
+    """Stage 4 host findings from hosts.py over a small repository: CLAUDE.md and AGENTS.md that
+    differ, a skill in .claude/skills with a Claude-only key, a skill outside every host's folder,
+    and a Cursor hook file (slice 3, 2026-10-26)."""
+    import hosts
+    texts = {"CLAUDE.md": "Keep it short.\nUse British spelling.\n",
+             "AGENTS.md": "Keep it short.\n",
+             ".claude/skills/tidy/SKILL.md": "---\nname: tidy\ndescription: d\nmodel: opus\n---\nTidy $ARGUMENTS.\n",
+             "skills/loose/SKILL.md": "---\nname: loose\ndescription: d\n---\n"}
+    rows = [{"check": "inv.file", "file": f} for f in [*texts, ".cursor/hooks.json"]]
+    r["04-phrases"]["findings"] += hosts.findings(texts, rows, [{"check": "struct.hooks", "file": ".cursor/hooks.json"}])
+    r["01-inventory"]["findings"] += [x for x in rows if x["file"].endswith("SKILL.md")]
+    return r
+
+
+def test_ready_helpers():
+    """Slice 3: host names, the log line, coverage lines, the to-do list, and full.md's section."""
+    assert R.parse_hosts("Claude, codex,claude") == ["claude", "codex"]
+    for bad in ("", "claude,vim"):
+        try:
+            R.parse_hosts(bad)
+            raise AssertionError(bad)
+        except ValueError:
+            pass
+    assert R.hosts_of("Target hosts: claude, cursor\n") == ["claude", "cursor"]
+    assert R.hosts_of("Target hosts: none named\n") == [] and R.hosts_of("") == []
+    assert "Target hosts: codex" in R.log(dict(META, hosts=["codex"]), [], {}, {})
+    rd = R.ready_of(hosty(reports()))
+    assert rd["measured"] and rd["loose"] == ["skills/loose/SKILL.md"]
+    assert [d["relation"] for d in rd["drift"]] == ["differ"]
+    assert [k for k, *_ in rd["features"]] == ["frontmatter", "claude-words", "hooks"]
+    lines = [R.host_line(c) for c in rd["coverage"]]
+    assert lines[0] == "Claude Code: CLAUDE.md; 1 skill."
+    assert lines[2] == "Gemini CLI: none of its files (it reads GEMINI.md; skills in .gemini/skills, .agents/skills)."
+    assert "Cursor: AGENTS.md; 1 skill; 1 hook file." in lines
+    assert R.drift_line(rd["drift"][0], rd["coverage"]).endswith(
+        "Claude Code reads CLAUDE.md; Codex, Cursor, Windsurf and other AGENTS.md readers read AGENTS.md; "
+        "GitHub Copilot reads both.")
+    t = R.todo(hosty(reports()), ["claude", "codex"])
+    assert t == ["Claude Code: 1 hook file for Cursor, which does not run on it.",
+                 "Codex: none of the skills sit where it reads them (.agents/skills).",
+                 "Codex: 2 places written for Claude Code only (1 skill frontmatter key, 1 Claude Code word).",
+                 "Codex: 1 hook file for Cursor, which does not run on it.",
+                 "Claude Code reads CLAUDE.md and Codex reads AGENTS.md, which differ "
+                 "(1 line only in the first, 0 only in the second)."]
+    L = "\n".join(R.ready_lines(hosty(reports()), ["codex"]))
+    assert "For the hosts named (codex):" in L and "- `CLAUDE.md` and `AGENTS.md`: differ, 1 line only" in L
+    assert "- .claude/skills/tidy/SKILL.md:4: `model`" in L and "- `skills/loose/SKILL.md`" in L
+    assert "Not measured" in "\n".join(R.ready_lines(reports()))
+    assert "### Ready for any AI" in R.full(dict(META, hosts=[]), hosty(reports()), PASS, {}, set(R.ORDER[:6]))
+
+
+def triggery(r):
+    """Stage 4 trigger findings from trigger.py over a small repository: a skill that follows the
+    rules, one with a YAML error, one typed only, one with a typo key and a first-person
+    description, and an agent with an older tool name (slice 4, 2026-10-26)."""
+    import trigger
+    fm = lambda *x: "---\n" + "\n".join(x) + "\n---\nBody.\n"  # noqa: E731
+    texts = {".claude/skills/good/SKILL.md": fm("name: good", "description: Sorts notes. Use when notes pile up."),
+             ".claude/skills/bad/SKILL.md": fm("name: bad", "description: Dates: when wrong."),
+             ".claude/skills/hand/SKILL.md": fm("name: hand", "description: Ships it. Use when told.",
+                                                "disable-model-invocation: true"),
+             ".claude/skills/odd/SKILL.md": fm("name: odd", "description: I tidy files.", "allowed_tools: Read"),
+             ".claude/agents/rev.md": fm("name: rev", "description: Reviews code when asked.", "tools: Task, Read")}
+    rows = [{"check": "inv.file", "file": f, "entry_point": "skill" if f.endswith("SKILL.md") else "agent"} for f in texts]
+    r["04-phrases"]["findings"] += trigger.findings(texts, rows)
+    return r
+
+
+def test_trigger_helpers():
+    """Slice 4: the entries line, the listing, each place in words, and full.md's section."""
+    tr = R.trigger_of(triggery(reports()))
+    assert tr["measured"] and R.entries_line(tr) == (
+        "4 skills: 2 Claude chooses by their description, 1 only when typed, 1 whose frontmatter is not read. "
+        "1 agent: 1 Claude Code loads.")
+    assert [k for k, *_ in tr["kinds"]] == ["not-read", "keys", "tools", "guidance"]
+    lines = R.listing_lines(tr, 8000)
+    assert lines[0].startswith("Skill descriptions here take about ") and "about 80 tokens at 8,000, 2,000 at 200,000." in lines[0]
+    assert lines[1].startswith("Agent descriptions take about ")
+    places = {k: [R.trig_place(k, f) for f in p] for k, _, _, p in tr["kinds"]}
+    assert places["keys"] == [".claude/skills/odd/SKILL.md:4: allowed_tools (Claude Code knows allowed-tools)"]
+    assert places["tools"][0].startswith(".claude/agents/rev.md:4: Task (an older name; the current one is Agent")
+    assert {R.trig_parts("guidance", f) for f in tr["kinds"][3][3]} == {
+        (".claude/skills/odd/SKILL.md:3", "written in the first person"),
+        (".claude/skills/odd/SKILL.md:3", "does not say when to use it")}
+    assert R.brief_trigger_counts(tr) == {"host": 3, "guidance": 2, "overlap": 0}
+    L = "\n".join(R.trigger_lines(triggery(reports()), 8000))
+    assert "Frontmatter its host does not read (1)" in L and "- `.claude/skills/hand/SKILL.md` (skill): typed" in L
+    assert "Not measured" in "\n".join(R.trigger_lines(reports(), 8000))
+    full = R.full(dict(META, hosts=[]), triggery(reports()), PASS, {}, set(R.ORDER[:6]))
+    assert full.index("### Will it trigger") < full.index("### Ready for any AI")
+
+
+def fitty(r):
+    """Slice 5 findings as stages 4 and 5 write them (2026-10-26)."""
+    r["04-phrases"]["findings"] += [
+        {"check": "fit.loop", "file": "SKILL.md", "line": 30, "quote": "Repeat until the tests pass.", "audience": "model"}]
+    r["05-capability"]["findings"] += [
+        {"check": "fit.unused", "file": "agents/a.md", "line": 4, "kind_of": "agent", "tool": "WebFetch",
+         "family": "web", "pre_approved": False},
+        {"check": "fit.unused", "file": "skills/s/SKILL.md", "line": 4, "kind_of": "skill", "tool": "WebSearch",
+         "family": "search", "pre_approved": True},
+        {"check": "fit.missing", "file": "agents/b.md", "line": 4, "kind_of": "agent", "family": "shell",
+         "asked_at": "agents/b.md:7", "why": "none of its tools does this"},
+        {"check": "fit.inherits", "file": "agents/c.md", "line": None, "families": ["write"], "asked_at": {}},
+        {"check": "fit.hook", "file": "h.json", "line": None, "event": "UserPromptSubmit", "host": "claude",
+         "matcher": None, "how_often": "every-prompt", "adds_context": True, "bytes": 12000, "over_cap": True},
+        {"check": "fit.hook", "file": "h.json", "line": None, "event": "SessionStart", "host": "claude",
+         "matcher": None, "how_often": "once-a-session", "adds_context": True, "bytes": None, "over_cap": False},
+        {"check": "fit.checked", "file": None, "line": None, "entries": 4, "with_grants": 3, "inheriting": 1}]
+    return r
+
+
+def test_fit_helpers():
+    """Slice 5: kinds in order, each place in words, hooks, and full.md's section."""
+    ft = R.fit_of(fitty(reports()))
+    assert ft["measured"] and [k for k, *_ in ft["kinds"]] == ["unused", "missing", "inherits", "loops", "hooks"]
+    places = {k: [R.fit_place(k, f) for f in p] for k, _, _, p in ft["kinds"]}
+    assert places["unused"] == ["agents/a.md:4: WebFetch: nothing it reads asks for fetching pages",
+                                "skills/s/SKILL.md:4: WebSearch: pre-approved, and nothing it reads asks for searching the web"]
+    assert places["missing"] == ["agents/b.md: asks for running commands (agents/b.md:7); none of its tools does this"]
+    assert places["inherits"] == ["agents/c.md: its words ask for writing files"]
+    assert places["hooks"] == ["h.json: UserPromptSubmit runs on every prompt; its output, about 3,000 tokens, becomes "
+                               "context each time; over the 10,000-character cap, so Claude sees a 2,000-character preview"]
+    other = {"event": "sessionStart", "how_often": "once-a-session", "adds_context": None, "bytes": None}
+    assert R.hook_text(other) == "sessionStart runs once a session (whether its output becomes context is not known for this host)"
+    assert R.brief_fit_counts(ft) == {"unused": 2, "missing": 1, "inherits": 1, "readonly": 0, "loops": 1, "hooks": 1}
+    L = "\n".join(R.fit_lines(fitty(reports())))
+    assert "Entries checked: 4 (3 with a tools list, 1 agent with none)." in L
+    assert "Other hooks (1):" in L and "- h.json: SessionStart runs once a session" in L
+    assert "Not measured" in "\n".join(R.fit_lines(reports()))
+    full = R.full(dict(META, hosts=[]), fitty(reports()), PASS, {}, set(R.ORDER[:6]))
+    assert full.index("## 5 ") < full.index("### Do the tools fit the job") < full.index("## 6 ")
+
+
+def cleany(r):
+    """Slice 6 findings as stage 4 writes them (2026-10-27)."""
+    r["04-phrases"]["findings"] += [
+        {"check": "clean.unfinished", "file": "SKILL.md", "line": 9, "kind": "todo", "quote": "TODO: add it", "audience": "model"},
+        {"check": "clean.dated", "file": "SKILL.md", "line": 13, "quote": "Before August 2025, use the old API.", "audience": "model"},
+        {"check": "clean.model", "file": "SKILL.md", "line": 4, "model": "claude-opus-5-5", "where": "frontmatter", "audience": "model"},
+        {"check": "clean.model", "file": "run.py", "line": 2, "model": "claude-opus-5-5", "where": "code", "audience": "tool"},
+        {"check": "clean.older", "file": "SKILL.md", "line": 17, "tool": "Task", "now": "Agent", "audience": "model"},
+        {"check": "clean.checked", "file": None, "line": None, "files": 3}]
+    return r
+
+
+def test_clean_helpers():
+    """Slice 6: kinds in order, places with and without the line, distinct models, full.md."""
+    cl = R.clean_of(cleany(reports()))
+    assert cl["measured"] and [k for k, *_ in cl["kinds"]] == ["unfinished", "dated", "models", "older"]
+    assert cl["models"] == ["claude-opus-5-5"]
+    unf = cl["kinds"][0][3][0]
+    assert R.clean_place("unfinished", unf) == "SKILL.md:9: a TODO or FIXME marker"
+    assert R.clean_place("unfinished", unf, quote=True) == "SKILL.md:9: a TODO or FIXME marker: TODO: add it"
+    assert R.clean_place("models", cl["kinds"][2][3][0]) == "SKILL.md:4: claude-opus-5-5 (in frontmatter)"
+    assert R.clean_place("older", cl["kinds"][3][3][0]) == "SKILL.md:17: Task (the current name is Agent)"
+    assert R.clean_count("models", cl["kinds"][2][3], cl["models"]) == "2 (1 distinct)"
+    L = "\n".join(R.clean_lines(cleany(reports())))
+    assert "Pinned model IDs (2 (1 distinct))" in L and "- SKILL.md:13: Before August 2025, use the old API." in L
+    assert "Not measured" in "\n".join(R.clean_lines(reports()))
+    full = R.full(dict(META, hosts=[]), cleany(reports()), PASS, {}, set(R.ORDER[:6]))
+    assert full.index("### Ready for any AI") < full.index("### Current and clean") < full.index("## 5 ")

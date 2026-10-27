@@ -171,6 +171,35 @@ brief in `walkdown.py`; its stage 4 phrase places are `render.point_hits` (2026-
 
 Done when: `test_items_say_what_hidden_text_spells`.
 
+## Added 2026-10-26 (plan for builders, slice 1)
+
+- After the marks bar, "Will it trigger?" (`trigger`, id `trigger`; slice 4): the entries line, the
+  listing, every entry with its kind and mode folded, and every place folded under its kind. Done
+  when: `test_trigger_section`.
+- After it, "What it costs and what you ship" (`ship_section`, id `ship`): the
+  expected-context table (`context_table`, also on `summary.html`) with its notes (`cost_notes`:
+  the largest skill, what it names outside its folder, how tokens were counted, what only running
+  shows), then each band with its groups, every file folded under its group with size, tokens,
+  and the file that reaches it. A run with no file groups says so.
+- Questions before use (`before_use`) is here again, after the three boxes (owner, 2026-10-26:
+  `summary.html` is the builder's page).
+
+Done when: `test_ship_section_and_questions_before_use`.
+
+- After it, "Will it run on someone else's machine?" (`elsewhere`, id `elsewhere`; slice 2): every
+  program with where it is declared and its places folded, every package with its ecosystem and
+  files, and every place that ties it to one machine folded under its kind. Done when:
+  `test_elsewhere_section`.
+- After it, "Is it ready for any AI?" (`ready`, id `ready`; slice 3): with `--hosts`, the to-do
+  list; every host with the files here it reads folded (instructions, skills, MCP config, hooks),
+  or what it would read; the skills to install; every copy kept for two hosts with its relation and
+  line counts; every one-host feature folded under its kind. Done when: `test_ready_section`.
+- After it, "Do the tools fit the job?" (`fit`, id `fit`; slice 5): how many entries were checked,
+  every place folded under its kind, and every hook with how often it runs. Done when:
+  `test_fit_section`.
+- After it, "Is it current and clean?" (`clean`, id `clean`; slice 6): every place folded under its
+  kind, with its line. Done when: `test_clean_section`.
+
 ## History
 
 - 2026-10-07: HTML summary page (report v1, now at tag `report-v1`).

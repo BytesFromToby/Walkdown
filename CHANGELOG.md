@@ -4,6 +4,68 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 `python walkdown.py --version`, and recorded in every run's LOG.md with the git commit
 ("+modified" when the code had uncommitted changes).
 
+## 0.3.0 (2026-10-27)
+
+The report is rebuilt for people building skills and agents. summary.html now answers, in order:
+will it trigger, what it costs, what you ship, will it run on someone else's machine, is it ready
+for any AI, do the tools fit the job, is it current and clean, and is it safe. Every yardstick is
+a host's documented behavior, dated published guidance, or the skill's own words, kept in dated
+data files with sources; there is still no score and no verdict.
+
+- summary.html gains "Is it current and clean?": TODO and FIXME markers, placeholders, and draft
+  notes in what ships; claims tied to a date in text the AI reads (published guidance: such text
+  becomes wrong); pinned model IDs, with how many are distinct; and older tool names in text. All
+  facts with locations; Walkdown never says a date is past or a model retired. "What it costs"
+  adds what changed since the earlier run of the same repository (every session, the largest
+  entry, what is not used at run time), and the changes in the brief and details.html carry it.
+- summary.html gains "Do the tools fit the job?": each skill's, agent's, and command's own words,
+  over the files it reads, against the tools it grants. It lists tools granted that nothing asks
+  for (a skill's `allowed-tools` as pre-approved and never used), work the words ask for that no
+  tool it may use can do (a subagent's tools list is an allowlist), agents with no tools list,
+  read-only claims a tool contradicts, loops with no stated limit, and hooks that run on every
+  prompt or tool call, with their output's size when it becomes context. A verb a negation
+  governs, a verb used as a noun, or a quoted example never counts as asking. details.html and
+  full.md list every one; the brief counts.
+- summary.html opens with "Will it trigger?": how each skill, command, and agent triggers (Claude
+  chooses it by its description, only on matching files, only when typed, or it never loads), the
+  descriptions' size against Claude Code's skill listing (about 1% of the context), and what may
+  stop it triggering as written: frontmatter its host does not read, agents Claude Code skips, name
+  and description rules from the Agent Skills spec, claude.ai uploads, and Claude Code, keys,
+  values, and tool names no host takes (with the nearest known one), descriptions that overlap, and
+  descriptions cut in the listing. Published guidance (say when to use it; the third person) is
+  shown apart from host rules. The rules are a dated data file with sources. details.html and
+  full.md list every place; the brief counts. A frontmatter key no host knows now appears here
+  instead of under "Is it ready for any AI?".
+- summary.html gains "Is it ready for any AI?": one line per AI host (Claude Code, Codex, Gemini
+  CLI, Cursor, GitHub Copilot, Windsurf, and the other tools that read `AGENTS.md`) with the
+  instruction files, skills, MCP config, and hooks here that it reads, from a dated list of what
+  each host reads, with sources. It names the skills no host reads where they sit, copies kept for
+  two hosts that say different things (a `CLAUDE.md` and an `AGENTS.md` in one folder), and what
+  in a `SKILL.md` or `AGENTS.md` only one host understands: frontmatter keys outside the Agent
+  Skills set, Claude Code's own words and tool names, `@` imports in `AGENTS.md`, and hooks.
+  `--hosts claude,codex` puts what each named host is missing first. details.html and full.md
+  list every one; the brief counts.
+- summary.html gains "Will it run on someone else's machine?": the programs and packages a skill
+  uses and which the repository never declares (in a dependency file, a skill's `compatibility`
+  field, or an install line), and what ties it to the machine it was built on: personal paths,
+  shell scripts committed with Windows line endings, scripts or commands for one system only,
+  references written with backslashes, scripts run without the executable bit, `python` where
+  many systems have only `python3`, and references whose letter case only matches on Windows and
+  macOS. Only programs on a dated list count. Line endings are read as git committed them, so a
+  Windows checkout's conversion is never blamed on the repository, and personal paths count only
+  where they run or the AI reads them. details.html and full.md list every one; the brief counts.
+- summary.html is rebuilt for people building a skill or agent: what it costs in an AI's context,
+  what you ship, and whether it is safe. What it costs gives the tokens an AI loads every session
+  (descriptions, hook text), every session in the folder (CLAUDE.md and what it imports), and for
+  the largest skill when it runs, with everything it names, and with its wildcard loads, against
+  the context you expect (`--context`, default 32,000 tokens) and 200,000 beside it. What you ship
+  sorts every file into loads into the AI, used another way, or not used at run time, and says
+  what leaving out the files nothing points to and the build material would save. Tokens are an
+  estimate from size (about 4 bytes per token). A skill counts only its own folder, as only that
+  installs; what it names outside is listed. Questions before use moved to details.html, which
+  gains every file by group. The brief gives the same counts. Measured on Walkdown itself: the
+  skill is 558 tokens, CLAUDE.md 3,392 every session.
+
 ## 0.2.1 (2026-10-26)
 
 Fixes from an outside tester's report, and the changes merged on GitHub after release 19,

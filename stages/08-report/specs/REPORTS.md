@@ -22,7 +22,7 @@ A run folder (`docs/RUN-FOLDER.md`) holds the reports at the top and everything 
 
 | File | Reader | What it is | Spec |
 |---|---|---|---|
-| `summary.html` | deciding | One page: the security concerns Walkdown found, by fixed kinds; what it can do; questions before use | `summary_html.SPEC.md` |
+| `summary.html` | building (owner, 2026-10-26; before, deciding) | One page: will it trigger, what it costs against the expected context, what ships by how it is used, will it run elsewhere, is it ready for any AI, do the tools fit the job, is it current and clean, is it safe (the security concerns by fixed kinds), what it can do | `summary_html.SPEC.md` |
 | `details.html` | improving | Every section in full, every list expandable, a Not concerned box on every row | `details_html.SPEC.md` |
 | `review.html` | improving | The places to check, one at a time, each marked Concerned, Not concerned, or Not sure | `review_html.SPEC.md` |
 | `full.md` | either | Every finding with file and line: the complete record, as text | `render.SPEC.md` |

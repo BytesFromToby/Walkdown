@@ -8,6 +8,7 @@ import argparse
 import json
 import os
 import posixpath
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -98,6 +99,30 @@ def unscanned_reason(row: dict) -> str | None:
     return None
 
 
+# Claude Code expands "@path" in CLAUDE.md at load (slice 1, 2026-10-26): written at the start of a
+# line or after white space, outside code spans and fenced blocks.
+_AT = re.compile(r"(?:^|(?<=\s))@([^\s`]+)")
+_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+_SPAN = re.compile(r"`+[^`]*`+")
+
+
+def at_imports(text: str) -> set[tuple[int, str]]:
+    """{(line, path as written after @)} for the @path imports in a file's text."""
+    out, fence = set(), None
+    for n, line in enumerate(text.split("\n"), start=1):
+        m = _FENCE.match(line)
+        if fence:
+            if m and m.group(1)[0] == fence[0]:
+                fence = None
+            continue
+        if m:
+            fence = m.group(1)
+            continue
+        for a in _AT.finditer(_SPAN.sub(" ", line)):
+            out.add((n, a.group(1).rstrip(".,;:)")))
+    return out
+
+
 def build_report(input_dir: Path, inv: dict) -> tuple[dict, dict]:
     rows = [f for f in inv.get("findings", []) if f.get("check") == "inv.file"]
     nodes = sorted({r["file"] for r in rows})
@@ -108,6 +133,7 @@ def build_report(input_dir: Path, inv: dict) -> tuple[dict, dict]:
     dangling: dict[tuple, dict] = {}
     dynamic: dict[tuple, dict] = {}
     unscanned: list[dict] = []
+    cases: list[dict] = []
 
     def add_edge(frm, line, to, kind, form, text, context, source=None, **flags):
         if frm == to:
@@ -174,6 +200,7 @@ def build_report(input_dir: Path, inv: dict) -> tuple[dict, dict]:
         base = rel
         if entries.get(rel) == "manifest":
             base = posixpath.join(manifest_root(rel), posixpath.basename(rel))
+        imports = at_imports(text) if entries.get(rel) == "project-instructions" else set()
         for f in extract(rel, text):
             ref = f.ref
             res = resolver.resolve(base, ref.path, ref.shape)
@@ -181,7 +208,11 @@ def build_report(input_dir: Path, inv: dict) -> tuple[dict, dict]:
                 for t in res.targets:
                     add_edge(rel, f.line, t, "static", f.form, ref.written, f.context,
                              ambiguous=res.ambiguous, case_mismatch=res.case_mismatch,
-                             partial=res.partial)
+                             partial=res.partial, by_name=res.by_name,
+                             at_import=(f.line, ref.written) in imports or (f.line, ref.path) in imports)
+                    if res.case_mismatch and not res.ambiguous:  # works on Windows and macOS only (slice 2)
+                        cases.append({"check": "graph.case", "file": rel, "line": f.line,
+                                      "written": ref.written, "to": t})
             elif res.status in ("dir", "glob"):
                 if (rel, f.line, ref.written) in dynamic or (rel, f.line, ref.path) in dynamic:
                     continue
@@ -219,7 +250,7 @@ def build_report(input_dir: Path, inv: dict) -> tuple[dict, dict]:
     dyn_rows = sorted(dynamic.values(), key=lambda d: (d["file"], d["line"], d["pattern"]))
     unl_rows = unlisted([n for n, k in entries.items() if k == "manifest"], nodes, edges)
     findings = (entry_rows + reach_mod.orphan_findings(rc) + dang_rows + dyn_rows + unl_rows
-                + reach_mod.depth_findings(rc) + unscanned)
+                + reach_mod.depth_findings(rc) + unscanned + cases)
     report = {"stage": STAGE, "contract": 1, "findings": findings}
 
     graph = {

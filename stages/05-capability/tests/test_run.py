@@ -66,7 +66,10 @@ def test_report_shape(tmp_path):
         "private-data", "untrusted-content", "external-comms"]
 
 
-ORDER = ["cap.leg", "cap.grant", "cap.injection", "cap.load-bytes", "cap.posture", "cap.pair"]
+ORDER = ["cap.leg", "cap.grant", "cap.injection", "cap.load-bytes", "cap.posture", "cap.pair",
+         "fit.unused", "fit.missing", "fit.inherits", "fit.checked", "fit.hook",  # slice 5, 2026-10-26
+         "cap.ship", "cap.context"]  # what ships and what it costs, last (slice 1, 2026-10-26)
+MAYBE = {"fit.unused", "fit.missing", "fit.inherits", "fit.hook"}  # only when there is one
 
 
 def test_order_and_three_legs(tmp_path):
@@ -75,7 +78,7 @@ def test_order_and_three_legs(tmp_path):
     doc = json.loads(out)
     checks = [f["check"] for f in doc["findings"]]
     assert checks == sorted(checks, key=ORDER.index)
-    assert set(checks) == set(ORDER)
+    assert set(ORDER) - set(checks) <= MAYBE and set(checks) <= set(ORDER)
     assert all(f["present"] for f in doc["findings"] if f["check"] == "cap.leg")
     assert sum(1 for c in checks if c == "cap.load-bytes") == 1
 

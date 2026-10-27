@@ -95,3 +95,16 @@ differ on disk, and that differences in other files come from Walkdown. `since` 
 Done when (tests in `tests/test_drift.py`): a CRLF-to-LF file is line endings only and its hit is
 not put down to the repository; a run without the new hashes is matched in either direction; the
 same version with only line-ending changes writes nothing, and with a file edited on disk says so.
+
+## Cost since the earlier run (added 2026-10-27, slice 6)
+
+`compare` adds `cost`: slice 1's numbers in each run (`cost_of`: every session, every session in
+the folder, the entry with the most at its fullest and which, and the files and tokens not used at
+run time), or null for a run made before they were counted. `cost_changed` is a difference
+(`differs`). `cost_line`: "cost: every session 1,200 -> 1,320 tokens (+120); ..." with only the
+numbers that changed and never a file name (the brief shows it), or "costs not comparable: the
+earlier run was made before they were counted"; `summary_lines` carries it, `since` returns it as
+`cost_line`, and `changes.md` gains a table "What it costs (estimated tokens)" with the largest
+entry's file when it changed.
+
+Done when: `test_cost_since_the_earlier_run`.

@@ -121,3 +121,33 @@ def test_sending_data_out_reaches_the_summary(tmp_path, run_main):
     assert "Reads secrets, calls out, or shares" in s
     n = html.unescape((next((res / "notes").iterdir()) / "summary.html").read_text(encoding="utf-8"))
     assert "Walkdown found none of the security concerns it looks for." in n
+
+
+def test_context_is_kept_and_can_change(tiny_repo, tmp_path, run_main):
+    """Slice 1 (2026-10-26): --context reaches LOG.md; a re-render keeps it or takes a new one."""
+    res = tmp_path / "results"
+    assert run_main([str(tiny_repo), "--repo", "tiny", "--results", str(res), "--no-validate",
+                     "--context", "8k"]) == 0
+    d = next((res / "tiny").iterdir())
+    assert "Expected context: 8,000 tokens" in (d / "LOG.md").read_text(encoding="utf-8")
+    assert "8,000-token context" in (d / "summary.html").read_text(encoding="utf-8")
+    assert run_main(["--rerender", str(d), "--no-validate"]) == 0
+    assert "8,000-token context" in (d / "summary.html").read_text(encoding="utf-8")
+    assert run_main(["--rerender", str(d), "--no-validate", "--context", "200k"]) == 0
+    assert "200,000-token context" in (d / "summary.html").read_text(encoding="utf-8")
+    assert run_main([str(tiny_repo), "--repo", "tiny", "--results", str(res), "--context", "lots"]) == 2
+
+
+def test_hosts_are_kept_and_can_change(tiny_repo, tmp_path, run_main):
+    """Slice 3 (2026-10-26): --hosts reaches LOG.md; a re-render keeps it or takes new ones."""
+    res = tmp_path / "results"
+    assert run_main([str(tiny_repo), "--repo", "tiny", "--results", str(res), "--no-validate",
+                     "--hosts", "codex,cursor"]) == 0
+    d = next((res / "tiny").iterdir())
+    assert "Target hosts: codex, cursor" in (d / "LOG.md").read_text(encoding="utf-8")
+    assert "For the hosts you named" in (d / "summary.html").read_text(encoding="utf-8")
+    assert run_main(["--rerender", str(d), "--no-validate"]) == 0
+    assert "For the hosts named (codex, cursor)" in (d / "full.md").read_text(encoding="utf-8")
+    assert run_main(["--rerender", str(d), "--no-validate", "--hosts", "gemini"]) == 0
+    assert "For the hosts named (gemini)" in (d / "full.md").read_text(encoding="utf-8")
+    assert run_main([str(tiny_repo), "--repo", "tiny", "--results", str(res), "--hosts", "vim"]) == 2

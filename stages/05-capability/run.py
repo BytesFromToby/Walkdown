@@ -16,6 +16,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
+import cost  # noqa: E402
+import fit  # noqa: E402
 import inputs  # noqa: E402
 from injection import injections, load_bytes  # noqa: E402
 from legs import grants, legs  # noqa: E402
@@ -42,6 +44,7 @@ def _inside(child: Path, parent: Path) -> bool:
 
 
 def derive(reports: dict, graph: dict | None) -> list[dict]:
+    every = reports  # what ships and what it costs reads test data too (slice 1, 2026-10-26)
     loaded = loaded_pairs(reports, graph)
     shown = image_pairs(reports, graph)  # before the set-aside: an image in tests/ still counts
     reports, aside = set_aside(reports, {p["file"] for p in loaded})
@@ -49,6 +52,9 @@ def derive(reports: dict, graph: dict | None) -> list[dict]:
     inj = injections(reports, graph)
     findings = lg + grants(reports, lg) + inj + load_bytes(inj) + postures(reports) \
         + pairs(reports, graph) + loaded + shown + stated_limits(reports) + aside
+    findings += fit.entries_fit(reports, graph) + fit.hooks_fit(reports, inj)  # slice 5
+    shipped = cost.ship(every, graph)
+    findings += shipped + cost.context(every, graph, inj, shipped)
     for f in findings:
         f["evidence_total"] = len(f.get("evidence", []))
     return findings

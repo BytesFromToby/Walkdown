@@ -1,0 +1,47 @@
+# Is it current and clean? (plan for builders, slice 6, owner 2026-10-27). Unfinished text,
+# dated claims, pinned model IDs, and older tool names, as facts with locations: Walkdown never
+# says a date is past, a model retired, or a TODO matters. Measured on the audited repositories
+# before the lists were kept (specs/clean.SPEC.md, History).
+
+checked: 2026-10-27
+sources:
+  guidance: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
+  models: https://code.claude.com/docs/en/model-config
+
+# Unfinished text, in every file but those for people and test data. `exact` patterns keep their
+# case (a TODO marker, not "a todo list"); `any_case` patterns ignore it.
+unfinished:
+  todo:
+    exact: ["(?<![\\w-])(TODO|FIXME|XXX|HACK)\\b"]
+  placeholder:
+    any_case: ["\\blorem ipsum\\b", "\\[(placeholder|insert [^\\]]{1,40}|tbd)\\]", "\\bREPLACE[_ ]?ME\\b",
+               "\\{\\{\\s*[\\w.-]+\\s*\\}\\}"]
+  draft:
+    exact: ["\\b(DRAFT|WIP)\\b"]
+    any_case: ["\\bwork in progress\\b", "\\bnot yet implemented\\b", "\\bcoming soon\\b",
+               "\\bunder construction\\b"]
+# A template's placeholders are what it ships (owner, 2026-10-27).
+template_paths: ["(^|/)templates?/", "template[^/]*$"]
+
+# Dated claims, in text the AI reads, outside code and quotes (owner, 2026-10-27: explicit dates
+# and "as of" only; "currently", "latest", "recently" are left out). A date counts when a word
+# makes it a claim that can expire ("before August 2025, use the old API", the guidance's own
+# example): a bare date is a record of when (measured 2026-10-27: 745 date stamps in Walkdown's
+# own notes, "Done 2026-09-25", "(owner, 2026-10-20)").
+months: "(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)\\.?"
+dated:
+  - "\\b(before|after|since|until|by)\\s+({months}\\s+(\\d{1,2},?\\s+)?)?(19|20)\\d\\d(-[01]\\d(-[0-3]\\d)?)?\\b"
+  - "\\bQ[1-4]\\s+(19|20)\\d\\d\\b"
+  - "\\bas of\\b"
+
+# Pinned model IDs, in frontmatter, text, and code (any case). An alias (sonnet, opus, haiku,
+# fable) is never one, nor an ID ending in -latest.
+models:
+  - "\\bclaude-(?:(?:opus|sonnet|haiku|fable|instant)-\\d[a-z0-9.-]*|\\d[a-z0-9.-]*-(?:opus|sonnet|haiku|instant)[a-z0-9.-]*)"
+  - "\\bgpt-(?:3\\.5|4o?|4\\.1|4\\.5|5)(?:[a-z0-9.-]*)"
+  - "\\bo[1345]-(?:mini|pro|preview)\\b"
+  - "\\bgemini-(?:\\d(?:\\.\\d)?|pro|ultra|flash)[a-z0-9.-]*"
+  - "\\bllama-?\\d(?:\\.\\d)?[a-z0-9.:-]*"
+  - "\\b(?:mistral|mixtral|codestral|devstral)-[a-z0-9.-]*\\d[a-z0-9.-]*"
+  - "\\bqwen\\d(?:\\.\\d)?[a-z0-9.:-]*"
+  - "\\bdeepseek-(?:r\\d|v\\d|coder)[a-z0-9.-]*"

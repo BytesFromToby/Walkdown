@@ -104,7 +104,7 @@ def test_capability_and_questions_and_no_not_checked():
     assert 'class="lede"' not in can
     assert ("<p>Each one is ordinary on its own. A tool that does all three can be steered by text from "
             "outside into sending your data away.</p>") in can
-    assert "Permissions to hold back" in section(h, "beforeuse")
+    assert 'id="beforeuse"' not in h  # on details.html since 2026-10-26 (owner)
     assert 'id="notchecked"' not in h and "Not checked" not in h and 'id="warning"' not in h
     assert 'href="details.html"' in h and 'href="review.html"' in h
 
@@ -128,8 +128,14 @@ def test_no_verdict_words_and_escaping():
         assert word not in h, word
 
 
+def details(r):
+    import details_html
+    return details_html.render_page(META, r, PASS, {}, set(R.ORDER[:6]))
+
+
 def test_questions_before_use_follow_the_evidence():
-    """Moved from details.html (owner, 2026-10-20): only questions with evidence, in three groups."""
+    """On details.html again since 2026-10-26 (owner: summary.html is the builder's page); only
+    questions with evidence, in three groups."""
     r = reports(hooks=1)
     r["01-inventory"]["findings"] += [
         {"check": "struct.agent-tools", "file": "agents/a.md", "line": None, "tools": None},
@@ -138,7 +144,7 @@ def test_questions_before_use_follow_the_evidence():
     r["04-phrases"]["findings"].append({"check": "phrase.L.override", "file": "SKILL.md", "line": 20,
                                         "quote": "No need to ask before you push.", "patterns": ["L.skip-confirm"],
                                         "audience": "model", "folded": False})
-    t = section(page(r), "beforeuse")
+    t = section(details(r), "beforeuse")
     assert "Permissions to hold back" in t and "Before you leave it running unattended" in t
     assert "Should its 1 agent or command definition with no tools list get every tool you have?" in t
     assert "Does it need a shell? Listed for 1 definition: agents/b.md." in t
@@ -148,7 +154,7 @@ def test_questions_before_use_follow_the_evidence():
     assert "Which part will you try first?" in t
     bare = reports(hooks=0)
     bare["04-phrases"]["findings"] = []
-    q = section(page(bare), "beforeuse")
+    q = section(details(bare), "beforeuse")
     assert "No questions from these findings." in q and 'class="lede"' not in q
     assert "no verdict and no score" not in page(full_set()).lower()
     assert "Finding nothing does not mean a repository is safe." in page(bare).split("<footer>")[1]
@@ -177,7 +183,7 @@ def test_a_step_that_did_not_work_is_named_at_the_bottom():
     assert "What the text asks for did not pass its fixture check (FAIL)" in w
     assert "What this touches did not run" in w and 'href="details.html#other"' in w
     assert "What the model actually reads" not in w and "OCR" not in w
-    assert h.index('id="beforeuse"') < h.index('id="warning"') < h.index("<footer>")
+    assert h.index('id="can"') < h.index('id="warning"') < h.index("<footer>")
     assert 'id="warning"' not in page(r, stamps={})  # no validation, no stamps to judge by
 
 
@@ -219,3 +225,118 @@ def test_a_run_missing_a_step_never_reads_as_clean():
     rs = [{"places": [1, 2], "not_concerned": 0}]
     assert "In the steps that ran, Walkdown found security concerns: 2 places, of 1 kind." in \
         S2.headline(rs, ["What this touches"])
+
+
+def test_builders_page_costs_and_ships():
+    """Slice 1 (owner, 2026-10-26): the builder's page: what it costs, what you ship, is it safe."""
+    import html as H
+    r = _tr.costed(full_set())
+    h = S.render_page(dict(META, context=32000), r, PASS, {}, set(R.ORDER[:6]))
+    t = H.unescape(section(h, "headline"))
+    assert ("every session takes 1,000 tokens once installed, and the largest skill at its fullest 40,000 "
+            "(125% of a 32,000-token context). That is more than the expected context.") in t
+    assert "Walkdown found security concerns in this repository" in t
+    order = [h.index(f'id="{x}"') for x in ("headline", "cost", "ship", "concerns", "can")]
+    assert order == sorted(order) and 'id="beforeuse"' not in h
+    assert "Is it safe?" in section(h, "concerns")
+    sh = H.unescape(section(h, "ship"))
+    assert "Not used at run time" in sh and "nothing points to it: 1" in sh
+    assert ("If the 1 file nothing points to and the 1 build file were left out of what you ship: "
+            "280 bytes smaller, and 70 tokens no longer within an AI's reach.") in sh
+    bare = S.render_page(META, full_set(), PASS, {}, set(R.ORDER[:6]))
+    assert "Not measured" in section(bare, "cost") and section(bare, "headline").count("<p") == 1
+    assert S.brief_cost_lines(r, 32000) == [
+        "Every session: 1,000 tokens. Largest skill at its fullest: 40,000 tokens (125% of 32,000).",
+        "Not used at run time: 3 files (170 tokens)."]
+
+
+def test_will_it_run_elsewhere():
+    """Slice 2 (owner, 2026-10-26): what it uses, what is not declared, and what ties it to one machine."""
+    import html as H
+    h = S.render_page(META, _tr.needy(full_set()), PASS, {}, set(R.ORDER[:6]))
+    t = H.unescape(section(h, "elsewhere"))
+    assert "It uses: git, jq, and 1 package (pandas)." in t and "Not declared anywhere: jq, pandas." in t
+    assert "Shell scripts with Windows line endings" in t and "scripts/run.sh" in t
+    assert h.index('id="ship"') < h.index('id="elsewhere"') < h.index('id="concerns"')
+    bare = full_set()
+    assert "Nothing found that ties it to one machine." in H.unescape(section(S.render_page(META, bare, PASS, {}, set(R.ORDER[:6])), "elsewhere"))
+    assert S.brief_needs_line(_tr.needy(full_set())) == (
+        "Needs: 2 programs, 1 package; 2 not declared. Ties to one machine: 3 places.")
+
+
+def test_is_it_ready_for_any_ai():
+    """Slice 3 (owner, 2026-10-26): one line per host, the to-do list for the hosts named first,
+    the skills to install, copies that differ, and one row per kind of one-host feature."""
+    import html as H
+    h = S.render_page(dict(META, hosts=["codex"]), _tr.hosty(full_set()), PASS, {}, set(R.ORDER[:6]))
+    t = re.sub(r"<[^>]+>", "", H.unescape(section(h, "ready")))
+    assert t.index("For the hosts you named") < t.index("Claude Code: CLAUDE.md; 1 skill.")
+    assert "Codex: none of the skills sit where it reads them" in t
+    assert "1 skill no host reads where it sits (first: skills/loose/SKILL.md)" in t
+    assert "CLAUDE.md and AGENTS.md differ: 1 line only in CLAUDE.md, 0 only in AGENTS.md." in t
+    assert "Skill frontmatter keys outside the Agent Skills set" in t and ".claude/skills/tidy/SKILL.md:4" in t
+    assert h.index('id="elsewhere"') < h.index('id="ready"') < h.index('id="concerns"')
+    plain = H.unescape(section(S.render_page(META, _tr.hosty(full_set()), PASS, {}, set(R.ORDER[:6])), "ready"))
+    assert "For the hosts you named" not in plain
+    assert "Not measured" in section(S.render_page(META, full_set(), PASS, {}, set(R.ORDER[:6])), "ready")
+    assert S.brief_ready_line(_tr.hosty(full_set())) == (
+        "Ready for: 6 of 7 hosts have their files here; copies that differ: 1; one-host features: 3.")
+    assert S.brief_ready_line(_tr.hosty(full_set()), ["claude", "codex"]).endswith(
+        "For the hosts named: 5 things missing.")
+    assert S.brief_ready_line(full_set()) is None
+
+
+def test_will_it_trigger_comes_first():
+    """Slice 4 (owner, 2026-10-26): first on the page; how the entries trigger, the listing, and one
+    row per kind with its first place; the brief counts."""
+    import html as H
+    h = S.render_page(META, _tr.triggery(full_set()), PASS, {}, set(R.ORDER[:6]))
+    t = re.sub(r"<[^>]+>", "", H.unescape(section(h, "trigger")))
+    assert "4 skills: 2 Claude chooses by their description" in t and "Skill descriptions here take about" in t
+    assert "Keys no host knows" in t and ".claude/skills/odd/SKILL.md:4 allowed_tools (Claude Code knows allowed-tools)" in t
+    assert h.index('id="headline"') < h.index('id="trigger"') < h.index('id="cost"')
+    assert "Not measured" in section(S.render_page(META, full_set(), PASS, {}, set(R.ORDER[:6])), "trigger")
+    assert S.brief_trigger_line(_tr.triggery(full_set())) == (
+        "Will it trigger: 4 skills, 1 agent; 3 places that break a host rule, 2 from guidance; 0 pairs of descriptions that overlap.")
+    assert S.brief_trigger_line(full_set()) is None
+    import trigger
+    one = full_set()
+    texts = {"s/a/SKILL.md": "---\nname: b\ndescription: Sorts notes. Use when asked.\n---\n"}
+    one["04-phrases"]["findings"] += trigger.findings(texts, [{"file": "s/a/SKILL.md", "entry_point": "skill"}])
+    assert "1 skill; 1 place that breaks a host rule, 0 from guidance; 0 pairs" in S.brief_trigger_line(one)
+
+
+def test_do_the_tools_fit_the_job():
+    """Slice 5 (owner, 2026-10-26): after Is it ready for any AI, before Is it safe; one row per kind;
+    the brief counts."""
+    import html as H
+    h = S.render_page(META, _tr.fitty(full_set()), PASS, {}, set(R.ORDER[:6]))
+    t = re.sub(r"<[^>]+>", "", H.unescape(section(h, "fit")))
+    assert "Tools granted and never used" in t and "agents/a.md:4 WebFetch: nothing it reads asks for fetching pages" in t
+    assert "Hooks that run on every prompt or tool call" in t
+    assert h.index('id="ready"') < h.index('id="fit"') < h.index('id="concerns"')
+    assert "Not measured" in section(S.render_page(META, full_set(), PASS, {}, set(R.ORDER[:6])), "fit")
+    assert S.brief_fit_line(_tr.fitty(full_set())) == (
+        "Tools fit: 2 granted and never used, 1 task with no tool, 1 loop with no stated limit; "
+        "1 hook runs on every prompt or tool call.")
+    assert S.brief_fit_line(full_set()) is None
+
+
+def test_is_it_current_and_clean_and_cost_since():
+    """Slice 6 (owner, 2026-10-27): after Do the tools fit the job, before Is it safe; the summary shows
+    no line of the repository's; the cost since the earlier run sits under What it costs."""
+    import html as H
+    h = S.render_page(META, _tr.fitty(_tr.cleany(full_set())), PASS, {}, set(R.ORDER[:6]))
+    t = re.sub(r"<[^>]+>", "", H.unescape(section(h, "clean")))
+    assert "Pinned model IDs 2 (1 distinct)" in t and "SKILL.md:9 a TODO or FIXME marker" in t
+    assert "Before August 2025" not in t
+    assert h.index('id="fit"') < h.index('id="clean"') < h.index('id="concerns"')
+    assert "Not measured" in section(S.render_page(META, full_set(), PASS, {}, set(R.ORDER[:6])), "clean")
+    assert S.brief_clean_line(_tr.cleany(full_set())) == (
+        "Current and clean: 1 unfinished, 1 dated claim, 2 pinned model IDs (1 distinct), 1 older tool name.")
+    ch = {"since": "2026-10-26_abc1234", "cost_line": "cost: every session 1,200 -> 1,320 tokens (+120)"}
+    costed = _tr.costed(full_set())
+    c = H.unescape(section(S.render_page(META, costed, PASS, {}, set(R.ORDER[:6]), None, ch), "cost"))
+    assert "Since run 2026-10-26_abc1234: every session 1,200 -> 1,320 tokens (+120)." in c
+    ch["cost_line"] = "costs not comparable: the earlier run was made before they were counted"
+    assert "Since run" not in section(S.render_page(META, costed, PASS, {}, set(R.ORDER[:6]), None, ch), "cost")

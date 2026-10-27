@@ -56,6 +56,8 @@ The run's record, written last. Read it to know whether to trust the rest.
 
 Source: .../ReposToExamine/backlog | channel: directory | pinned: git b449d9fa975e...
 Walkdown: bb80a98 | optional deps: see 07-limits.md
+Expected context: 32,000 tokens
+Target hosts: none named
 Soft models: label jev (remote, jev-1.13.0); sweep jev (remote, jev-1.13.0)
 
 | Stage | Started | Finished | Output | Result | Validation |

@@ -151,3 +151,39 @@ No new packages without a note to the user.
    Record hits per check and per pattern. Where PHRASES lists a superpowers base
    rate for a row, put the new count beside it; rows marked `n/a` get their first
    measurement.
+
+## What it needs and what ties it to one machine (added 2026-10-26)
+
+`needs.py` (`specs/needs.SPEC.md`; plan for builders, slice 2): `need.command`, `need.package`,
+and the `port.*` checks, from the texts this stage reads and stage 1's inventory (hooks, MCP
+servers, file modes, and the line endings git committed). Built in stage 1 first and moved here
+the same day: stage 1 must not import this stage's audience rules, which every later stage
+shares. The programs it recognizes are in `tools.yaml`.
+
+## Is it ready for any AI? (added 2026-10-26)
+
+`hosts.py` (`specs/hosts.SPEC.md`; plan for builders, slice 3): `host.coverage` (one per host, the
+files here each reads), `host.drift` (two hosts' instruction files in one folder that differ), and
+`host.feature` (one host's feature in text meant for any AI, and hook files), from the texts this
+stage reads, stage 1's inventory, and stage 1's hook findings. What each host reads is in
+`hosts.yaml`, dated, with its sources.
+
+## Will it trigger? (added 2026-10-26)
+
+`trigger.py` (`specs/trigger.SPEC.md`; plan for builders, slice 4): `trig.*` for each skill,
+command, and subagent: how it triggers, frontmatter its host does not read, name and description
+rules, published guidance, keys, values, and tool names no host takes, descriptions that overlap,
+and the listing they make together. The rules are in `trigger.yaml`, dated, with their sources.
+
+## What the text asks tools to do (added 2026-10-26)
+
+`asks.py` (`specs/asks.SPEC.md`; plan for builders, slice 5): `ask.tools` (per file the AI reads,
+the lines asking for each family of work), `ask.named` (tools and granted MCP servers named
+outright), and `fit.loop` (loops with no stated limit). Stage 5's `fit.py` compares them with each
+entry's grants. The cues are in `asks.yaml`.
+
+## Is it current and clean? (added 2026-10-27)
+
+`clean.py` (`specs/clean.SPEC.md`; plan for builders, slice 6): `clean.unfinished`, `clean.dated`,
+`clean.model`, `clean.older`, and `clean.checked`, as facts with locations in every file but
+those for people and test data. The patterns are in `clean.yaml`.

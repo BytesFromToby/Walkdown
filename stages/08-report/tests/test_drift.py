@@ -214,3 +214,33 @@ def test_same_commit_with_files_changed_on_disk_is_said_so(tmp_path):
     md = s["report"].read_text(encoding="utf-8")
     assert "every difference comes from Walkdown" not in md
     assert "differences in other files come from Walkdown" in md
+
+
+def costs(session, largest, unused_tokens, project=None, file="skills/a/SKILL.md"):
+    """Slice 1's rows as stage 5 writes them (slice 6, 2026-10-27)."""
+    rows = [{"check": "cap.context", "file": None, "line": None, "tier": "session", "tokens": session},
+            {"check": "cap.context", "file": file, "line": None, "tier": "skill-max", "tokens": largest},
+            {"check": "cap.ship", "file": f"notes/{SECRET}.md", "line": None, "group": "unused", "tokens": unused_tokens}]
+    if project is not None:
+        rows.append({"check": "cap.context", "file": None, "line": None, "tier": "project", "tokens": project})
+    return rows
+
+
+def test_cost_since_the_earlier_run(tmp_path):
+    """Slice 6: before -> now for each of slice 1's numbers, counts only; a run made before them is
+    not comparable; the same numbers are no difference."""
+    old = drift.load(run(tmp_path, "a", OLD1, s5=costs(1200, 6810, 100)))
+    new = drift.load(run(tmp_path, "b", OLD1, s5=costs(1320, 6500, 100, project=400)))
+    c = drift.compare(old, new)
+    assert drift.cost_changed(c) and drift.differs(c)
+    line = drift.cost_line(c)
+    assert line == ("cost: every session 1,200 -> 1,320 tokens (+120); every session in this folder none -> 400 tokens; "
+                    "largest at its fullest 6,810 -> 6,500 tokens (-310)")
+    assert line in drift.summary_lines(c) and SECRET not in " ".join(drift.summary_lines(c))
+    same = drift.compare(old, drift.load(run(tmp_path, "c", OLD1, s5=costs(1200, 6810, 100))))
+    assert not drift.cost_changed(same) and drift.cost_line(same) is None
+    before = drift.compare(drift.load(run(tmp_path, "d", OLD1)), new)
+    assert drift.cost_line(before).startswith("costs not comparable")
+    assert drift.cost_line(drift.compare(new, drift.load(run(tmp_path, "e", OLD1)))) is None
+    report = drift.render(tmp_path / "a", tmp_path / "b", old, new, c)
+    assert "## What it costs (estimated tokens)" in report and "| Every session | 1,200 | 1,320 | +120 |" in report

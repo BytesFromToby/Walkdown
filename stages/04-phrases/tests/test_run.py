@@ -134,7 +134,14 @@ def test_zero_findings(tmp_path):
     (tmp_path / "in").mkdir()
     (tmp_path / "in" / "a.md").write_text("nothing here\n", encoding="utf-8")
     doc, _ = report(tmp_path / "in", "--patterns", table(tmp_path))
-    assert doc["findings"] == []
+    # host.coverage is one fact per host (slice 3) and trig.listing one row (slice 4), in every run
+    facts = ("host.coverage", "trig.listing", "clean.checked")  # and clean.checked (slice 6)
+    assert [f for f in doc["findings"] if f["check"] not in facts] == []
+    cov = [f for f in doc["findings"] if f["check"] == "host.coverage"]
+    assert {f["host"] for f in cov} == {"claude", "codex", "gemini", "cursor", "copilot", "windsurf", "agents-md"}
+    assert all(not f["instructions"] and f["skills"] == 0 for f in cov)
+    [lst] = [f for f in doc["findings"] if f["check"] == "trig.listing"]
+    assert lst["skills"] == lst["agents"] == lst["listing_chars"] == 0
 
 
 def test_bad_patterns_exit_2(tmp_path):
@@ -174,7 +181,11 @@ def test_part2_order_and_part1_unchanged(tmp_path):
              "term.safety"]
     first_p2 = next(i for i, c in enumerate(checks) if not c.startswith("phrase."))
     assert all(c.startswith("phrase.") for c in checks[:first_p2])
-    p2 = checks[first_p2:]
+    p2 = [c for c in checks[first_p2:] if not c.startswith(("need.", "port.", "host.", "trig.", "ask.", "fit.", "clean."))]
+    # what it needs, what ties it to one machine (slice 2), and which hosts it is ready for
+    # (slice 3), whether it triggers (slice 4), and what it asks tools to do (slice 5) come last
+    tail = checks[first_p2 + len(p2):]
+    assert all(c.startswith(("need.", "port.", "host.", "trig.", "ask.", "fit.", "clean.")) for c in tail)
     assert all(c in order for c in p2)
     assert p2 == sorted(p2, key=order.index)
     sys.path.insert(0, str(RUN.parent))

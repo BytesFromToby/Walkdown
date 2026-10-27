@@ -1,0 +1,38 @@
+# Do the tools fit the job? (plan for builders, slice 5, owner 2026-10-26). Which tools do each
+# kind of work, which are reported when unused, and what each hook event costs. Each fact names
+# its source and the date it was checked; a host that changes is a data edit here.
+
+checked: 2026-10-26
+sources:
+  subagents: https://code.claude.com/docs/en/sub-agents
+  skills: https://code.claude.com/docs/en/skills
+  hooks: https://code.claude.com/docs/en/hooks
+
+# Families of work and the tools that do them. Only these are reported as granted and never used
+# (owner, 2026-10-26: reading tools, Read, Grep, Glob, never are); MCP tools too.
+families:
+  shell: [Bash, PowerShell, Monitor]
+  write: [Write, Edit, NotebookEdit, MultiEdit]
+  web: [WebFetch]
+  search: [WebSearch]
+  agent: [Agent, Task]
+
+# Claude Code's hook events, exact names (hooks page). Another host's hook (slice 3's hook_host),
+# or another spelling, gets how often it runs by name and no claim about its output.
+claude_events: [SessionStart, Setup, UserPromptSubmit, UserPromptExpansion, PreToolUse, PermissionRequest,
+                PermissionDenied, PostToolUse, PostToolUseFailure, PostToolBatch, Notification, MessageDisplay,
+                SubagentStart, SubagentStop, TaskCreated, TaskCompleted, Stop, StopFailure, TeammateIdle,
+                InstructionsLoaded, ConfigChange, CwdChanged, DirectoryAdded, FileChanged, WorktreeCreate,
+                WorktreeRemove, PreCompact, PostCompact, PreModelSwitch, PostModelSwitch, Elicitation,
+                ElicitationResult, SessionEnd]
+
+# How often a hook runs, by event (any letter case). A tool event's matcher of "*", "", or none matches every call.
+how_often:
+  every-prompt: [UserPromptSubmit, UserPromptExpansion]
+  every-tool-call: [PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest]
+  every-turn: [Stop, PostToolBatch, StopFailure]
+  once-a-session: [SessionStart, SessionEnd, Setup]
+tool_events: [PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest]
+# Plain stdout becomes context on these; additionalContext on more (not knowable statically).
+stdout_context: [UserPromptSubmit, UserPromptExpansion, SessionStart, PostModelSwitch]
+output_cap_chars: 10000      # over it, a file and a 2,000-character preview

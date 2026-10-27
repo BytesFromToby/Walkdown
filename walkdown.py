@@ -245,9 +245,22 @@ def brief(run_dir: Path) -> str:
     model = [it for it in every if it["stage"] == 6]
     by_model = collections.Counter(own_words(it["title"]) for it in model)
     pin = (R.fnd(reports, "01-inventory", "inv.pin") or [{}])[0]
+    log = (run_dir / "LOG.md").read_text(encoding="utf-8")
+    ctx = R.context_of(log) or R.DEFAULT_CONTEXT
+    cost = summary_html.brief_cost_lines(reports, ctx)  # slice 1: counts only (2026-10-26)
+    need = summary_html.brief_needs_line(reports)  # slice 2
+    cost += [need] if need else []
+    ready = summary_html.brief_ready_line(reports, R.hosts_of(log))  # slice 3
+    cost += [ready] if ready else []
+    fits = summary_html.brief_fit_line(reports)  # slice 5
+    cost += [fits] if fits else []
+    cleans = summary_html.brief_clean_line(reports)  # slice 6
+    cost += [cleans] if cleans else []
+    trig = summary_html.brief_trigger_line(reports)  # slice 4: first, as on the page
+    cost = ([trig] if trig else []) + cost
     L = [f"Walkdown brief: {run_dir.parent.name}",
          f"Files examined: {pin.get('files', '?')}. Pinned: {pin.get('hash_kind', '?')} "
-         f"{str(pin.get('hash', '?'))[:12]}.", "",
+         f"{str(pin.get('hash', '?'))[:12]}.", *cost, "",
          "What it can do:"]
     for k, name in R.LEG_NAMES.items():
         L.append(f"  [{'x' if legs.get(k) else ' '}] {name}")
@@ -340,6 +353,9 @@ def main(argv=None) -> int:
     ap.add_argument("--both", action="store_true")
     ap.add_argument("--revalidate", action="store_true",
                     help="re-run the fixture validation even if a stamp for this code is cached")
+    ap.add_argument("--context", help="expected context in tokens, such as 32k, 200k, or 8192 (default 32k)")
+    ap.add_argument("--hosts", help="the AI hosts you build for, such as claude,codex,cursor; the report "
+                                    "lists what each is missing")
     a = ap.parse_args(argv)
 
     try:
@@ -373,6 +389,10 @@ def main(argv=None) -> int:
         cmd.append("--both")
     if a.revalidate:
         cmd.append("--revalidate")
+    if a.context:
+        cmd += ["--context", a.context]
+    if a.hosts:
+        cmd += ["--hosts", a.hosts]
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, text=True, encoding="utf-8", cwd=ROOT)
     lines = [x for x in proc.stdout.splitlines() if x.strip()]
     run_dir = Path(lines[-1]) if lines else None

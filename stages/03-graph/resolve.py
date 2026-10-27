@@ -16,6 +16,7 @@ class Result:
     ambiguous: bool = False
     case_mismatch: bool = False
     partial: bool = False  # a path that is the end of a longer one (spec, 3b)
+    by_name: bool = False  # a bare name found only by its base name elsewhere (slice 5, 2026-10-27)
     pattern: str | None = None
 
 
@@ -155,7 +156,7 @@ class Resolver:
                 hits = table.get(key, [])
                 if hits:
                     return Result("file", sorted(hits), ambiguous=len(hits) > 1,
-                                  case_mismatch=not exact)
+                                  case_mismatch=not exact, by_name=True)
             if "/" in clean and not want_dir and not path.startswith(("./", "../")) and root_try:
                 tail = "/" + (root_try if exact else root_try.lower())
                 hits = [n for n in self.nodes if (n if exact else n.lower()).endswith(tail)]

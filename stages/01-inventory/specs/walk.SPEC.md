@@ -17,6 +17,9 @@ Lists what ships in an input folder and pins it. Stage 1, check `inv.pin`.
   - `target`: the link target string for a symlink, else None.
   - `exec_bit`: bool, or None when unknown.
   - `exec_source`: `git-index`, `stat`, or `stat-windows`.
+  - `eol_committed` (git mode only, 2026-10-26): the line endings as committed, from `git ls-files
+    --eol` (`lf`, `crlf`, `mixed`, `none`, `-text`), never as this checkout wrote them: Git for
+    Windows can write CRLF for a file committed with LF. Stage 1 copies it onto `inv.file`.
 - `hash`, `hash_kind` (`git` or `sha256`).
 - `channel`: `git` or `directory`.
 - `untracked`: in git mode, the number of files present in the work tree but

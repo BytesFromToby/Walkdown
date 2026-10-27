@@ -123,23 +123,23 @@
         }
       ],
       "fixtures": {
-        "LICENSE": "1ae9fd2d16a7c0764d747df54f03375c616d38a74aacf55f683c7362b9b65194",
-        "README.md": "3647739b7707b28050286c3bf1194c79799cd6894ec0d00d2a4f8fd364f69a9b",
-        "SKILL.md": "bf2126cd0c2080a98465e7500fd814bc07179094f259d1399f91719d837a8638",
         "extra/scan-only.md": "0b7b9b67e45305d36a3b93627c01dc69f7062dd8ac2d53804a7b481442986568",
+        "LICENSE": "1ae9fd2d16a7c0764d747df54f03375c616d38a74aacf55f683c7362b9b65194",
         "orphan-staged.md": "a268ad0a0333040c270b450bf22b886973af9194238fa5545254d53a0b2f5de4",
+        "README.md": "3647739b7707b28050286c3bf1194c79799cd6894ec0d00d2a4f8fd364f69a9b",
         "references/details.md": "d3e6f32b599ca13a8c4b293aff6ddcaf4909bb34b3414e6aa74c5e34b99c2116",
-        "references/helpers.md": "9e39c2670e9f897214aee6f72f6b36658353ed80b5f1b34ca84fa01c0c1f8cd8"
+        "references/helpers.md": "9e39c2670e9f897214aee6f72f6b36658353ed80b5f1b34ca84fa01c0c1f8cd8",
+        "SKILL.md": "bf2126cd0c2080a98465e7500fd814bc07179094f259d1399f91719d837a8638"
       }
     },
     {
       "root": "plugin-repo",
       "fixtures": {
         ".claude-plugin/plugin.json": "5523cce2cbf39f832456f6c1a91f99172e21e4838291018819a89f149e77eeea",
-        "README.md": "3ef311b396701f3da5b10d6c97a90d2fb3e565f458716d4af9113c5d933c86bc",
         "agents/x.md": "b9a356f9f3102371257a27bd58dda87c29e561704ae86eada4b8c9f856ca5d29",
         "agents/y.md": "aa9855a248489bba099db6944c742b094f2c59d79a9d5567188e277c9d49e3a6",
         "commands/z.md": "049c74e8b17122e60098f4318e9543b76423d83e35d20ac9a534711676a3a0b4",
+        "README.md": "3ef311b396701f3da5b10d6c97a90d2fb3e565f458716d4af9113c5d933c86bc",
         "skills/a/SKILL.md": "0b1bf5f130ae08d5e15939d6bfe78d58d7ae54cfbad8ccea097c828e9e0d20d5",
         "skills/b/SKILL.md": "ace35bed87db225d38e44657b0bcf4621a73355594b4d4c4002707958b8df600",
         "skills/c/SKILL.md": "818768a91d72496cf78295c2c308bef1b6b190c89aa3e2bc43d0b4df1bea24d6"
@@ -201,6 +201,30 @@
         }
       ],
       "deferred": []
+    },
+    {
+      "root": "case-repo",
+      "deferred": [],
+      "fixtures": {
+        "references/guide.md": "5fb9d1650b8f5a5ac21fdb47bca7db14934a02bec8fdb9292c725b8824a565ba",
+        "SKILL.md": "99bb25faa3ff00c9451acdf42c1df700565eaabebe400be5816d019f4d8da626"
+      },
+      "note": "Slice 2 (2026-10-26): a reference whose letter case matches no file exactly.",
+      "expect": [
+        {
+          "id": "case-guide",
+          "polarity": "gate",
+          "check": "graph.case",
+          "file": "SKILL.md",
+          "line": 6,
+          "match": {
+            "to": {
+              "eq": "references/guide.md"
+            }
+          },
+          "note": "Windows and macOS ignore case; Linux does not."
+        }
+      ]
     }
   ]
 }

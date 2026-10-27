@@ -10,10 +10,14 @@ import re
 import sys
 from pathlib import Path
 
+import yaml
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "04-phrases"))
 import baserates  # noqa: E402
 from audience import audience, is_test_data  # noqa: E402
+from hosts import HOSTS as HOST_TABLE  # noqa: E402
+from trigger import T as TRIGGER_TABLE  # noqa: E402
 
 HEADINGS = {
     "01-inventory": "What ships",
@@ -272,6 +276,739 @@ def lookalike_note(h: dict) -> str:
         return ""
     puny = f", {h['punycode']}" if h.get("punycode") else ""
     return f" (look-alike letters{puny}; imitates {h['lookalike_of']})"
+
+
+# What it costs and what ships (plan for builders, slice 1, owner 2026-10-26). The builder's
+# expected context, with Claude's beside it; tokens are stage 5's estimate from size.
+DEFAULT_CONTEXT = 32_000
+CLAUDE_CONTEXT = 200_000
+TOKEN_NOTE = ("Tokens are estimated from size: about 4 bytes of English text per token; text in "
+              "other scripts runs high.")
+SHIP_GROUPS = {
+    "entry": "Skills, agents, and commands",
+    "project": "Project instructions and what they import",
+    "on-demand": "Named by a file the AI loads",
+    "maybe": "Reached only by a wildcard or a folder read",
+    "run": "Scripts it runs",
+    "config": "Configs the host reads",
+    "people": "Written for people",
+    "build": "Build material: tests, fixtures, CI, tooling",
+    "unused": "Nothing points to it",
+}
+SHIP_BANDS = (("Loads into the AI", ("entry", "project", "on-demand", "maybe")),
+              ("Used another way", ("run", "config")),
+              ("Not used at run time", ("people", "build", "unused")))
+CONTEXT_LINE = re.compile(r"^Expected context: ([\d,]+) tokens", re.M)
+
+
+def parse_context(s) -> int:
+    """`32k`, `200k`, `8192`, `8k`, `1m` (k is 1,000): a positive token count, else ValueError."""
+    t = str(s).strip().lower().replace(",", "").replace("_", "")
+    mult = {"k": 1_000, "m": 1_000_000}.get(t[-1:], 1)
+    num = float(t[:-1] if mult > 1 else t)
+    if not num > 0:
+        raise ValueError(f"not a token count: {s}")
+    return int(num * mult)
+
+
+def context_of(log_text: str) -> int | None:
+    """The expected context a run was made with, from its LOG.md, or None."""
+    m = CONTEXT_LINE.search(log_text or "")
+    return int(m.group(1).replace(",", "")) if m else None
+
+
+def cost(r) -> dict:
+    """Stage 5's context tiers: `session`, `project`, the entry with the most at its fullest
+    (`largest`, ties to the first by path) and its tiers, and how many entries there are."""
+    rows = fnd(r, "05-capability", "cap.context")
+    per: dict[str, dict] = {}
+    for x in rows:
+        if x.get("file"):
+            per.setdefault(x["file"], {})[x["tier"]] = x
+    largest = min(per, key=lambda f: (-per[f].get("skill-max", {}).get("tokens", 0), f), default=None)
+    return {"session": next((x for x in rows if x["tier"] == "session"), None),
+            "project": next((x for x in rows if x["tier"] == "project"), None),
+            "largest": largest, "tiers": per.get(largest, {}), "entries": len(per)}
+
+
+def what(kind) -> str:
+    return {"agent": "agent", "command": "command"}.get(kind, "skill")
+
+
+def context_rows(r) -> list[tuple[str, int]]:
+    """(label, tokens) for the expected-context table, in order; empty with no stage 5 tiers."""
+    c, out = cost(r), []
+    if c["session"] is not None:
+        out.append(("Every session, once installed (descriptions, hooks)", c["session"]["tokens"]))
+    if c["project"]:
+        out.append(("Every session in this folder (project instructions)", c["project"]["tokens"]))
+    t = c["tiers"]
+    if t:
+        w = what(t["skill-runs"].get("kind"))
+        out.append((f"When the largest {w} runs", t["skill-runs"]["tokens"]))
+        out.append((f"That {w} and everything it names", t["skill-full"]["tokens"]))
+        if t["skill-max"]["tokens"] > t["skill-full"]["tokens"]:
+            out.append(("With its wildcard and folder loads", t["skill-max"]["tokens"]))
+    return out
+
+
+def pct(tok: int, ctx: int) -> str:
+    p = 100 * tok / ctx
+    return "under 1%" if 0 < p < 1 else f"{round(p):,}%"
+
+
+def unknown_line(r) -> str | None:
+    """What only running shows, counted: hooks with no estimate, MCP servers' tool lists."""
+    s = cost(r)["session"] or {}
+    k = collections.Counter(u.get("what") for u in s.get("unknown") or [])
+    parts = ([n(k["hook"], "hook with no size estimate", "hooks with no size estimate")] if k["hook"] else []) \
+        + ([n(k["mcp"], "MCP server's tool list", "MCP servers' tool lists")] if k["mcp"] else [])
+    return ("Not counted, because only running shows them: " + " and ".join(parts) + ".") if parts else None
+
+
+def ship_bands(r) -> list[dict]:
+    """Per band: `name`, `groups` ({group: {files, bytes, tokens}}), and the band's totals."""
+    by: dict[str, dict] = {}
+    for x in fnd(r, "05-capability", "cap.ship"):
+        g = by.setdefault(x["group"], {"files": 0, "bytes": 0, "tokens": 0})
+        g["files"] += 1
+        g["bytes"] += x.get("bytes") or 0
+        g["tokens"] += x.get("tokens") or 0
+    out = []
+    for name, groups in SHIP_BANDS:
+        mine = {g: by[g] for g in groups if g in by}
+        out.append({"name": name, "groups": mine, "files": sum(v["files"] for v in mine.values()),
+                    "bytes": sum(v["bytes"] for v in mine.values()),
+                    "tokens": sum(v["tokens"] for v in mine.values())})
+    return out
+
+
+def left_out(r) -> dict:
+    """What leaving out the files nothing points to and the build material would save."""
+    rows = [x for x in fnd(r, "05-capability", "cap.ship") if x["group"] in ("unused", "build")]
+    return {"unused": sum(1 for x in rows if x["group"] == "unused"),
+            "build": sum(1 for x in rows if x["group"] == "build"),
+            "bytes": sum(x.get("bytes") or 0 for x in rows),
+            "tokens": sum(x.get("tokens") or 0 for x in rows)}
+
+
+def kb(b: int) -> str:
+    if b < 1024:
+        return f"{b:,} bytes"
+    return f"{b / 1024:,.1f} KB" if b < 1024 * 1024 else f"{b / 1024 / 1024:,.1f} MB"
+
+
+def in_sentence(s: str) -> str:
+    """A name inside a sentence: lower case first, unless it starts with an acronym (AI, CI)."""
+    return s if s[1:2].isupper() else s[:1].lower() + s[1:]
+
+
+def ship_lines(r, ctx: int) -> list[str]:
+    """full.md section 5: the context tiers against the expected context, then every file by group."""
+    if not fnd(r, "05-capability", "cap.ship"):
+        return ["No file groups: this run has no stage 3 graph for stage 5 to read."]
+    L = [f"Expected context: {ctx:,} tokens (a line for {CLAUDE_CONTEXT:,} beside it). {TOKEN_NOTE}", ""]
+    L += [f"- {label}: {tok:,} tokens, {pct(tok, ctx)} of {ctx:,}, {pct(tok, CLAUDE_CONTEXT)} of {CLAUDE_CONTEXT:,}"
+          for label, tok in context_rows(r)]
+    c = cost(r)
+    if c["largest"]:
+        L.append(f"- The largest is {code(c['largest'])}, of {n(c['entries'], 'skill, agent, or command', 'skills, agents, or commands')}.")
+    u = unknown_line(r)
+    if u:
+        L.append(f"- {u}")
+    L += ["", "Every skill, agent, or command, by tier (tokens):", ""]
+    per: dict[str, dict] = {}
+    for x in fnd(r, "05-capability", "cap.context"):
+        if x.get("file"):
+            per.setdefault(x["file"], {})[x["tier"]] = x
+    L += [f"- {loc({'file': f})}: runs {t['skill-runs']['tokens']:,}, with what it names {t['skill-full']['tokens']:,}, "
+          f"with wildcard loads {t['skill-max']['tokens']:,}"
+          + (f"; names {n(len(t['skill-max']['outside']), 'file')} outside its folder, not counted: "
+             + ", ".join(code(x) for x in t['skill-max']['outside']) if t['skill-max'].get('outside') else "")
+          for f, t in sorted(per.items())] or ["None."]
+    for band in ship_bands(r):
+        L += ["", f"#### {band['name']}: {n(band['files'], 'file')}, {kb(band['bytes'])}, {band['tokens']:,} tokens", ""]
+        rows = sorted((x for x in fnd(r, "05-capability", "cap.ship") if x["group"] in dict(SHIP_BANDS)[band["name"]]),
+                      key=lambda x: (dict(SHIP_BANDS)[band["name"]].index(x["group"]), x["file"]))
+        L += [f"- {code(x['file'])}: {in_sentence(SHIP_GROUPS[x['group']])}, {kb(x.get('bytes') or 0)}, "
+              + (f"{x['tokens']:,} tokens" if x.get("tokens") is not None else "not text")
+              + (f", reached from {code(x['reached_by'])}" if x.get("reached_by") else "") for x in rows] or ["None."]
+    return L
+
+
+# Will it run on someone else's machine? (plan for builders, slice 2, owner 2026-10-26): stage 4's
+# need and port findings, and stage 3's references that match only when case is ignored.
+PORT_KINDS = (
+    ("port.path", "Personal paths", "another machine has another user"),
+    ("port.crlf", "Shell scripts with Windows line endings", "bash fails on them"),
+    ("port.os", "Scripts or commands for one system only", "the other systems do not have them"),
+    ("port.backslash", "References written with backslashes", "macOS and Linux read the backslash as part of the name"),
+    ("port.exec", "Scripts run directly without the executable bit", "macOS and Linux refuse to run them"),
+    ("port.python", "Runs python, not python3", "macOS and many Linux systems have only python3"),
+    ("graph.case", "References that match only when case is ignored", "Windows and macOS ignore case; Linux does not"),
+)
+
+
+def needs_of(r) -> dict:
+    """{commands, packages, undeclared (names), port: [(check, name, why, places)] with places},
+    and `measured`: whether stage 4 ran."""
+    cmds = fnd(r, "04-phrases", "need.command")
+    pkgs = fnd(r, "04-phrases", "need.package")
+    port = []
+    for check, name, why in PORT_KINDS:
+        stage = "03-graph" if check == "graph.case" else "04-phrases"
+        places = sorted(fnd(r, stage, check), key=lambda f: (f.get("file") or "", f.get("line") or 0))
+        if check == "graph.case":  # only where it runs or the AI reads it, as for personal paths
+            places = [f for f in places if not is_test_data(f.get("file")) and audience(f.get("file") or "") != "human"]
+        if places:
+            port.append((check, name, why, places))
+    return {"commands": cmds, "packages": pkgs, "port": port, "measured": "04-phrases" in r,
+            "undeclared": [c["command"] for c in cmds if not c.get("declared")]
+            + [p["package"] for p in pkgs if not p.get("declared")]}
+
+
+def where(f) -> str:
+    return f"{f.get('file')}:{f['line']}" if f.get("line") else str(f.get("file"))
+
+
+def needs_lines(r) -> list[str]:
+    """full.md section 1: what it needs, then what ties it to one machine; every finding."""
+    n_ = needs_of(r)
+    if not n_["measured"]:
+        return ["### What it needs", "", "Not measured: stage 4 did not run.", ""]
+    dec = lambda f: ("declared in " + ", ".join(f"{d['file']} ({d['how']})" for d in f["declared_in"])  # noqa: E731
+                     if f.get("declared") else "not declared")
+    L = ["### What it needs", "",
+         "Programs are the ones Walkdown recognizes (`stages/04-phrases/tools.yaml`); declared means named "
+         "in a dependency file, a skill's compatibility field, or an install line.", ""]
+    L += [f"- {code(c['command'])}: {dec(c)}; used at " + ", ".join(
+          f"{loc(u)} ({u['how']})" for u in c["uses"]) for c in n_["commands"]] or ["- No program Walkdown recognizes."]
+    L += [f"- {code(p['package'])} ({p['ecosystem']}): {dec(p)}; imported in "
+          + ", ".join(code(x) for x in p["files"]) for p in n_["packages"]] or ["- No package imported."]
+    L += ["", "### What ties it to one machine", ""]
+    for check, name, why, places in n_["port"]:
+        L.append(f"{name} ({len(places)}): {why}.")
+        L += [f"- {loc(f)}" + (f": {f['why']}" if f.get("why") else "")
+              + (f": {code(f['written'])}" if f.get("written") else "") for f in places]
+        L.append("")
+    if not n_["port"]:
+        L += ["Nothing found that ties it to one machine.", ""]
+    return L
+
+
+# ---------------------------------------------------------------- is it ready for any AI (slice 3)
+
+HOST_KEYS = tuple(HOST_TABLE["hosts"])
+HOSTS_LINE = re.compile(r"^Target hosts: (.+)$", re.M)
+NO_HOSTS = "none named"
+FEATURE_KINDS = (
+    ("frontmatter", "Skill frontmatter keys outside the Agent Skills set",
+     "claude.ai and the Skills API refuse the skill; other hosts ignore the key"),
+    ("claude-words", "Claude Code's own words", "other hosts pass them to the AI as written"),
+    ("claude-tool", "Claude Code's tool names", "other hosts have no tool by that name"),
+    ("import", "@ imports in AGENTS.md", "AGENTS.md has no imports, so other hosts see the line as written"),
+    ("hooks", "Hook files", "each runs on its own host only"),
+)
+
+
+def parse_hosts(s) -> list[str]:
+    """`claude,codex`: the host names, in the order given, each once; ValueError on an unknown or
+    empty list."""
+    out = []
+    for x in str(s).split(","):
+        k = x.strip().lower()
+        if k not in HOST_KEYS:
+            raise ValueError(f"not a host: {x.strip()!r}")
+        if k not in out:
+            out.append(k)
+    return out
+
+
+def hosts_of(log_text: str) -> list[str]:
+    """The target hosts a run was made with, from its LOG.md ([] when none were named)."""
+    m = HOSTS_LINE.search(log_text or "")
+    if not m or m.group(1).strip() == NO_HOSTS:
+        return []
+    return [k for k in (x.strip() for x in m.group(1).split(",")) if k in HOST_KEYS]
+
+
+def reads(host: str) -> str:
+    """What a host reads, from hosts.yaml, for a host with none of its files here."""
+    h = HOST_TABLE["hosts"][host]
+    inst = [x for x in h["instructions"] if not x.startswith("**/")][:3]
+    s = ", ".join(inst)
+    if h.get("skills"):
+        s += "; skills in " + ", ".join(h["skills"])
+    return s
+
+
+def _some(names, cap=3) -> str:
+    return ", ".join(names[:cap]) + (f", and {len(names) - cap} more" if len(names) > cap else "")
+
+
+def ready_of(r) -> dict:
+    """{measured, coverage (hosts.yaml order), drift, differ, features [(kind, name, why, places)],
+    skills (every SKILL.md outside test data), loose (those no host reads where they sit)}."""
+    cov = fnd(r, "04-phrases", "host.coverage")
+    drift = fnd(r, "04-phrases", "host.drift")
+    feats = fnd(r, "04-phrases", "host.feature")
+    skills = sorted(f["file"] for f in fnd(r, "01-inventory", "inv.file")
+                    if f["file"].rsplit("/", 1)[-1] == "SKILL.md" and not is_test_data(f["file"]))
+    read = {s for c in cov for s in c.get("skill_files", [])}
+    kinds = []
+    for kind, name, why in FEATURE_KINDS:
+        places = sorted((f for f in feats if f["kind"] == kind), key=lambda f: (f["file"], f.get("line") or 0))
+        if places:
+            kinds.append((kind, name, why, places))
+    return {"measured": "04-phrases" in r and bool(cov), "coverage": cov, "drift": drift,
+            "differ": [d for d in drift if d["relation"] == "differ"], "features": kinds,
+            "skills": skills, "loose": [s for s in skills if s not in read]}
+
+
+def has_files(c) -> bool:
+    return bool(c["instructions"] or c["skills"])
+
+
+def host_line(c) -> str:
+    """One host: the files here it reads, or what it would read."""
+    parts = []
+    if c["instructions"]:
+        parts.append(_some(c["instructions"]))
+    if c["skills"]:
+        parts.append(n(c["skills"], "skill"))
+    if c["mcp"]:
+        parts.append("MCP config " + ", ".join(c["mcp"]))
+    if c["hooks"]:
+        parts.append(n(len(c["hooks"]), "hook file"))
+    if parts:
+        return f"{c['name']}: " + "; ".join(parts) + "."
+    return f"{c['name']}: none of its files (it reads {reads(c['host'])})."
+
+
+def short(c) -> str:
+    """A host's name in a list of hosts."""
+    return HOST_TABLE["hosts"][c["host"]].get("short") or c["name"]
+
+
+def names(xs) -> str:
+    return xs[0] if len(xs) == 1 else ", ".join(xs[:-1]) + " and " + xs[-1]
+
+
+def _read(xs, what) -> str:
+    return f"{names(xs)} {'reads' if len(xs) == 1 else 'read'} {what}"
+
+
+def drift_line(d, cov) -> str:
+    """A pair that differs, and which hosts read one, the other, or both."""
+    s = (f"{d['file']} and {d['other']} differ: {n(d['only_here'], 'line')} only in {d['file']}, "
+         f"{d['only_there']} only in {d['other']}.")
+    a = [short(c) for c in cov if d["file"] in c["instructions"] and d["other"] not in c["instructions"]]
+    b = [short(c) for c in cov if d["other"] in c["instructions"] and d["file"] not in c["instructions"]]
+    both = [short(c) for c in cov if d["file"] in c["instructions"] and d["other"] in c["instructions"]]
+    said = [_read(x, w) for x, w in ((a, d["file"]), (b, d["other"]), (both, "both")) if x]
+    return s + (" " + "; ".join(said) + "." if said else "")
+
+
+TODO_KINDS = {"frontmatter": "skill frontmatter key", "claude-words": "Claude Code word",
+              "claude-tool": "Claude Code tool name", "import": "@ import"}
+
+
+def todo(r, targets) -> list[str]:
+    """For the hosts the builder named (--hosts): per host, a missing instruction file or skill
+    folder, the places written for another host only, and other hosts' hooks; then each pair of
+    copies that differ where the named hosts read different sides."""
+    rd = ready_of(r)
+    cov = {c["host"]: c for c in rd["coverage"]}
+    read_any = any(c["skills"] for c in rd["coverage"])
+    out = []
+    for t in (t for t in targets if t in cov):
+        c, h = cov[t], HOST_TABLE["hosts"][t]
+        items = []
+        if not c["instructions"]:
+            items.append(f"no instruction file it reads ({_some([x for x in h['instructions'] if not x.startswith('**/')])})")
+        if not c["skills"] and read_any:
+            items.append("none of the skills sit where it reads them ("
+                         + (", ".join(h["skills"]) if h.get("skills") else "it reads no skills") + ")")
+        feats = [f for *_, places in rd["features"] for f in places if f["host"] != t and f["kind"] != "hooks"]
+        if feats:
+            per = collections.Counter(f["kind"] for f in feats)
+            items.append(f"{n(len(feats), 'place')} written for Claude Code only ("
+                         + ", ".join(n(v, TODO_KINDS[k]) for k, v in per.items()) + ")")
+        hooks = collections.Counter(f["host"] for *_, places in rd["features"] for f in places
+                                    if f["kind"] == "hooks" and f["host"] != t)
+        for host, k in hooks.items():
+            items.append(f"{n(k, 'hook file')} for {HOST_TABLE['hosts'][host]['name']}, which "
+                         f"{'does' if k == 1 else 'do'} not run on it")
+        out += [f"{c['name']}: {x}." for x in items] or [f"{c['name']}: nothing missing."]
+    for d in rd["differ"]:
+        a = [short(cov[t]) for t in targets if t in cov and d["file"] in cov[t]["instructions"]
+             and d["other"] not in cov[t]["instructions"]]
+        b = [short(cov[t]) for t in targets if t in cov and d["other"] in cov[t]["instructions"]
+             and d["file"] not in cov[t]["instructions"]]
+        if a and b:
+            out.append(f"{_read(a, d['file'])} and {_read(b, d['other'])}, which differ "
+                       f"({n(d['only_here'], 'line')} only in the first, {d['only_there']} only in the second).")
+    return out
+
+
+def ready_lines(r, targets=()) -> list[str]:
+    """full.md section 4: ready for any AI; every finding."""
+    rd = ready_of(r)
+    L = ["### Ready for any AI", ""]
+    if not rd["measured"]:
+        return L + ["Not measured: this run has no host findings (stage 4 did not run, or the run was "
+                    "made before they were counted).", ""]
+    L += ["What each AI host reads is in `stages/04-phrases/hosts.yaml` (dated, with sources).", ""]
+    if targets:
+        L += ["For the hosts named (" + ", ".join(targets) + "):", ""] + [f"- {x}" for x in todo(r, targets)] + [""]
+    L += [f"- {host_line(c)}" for c in rd["coverage"]] + [""]
+    if rd["loose"]:
+        L += [f"Skills no host reads where they sit ({len(rd['loose'])}); a host reads them once they are "
+              "installed (copied into its skill folder, or added as a plugin):", ""]
+        L += [f"- {code(s)}" for s in rd["loose"]] + [""]
+    L += [f"Copies kept for two hosts ({len(rd['drift'])}):", ""]
+    L += [f"- {code(d['file'])} and {code(d['other'])}: {d['relation']}"
+          + (f", {n(d['only_here'], 'line')} only in the first, {d['only_there']} only in the second"
+             if d["relation"] == "differ" else "") for d in rd["drift"]] or ["- None."]
+    L.append("")
+    for kind, name, why, places in rd["features"]:
+        L += [f"{name} ({len(places)}): {why}.", ""]
+        L += [f"- {loc(f)}: {code(f['what'])}" + (f" ({HOST_TABLE['hosts'][f['host']]['name']})" if kind == "hooks" else "")
+              for f in places] + [""]
+    if not rd["features"]:
+        L += ["No one-host feature found.", ""]
+    return L
+
+
+# ---------------------------------------------------------------- will it trigger (slice 4)
+
+BYTES_PER_TOKEN = yaml.safe_load((Path(__file__).resolve().parent.parent / "05-capability" / "loading.yaml")
+                                 .read_text(encoding="utf-8"))["bytes_per_token"]
+FRONT_TEXT = {"yaml-error": "the YAML does not parse", "not-first-line": "--- is not on the first line",
+              "missing": "no frontmatter (Claude Code uses the first line as its description; the Agent "
+                         "Skills spec requires a name and a description)",
+              "bom": "a byte-order mark comes before ---; the docs do not say whether it is read"}
+RULE_TEXT = {
+    "name-missing": "no name (Claude Code uses the folder's; the Agent Skills spec requires one)",
+    "name-long": "a name over 64 characters (Agent Skills spec)",
+    "name-chars": "a name with characters other than lowercase letters, digits, and single hyphens (Agent Skills spec)",
+    "name-folder": "a name that is not its folder's (Agent Skills spec)",
+    "name-reserved": "\"anthropic\" or \"claude\" in the name (claude.ai uploads and the Skills API refuse it)",
+    "name-xml": "an XML tag in the name (claude.ai uploads and the Skills API refuse it)",
+    "description-missing": "no description (Claude Code uses the first line; the Agent Skills spec requires one)",
+    "description-empty": "an empty description (Agent Skills spec)",
+    "description-long": "a description over 1,024 characters (Agent Skills spec)",
+    "description-xml": "an XML tag in the description (claude.ai uploads and the Skills API refuse it)",
+    "listing-cut": "cut in Claude Code's listing",
+    "agent-name": "a subagent name Claude Code skips (it starts with -, holds :, or is over 256 characters)",
+    "name-duplicate": "a subagent name used twice (names are unique across the agents)",
+}
+GUIDANCE_TEXT = {"no-when": "does not say when to use it", "first-person": "written in the first person",
+                 "second-person": "written in the second person"}
+TRIG_KINDS = (
+    ("not-read", "Frontmatter its host does not read",
+     "Claude Code reads frontmatter only when --- is the first line and the YAML parses; otherwise a "
+     "skill loads with no fields set, so Claude cannot match it, and an agent is skipped"),
+    ("skipped", "Agents Claude Code does not load", "it skips an agent with no name, no description, or a name it refuses"),
+    ("rules", "Names and descriptions that break a rule",
+     "each place says whose rule it is (the Agent Skills spec, claude.ai uploads, or Claude Code)"),
+    ("keys", "Keys no host knows", "Claude Code ignores them without an error"),
+    ("values", "Values Claude Code does not take", "outside the values its docs list"),
+    ("tools", "Tool names no host knows", "tool names are exact strings"),
+    ("overlap", "Descriptions that overlap",
+     "Claude may choose the wrong one (Walkdown's own measure, not a host's: at least half the words of the "
+     "shorter description, and at least 4)"),
+    ("cut", "Descriptions cut in Claude Code's listing", "past 1,536 characters the rest never reaches the AI"),
+    ("guidance", "Published guidance", "a description says what it does and when to use it, in the third person"),
+)
+
+
+def trigger_of(r) -> dict:
+    """{measured, entries, listing, kinds [(kind, name, why, places)]} from stage 4's trig.*."""
+    t = lambda c: fnd(r, "04-phrases", c)  # noqa: E731
+    entries, rules, lst = t("trig.entry"), t("trig.rule"), t("trig.listing")
+    groups = {"not-read": t("trig.frontmatter"),
+              "skipped": [e for e in entries if e["mode"] == "skipped" and e.get("why") != "its frontmatter is not read"],
+              "rules": [f for f in rules if f["rule"] != "listing-cut"],
+              "keys": t("trig.key"), "values": t("trig.value"), "tools": t("trig.tool"),
+              "overlap": t("trig.overlap"), "cut": [f for f in rules if f["rule"] == "listing-cut"],
+              "guidance": t("trig.guidance")}
+    kinds = [(k, name, why, sorted(groups[k], key=lambda f: (f.get("file") or "", f.get("line") or 0)))
+             for k, name, why in TRIG_KINDS if groups[k]]
+    return {"measured": "04-phrases" in r and bool(lst), "entries": entries,
+            "listing": lst[0] if lst else None, "kinds": kinds}
+
+
+def trig_parts(kind, f) -> tuple[str, str]:
+    """One place: (where, what), in words."""
+    if kind == "not-read":
+        return where(f), FRONT_TEXT[f["kind"]] + (f" ({f['error']})" if f.get("error") else "")
+    if kind == "skipped":
+        return f["file"], f["why"]
+    if kind == "rules":
+        return where(f), RULE_TEXT[f["rule"]] + (f" ({f['other']})" if f.get("other") else "")
+    if kind == "keys":
+        return where(f), f["key"] + (f" (Claude Code knows {f['near']})" if f.get("near") else "")
+    if kind == "values":
+        return where(f), f"{f['field']}: {f['value']}"
+    if kind == "tools":
+        if f["kind"] == "older":
+            return where(f), (f"{f['tool']} (an older name; the current one is {f['now']}, and the docs do not "
+                              "say whether the old one still works)")
+        return where(f), f["tool"] + (f" (the tool is {f['near']})" if f.get("near") else "")
+    if kind == "overlap":
+        return f"{f['file']} and {f['other']}", f"{n(f['count'], 'word')} shared ({', '.join(f['shared'])})"
+    if kind == "cut":
+        return where(f), f"{f['chars']:,} characters; the last {f['lost']:,} never reach the AI"
+    return where(f), GUIDANCE_TEXT[f["kind"]]
+
+
+def trig_place(kind, f) -> str:
+    return ": ".join(trig_parts(kind, f))
+
+
+def entries_line(tr) -> str:
+    """How the entries trigger, by kind."""
+    ents = tr["entries"]
+    if not ents:
+        return "No skill, agent, or command here."
+    out = []
+    sk = [e for e in ents if e["kind"] != "agent"]
+    if sk:
+        nsk = sum(1 for e in sk if e["kind"] == "skill")
+        head = " and ".join(x for x in (n(nsk, "skill") if nsk else "", n(len(sk) - nsk, "command") if len(sk) > nsk else "") if x)
+        c = collections.Counter(e["mode"] for e in sk)
+        auto = c["auto"] + c["paths"]
+        bits = [f"{auto} Claude chooses by {'its' if auto == 1 else 'their'} description"
+                + (f" ({c['paths']} only on matching files)" if c["paths"] else "")] if auto else []
+        bits += [f"{c['typed']} only when typed"] if c["typed"] else []
+        bits += [f"{c['unread']} whose frontmatter is not read"] if c["unread"] else []
+        hidden = sum(1 for e in sk if not e.get("menu", True))
+        bits += [f"{hidden} hidden from the / menu"] if hidden else []
+        out.append(f"{head}: {', '.join(bits)}.")
+    ag = [e for e in ents if e["kind"] == "agent"]
+    if ag:
+        off = sum(1 for e in ag if e["mode"] == "skipped")
+        bits = ([f"{len(ag) - off} Claude Code loads"] if len(ag) > off else []) + ([f"{off} it does not"] if off else [])
+        out.append(f"{n(len(ag), 'agent')}: {', '.join(bits)}.")
+    return " ".join(out)
+
+
+def listing_lines(tr, ctx: int) -> list[str]:
+    """The descriptions Claude chooses by, against Claude Code's listing and the agent warning."""
+    lst = tr["listing"]
+    if not lst:
+        return []
+    share = TRIGGER_TABLE["listing_share"]
+    out = []
+    if lst["skills"]:
+        tok = round(lst["listing_chars"] / BYTES_PER_TOKEN)
+        s = (f"Skill descriptions here take about {tok:,} tokens ({lst['listing_chars']:,} characters). Claude "
+             f"Code's listing of every installed skill holds about {share:.0%} of the context: about "
+             f"{round(ctx * share):,} tokens at {ctx:,}, {round(CLAUDE_CONTEXT * share):,} at {CLAUDE_CONTEXT:,}.")
+        if tok > ctx * share:
+            s += (f" At {ctx:,} these alone do not fit, and Claude Code drops the descriptions of the skills "
+                  "used least.")
+        out.append(s)
+    if lst["agents"]:
+        tok = round(lst["agent_chars"] / BYTES_PER_TOKEN)
+        warn = TRIGGER_TABLE["agent_warning_tokens"]
+        out.append(f"Agent descriptions take about {tok:,} tokens"
+                   + (f", over the {warn:,} at which Claude Code warns at startup." if tok > warn else "."))
+    return out
+
+
+def brief_trigger_counts(tr) -> dict:
+    """{host, guidance, overlap}: places that break a host rule, guidance rows, overlapping pairs."""
+    k = {kind: len(p) for kind, _, _, p in tr["kinds"]}
+    host = sum(k.get(x, 0) for x in ("not-read", "skipped", "rules", "keys", "values", "tools", "cut"))
+    return {"host": host, "guidance": k.get("guidance", 0), "overlap": k.get("overlap", 0)}
+
+
+def trigger_lines(r, ctx: int) -> list[str]:
+    """full.md section 4: will it trigger; every entry and finding."""
+    tr = trigger_of(r)
+    L = ["### Will it trigger", ""]
+    if not tr["measured"]:
+        return L + ["Not measured: this run has no trigger findings (stage 4 did not run, or the run was "
+                    "made before they were counted).", ""]
+    L += ["What each host does with a skill's, agent's, or command's frontmatter is in "
+          "`stages/04-phrases/trigger.yaml` (dated, with sources).", "", entries_line(tr), ""]
+    L += listing_lines(tr, ctx) + [""] if tr["listing"] and (tr["listing"]["skills"] or tr["listing"]["agents"]) else []
+    L += [f"- {code(e['file'])} ({e['kind']}): {e['mode']}" + (f", {e['why']}" if e.get("why") else "")
+          + (f"; description {e['description_chars']:,} characters" if e["description_chars"] else "")
+          for e in tr["entries"]]
+    if tr["entries"]:
+        L.append("")
+    for kind, name, why, places in tr["kinds"]:
+        L += [f"{name} ({len(places)}): {why}.", ""] + [f"- {trig_place(kind, f)}" for f in places] + [""]
+    if tr["entries"] and not tr["kinds"]:
+        L += ["Every entry has frontmatter its host reads and follows the rules.", ""]
+    return L
+
+
+# ---------------------------------------------------------------- do the tools fit the job (slice 5)
+
+FAMILY_TEXT = {"shell": "running commands", "write": "writing files", "web": "fetching pages",
+               "search": "searching the web", "agent": "starting subagents", "mcp": "this MCP server's tools"}
+OFTEN_TEXT = {"every-prompt": "on every prompt", "every-tool-call": "on every tool call",
+              "matching-tool-calls": "on every tool call its matcher names", "every-turn": "at the end of every turn",
+              "once-a-session": "once a session", "other": "on its event"}
+FIT_KINDS = (
+    ("unused", "Tools granted and never used",
+     "nothing the entry reads asks for the work they do (a skill's are pre-approved, never required)"),
+    ("missing", "Tasks with no tool to do them", "the words ask for the work and no tool it may use does it"),
+    ("inherits", "Agents that inherit every tool", "no tools list, so every tool and MCP tool"),
+    ("readonly", "Read-only claims the tools contradict", "the words say read-only and a tool or setting beside them can write"),
+    ("loops", "Loops with no stated limit",
+     "no number of tries, give-up, or time on the line or the next (a limit may be stated elsewhere)"),
+    ("hooks", "Hooks that run on every prompt or tool call", "each run takes time, and output that becomes context takes tokens"),
+)
+FREQUENT = ("every-prompt", "every-tool-call", "matching-tool-calls")
+
+
+def fit_of(r) -> dict:
+    """{measured, kinds [(kind, name, why, places)], hooks (every one)} from slice 5's findings."""
+    g4 = lambda c: fnd(r, "04-phrases", c)  # noqa: E731
+    g5 = lambda c: fnd(r, "05-capability", c)  # noqa: E731
+    hooks = g5("fit.hook")
+    groups = {"unused": g5("fit.unused"), "missing": g5("fit.missing"), "inherits": g5("fit.inherits"),
+              "readonly": [x for x in g5("cap.limit") if x.get("status") == "contradicted"],
+              "loops": g4("fit.loop"), "hooks": [h for h in hooks if h["how_often"] in FREQUENT]}
+    kinds = [(k, name, why, sorted(groups[k], key=lambda f: (f.get("file") or "", f.get("line") or 0)))
+             for k, name, why in FIT_KINDS if groups[k]]
+    return {"measured": bool(g5("fit.checked")), "kinds": kinds, "hooks": hooks,
+            "checked": (g5("fit.checked") or [None])[0]}
+
+
+def hook_text(h) -> str:
+    """How often a hook runs and what its output costs, in words."""
+    s = f"{h['event']} runs {OFTEN_TEXT[h['how_often']]}"
+    if h.get("adds_context") and h.get("bytes") is not None:
+        s += f"; its output, about {tokens_of(h['bytes']):,} tokens, becomes context each time"
+    elif h.get("adds_context"):
+        s += "; its output becomes context (size not known)"
+    elif h.get("adds_context") is None:
+        s += " (whether its output becomes context is not known for this host)"
+    if h.get("over_cap"):
+        s += "; over the 10,000-character cap, so Claude sees a 2,000-character preview"
+    return s
+
+
+def tokens_of(size: int) -> int:
+    return -(-size // BYTES_PER_TOKEN) if size else 0
+
+
+def fit_parts(kind, f) -> tuple[str, str]:
+    """One place: (where, what), in words."""
+    if kind == "unused":
+        return where(f), (f"{f['tool']}: " + ("pre-approved, and " if f.get("pre_approved") else "")
+                          + f"nothing it reads asks for {FAMILY_TEXT[f['family']]}")
+    if kind == "missing":
+        return f["file"], f"asks for {FAMILY_TEXT[f['family']]} ({f['asked_at']}); {f['why']}"
+    if kind == "inherits":
+        fams = [FAMILY_TEXT[x] for x in f["families"]]
+        return f["file"], ("its words ask for " + ", ".join(fams) if fams
+                           else "its words ask for none of running commands, writing, fetching, searching, or subagents")
+    if kind == "readonly":
+        return where(f), "says read-only; " + ("its own tools can write" if f.get("owner_tools") else "another route beside it can write")
+    if kind == "loops":
+        return where(f), f.get("quote") or "a loop"
+    return where(f), hook_text(f)
+
+
+def fit_place(kind, f) -> str:
+    return ": ".join(fit_parts(kind, f))
+
+
+def brief_fit_counts(ft) -> dict:
+    k = {kind: len(p) for kind, _, _, p in ft["kinds"]}
+    return {x: k.get(x, 0) for x in ("unused", "missing", "inherits", "readonly", "loops", "hooks")}
+
+
+def fit_lines(r) -> list[str]:
+    """full.md section 5: do the tools fit the job; every finding and every hook."""
+    ft = fit_of(r)
+    L = ["### Do the tools fit the job", ""]
+    if not ft["measured"]:
+        return L + ["Not measured: this run has no tool-fit findings (stages 4 and 5 did not run, or the run "
+                    "was made before they were counted).", ""]
+    c = ft["checked"]
+    L += [f"Entries checked: {c['entries']} ({c['with_grants']} with a tools list, {n(c['inheriting'], 'agent')} "
+          "with none). The yardstick is each entry's own words, over what it reads, against its own grants; "
+          "families and hook facts are in `stages/05-capability/fit.yaml`, the cues in "
+          "`stages/04-phrases/asks.yaml`.", ""]
+    for kind, name, why, places in ft["kinds"]:
+        L += [f"{name} ({len(places)}): {why}.", ""] + [f"- {fit_place(kind, f)}" for f in places] + [""]
+    if not ft["kinds"]:
+        L += ["Every tool granted is one the words ask for, and nothing asks for a tool it lacks.", ""]
+    others = [h for h in ft["hooks"] if h["how_often"] not in FREQUENT]
+    if others:
+        L += [f"Other hooks ({len(others)}):", ""] + [f"- {fit_place('hooks', h)}" for h in others] + [""]
+    return L
+
+
+# ---------------------------------------------------------------- is it current and clean (slice 6)
+
+CLEAN_KINDS = (
+    ("unfinished", "Unfinished text", "TODO and FIXME markers, placeholders, and draft notes in what ships"),
+    ("dated", "Dated claims (published guidance)",
+     "text tied to a date becomes wrong; the guidance keeps the current way in the text and old ones in an "
+     "\"old patterns\" section"),
+    ("models", "Pinned model IDs", "an alias (sonnet, opus) follows the provider's recommended version; a full ID stays on one"),
+    ("older", "Older tool names in text", "not in Claude Code's current list; the docs do not say whether they still work"),
+)
+UNFINISHED_WORD = {"todo": "a TODO or FIXME marker", "placeholder": "a placeholder", "draft": "a draft note"}
+WHERE_WORD = {"frontmatter": "frontmatter", "code": "code", "text": "text"}
+
+
+def clean_of(r) -> dict:
+    """{measured, kinds [(kind, name, why, places)], distinct models} from slice 6's findings."""
+    g = lambda c: fnd(r, "04-phrases", c)  # noqa: E731
+    groups = {"unfinished": g("clean.unfinished"), "dated": g("clean.dated"), "models": g("clean.model"),
+              "older": g("clean.older")}
+    kinds = [(k, name, why, sorted(groups[k], key=lambda f: (f.get("file") or "", f.get("line") or 0)))
+             for k, name, why in CLEAN_KINDS if groups[k]]
+    return {"measured": bool(g("clean.checked")), "kinds": kinds,
+            "models": sorted({f["model"].lower() for f in groups["models"]})}
+
+
+def clean_parts(kind, f, quote=False) -> tuple[str, str]:
+    """One place: (where, what); `quote` adds the line (details and full.md, never the summary)."""
+    if kind == "unfinished":
+        return where(f), UNFINISHED_WORD[f["kind"]] + (f": {f['quote']}" if quote else "")
+    if kind == "dated":
+        return where(f), f["quote"] if quote else "a claim tied to a date"
+    if kind == "models":
+        return where(f), f"{f['model']} (in {WHERE_WORD[f['where']]})"
+    return where(f), f"{f['tool']} (the current name is {f['now']})"
+
+
+def clean_place(kind, f, quote=False) -> str:
+    return ": ".join(clean_parts(kind, f, quote))
+
+
+def clean_count(kind, places, models=()) -> str:
+    """A row's count: the models row adds how many distinct IDs."""
+    s = f"{len(places):,}"
+    return s + (f" ({len(models)} distinct)" if kind == "models" and len(models) != len(places) else "")
+
+
+def clean_lines(r) -> list[str]:
+    """full.md section 4: current and clean; every finding with its line."""
+    cl = clean_of(r)
+    L = ["### Current and clean", ""]
+    if not cl["measured"]:
+        return L + ["Not measured: this run has no current-and-clean findings (stage 4 did not run, or the run "
+                    "was made before they were counted).", ""]
+    L += ["Facts with locations: Walkdown never says a date is past, a model retired, or a TODO matters. The "
+          "patterns are in `stages/04-phrases/clean.yaml` (dated, with sources).", ""]
+    for kind, name, why, places in cl["kinds"]:
+        L += [f"{name} ({clean_count(kind, places, cl['models'])}): {why}.", ""]
+        L += [f"- {clean_place(kind, f, quote=True)}" for f in places] + [""]
+    if not cl["kinds"]:
+        L += ["No unfinished text, dated claims, pinned model IDs, or older tool names.", ""]
+    return L
 
 
 def phrase_hits(r):
@@ -896,7 +1633,14 @@ def full(meta, reports, stamps, notes, runs_ok, capability_full=None) -> str:
         st = stamps.get(stage)
         L += ["", f"Validation: {st.text if st else 'not run'}", ""]
         if stage in reports:
-            L += SECTIONS[stage](reports, capability_full)
+            L += (_f5(reports, capability_full, meta.get("context") or DEFAULT_CONTEXT)
+                  if stage == "05-capability" else SECTIONS[stage](reports, capability_full))
+        if stage == "05-capability":  # slice 5, 2026-10-26
+            L += fit_lines(reports)
+        if stage == "04-phrases":  # slices 4 and 3, 2026-10-26
+            L += trigger_lines(reports, meta.get("context") or DEFAULT_CONTEXT)
+            L += ready_lines(reports, meta.get("hosts") or [])
+            L += clean_lines(reports)  # slice 6, 2026-10-27
     recs = recommendations(reports)
     L += ["## Recommendations", "",
           "Conditional on what the skill is for. Unranked, in stage order."
@@ -940,7 +1684,7 @@ def _f1(r, _):
                                 else f"license file, matched by {f['how']}" if f.get("how") else "license file")
                              + (f"; says {code(f.get('stated'))}"
                                 if f.get("stated") and f.get("stated") != f.get("license") else ""))
-    return L
+    return L + [""] + needs_lines(r)  # slice 2, 2026-10-26
 
 
 def _f2(r, _):
@@ -1100,7 +1844,7 @@ def _key(f):
             f.get("mechanism"), f.get("event"))
 
 
-def _f5(r, capability_full):
+def _f5(r, capability_full, ctx=DEFAULT_CONTEXT):
     full_by_key = {_key(f): f for f in (capability_full or {}).get("findings", [])}
     L = ["A map of capability, derived from stages 1 to 4; it reaches no verdict. A Bash grant is "
          "counted as private-data "
@@ -1126,6 +1870,7 @@ def _f5(r, capability_full):
     L += [f"- {loc(i)}: {i.get('mechanism')}{' ' + str(i.get('event')) if i.get('event') else ''}, "
           f"{_bytes(i)}" for i in fnd(r, "05-capability", "cap.injection")]
     L.append("")
+    L += ["### What it costs and what ships", ""] + ship_lines(r, ctx) + [""]  # slice 1, 2026-10-26
     L += _list("Agent and command posture", fnd(r, "05-capability", "cap.posture"),
                lambda p: f"{loc(p)}: {', '.join(p.get('posture', []))}"
                          f"{' (least privilege)' if p.get('least_privilege') else ''}; "
@@ -1172,6 +1917,8 @@ def log(meta, runs, stamps, reports) -> str:
          f"Source: {meta['source']} | channel: {meta.get('channel', 'directory')} | "
          f"pinned: {meta['hash_kind']} {meta['hash']}",
          f"Walkdown: {meta.get('tool', '?')} | optional deps: {meta.get('deps', 'see data/07-limits.md')}",
+         f"Expected context: {meta.get('context') or DEFAULT_CONTEXT:,} tokens",
+         f"Target hosts: {', '.join(meta.get('hosts') or []) or NO_HOSTS}",
          _soft_models(reports), "",
          "| Stage | Started | Finished | Output | Result | Validation |",
          "|---|---|---|---|---|---|"]

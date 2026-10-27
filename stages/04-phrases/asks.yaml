@@ -1,0 +1,49 @@
+# What text the AI reads asks a tool to do, and loops with no stated limit (plan for builders,
+# slice 5, owner 2026-10-26). Patterns are case-insensitive. A rule is a list of patterns that
+# must all match one sentence; the first is the verb, and a verb with a negation shortly before it
+# in its clause does not count ("does not run the tests"). Quoted text ("...") is set aside: a
+# quoted example asks for nothing. Fenced code is left to slice 2's command scan (shell). The
+# yardstick is the text's own words against its own grants. Measured 2026-10-27 on the audited
+# repositories and Walkdown itself (specs/asks.SPEC.md, History).
+
+checked: 2026-10-26
+
+families:
+  shell:  # the verb right before its object: "run/demo command" asks for nothing
+    - ["\\b(run|runs|running|execute|executes|executing|rerun|re-run)\\s+(the\\s+|all\\s+|your\\s+|a\\s+|any\\s+|these\\s+|those\\s+|its\\s+)?(tests?|test suite|build|linters?|scripts?|commands?|checks?|migrations?)\\b"]
+  write:
+    - ["\\b(write|writes|writing|create|creates|creating|save|saves|saving|edit|edits|editing|update|updates|updating|append|appends|appending|delete|deletes|deleting|rename|renames|overwrite|overwrites|modify|modifies|modifying|patch|patches|commit|commits)\\b",
+       "\\b(files?|folders?|director(y|ies)|code|changes|changelog|readme)\\b|`[^`\\s]*[/.][^`\\s]*`|\\b[\\w./-]+\\.(md|py|js|ts|json|ya?ml|toml|txt|sh|html|css|csv)\\b"]
+  web:
+    - ["\\b(fetch|fetches|fetching|download|downloads|downloading|scrape|scrapes|scraping|crawl|crawls|crawling)\\b"]
+    - ["\\b(open|opens|visit|visits|browse|browses)\\b", "https?://|\\b(urls?|web ?pages?|web ?sites?|websites?|links?)\\b"]
+  search:
+    - ["\\b(search|searches|searching|look up|looks up|research)\\b", "\\b(the web|web|online|internet)\\b"]
+    - ["\\bweb ?search\\b"]
+  agent:
+    - ["\\b(spawn|spawns|spawning|dispatch|dispatches|dispatching|delegate|delegates|delegating|launch|launches|launching)\\b",
+       "\\b(sub-?agents?|agents?|workers?)\\b"]
+
+# Tools named outright: `Name`, "the Name tool", or Name( . Counts as using the tool (never as
+# asking for a task, since a line may forbid it).
+named_tools: [Bash, PowerShell, Write, Edit, NotebookEdit, MultiEdit, WebFetch, WebSearch, Agent, Task]
+
+# A verb used as a noun asks for nothing: right after "/" or "-" ("test/run commands"), or after
+# a determiner ("the run command", "an edit"). Measured 2026-10-27 on an audited plugin.
+noun_before: "([/-]|\\b(the|a|an|its|their|your|our|this|that|each)\\s+)$"
+
+# A negation before a verb, in its clause, within a few words.
+not_asking: "\\b(not|never|no|nor|don't|doesn't|didn't|cannot|can't|won't|without|instead of|rather than|avoid|avoids)\\b[^,;.:!?]{0,30}$"
+
+# A loop with no stated limit: a loop pattern on a line, and no limit pattern on that line or the
+# next (owner, 2026-10-26: "no stated limit", never "no limit").
+loops:
+  - "\\b(repeat|repeats|repeating|loop|loops|looping|iterate|iterates|iterating|retry|retries|retrying|keep (going|trying|iterating|working|fixing|looping)|continue|fix|rerun|re-run)\\b[^.]{0,60}\\buntil\\b"
+  - "\\b(do not|don't|never) stop until\\b"
+  # "until" alone is not a loop ("Until the orchestrator passes it ..."); a loop verb comes first
+limits:
+  - "\\b(at most|up to|no more than|maximum|max\\.?|a limit of|limited to|cap of|capped at)\\b"
+  - "\\b\\d+\\s*(times|attempts|tries|rounds|iterations|passes|cycles|loops)\\b"
+  - "\\b(once|twice|one|two|three|four|five|six|seven|eight|nine|ten) (more )?(times|attempts|tries|rounds|iterations|passes|cycles)\\b"
+  - "\\b(give up|gives up|stop after|bail out|escalate|stop and (report|ask))\\b"
+  - "\\b\\d+\\s*(minutes?|seconds?|hours?|mins?)\\b"
