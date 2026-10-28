@@ -4,6 +4,32 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 `python walkdown.py --version`, and recorded in every run's LOG.md with the git commit
 ("+modified" when the code had uncommitted changes).
 
+## 0.3.1 (2026-10-27)
+
+summary.html and details.html are rebuilt to be read at a glance, by someone with no computer
+skills. Both pages now ask the same eight questions, each with a short label and a one-line
+answer: will its skills switch on, how much of the AI's memory it uses, what comes in the
+package, will it work on someone else's computer, will it work with AI tools other than Claude,
+does it ask only for the tools it needs, is it finished and up to date, and is there anything to
+be careful about. There is still no score and no verdict.
+
+- Tokens appear in one place, the memory question, in one table: "Local AI (32k tokens)" and
+  "Claude (200k tokens)" ("Your AI" when you set `--context`).
+- Plain words throughout, from fixed templates; file names only in small notes. What comes in the
+  package is one bar of how the files are used, with the saving if the unused ones were left out.
+- The summary quotes the repository only for hidden text that reads like an instruction, up to 80
+  characters. details.html quotes every place.
+- details.html lists every place by kind, each linked to its card on review.html, and ends with
+  what Walkdown didn't check, naming any check skipped for a missing optional tool.
+- Marking is on review.html only: the Not concerned boxes on details.html are gone, and both other
+  pages say how many places are marked. A marks file saved from those boxes still loads.
+- A place counts once, as review.html counts it, on the pages and in the brief, so the numbers
+  agree across them.
+- A question an older run did not check says "Not measured" (re-rendering an older run draws it
+  in the new design).
+- Not carried to the new pages: Recommendations, the trifecta's place lists, and the file stats
+  (all still in full.md), and Questions before use.
+
 ## 0.3.0 (2026-10-27)
 
 The report is rebuilt for people building skills and agents. summary.html now answers, in order:

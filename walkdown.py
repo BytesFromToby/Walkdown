@@ -267,7 +267,7 @@ def brief(run_dir: Path) -> str:
     L.append(f"  {summary_html.TOGETHER}")
     L.append(f"  Install grants: {', '.join(grants) if grants else 'none'}.")
     rs = summary_html.rows(reports, items)
-    wording = sum(1 for it in items if summary_html.concern(it) is None)
+    wording = summary_html.wording_count(reports, items, rs)
     missing = summary_html.not_run(set(reports))
     res = {s: w for s, w in st.items() if s in reports and w != "not run"}
     L += ["", summary_html.headline(rs, missing, summary_html.failed_checks(res))]

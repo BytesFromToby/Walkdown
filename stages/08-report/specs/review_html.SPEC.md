@@ -82,8 +82,8 @@ carried from an earlier run, and shared with `details.html`, 2026-10-20).
 - Marks are kept in the browser as they are made. The page starts from the run's marks, its own
   or carried; a carried mark says "Your mark from run <name>." under the buttons until the
   reader changes it; the download is `walkdown_marks: 2` with stable keys (`marks.SPEC.md`), and
-  it keeps the marks made on `details.html` (links, files, trifecta and hidden places) as they
-  are.
+  it keeps the marks made on `details.html` before report v3 (links, files, trifecta and hidden
+  places) as they are.
 - Theme tokens for light and dark, phone width.
 
 ## plain.py
@@ -139,3 +139,5 @@ old run) says the pattern no longer exists.
   (C28), passes and Not sure again (C36); wrapped matches on every line.
 - 2026-10-20: owner: marks carry over and are shared with `details.html`. Built the same day
   (`marks.py`, `walkdown_marks: 2`).
+- 2026-10-27 (owner, report v3): the only page that makes marks; `summary.html` and `details.html`
+  count them and link here.

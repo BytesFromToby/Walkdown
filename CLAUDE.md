@@ -28,13 +28,13 @@ makes language / script shift its own signal (CHARTER scope section).
 
 **Alpha, public:** https://github.com/BytesFromToby/Walkdown (released from a separate copy;
 see "Public repo" below). All eight stages run end to end from one command; every stage has
-fixtures, a grader stamp, specs, and tests (855). Stage 6 (model reads) is optional and
+fixtures, a grader stamp, specs, and tests (850). Stage 6 (model reads) is optional and
 experimental. Repositories audited include superpowers, Plumbline, claude-familiar, and backlog,
 plus the self-audit, and several more since 2026-10-16 (named only in their own runs, which stay
 private). Every check the method calls for is built (HTML as a browser draws it was the last,
 2026-10-20). Two optional tools affect results: Tesseract (OCR of images and PDF pages) and
 Playwright with its Chromium (HTML as a browser draws it); gitleaks has a pip fallback.
-Version 0.3.0 (release 21, 2026-10-27).
+Version 0.3.1 (release 22, 2026-10-27).
 
 Where things stand and what is next: `pre-planning/REVIEW-2026-10-03.md` (the latest review:
 fixed items, design items C14 onward, and the ordered plan). The reports and their specs:
@@ -248,10 +248,13 @@ audited repository's author has seen theirs.
    plugin root. The grader honors a skip that names its carrier.
 
 Stage 6 working notes and open decisions: `pre-planning/soft/` (README lists D1 to D5).
-Reports: `summary.html` at the top of a run folder is the builder's one page (will it trigger, what it costs
-against `--context`, what ships, will it run elsewhere, is it ready for any AI (`--hosts`), do the tools fit the job, is it current and clean, is it safe, what it can do; 2026-10-27), `details.html` has every section with a Not concerned box
-on every row, and `review.html` walks the places one at a time for the reader to mark; marks are
-one set and carry over to the next run (2026-10-20; `stages/08-report/specs/REPORTS.md`). Since
+Reports (report v3, 2026-10-27): `summary.html` at the top of a run folder is one page of eight
+questions at a glance, for a reader with no computer skills (will its skills switch on, how much
+of the AI's memory it uses against `--context`, what comes in the package, will it work on someone
+else's computer, with other AI tools (`--hosts`), does it ask only for the tools it needs, is it
+finished, anything to be careful about; `stages/08-report/glance.py`); `details.html` is the same
+eight questions with everything behind them; `review.html` walks the places one at a time and is
+the only page that marks; marks carry over to the next run (`stages/08-report/specs/REPORTS.md`). Since
 2026-10-02 the reports and LOG.md sit at the top and everything else under `data/`
 (`docs/RUN-FOLDER.md`). Re-render with `python stages/08-report/run.py --rerender RepoResults/<repo>/<run>`.
 Public docs: `docs/READING-THE-REPORT.md`, `docs/HOW-IT-WORKS.md`, `docs/RUN-FOLDER.md`.

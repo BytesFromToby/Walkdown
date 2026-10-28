@@ -117,7 +117,7 @@ def test_sending_data_out_reaches_the_summary(tmp_path, run_main):
     assert sending == {8, 9}
     s = html.unescape((d / "summary.html").read_text(encoding="utf-8"))
     assert "found none" not in s
-    assert "Walkdown found security concerns in this repository: 2 places, of 1 kind." in s
+    assert "2 places have steps that read secrets, call out, or share." in s and "2 to look at" in s  # report v3
     assert "Reads secrets, calls out, or shares" in s
     n = html.unescape((next((res / "notes").iterdir()) / "summary.html").read_text(encoding="utf-8"))
     assert "Walkdown found none of the security concerns it looks for." in n
@@ -130,11 +130,11 @@ def test_context_is_kept_and_can_change(tiny_repo, tmp_path, run_main):
                      "--context", "8k"]) == 0
     d = next((res / "tiny").iterdir())
     assert "Expected context: 8,000 tokens" in (d / "LOG.md").read_text(encoding="utf-8")
-    assert "8,000-token context" in (d / "summary.html").read_text(encoding="utf-8")
+    assert "holds about 8,000 tokens at once" in (d / "summary.html").read_text(encoding="utf-8")
     assert run_main(["--rerender", str(d), "--no-validate"]) == 0
-    assert "8,000-token context" in (d / "summary.html").read_text(encoding="utf-8")
+    assert "holds about 8,000 tokens at once" in (d / "summary.html").read_text(encoding="utf-8")
     assert run_main(["--rerender", str(d), "--no-validate", "--context", "200k"]) == 0
-    assert "200,000-token context" in (d / "summary.html").read_text(encoding="utf-8")
+    assert "holds about 200,000 tokens at once" in (d / "summary.html").read_text(encoding="utf-8")
     assert run_main([str(tiny_repo), "--repo", "tiny", "--results", str(res), "--context", "lots"]) == 2
 
 
@@ -145,7 +145,7 @@ def test_hosts_are_kept_and_can_change(tiny_repo, tmp_path, run_main):
                      "--hosts", "codex,cursor"]) == 0
     d = next((res / "tiny").iterdir())
     assert "Target hosts: codex, cursor" in (d / "LOG.md").read_text(encoding="utf-8")
-    assert "For the hosts you named" in (d / "summary.html").read_text(encoding="utf-8")
+    assert "for your tools" in (d / "summary.html").read_text(encoding="utf-8")
     assert run_main(["--rerender", str(d), "--no-validate"]) == 0
     assert "For the hosts named (codex, cursor)" in (d / "full.md").read_text(encoding="utf-8")
     assert run_main(["--rerender", str(d), "--no-validate", "--hosts", "gemini"]) == 0

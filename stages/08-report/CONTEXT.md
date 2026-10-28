@@ -46,7 +46,7 @@ python stages/08-report/run.py <input_dir> --repo <name> [--results <dir>] [--da
   the fixed qualifier.
 - Every count resolves to file:line in the full report.
 - A stage whose validation stamp is not PASS says so on its status line in `full.md` and
-  points to section 7; `details.html` puts a pill on Other details, and `summary.html` names a
+  points to section 7; `details.html` names it under "What Walkdown didn't check", and `summary.html` names a
   step that did not run or failed its fixture check at the bottom of the page, and in the
   headline when it found nothing (owner, 2026-10-25). A check skipped for a missing optional tool
   (INCOMPLETE) stays in `details.html` and `full.md`. A zero from an unvalidated stage is never
@@ -152,3 +152,14 @@ Marks are one model across the pages (`marks.py`): Concerned, Not concerned, Not
 the reader as `marks.json`. Each names its row by a stable key (what was flagged, never the line
 number alone), and a run with no `marks.json` takes the newest earlier run's marks by key. This
 replaces the v1 rule of no carry-over. Specs: `specs/REPORTS.md` and the specs it lists.
+
+## Report v3: glance and know (2026-10-27)
+
+The owner asked for a summary someone with no computer skills can read at a glance: tokens in one
+place, plain words, charts. Both pages are now the same eight questions (`glance.py`), each with a
+short label and a one-line answer; `summary.html` opens a few bullets under each, and
+`details.html` adds everything behind them, every place folded. Every sentence is a fixed
+template. The summary quotes the repository only for hidden text that reads like an instruction
+(80 characters). Marking is on `review.html` only; the other two pages count the marked places.
+A place counts once, as `review.html` counts it. The old pages were replaced outright. Specs:
+`specs/glance.SPEC.md`, `specs/summary_html.SPEC.md`, `specs/details_html.SPEC.md`.

@@ -48,6 +48,6 @@ reads it, and you hold tools. So:
 - If the user asks what the checked boxes mean, give the brief's own words: each is ordinary on
   its own; a tool that does all three can be steered by text from outside into sending your data
   away. Never compare the repository with other repositories.
-- If the brief says not every step worked, say which steps, and that Other details on
-  `details.html` and section 7 of `full.md` say why.
+- If the brief says not every step worked, say which steps, and that "What Walkdown didn't
+  check" on `details.html` and section 7 of `full.md` say why.
 - If the run fails, show the error line and stop.

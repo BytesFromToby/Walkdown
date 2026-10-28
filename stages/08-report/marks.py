@@ -1,7 +1,7 @@
 """The reader's marks: one model, one file, carried to later runs. Spec: specs/marks.SPEC.md.
 
-Three marks, Concerned, Not concerned, and Not sure, made on review.html (and on details.html,
-the Not concerned box) and saved by the reader as marks.json in the run folder. Walkdown never
+Three marks, Concerned, Not concerned, and Not sure, made on review.html (report v3, 2026-10-27;
+before, also on details.html) and saved by the reader as marks.json in the run folder. Walkdown never
 writes that file, and a mark changes no finding and no count. Each mark names its row by a stable
 key, built from what was flagged and never from the line number alone, so a mark follows its line
 when lines move and drops away when the line itself changes (owner, 2026-10-20). A run with no

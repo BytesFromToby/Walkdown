@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml/badge.svg)](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml)
 
-**Status: alpha, version 0.3.0** ([CHANGELOG](CHANGELOG.md)). It runs end to end and produces a report you can read. Parts of it are
+**Status: alpha, version 0.3.1** ([CHANGELOG](CHANGELOG.md)). It runs end to end and produces a report you can read. Parts of it are
 experimental, and they are marked as such below.
 
 Walkdown examines the instruction layer of AI skills and agents: the SKILL.md files, agent
@@ -49,9 +49,11 @@ One command runs every stage and writes a run folder:
 
 ```
 RepoResults/<name>/<date>_<hash7>/
-  summary.html    one page for a builder: will it trigger, what it costs, what ships, will it run
-                  elsewhere, is it ready for any AI, do the tools fit, is it current, is it safe
-  details.html    every section in full, with a Not concerned box on every row
+  summary.html    one page, eight questions at a glance: will its skills switch on, how much of
+                  the AI's memory it uses, what comes in the package, will it work on someone
+                  else's computer and with other AI tools, does it ask only for the tools it
+                  needs, is it finished, anything to be careful about
+  details.html    the same eight questions with everything behind them, every place folded
   review.html     one card per place to check, one at a time, for you to mark
   full.md         every finding, with file and line
   LOG.md          what ran, when, and each stage's validation stamp

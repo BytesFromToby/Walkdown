@@ -174,8 +174,7 @@ def write_reports(run_dir, meta, reports, stamps, notes, runs_ok, cap_full):
     (out / "summary.html").write_text(
         summary_html.render_page(meta, reports, stamps, notes, runs_ok, m["data"], ch), encoding="utf-8")
     (out / "details.html").write_text(
-        details_html.render_page(meta, reports, stamps, notes, runs_ok, ch,
-                                 cap_full, text_href, m["data"], m["carried"]),
+        details_html.render_page(meta, reports, stamps, notes, runs_ok, ch, m["data"]),
         encoding="utf-8")
     (out / "full.md").write_text(render.full(meta, reports, stamps, notes, runs_ok, cap_full),
                                  encoding="utf-8")

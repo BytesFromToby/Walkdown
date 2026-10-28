@@ -10,8 +10,8 @@ reports were built from, for anyone who wants to check a finding or build on the
 
 ```
 RepoResults/<name>/<date>_<hash7>/          one run, e.g. RepoResults/backlog/2026-10-02_b449d9f
-  summary.html        one page: the security concerns found, what it can do, questions before use
-  details.html        every section in full, with a Not concerned box on every row
+  summary.html        one page: eight questions at a glance, each with a label and a one-line answer
+  details.html        the same eight questions with everything behind them, every place folded
   review.html         each place to check, one at a time, to mark Concerned, Not concerned, or Not sure
   marks.json          your marks, once you save them here (Walkdown never writes it)
   full.md             every finding, by stage, with file and line

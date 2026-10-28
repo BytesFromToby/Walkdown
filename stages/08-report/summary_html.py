@@ -1,11 +1,11 @@
-"""The one page (summary.html), for someone building a skill or agent (owner, 2026-10-26; before,
-for someone deciding whether to use one). Spec: specs/summary_html.SPEC.md.
+"""The one page (summary.html), and the counts the brief shares. Spec: specs/summary_html.SPEC.md.
 
-What it costs in an AI's context against the builder's expected context, what ships by how it is
-used, and whether it is safe: the security concerns by fixed kinds in a fixed order and what the
-repository can do. Everything else is in details.html and review.html, except a step that did not
-work: that is named at the bottom of the page, since the page's counts lean on it. Same facts as
-the other reports; nothing here detects or judges, and nothing is picked by how bad it seems.
+Report v3 (owner, 2026-10-27: "glance and know"): the eight questions of glance.py as cards for
+someone with no computer skills, a step that did not work at the bottom, and the one caveat. This
+module also holds the security concern kinds in their fixed order (`CONCERNS`, `rows`), the
+headline rules, the failed-step rules, and the brief's lines (`brief_*`), which walkdown.py
+prints. Same facts as the other reports; nothing here detects or judges, and nothing is picked by
+how bad it seems.
 """
 from __future__ import annotations
 
@@ -26,7 +26,6 @@ CONCERNS = (
     ("lasting", "Lasting changes or permissions", "risky"),
 )
 WORDING = "{n} {be} wording only: instructions that change how the AI reads, decides, or answers."
-NOTHING = "Nothing to point out here."
 # Under the three boxes (owner, 2026-10-20): the trifecta's point, as details.html words it.
 TOGETHER = D.TRIFECTA_LEDE.split(". ", 1)[1]
 # The page's one qualifier, in plain words for someone who is not technical (owner, 2026-10-20).
@@ -67,21 +66,43 @@ def _place_marks(r, marks) -> tuple[dict, dict]:
 
 
 def rows(r, places, marks=None) -> list[dict]:
-    """The concern rows with places, in order: {key, name, section, places, not_concerned,
-    example}. An example is the first place (stage, file, line) not marked Not concerned."""
+    """The concern rows with places, in order: {key, name, section, places, ids, not_concerned,
+    example}. An example is the first place (stage, file, line) not marked Not concerned. Findings
+    that review.html shows as one place (one line named by several) count once in a row, and
+    `ids` are the places' review cards, so a place in two rows counts once in all (owner,
+    2026-10-12; report v3 recount, 2026-10-27)."""
     card_of, mark_of = _place_marks(r, marks)
+    pid = lambda it: card_of.get(M.place_key(it))  # noqa: E731
     out = []
     for key, name, section in CONCERNS:
-        mine = sorted((it for it in places if concern(it) == key), key=_where)
+        mine, seen = [], set()
+        for it in sorted((it for it in places if concern(it) == key), key=_where):
+            c = pid(it) or ("item", id(it))
+            if c not in seen:
+                seen.add(c)
+                mine.append(it)
         if not mine:
             continue
-        pid = lambda it: card_of.get(M.place_key(it))  # noqa: E731
         nc = [it for it in mine if mark_of.get(pid(it)) == "not-concerned"]
         rest = [it for it in mine if it not in nc]
         ex = rest[0] if rest else None
-        out.append({"key": key, "name": name, "section": section, "places": mine,
+        out.append({"key": key, "name": name, "section": section, "places": mine, "ids": seen,
                     "not_concerned": len(nc), "example": ex, "example_id": pid(ex) if ex else None})
     return out
+
+
+def total(rs) -> int:
+    """Places across the rows, each place once (rows from `rows`; a bare row counts its places)."""
+    if all("ids" in x for x in rs):
+        return len(set().union(*(x["ids"] for x in rs)))
+    return sum(len(x["places"]) for x in rs)
+
+
+def wording_count(r, places, rs, marks=None) -> int:
+    """The places that are wording only, each once, leaving out a place a concern row holds."""
+    card_of, _ = _place_marks(r, marks)
+    held = set().union(*(x.get("ids", ()) for x in rs))
+    return len({card_of.get(M.place_key(it)) or ("item", id(it)) for it in places if concern(it) is None} - held)
 
 
 def not_run(runs_ok) -> list[str]:
@@ -102,7 +123,7 @@ def headline(rs, missing=(), failed=()) -> str:
     fixture check (`failed_checks`). A run missing a step never says it found none (2026-10-21,
     an outside tester: an empty .venv crashed stage 1 and the page said "found none"), and with
     no concerns a failed check is said here, not only at the bottom (owner, 2026-10-25, C40)."""
-    n = sum(len(x["places"]) for x in rs)
+    n = total(rs)
     if missing:
         steps = (f'the step "{missing[0]}" did not run' if len(missing) == 1 else
                  f'{len(missing)} steps did not run, starting with "{missing[0]}"')
@@ -121,56 +142,6 @@ def headline(rs, missing=(), failed=()) -> str:
     return "Walkdown found none of the security concerns it looks for."
 
 
-def concerns_block(rs, wording, model) -> str:
-    items = []
-    for x in rs:
-        ex = x["example"]
-        if ex is not None:
-            where = esc(ex["where"])
-            link = (f'<a href="review.html#p-{x["example_id"]}">{where}</a>' if x["example_id"]
-                    else f"<code>{where}</code>")
-            example = f'<div class="c-ex">{esc(ex["title"])}: {link}</div>'
-        else:
-            example = '<div class="c-ex">Every place of this kind is marked Not concerned.</div>'
-        more = len(x["places"]) - 1
-        more_link = (f' <a class="c-more" href="details.html#{x["section"]}">{more} more</a>'
-                     if more > 0 else "")
-        nc = f' <span class="c-nc">{x["not_concerned"]} marked Not concerned</span>' if x["not_concerned"] else ""
-        items.append(f'<li class="concern"><div class="c-head"><span class="c-name">{esc(x["name"])}</span> '
-                     f'<span class="c-count">{esc(R.n(len(x["places"]), "place"))}</span>{nc}</div>'
-                     f'{example}{more_link}</li>')
-    body = f'<ol class="concerns">{"".join(items)}</ol>' if items else D._p(NOTHING)
-    if wording:
-        n = R.n(wording, "more place" if items else "place")
-        body += (f'<p class="note">{esc(WORDING.format(n=n, be="is" if wording == 1 else "are"))} '
-                 f'<a href="details.html#risky">In the details</a>.</p>')
-    if model:
-        body += (f'<p class="note">{esc(R.n(model, "model read"))}, experimental, on the '
-                 f'<a href="review.html">review page</a>.</p>')
-    lede = (esc("By fixed kinds, in a fixed order. Each row gives one example; the details and the "
-                "review page have every place.") if items else "")  # owner, 2026-10-20: none, no lede
-    return D._section("concerns", "Is it safe?", lede, body)
-
-
-def capability(r) -> str:
-    legs = {x["leg"]: bool(x.get("present")) for x in R.fnd(r, "05-capability", "cap.leg")}
-    order = [k for k in R.LEG_NAMES if legs.get(k)] + [k for k in R.LEG_NAMES if not legs.get(k)]
-    lis = []
-    for i, k in enumerate(order, 1):
-        on = legs.get(k)
-        data_n = f' data-n="{i}"' if on else ""
-        lis.append(f'<li class="leg {"on" if on else "off"}"{data_n}>'
-                   f'<span class="box" role="img" aria-label="{"yes" if on else "no"}">'
-                   f'{D.CHECK if on else D.BOX}</span><div><div class="leg-name">{esc(R.LEG_NAMES[k])}</div></div></li>')
-    allows = D._allows(r)
-    also = [allows[k][0] for k in D.GENERAL if allows[k][2]]
-    also_line = (f'<p class="note">Also: {esc(", ".join(a[:1].lower() + a[1:] for a in also))}.</p>'
-                 if also else "")
-    return D._section("can", "What it can do", "",  # no lede: the footer covers it (owner, 2026-10-20)
-                      f'<ul class="legs compact">{"".join(lis)}</ul><p>{esc(TOGETHER)}</p>{also_line}'
-                      '<p class="note"><a href="details.html#trifecta">The places behind each box</a>.</p>')
-
-
 def results(stamps, runs_ok) -> dict:
     """{stage: result word} for the stages that ran and have a stamp."""
     return {st: s.result for st, s in (stamps or {}).items() if st in runs_ok}
@@ -179,8 +150,9 @@ def results(stamps, runs_ok) -> dict:
 def failed_steps(stamps, runs_ok) -> list[str]:
     """Steps that did not work in this run (owner, 2026-10-20): a step with no output, or one that
     ran and failed its fixture check. Never a step with nothing here to test, or a check that did
-    not run for a missing optional tool (INCOMPLETE, any stage; owner, 2026-10-25): Other details
-    on details.html lists those. A run made without validation has no stamps and adds none here."""
+    not run for a missing optional tool (INCOMPLETE, any stage; owner, 2026-10-25): "What Walkdown
+    didn't check" on details.html lists those. A run made without validation has no stamps and adds
+    none here."""
     return not_working(results(stamps, runs_ok), runs_ok)
 
 
@@ -202,118 +174,9 @@ def warning(steps) -> str:
     (owner, 2026-10-21)."""
     if not steps:
         return ""
-    return (f'<section class="block warn" id="warning"><p><b>Not every step worked in this run.</b> '
+    return (f'<p class="warnline" id="warning"><b>Not every step worked in this run.</b> '
             f'{esc("; ".join(steps))}. A step that did not work can miss places, so this page may show '
-            f'fewer than there are. <a href="details.html#other">Other details</a> says why.</p></section>')
-
-
-def cost_sentence(r, ctx: int) -> str | None:
-    """The headline's first sentence (slice 1): files, every session, and the largest skill at its
-    fullest against the expected context. None with no stage 5 tiers."""
-    c = R.cost(r)
-    if c["session"] is None:
-        return None
-    files = (R.fnd(r, "01-inventory", "inv.pin") or [{}])[0].get("files")
-    lead = f"{R.n(files, 'file')}; " if isinstance(files, int) else ""
-    t = c["tiers"]
-    if t:
-        top = t["skill-max"]["tokens"]
-        s = (f"{lead}every session takes {c['session']['tokens']:,} tokens once installed, and the largest "
-             f"{R.what(t['skill-runs'].get('kind'))} at its fullest {top:,} ({R.pct(top, ctx)} of a "
-             f"{ctx:,}-token context).")
-    elif c["project"]:
-        top = c["project"]["tokens"]
-        s = (f"{lead}every session in this folder takes {top:,} tokens ({R.pct(top, ctx)} of a "
-             f"{ctx:,}-token context).")
-    else:
-        top = c["session"]["tokens"]
-        s = f"{lead}every session takes {top:,} tokens once installed."
-    s = s[0].upper() + s[1:]
-    return s + (" That is more than the expected context." if top > ctx else "")
-
-
-def cost_block(r, ctx: int, changes=None) -> str:
-    table = D.context_table(r, ctx)
-    body = (table + D.cost_notes(r) + '<p class="more"><a href="details.html#ship">Every skill and file, '
-            "by tier and group</a></p>") if table else D._empty(
-        "Not measured: this run has no context tiers (it was made before they were counted, or stage 3 "
-        "or 5 did not run).")
-    line = (changes or {}).get("cost_line")
-    if table and line and line.startswith("cost: "):  # slice 6: since the earlier run
-        body += f'<p class="since">Since run {esc(changes["since"])}: {esc(line[len("cost: "):])}.</p>'
-    return D._section("cost", "What it costs", "", body)
-
-
-def ship_block(r) -> str:
-    bands = R.ship_bands(r)
-    if not any(b["files"] for b in bands):
-        return D._section("ship", "What you ship", "", D._empty("Not measured: this run has no file groups."))
-    def groups(b):
-        return "; ".join(f'{R.in_sentence(R.SHIP_GROUPS[g])}: {v["files"]:,}' for g, v in b["groups"].items())
-    lis = "".join(
-        f'<li><b>{esc(b["name"])}</b>: {esc(R.n(b["files"], "file"))}, {esc(R.kb(b["bytes"]))}, '
-        f'{b["tokens"]:,} tokens'
-        + (f'<div class="c-ex">{esc(groups(b))}</div>' if b["groups"] else "") + "</li>" for b in bands)
-    lo = R.left_out(r)
-    what = " and ".join(x for x in (
-        (f"the {R.n(lo['unused'], 'file')} nothing points to" if lo["unused"] else ""),
-        (f"the {R.n(lo['build'], 'build file')}" if lo["build"] else "")) if x)
-    saving = (f'<p>If {esc(what)} were left out of what you ship: {esc(R.kb(lo["bytes"]))} smaller, and '
-              f'{lo["tokens"]:,} tokens no longer within an AI\'s reach.</p>') if what else ""
-    return D._section("ship", "What you ship", "",
-                      f'<ul class="bands">{lis}</ul>{saving}'
-                      '<p class="more"><a href="details.html#ship">Every file, by group</a></p>')
-
-
-def elsewhere_block(r) -> str:
-    """Will it run on someone else's machine? (slice 2): what it uses and what is not declared,
-    then one row per kind of place that ties it to one machine, with one example."""
-    n_ = R.needs_of(r)
-    title = "Will it run on someone else's machine?"
-    if not n_["measured"]:
-        return D._section("elsewhere", title, "", D._empty("Not measured: stage 4 did not run."))
-    cmds = [c["command"] for c in n_["commands"]]
-    pkgs = [p["package"] for p in n_["packages"]]
-    parts = []
-    def some(names, cap=12):
-        return ", ".join(names[:cap]) + (f", and {len(names) - cap} more" if len(names) > cap else "")
-    if cmds or pkgs:
-        uses = some(cmds) + (", and " if cmds and pkgs else "") + (
-            f"{R.n(len(pkgs), 'package')} ({some(pkgs, 6)})" if pkgs else "")
-        parts.append(f"<p>It uses: {esc(uses)}.</p>")
-        parts.append(f"<p>Not declared anywhere: {esc(some(n_['undeclared']))}.</p>" if n_["undeclared"]
-                     else "<p>Everything it uses is declared.</p>")
-    rows = "".join(
-        f'<li class="concern"><div class="c-head"><b>{esc(name)}</b> <span class="count">{len(places):,}</span></div>'
-        f'<div class="c-ex">{esc(why)}: <code>{esc(R.where(places[0]))}</code></div></li>'
-        for _, name, why, places in n_["port"])
-    parts.append(f'<ul class="concerns">{rows}</ul>' if rows else "<p>Nothing found that ties it to one machine.</p>")
-    parts.append('<p class="more"><a href="details.html#elsewhere">Every program, package, and place</a></p>')
-    return D._section("elsewhere", title, "", "".join(parts))
-
-
-def trigger_block(r, ctx: int) -> str:
-    """Will it trigger? (slice 4, owner 2026-10-26: first on the page): how the entries trigger,
-    the listing, then one row per kind of finding with what the host does and one example."""
-    tr = R.trigger_of(r)
-    title = "Will it trigger?"
-    if not tr["measured"]:
-        return D._section("trigger", title, "", D._empty(
-            "Not measured: this run has no trigger findings (stage 4 did not run, or the run was made "
-            "before they were counted)."))
-    parts = [f"<p>{esc(R.entries_line(tr))}</p>"] + [f"<p>{esc(x)}</p>" for x in R.listing_lines(tr, ctx)]
-    rows = "".join(
-        f'<li class="concern"><div class="c-head"><b>{esc(name)}</b> <span class="count">{len(places):,}</span></div>'
-        f'<div class="c-ex">{esc(why)}: <code>{esc(R.trig_parts(kind, places[0])[0])}</code> '
-        f'{esc(R.trig_parts(kind, places[0])[1])}</div></li>'
-        for kind, name, why, places in tr["kinds"])
-    if rows:
-        parts.append(f'<ul class="concerns">{rows}</ul>')
-    elif tr["entries"]:
-        parts.append("<p>Every entry has frontmatter its host reads and follows the rules.</p>")
-    if tr["entries"]:
-        parts.append('<p class="more"><a href="details.html#trigger">Every entry and place</a></p>')
-    return D._section("trigger", title, "", "".join(parts))
+            f'fewer than there are. <a href="details.html#limits">What Walkdown didn\'t check</a> says why.</p>')
 
 
 def brief_trigger_line(r) -> str | None:
@@ -331,40 +194,6 @@ def brief_trigger_line(r) -> str | None:
             f"a host rule, {c['guidance']} from guidance; {R.n(c['overlap'], 'pair')} of descriptions that overlap.")
 
 
-def ready_block(r, targets=()) -> str:
-    """Is it ready for any AI? (slice 3): for the hosts named, what is missing; then one line per
-    host, the skills no host reads where they sit, copies that differ, and one row per kind of
-    one-host feature with one example."""
-    rd = R.ready_of(r)
-    title = "Is it ready for any AI?"
-    if not rd["measured"]:
-        return D._section("ready", title, "", D._empty(
-            "Not measured: this run has no host findings (stage 4 did not run, or the run was made "
-            "before they were counted)."))
-    parts = []
-    if targets:
-        items = "".join(f"<li>{esc(x)}</li>" for x in R.todo(r, targets))
-        parts.append(f'<h3>For the hosts you named</h3><ul class="todo">{items}</ul>')
-    if targets:
-        parts.append("<h3>Each host</h3>")
-    parts.append('<ul class="hosts">' + "".join(f"<li>{esc(R.host_line(c))}</li>" for c in rd["coverage"]) + "</ul>")
-    if rd["loose"]:
-        parts.append(f"<p>{esc(R.n(len(rd['loose']), 'skill'))} no host reads where "
-                     f"{'it sits' if len(rd['loose']) == 1 else 'they sit'} (first: <code>{esc(rd['loose'][0])}</code>); "
-                     "a host reads them once they are installed (copied into its skill folder, or added as a plugin).</p>")
-    for d in rd["differ"][:3]:
-        parts.append(f"<p>{esc(R.drift_line(d, rd['coverage']))}</p>")
-    if len(rd["differ"]) > 3:
-        parts.append(f"<p>And {R.n(len(rd['differ']) - 3, 'more pair')} that differ.</p>")
-    rows = "".join(
-        f'<li class="concern"><div class="c-head"><b>{esc(name)}</b> <span class="count">{len(places):,}</span></div>'
-        f'<div class="c-ex">{esc(why)}: <code>{esc(R.where(places[0]))}</code></div></li>'
-        for _, name, why, places in rd["features"])
-    parts.append(f'<ul class="concerns">{rows}</ul>' if rows else "<p>No one-host feature found.</p>")
-    parts.append('<p class="more"><a href="details.html#ready">Every host, copy, and place</a></p>')
-    return D._section("ready", title, "", "".join(parts))
-
-
 def brief_ready_line(r, targets=()) -> str | None:
     """The brief's line (slice 3): counts only."""
     rd = R.ready_of(r)
@@ -377,45 +206,6 @@ def brief_ready_line(r, targets=()) -> str | None:
         left = [x for x in R.todo(r, targets) if not x.endswith(": nothing missing.")]
         s += f" For the hosts named: {R.n(len(left), 'thing')} missing."
     return s
-
-
-def fit_block(r) -> str:
-    """Do the tools fit the job? (slice 5, owner 2026-10-26: after Ready for any AI, before Is it
-    safe): one row per kind with its count, why, and first place."""
-    ft = R.fit_of(r)
-    title = "Do the tools fit the job?"
-    if not ft["measured"]:
-        return D._section("fit", title, "", D._empty(
-            "Not measured: this run has no tool-fit findings (stages 4 and 5 did not run, or the run was "
-            "made before they were counted)."))
-    rows = "".join(
-        f'<li class="concern"><div class="c-head"><b>{esc(name)}</b> <span class="count">{len(places):,}</span></div>'
-        f'<div class="c-ex">{esc(why)}: <code>{esc(R.fit_parts(kind, places[0])[0])}</code> '
-        f'{esc(R.fit_parts(kind, places[0])[1])}</div></li>'
-        for kind, name, why, places in ft["kinds"])
-    body = (f'<ul class="concerns">{rows}</ul>' if rows else
-            "<p>Every tool granted is one the words ask for, and nothing asks for a tool it lacks.</p>")
-    return D._section("fit", title, "", body + '<p class="more"><a href="details.html#fit">Every entry, hook, and place</a></p>')
-
-
-def clean_block(r) -> str:
-    """Is it current and clean? (slice 6, owner 2026-10-27: after Do the tools fit the job, before
-    Is it safe): one row per kind with its count, what it means, and the first place."""
-    cl = R.clean_of(r)
-    title = "Is it current and clean?"
-    if not cl["measured"]:
-        return D._section("clean", title, "", D._empty(
-            "Not measured: this run has no current-and-clean findings (stage 4 did not run, or the run was "
-            "made before they were counted)."))
-    rows = "".join(
-        f'<li class="concern"><div class="c-head"><b>{esc(name)}</b> <span class="count">'
-        f'{esc(R.clean_count(kind, places, cl["models"]))}</span></div>'
-        f'<div class="c-ex">{esc(why)}: <code>{esc(R.clean_parts(kind, places[0])[0])}</code> '
-        f'{esc(R.clean_parts(kind, places[0])[1])}</div></li>'
-        for kind, name, why, places in cl["kinds"])
-    body = (f'<ul class="concerns">{rows}</ul>' if rows
-            else "<p>No unfinished text, dated claims, pinned model IDs, or older tool names.</p>")
-    return D._section("clean", title, "", body + '<p class="more"><a href="details.html#clean">Every place</a></p>')
 
 
 def brief_clean_line(r) -> str | None:
@@ -471,56 +261,20 @@ def brief_cost_lines(r, ctx: int) -> list[str]:
 
 
 def render_page(meta, r, stamps, notes, runs_ok, marks=None, changes=None) -> str:
-    """`stamps`, `notes`, `runs_ok` are taken as details.html takes them. What was not checked is
-    on that page only (owner, 2026-10-20); a step that did not work is named at the bottom of this
-    one (`warning`)."""
-    every = D.first_items(r)
-    places = [it for it in every if it["stage"] != 6]
-    model = sum(1 for it in every if it["stage"] == 6)
-    rs = rows(r, places, marks)
-    wording = sum(1 for it in places if concern(it) is None)
-    head = D.header(meta, r, links=(("details.html", "Details"), ("review.html", "Review each place →")))
-    ctx = meta.get("context") or R.DEFAULT_CONTEXT
-    first = cost_sentence(r, ctx)
-    body = [head,
-            '<section class="block lead" id="headline">'
-            + (f'<p class="headline">{esc(first)}</p>' if first else "")
-            + f'<p class="headline">{esc(headline(rs, not_run(runs_ok), failed_checks(results(stamps, runs_ok))))}</p></section>',
-            trigger_block(r, ctx),  # slice 4, owner 2026-10-26: first
-            cost_block(r, ctx, changes), ship_block(r),  # slice 1, owner 2026-10-26
-            elsewhere_block(r),  # slice 2
-            ready_block(r, meta.get("hosts") or []),  # slice 3
-            fit_block(r),  # slice 5
-            clean_block(r),  # slice 6
-            concerns_block(rs, wording, model), capability(r),
-            warning(failed_steps(stamps, runs_ok)), f'<footer><p>{esc(FOOTER)}</p></footer>']
-    return ("<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
-            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n"
-            f"<title>{esc('Walkdown summary: ' + meta['repo'])}</title>\n" + D.FONTS
-            + f"<style>{D.CSS}{CSS}</style>\n</head>\n"
-            f"<body>\n<main class=\"wrap\">\n{''.join(body)}\n</main>\n</body>\n</html>\n")
-
-
-CSS = """
-.lead { padding-top: .9rem; padding-bottom: .9rem; }
-.block.warn { border-left: 4px solid var(--leg-3); background: var(--flag-bg); padding-top: .8rem; padding-bottom: .8rem; }
-.block.warn p { margin: 0; }
-.block.warn a { color: var(--accent); font-weight: 600; }
-.headline { font: 600 1.15rem/1.45 var(--body); margin: 0; max-width: 70ch; }
-.headline + .headline { margin-top: .5rem; }
-.bands { list-style: none; margin: 0 0 .6rem; padding: 0; display: grid; gap: .5rem; }
-.more a { color: var(--accent); font-weight: 600; }
-.concerns { list-style: none; margin: 0; padding: 0; display: grid; gap: .7rem; }
-.concern { border-left: 4px solid var(--leg-2); background: var(--flag-bg); border-radius: 6px; padding: .6rem .8rem; }
-.c-head { display: flex; flex-wrap: wrap; gap: .3rem .7rem; align-items: baseline; }
-.c-name { font-weight: 600; }
-.c-count { color: var(--muted); font-variant-numeric: tabular-nums; }
-.c-nc { color: var(--muted); font-size: .88rem; }
-.c-ex { margin-top: .25rem; font-size: .92rem; overflow-wrap: anywhere; }
-.c-ex a, .c-ex code { font: .8rem/1.4 var(--mono); }
-.c-more { font-size: .88rem; }
-.legs.compact { gap: .6rem; }
-.hosts, .todo { list-style: disc; margin: 0 0 .7rem; padding-left: 1.2rem; }
-.hosts li, .todo li { margin: .15rem 0; overflow-wrap: anywhere; }
-@media print { .block { break-inside: avoid; } }
-"""
+    """Report v3 (owner, 2026-10-27: "glance and know"): the eight questions as cards
+    (glance.py), a step that did not work at the bottom, and the one caveat. `marks` are the
+    run's marks; `changes` is run.changes_for (its cost line goes under question 2)."""
+    import glance as G  # glance imports this module
+    qs = G.questions(meta, r, stamps, runs_ok, marks)
+    for q in qs:
+        if q.id == "memory":
+            q.more += G.since_line(changes)
+    body = (f'<header><h1>{esc(meta["repo"])}</h1><p class="meta">{esc(G.meta_line(meta, r))}</p>'
+            f'<p class="what">{G.what_it_is(r)}</p><p class="how">Walkdown reads the files without running '
+            "anything. It points things out; you decide what matters. Tap a line for more.</p></header>"
+            '<h2>At a glance</h2><ul class="rows">' + "".join(G.card(q) for q in qs) + "</ul>"
+            + warning(failed_steps(stamps, runs_ok))
+            + '<footer><p>Everything behind this page: <a href="details.html">details</a> \u00b7 '
+            '<a href="review.html">go through each place and mark it</a> \u00b7 every finding with its file '
+            f'and line: <a href="full.md">full.md</a></p><p>{esc(FOOTER)}</p></footer>')
+    return G.page(f"{meta['repo']} at a glance", meta, r, body)

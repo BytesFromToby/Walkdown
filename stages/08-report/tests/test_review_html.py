@@ -163,20 +163,22 @@ def test_place_ids_stable_and_distinct():
 
 
 # 11
-TOP_TO_REVIEW = '<a class="pagelink" href="review.html">'
+TO_REVIEW = '<a href="review.html">'
 TOP_TO_SUMMARY = '<a class="pagelink" href="summary.html">'
 
 
-def test_pages_link_to_each_other_top_right():
+def test_pages_link_to_each_other():
+    """Report v3 (owner, 2026-10-27): marking is on review.html only; the summary links to it
+    from its footer, and from the line that says how many places are marked."""
     r = reports(extra_hits=[IGNORE])
     s = summary_html.render_page(META, r, {}, {}, set(r))
-    assert TOP_TO_REVIEW in s and 'class="review-link"' in s
+    assert TO_REVIEW in s and 'class="marked"' in s
     assert TOP_TO_SUMMARY in page(r)
-    # the header links stay with nothing listed; the line above the cards goes
+    # the footer link stays with nothing listed; the marked line goes
     r = reports(hooks=0)
     r["04-phrases"]["findings"] = []
     s = summary_html.render_page(META, r, {}, {}, set(r))
-    assert TOP_TO_REVIEW in s and 'class="review-link"' not in s
+    assert TO_REVIEW in s and 'class="marked"' not in s
     h = page(r)
     assert TOP_TO_SUMMARY in h and not cards(h) and "Nothing to check" in h
 
@@ -212,8 +214,7 @@ def test_one_card_for_one_place_named_by_several_findings():
     assert len(ps) == 1 and ps[0]["patterns"] == ["L.ignore", "K.data-flow"]
     assert len(ps[0]["also"]) == 1
     h = summary_html.render_page(META, r, {}, {}, set(r))
-    assert ('Nothing refers to this file, and it reads like an instruction '
-            '<span class="count">1 place</span>') in h
+    assert "1 place is only wording" in h and "0 of 1 place marked so far." in h
 
 
 def test_model_read_card_says_what_the_model_said_first_in_plain_words(tmp_path):

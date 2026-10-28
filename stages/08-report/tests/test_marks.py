@@ -102,9 +102,9 @@ def test_a_carried_mark_keeps_from_and_the_pages_show_it():
     assert "1 earlier marks match nothing in this run" in h
     assert f'data-key="{p["key"]}"' in h and '<p class="from" hidden></p>' in h
     assert "walkdown_marks: 2" in h and "Your mark from run " in h  # the script writes and shows them
-    # summary.html counts it as the reader's mark
+    # summary.html counts it as the reader's mark (report v3: "N of M places marked so far")
     s = SU.render_page(META, r, {}, {}, set(r), data)
-    assert "marked Not concerned" in s
+    assert re.search(r"1 of \d+ places? marked so far", s)
 
 
 # 5

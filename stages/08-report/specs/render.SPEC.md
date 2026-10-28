@@ -186,7 +186,9 @@ Done when: `test_ready_helpers`.
 - `PORT_KINDS`: the kinds of place that tie a repository to one machine, in order, each with its
   name and why it breaks elsewhere (stage 4's `port.*`, stage 3's `graph.case`). `needs_of(r)`:
   the programs, packages, what is not declared, and the places by kind; `graph.case` only from
-  files that run or the AI reads (not test data, not files for people).
+  files that run or the AI reads (not test data, not files for people); `measured` when the run
+  found any of these or holds slice 3's `host.coverage` (there is no marker finding, so a run made
+  before slice 2 is not measured).
 - `full.md` section 1 ends with "What it needs" (each program and package, declared where or
   not, and where used) and "What ties it to one machine" (every place by kind; `needs_lines`).
 
@@ -231,3 +233,4 @@ Done when: `test_context_and_ship_helpers`.
 - 2026-10-25: `point_hits` (review C39, owner): sending data out reaches the places, measured
   first on the earlier runs (credential hits on a line that sends, not anywhere in a file that
   sends: the file rule added 36 places on the self-audit, the line rule 9).
+- 2026-10-27 (report v3 recount): `needs_of` is measured only on a run that made the check.

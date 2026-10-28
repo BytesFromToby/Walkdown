@@ -387,7 +387,7 @@ It lists: stages that did not finish or did not pass validation; checks skipped 
 optional tool; files unread or not scanned; the test-data rule and how much it set aside; and
 the standing limits (English only, static only, known shapes).
 
-**In the report.** Section 7 of `full.md`, Other details on `details.html`, and
+**In the report.** Section 7 of `full.md`, "What Walkdown didn't check" on `details.html`, and
 `data/07-limits.md`. A step that did not run or did not pass validation is also named at the
 bottom of `summary.html`, and in its headline when it found nothing. A missing optional tool is
 not named there.

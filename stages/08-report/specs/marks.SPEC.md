@@ -1,7 +1,7 @@
 # marks.py: spec
 
-Status: built 2026-10-20 (owner decision the same day): `review.html`, `summary.html`, and the
-Not concerned boxes on `details.html`.
+Status: built 2026-10-20 (owner decision the same day). Since report v3 (owner, 2026-10-27),
+marks are made on `review.html` only.
 
 The reader's marks: one model, one file, carried to later runs of the same repository.
 
@@ -12,8 +12,10 @@ the repository is for), **Not sure**. "Ignore" is Not concerned (owner, 2026-10-
 belongs to the reader: Walkdown never sets one, and a mark changes no finding, no count in
 `full.md`, and nothing in `data/`.
 
-Marks are made on `review.html` (any of the three) and `details.html` (the Not concerned box).
-`summary.html` shows how many places are marked Not concerned, and makes no marks.
+Marks are made on `review.html` (any of the three). `summary.html` and `details.html` say how
+many places are marked ("<M> of <N> places marked so far") and make no marks. A marks file saved
+from the `details.html` boxes before report v3 still loads: `review.html` keeps its link, file,
+evidence, and hidden marks as they are.
 
 ## The file: `marks.json`
 
@@ -73,8 +75,8 @@ When `run.py` writes a run's pages (a new run or `--rerender`):
    sorts before this one, as `run.changes_for`) with a `marks.json` gives **carried** marks:
    each matched to this run's rows by key. Marks whose key matches no row are dropped and
    counted ("<n> earlier marks match nothing in this run").
-3. A carried mark shows as the reader's mark with "Your mark from run <name>." (on
-   `details.html`, "from run <name>" beside its box), and can be changed. Saving from the page writes it into this run's `marks.json` (`from` as above).
+3. A carried mark shows as the reader's mark with "Your mark from run <name>.", and can be
+   changed. Saving from the page writes it into this run's `marks.json` (`from` as above).
    `review.html` says how many marks were carried from which run, and how many match nothing.
 
 All three marks carry over. A Concerned mark stays until the reader changes it.
@@ -98,8 +100,6 @@ All three marks carry over. A Concerned mark stays until the reader changes it.
    (2026-10-20): carried marks labeled with their run, a changed mark becomes this run's, a note
    keeps the run, the download is `walkdown_marks: 2`.
 5. A `walkdown_review: 1` file loads by id (`test_a_walkdown_review_1_file_loads_by_id`).
-   Marks are one set across the pages (`tests/test_details_html.py`,
-   `test_marks_are_one_set_across_the_pages`).
 6. End to end, two runs with the line moved: the mark carries; nothing in `data/`, `full.md`, or
    `changes.md` differs with and without marks; Walkdown writes no `marks.json`
    (`test_marks_carry_to_a_later_run_and_change_nothing_else`).
@@ -110,3 +110,5 @@ All three marks carry over. A Concerned mark stays until the reader changes it.
 - 2026-10-20: owner: one model across pages, Not concerned replaces ignore, marks carry over.
   Built the same day: `review.html` and `summary.html` (`walkdown_marks: 2`), then the Not
   concerned boxes on `details.html` with the `link`, `file`, `evidence`, and `hidden` kinds.
+- 2026-10-27 (owner, report v3): marking on `review.html` only; the Not concerned boxes on
+  `details.html` are gone, and both other pages count the marked places.

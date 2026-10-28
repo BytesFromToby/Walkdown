@@ -451,7 +451,10 @@ PORT_KINDS = (
 
 def needs_of(r) -> dict:
     """{commands, packages, undeclared (names), port: [(check, name, why, places)] with places},
-    and `measured`: whether stage 4 ran."""
+    and `measured`: whether this run made the check (slice 2, 2026-10-26). There is no marker
+    finding, so a run counts as measured when it found something here, or when it holds slice 3's
+    host.coverage (built after slice 2); a run made before it says Not measured, never "nothing"
+    (report v3 recount, 2026-10-27)."""
     cmds = fnd(r, "04-phrases", "need.command")
     pkgs = fnd(r, "04-phrases", "need.package")
     port = []
@@ -462,7 +465,8 @@ def needs_of(r) -> dict:
             places = [f for f in places if not is_test_data(f.get("file")) and audience(f.get("file") or "") != "human"]
         if places:
             port.append((check, name, why, places))
-    return {"commands": cmds, "packages": pkgs, "port": port, "measured": "04-phrases" in r,
+    measured = "04-phrases" in r and bool(cmds or pkgs or port or fnd(r, "04-phrases", "host.coverage"))
+    return {"commands": cmds, "packages": pkgs, "port": port, "measured": measured,
             "undeclared": [c["command"] for c in cmds if not c.get("declared")]
             + [p["package"] for p in pkgs if not p.get("declared")]}
 
@@ -1556,7 +1560,7 @@ def tool_items(reports, notes) -> tuple[list[tuple[str, str]], list[str]]:
 
 
 def glance(reports, notes, stamps, runs_ok) -> tuple[list[str], list[str]]:
-    """(skipped, not needed): plain items for details.html's count (Other details). `skipped` is what this run
+    """(skipped, not needed): plain items for details.html's What Walkdown didn't check. `skipped` is what this run
     could not look at in this repository; `not needed` names tools the repository has no use for."""
     skipped, idle = [], []
     for stage in ORDER[:6]:
