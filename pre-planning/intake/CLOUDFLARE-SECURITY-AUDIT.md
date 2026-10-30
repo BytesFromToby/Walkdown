@@ -22,7 +22,7 @@ Paths below are relative to `skills/security-audit/` in that repository.
 Each item: what to add, where the idea comes from, what Walkdown has today, and where it would go.
 Ordered by value for effort.
 
-### CF-1. Code an install runs that can change after review (pin state)
+### CF-1. Code an install runs that can change after review (pin state) `[= SS-2]`
 
 - **Source.** `SUPPLY-CHAIN-AND-RELEASE.md:24` (mutable and unbound build inputs: floating
   tags, branches, downloaded tools) and `:58` (plugin and extension trust expansion: install or
@@ -41,7 +41,7 @@ Ordered by value for effort.
 - **Fixture.** `.mcp.json` with one exact, one range, one bare, one `@latest`, one docker
   image with no tag. Hooks with `npx` both pinned and unpinned.
 
-### CF-2. Names that collide (MCP servers, tools, skills, commands)
+### CF-2. Names that collide (MCP servers, tools, skills, commands) `[= SS-3]`
 
 - **Source.** `AI-AND-LLM.md:56` (MCP server and tool identity confusion: two servers claiming
   the same tool identity; routing by an attacker-chosen name).
@@ -54,7 +54,7 @@ Ordered by value for effort.
 - **Open.** What each host does on a clash (which one wins) has to be checked against host docs
   before the report says anything about it. Until then, report the clash only.
 
-### CF-3. A coverage ledger behind stage 7
+### CF-3. A coverage ledger behind stage 7 `[≈ SS-14]`
 
 - **Source.** `SKILL.md:105` ("Never imply that one run exhausts the target"), `:115` (a scoped
   run must present itself as partial), and `RECONNAISSANCE.md:90-156` (one unit per surface ×
