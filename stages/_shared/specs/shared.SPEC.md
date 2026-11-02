@@ -2106,6 +2106,9 @@ the findings of `02.4-phrases`, and each call the file's name and the lines `lin
 - each list of code points (`chars`, `removed`) keeps each one once, sorted. In the order they stand, tag characters spell the text;
   once each and sorted, they still name the kinds a page counts.
 
+The lines the scan flagged (`flagged_lines`) are each `secret.found`'s `line`, and for a private key every line through its
+`key_end` (`02.4-phrases`, secret_scan): the scan flags only a key's first line, and the lines below it are the key.
+
 `masked` is set true, on a finding that quotes the line for where it is, and on one a parser made (it has `span`, or is in `PLACED`)
 for what it held, so a row with no words is not marked. The location stays. A `secret.found` that is a skip (`skipped`), or whose
 only "secret" is base64 that decodes to readable text (`likely_not_secret` is `BASE64_TEXT`, review C42), masks nothing: it holds no
@@ -2164,8 +2167,9 @@ phrase report, in place. It returns whether a finding of the reader is masked no
   `likely_not_secret` says: a page shows a line marked `BASE64_TEXT`, and that mark looks at the line as a whole, so a key beside
   readable base64 gets it too. For a kind that names a private key (`PRIVATE_KEY`: `Private Key`, `private-key`), the rest of the key
   as well, since the scan flags only its first line: through the next line holding `-----END`, or with none through the line
-  before the next blank line (a PuTTY file has no such line); nothing more when `-----END` is on the flagged line. A row whose line
-  is not in the file adds nothing.
+  before the next blank line (a PuTTY file has no such line); nothing more when `-----END` is on the flagged line (`key_end`). The
+  row's `key_end` is taken too, never past the file's last line, and the rule over the lines stands for a row saved before it. A row
+  whose line is not in the file adds nothing.
 - `read(rel)`: whether the scan read the file: false for a file with a skip row, and for every file when the skip row names none
   (no scanner), since no row can say what is in such a file. A file of a build name in `agents/` or `commands/` goes by its rows, as any
   file does. The scan writes no row for a lock file (`secret_scan.LOCK_FILES`), and no read takes one: a read takes prose by its extension
@@ -2180,9 +2184,9 @@ What it does not reach: the mask follows the scan, so a key the scan did not fla
 or a PDF page (OCR, `02.2-reader`'s `image-text`, and what `review_html` shows as a place's image text), one spelled only in hidden
 characters, one in a lock file, which the scan leaves out by name (`02.4-phrases`'s `secret_left_out`; a file it could not read is a skip), and
 one in a file's own name. So a path is never masked: `file`, `to`, `from`, `resolves`, `graph.case`'s `written`, and `port.*`'s
-`written`, `file_named`, and `script` each name a file that exists. The scan flags only a private key's first line, so a finding that
-quotes a later line of the key is not masked (`ToSend` leaves the whole key out of what a model reads). `normalized/` holds each file's
-own text.
+`written`, `file_named`, and `script` each name a file that exists. A run saved before `key_end` has a private key's first line
+alone flagged, so a finding there that quotes a later line of the key is not masked when it is drawn again. `normalized/` holds each
+file's own text.
 
 ### Must never
 
@@ -2245,6 +2249,14 @@ own text.
     its line (`test_an_edge_goes_by_the_line_it_comes_from`).
 15. On a whole run of a made-up skill with one key in every place a step keeps a person's words, no key, whole or cut short, is in any
     report or step output, and each step read the words before they were masked (`06-report/tests/test_secret_fields.py`).
+16. A private key is flagged through its `key_end` and not past it, and a base64 mark still masks nothing
+    (`test_flagged_lines_take_the_rest_of_a_private_key_and_nothing_past_it`); a finding on a later line of the key is masked, and
+    one past its end is not (`test_a_finding_on_a_later_line_of_a_private_key_is_masked_and_one_past_its_end_is_not`); a model
+    read takes the scan's `key_end`, and its own rule for a row with none
+    (`test_a_model_read_leaves_out_the_key_the_scan_measured_even_past_a_blank_line`); `key_end`'s rule
+    (`test_key_end_is_the_end_line_or_the_line_before_a_blank_one_and_none_on_one_line`). On a whole run of a made-up skill with
+    hidden characters on two lines of a key's body, no line of the body is in any report or step output, and the hidden places
+    are still counted (`06-report/tests/test_run.py`, `test_no_line_of_a_private_key_is_in_a_report_or_a_step_output`).
 
 ### History
 
@@ -2265,6 +2277,11 @@ own text.
   `rep.sentence`, `term.conflict`, `trig.*`, `host.feature`, `clean.model`, `need.package`, and the copies in `cap.*` and `fit.*`, some
   of them on `summary.html`. `span`, `mask_copies`, `mask_edges`, and `mask_reports` are new, and `_mask_places` for the findings of
   several places.
+- 2026-11-02: the whole of a private key is flagged. The scan flags only a key's first line, so hidden text on a later line of its body
+  reached `full.md` and `data/02.2-reader.json` whole. `flagged_lines` (was `_flagged`) takes each row's `key_end`, which `02.4-phrases`
+  now writes, and `key_end` and `is_private_key` are public so the scan and `ToSend` share one rule. A finding that quotes the `-----END`
+  line is masked too: it is a line of the key, as a model read already counted it. `06-report`'s `details_html.secret_lines` reads the
+  same lines.
 
 ## softdata
 

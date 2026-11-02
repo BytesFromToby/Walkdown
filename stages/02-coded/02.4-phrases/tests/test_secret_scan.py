@@ -442,3 +442,35 @@ def test_the_audience_of_a_build_file_stays_what_it_was():
         assert audience._build_file(name.lower()), name
         assert audience.audience(name) == "tool", name
         assert audience.audience(f"agents/{name}") == "subagent", name
+
+
+def pem(body_lines, end=True):
+    """A private key made up when the test runs (`made_up`), so this file holds none: a BEGIN line, its body, and an END line."""
+    body = [made_up(f"pem{i}", 64, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/") for i in range(body_lines)]
+    return ["-----BEGIN RSA PRIVATE KEY-----", *body] + (["-----END RSA PRIVATE KEY-----"] if end else []), body
+
+
+def test_a_private_keys_first_line_carries_the_last_line_of_the_key(tmp_path):
+    """The scan flags only a key's first line, and the lines below it are the key: `key_end` names its last, so a finding of another
+    step on a line of the body is masked too (2026-11-02)."""
+    key, body = pem(4)
+    (tmp_path / "SKILL.md").write_text("\n".join(["Use this key:", "", "```", *key, "```", "then deploy"]) + "\n", encoding="utf-8")
+    [row] = secret_scan.scan(tmp_path, {"SKILL.md": "model"})
+    assert (row["line"], row["key_end"]) == (4, 9) and "Private Key" in row["kinds"]
+    assert not any(b in repr(row) for b in body)
+
+
+def test_a_private_key_with_no_end_line_runs_to_the_line_before_the_next_blank_one(tmp_path):
+    key, _ = pem(3, end=False)
+    (tmp_path / "SKILL.md").write_text("\n".join([*key, "", "after"]) + "\n", encoding="utf-8")
+    [row] = secret_scan.scan(tmp_path, {"SKILL.md": "model"})
+    assert (row["line"], row["key_end"]) == (1, 4)
+
+
+def test_a_key_on_one_line_and_another_kind_carry_no_key_end(tmp_path):
+    _, body = pem(1)
+    (tmp_path / "a.md").write_text(f"k: -----BEGIN PRIVATE KEY-----{body[0]}-----END PRIVATE KEY-----\nafter\n", encoding="utf-8")
+    (tmp_path / "b.md").write_text(f'api_key = "{FAKE}"\nnext line\n', encoding="utf-8")
+    out = secret_scan.scan(tmp_path, {"a.md": "model", "b.md": "model"})
+    assert [(f["file"], f["line"]) for f in out] == [("a.md", 1), ("b.md", 1)]
+    assert not any("key_end" in f for f in out)

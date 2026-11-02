@@ -65,12 +65,20 @@ def _lines_of(f: dict) -> set | None:
     return {line}
 
 
-def _flagged(findings: list[dict]) -> set:
-    """The lines the secret scan flagged, as (file, line). A line whose secret is only base64 that decodes to readable text holds
-    no key: its text is the instruction a reader needs (review C42)."""
-    return {(f["file"], f["line"]) for f in findings
-            if f.get("check") == "secret.found" and "skipped" not in f
-            and f.get("likely_not_secret") != BASE64_TEXT}
+def flagged_lines(findings: list[dict]) -> set:
+    """The lines the secret scan flagged, as (file, line), with the rest of each private key it starts (`key_end`): the scan flags
+    only a key's first line, and its body is the key. A line whose secret is only base64 that decodes to readable text holds no key:
+    its text is the instruction a reader needs (review C42)."""
+    out = set()
+    for f in findings:
+        if f.get("check") != "secret.found" or "skipped" in f or f.get("likely_not_secret") == BASE64_TEXT:
+            continue
+        line, last = f.get("line"), f.get("key_end")
+        if isinstance(line, int) and isinstance(last, int):
+            out.update((f["file"], n) for n in range(line, last + 1))
+        else:
+            out.add((f["file"], line))
+    return out
 
 
 def _is_plain(word) -> bool:
@@ -164,7 +172,7 @@ def mask_secret_lines(findings: list[dict], was: dict | None = None) -> None:
     fired, and that holds a person's words, is replaced by SECRET_MASK, matched words included, and a list of code points keeps
     each one once, sorted, so it names the kinds and spells nothing. The location stays. `was`, when given: {file: the words
     masked}, for `mask_copies`."""
-    lines = _flagged(findings)
+    lines = flagged_lines(findings)
     files = {file for file, _ in lines}
     for f in findings:
         if f.get("check") == "secret.found":
@@ -219,7 +227,7 @@ def mask_copies(node, was: dict, file=None) -> bool:
 
 def mask_edges(graph: dict | None, secrets: list[dict]) -> None:
     """`graph.json`: an edge keeps the text that named its target, as (`from`, `line`), in place."""
-    lines = _flagged(secrets)
+    lines = flagged_lines(secrets)
     for e in (graph or {}).get("edges") or []:
         if (e.get("from"), e.get("line")) in lines and isinstance(e.get("text"), str):
             e["text"] = SECRET_MASK
@@ -234,7 +242,7 @@ def mask_reports(reports: dict, *side) -> None:
     {step's name: its report}, any of them absent or None. `side`: reports of the capability step's kept apart (`capability.json`),
     which hold the same findings with every citation."""
     secrets = secrets_of(reports.get(PHRASES))
-    if not _flagged(secrets):
+    if not flagged_lines(secrets):
         return
     was: dict = {}
     mask_secret_lines(secrets + list((reports.get(INVENTORY) or {}).get("findings") or []), was)
@@ -263,15 +271,27 @@ def left_out_note(count: int) -> str:
     return f"{count} lines the secret scan flagged were left out of what the model read, so they were not examined."
 
 
-def _key_body(lines: list[str], start: int) -> range:
-    """The lines after a flagged first line of a private key that hold the rest of it, by number: the scan flags only the first.
-    Through the line with `KEY_END`, or with none, through the next blank line (a PuTTY file has no such line)."""
+def is_private_key(kinds) -> bool:
+    """Whether a `secret.found` row's kinds name a private key (`PRIVATE_KEY`)."""
+    return any(PRIVATE_KEY.search(str(k)) for k in kinds or [])
+
+
+def key_end(lines: list[str], start: int) -> int | None:
+    """The last line of a private key whose first line, `start`, the scan flagged, or None when the key ends on that line: the scan
+    flags only the first. Through the line with `KEY_END`, or with none, through the line before the next blank line (a PuTTY file
+    has no such line)."""
     if KEY_END in lines[start - 1]:
-        return range(0)
+        return None
     last = next((n for n in range(start + 1, len(lines) + 1) if KEY_END in lines[n - 1]), None)
     if last is None:
         last = next((n - 1 for n in range(start + 1, len(lines) + 1) if not lines[n - 1].strip()), len(lines))
-    return range(start + 1, last + 1)
+    return last if last > start else None
+
+
+def _key_body(lines: list[str], start: int) -> range:
+    """The lines after a flagged first line of a private key that hold the rest of it, by number (`key_end`)."""
+    last = key_end(lines, start)
+    return range(start + 1, last + 1) if last else range(0)
 
 
 class ToSend:
@@ -301,8 +321,10 @@ class ToSend:
             n = f.get("line")
             if isinstance(n, int) and 0 < n <= len(lines):
                 out.add(n)
-                if any(PRIVATE_KEY.search(str(k)) for k in f.get("kinds") or []):
+                if is_private_key(f.get("kinds")):  # the scan's `key_end`, and the same rule over these lines for a row saved before it
                     out.update(_key_body(lines, n))
+                    if isinstance(f.get("key_end"), int):
+                        out.update(range(n + 1, min(f["key_end"], len(lines)) + 1))
         return out
 
     def lines(self, rel, lines) -> list[str] | None:

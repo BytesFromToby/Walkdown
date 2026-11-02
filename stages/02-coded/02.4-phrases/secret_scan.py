@@ -14,7 +14,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "_shared"))
-from secretmask import BASE64_TEXT  # noqa: E402  (the mask must skip what scan marks with it)
+# The mask must skip what the scan marks with BASE64_TEXT, and cover the whole of a key whose first line the scan flags.
+from secretmask import BASE64_TEXT, is_private_key, key_end  # noqa: E402
 from foldtext import base64_texts  # noqa: E402
 import coverlines as cov  # noqa: E402
 import readtext  # noqa: E402
@@ -193,8 +194,14 @@ def scan(root, files: dict[str, str]) -> list[dict]:
     for (rel, ln), m in merged.items():
         if rel not in lines:
             lines[rel] = readtext.split_lines(_text(root, rel) or "")
-        text = lines[rel][ln - 1] if isinstance(ln, int) and 0 < ln <= len(lines[rel]) else ""
+        inside = isinstance(ln, int) and 0 < ln <= len(lines[rel])
+        text = lines[rel][ln - 1] if inside else ""
         why = likely_not_secret(text, m["kinds"])
         if why:
             m["likely_not_secret"] = why
+        # A private key's first line is the one flagged, and the lines below it are the key: `key_end` is its last, so the mask
+        # covers every line a finding of another step could quote (2026-11-02).
+        last = key_end(lines[rel], ln) if inside and is_private_key(m["kinds"]) else None
+        if last:
+            m["key_end"] = last
     return skip + file_skips + [merged[k] for k in sorted(merged, key=lambda k: (k[0], k[1] or 0))]

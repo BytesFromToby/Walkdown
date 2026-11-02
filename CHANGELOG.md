@@ -4,6 +4,15 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 `python walkdown.py --version`, and recorded in every run's LOG.md with the git commit
 ("+modified" when the code had uncommitted changes).
 
+## Unreleased
+
+- **No line of a private key reaches a report.** The secret scan flags a private key's first line, and the mask covered only
+  that line. Hidden characters on a later line of the key's body made the reader quote that line, and `full.md` and
+  `data/02.2-reader.json` printed it whole. The scan now records where the key ends (`key_end` on its `secret.found` row), and
+  every line through that one is masked, the `-----END` line included. A model read already left the whole key out, and now uses
+  the same lines. Counts, findings, and page wording are the same; a quote on a key's later line reads as masked, so a mark on
+  such a place does not carry over.
+
 ## 0.4.0 (2026-11-02)
 
 The pages say what they said in 0.3.1 about the same repository, in the same order, except where

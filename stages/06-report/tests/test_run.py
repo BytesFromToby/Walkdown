@@ -536,6 +536,34 @@ def test_a_key_the_scan_flagged_is_in_no_report_and_no_step_output(tmp_path, aud
     assert "7 divergences" in full_md and "SKILL.md:10: A-only, carrier comment" in full_md  # and named by file and line
 
 
+def test_no_line_of_a_private_key_is_in_a_report_or_a_step_output(tmp_path, audit_main):
+    """The scan flags only a private key's first line. Hidden characters on two lines of its body made the reader quote them, and
+    `full.md` and `data/02.2-reader.json` repeated those lines of the key (2026-11-02). The body is made up when the test runs."""
+    import hashlib
+    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    body = ["".join(letters[b % 64] for b in hashlib.sha256(f"body{i}".encode()).digest() * 2) for i in range(6)]
+    shown = list(body)
+    shown[2] = body[2][:20] + "\u200b" + body[2][20:]
+    shown[4] = body[4][:30] + "\u202e" + body[4][30:]
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "SKILL.md").write_text("\n".join(["---", "name: tiny", "description: A tiny skill.", "---", "", "Use this key:", "",
+                                              "```", "-----BEGIN RSA PRIVATE KEY-----", *shown, "-----END RSA PRIVATE KEY-----",
+                                              "```", "", "Then deploy."]) + "\n", encoding="utf-8", newline="\n")
+    assert audit_main([str(repo), "--repo", "tiny", "--results", str(tmp_path / "results"),
+                       "--date", "2026-02-03", "--no-validate"]) == 0
+    run = next((tmp_path / "results" / "tiny").iterdir())
+    phrases = json.loads((run / "data" / "02.4-phrases.json").read_text(encoding="utf-8"))["findings"]
+    assert [(f["line"], f.get("key_end")) for f in phrases if f["check"] == "secret.found"] == [(9, 16)]
+    saved = json.loads((run / "data" / "02.2-reader.json").read_text(encoding="utf-8"))["findings"]
+    assert sorted(f["line"] for f in saved if f["check"] == "read.divergence" and f.get("masked")) == [12, 14]  # still counted
+    outputs = [run / name for name in REPORTS] + [p for p in (run / "data").glob("*") if p.is_file()]
+    for p in outputs:
+        text = p.read_text(encoding="utf-8", errors="replace")
+        assert not any(b[:16] in text for b in body), p.name
+    assert body[0] in (run / "data" / "normalized" / "text" / "SKILL.md.txt").read_text(encoding="utf-8")
+
+
 def test_a_run_saved_before_the_mask_is_masked_when_drawn_and_its_data_is_left_alone(run_dir, run_main):
     """A re-render reads what the run saved, and writes no step output."""
     data = run_dir / "data"

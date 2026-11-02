@@ -19,6 +19,7 @@ import qaview
 import render as R
 import stagelist
 import library  # `render` has put stages/_shared on the path, as it did for `stagelist`
+import secretmask
 
 PLAIN_STAGE = dict(stagelist.STEP_WORDS)  # the words a reader meets for each step, from stages.json
 # Plain names for pattern families (`02.4-phrases`), used as the headline of an item.
@@ -178,8 +179,10 @@ def first_items(r) -> list[dict]:
 
 def secret_lines(r) -> set:
     """The lines the secret scan flagged, as (file, line). A divergence on one is masked by the time a page is drawn
-    (`run.load`); no page says what one of them spells either way: a report never repeats a secret."""
-    return {(x.get("file"), x.get("line")) for x in R.fnd(r, "02.4-phrases", "secret.found") if "skipped" not in x}
+    (`run.load`); no page says what one of them spells either way: a report never repeats a secret. A private key's lines below
+    its first are flagged with it (`secretmask.flagged_lines`)."""
+    found = R.fnd(r, "02.4-phrases", "secret.found")
+    return {(x.get("file"), x.get("line")) for x in found if "skipped" not in x} | secretmask.flagged_lines(found)
 
 
 def _spelled_places(r, items) -> list[dict]:

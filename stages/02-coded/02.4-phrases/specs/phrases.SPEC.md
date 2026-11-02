@@ -1021,6 +1021,11 @@ and `BUILD_GLOBS` say who reads a file, and do not decide what the scan reads.
   row, however many lines of the file hold the same value: the hits are the library's `scan_file`, which gives one for each line.
   Its `SecretsCollection` keeps one of a value in a file, and its GitHub rule captures only the prefix, so there every GitHub
   token of a file is one value.
+- `key_end` on a row whose kinds name a private key (`secretmask.is_private_key`): the last line of the key, since the scan flags only
+  its first and the lines below it are the key (`secretmask.key_end`: through the next line holding `-----END`, or with none through
+  the line before the next blank line). Absent when the key ends on its first line. The mask and a model read cover every line from
+  `line` to `key_end` (`stages/_shared/specs/shared.SPEC.md`, secretmask); `line` and the count of rows stay what they were, and no page
+  shows the range.
 - No scanner available: one skip finding (`file` null) naming what to install; the limits (`data/limits.md`) list it.
 - A file detect-secrets did not scan: one skip finding for that file (`_could_not`, `the secret scan could not scan this file`),
   never the error's text. Those are a file whose bytes `readtext.decode` cannot read or that cannot be opened, a file it raised on,
@@ -1123,6 +1128,10 @@ see the same lines. The name `open` is taken back after each call, and `detect-s
     (`test_every_check_has_a_line_and_the_counts_add_up`).
 16. A gitleaks on the machine is not run, with `.gitleaks.toml` and `.gitleaksignore` in the repository, and the scan runs no program
     (`test_a_gitleaks_on_the_machine_is_not_run`). The stamp's fingerprint does not ask for it (`test_the_fingerprint_does_not_ask_for_gitleaks`).
+17. A private key's first line carries `key_end`, its last line, through `-----END` or, with none, the line before the next blank line;
+    a key on one line and another kind carry none, and no line of the body appears
+    (`test_a_private_keys_first_line_carries_the_last_line_of_the_key`,
+    `test_a_private_key_with_no_end_line_runs_to_the_line_before_the_next_blank_one`, `test_a_key_on_one_line_and_another_kind_carry_no_key_end`).
 
 ### Likely not a secret (2026-10-09)
 
@@ -1185,6 +1194,9 @@ The report counts these apart and lists them with the reason in the full report 
 - 2026-11-01 (owner): gitleaks is not run. It ran in place of detect-secrets when installed, a repository's own `.gitleaks.toml` and
   `.gitleaksignore` steer it by its README, and no run here or in CI ever reached a real one. `_gitleaks` is gone, and `SKIPPED` says to install
   detect-secrets. Default runs on a machine with no gitleaks do not move. "What it does not reach" now lists what the scan misses.
+- 2026-11-02: `key_end` on a private key's first line. The scan flags only that line, so a finding of another step that quoted a later
+  line of the key was not masked: on a made-up skill with hidden characters on two lines of a key's body, `full.md` and
+  `data/02.2-reader.json` repeated both lines. No row is added or removed, and `line` stays. `terms.code` moves with this file.
 
 ## terms
 
