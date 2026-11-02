@@ -296,8 +296,8 @@ def _key_body(lines: list[str], start: int) -> range:
 
 class ToSend:
     """What of a file a model read may send, from the `secret.found` rows of `02.4-phrases`. More is held back than a page masks: a page
-    can show a line marked as base64 that reads as text (`mask_secret_lines`), and that mark looks at the line as a whole, so a key
-    beside such text gets it too. Sending cannot be taken back, so every flagged line stays here, marked or not; so does a file with a
+    can show a line marked as base64 that reads as text (`mask_secret_lines`), and that mark asks only the values the scanner flagged,
+    so a key it did not flag can stand beside such text. Sending cannot be taken back, so every flagged line stays here, marked or not; so does a file with a
     skip row, since no row can say what is in it. The scan also writes no row for a lock file (`secret_scan.scannable`), and no read
     takes one: a read takes prose by its extension, and no lock file's name has one."""
 

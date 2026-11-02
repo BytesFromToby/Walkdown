@@ -12,6 +12,11 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
   every line through that one is masked, the `-----END` line included. A model read already left the whole key out, and now uses
   the same lines. Counts, findings, and page wording are the same; a quote on a key's later line reads as masked, so a mark on
   such a place does not carry over.
+- **A key beside readable base64 is a key.** A line holding an instruction hidden in base64 was marked as holding no key, whatever
+  else the scanner flagged on it, so a hex key or base64 of random bytes on the same line was shown in `full.md` and `data/`, and
+  such a skill could read "found none of the security concerns it looks for". The mark now needs every flagged value on the line to
+  decode to readable text. Such a line counts as looks like a committed secret, and its quotes, the decoded instruction included,
+  are masked.
 
 ## 0.4.0 (2026-11-02)
 

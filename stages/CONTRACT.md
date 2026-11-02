@@ -514,3 +514,4 @@ already (`step-missing`), a step a stop left out has no coverage to check, and a
 - 2026-11-01: `span` and `event_line` (above, Additional fields), and `masked` on any finding that keeps words from a flagged line. No check was added or removed, and no count moved.
 - 2026-11-01: `secret.found` reads build files and pattern lists, and `secret_left_out` is new on `02.4-phrases`'s report. No check was added or removed.
 - 2026-11-02: `key_end` on a private key's `secret.found`, and the mask covers the key through it. No check was added or removed, and no count moved.
+- 2026-11-02: `likely_not_secret` is `BASE64_TEXT` only when every value the scanner flagged on the line is readable base64. No check was added or removed; a line with a key beside such text now counts as one that may hold a secret.

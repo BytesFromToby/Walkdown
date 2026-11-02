@@ -1083,8 +1083,9 @@ see the same lines. The name `open` is taken back after each call, and `detect-s
 - A key in a lock file: left out by name (`LOCK_FILES`), so it is not flagged and not masked. The pages name the file.
 - A key the scanner has no rule for: a shape no detector knows, a key spelled only in hidden characters, and `password = value` with no
   quotes in a `.md` with prose in it (`test_what_the_scan_does_not_flag_is_what_the_docs_say`). It has no row, so nothing masks it and a model read sends it.
-- A key of no known shape beside readable base64: `BASE64_TEXT` looks at the line as a whole, so with a phrase hit on the line `full.md` and
-  `data/02.4-phrases.json` keep the key. A line with a kind outside `ENTROPY` is not marked. A model read leaves the line out.
+- A key on a line with readable base64 that the scanner does not flag itself: `BASE64_TEXT` asks only the values it flagged, so a key
+  of a shape no rule knows, out of quotes where the entropy rules do not look, keeps the mark, and with a phrase hit on the line `full.md`
+  and `data/02.4-phrases.json` keep it. A model read leaves the line out.
 
 ### Done when
 
@@ -1133,6 +1134,13 @@ see the same lines. The name `open` is taken back after each call, and `detect-s
     (`test_a_private_keys_first_line_carries_the_last_line_of_the_key`,
     `test_a_private_key_with_no_end_line_runs_to_the_line_before_the_next_blank_one`, `test_a_key_on_one_line_and_another_kind_carry_no_key_end`).
 
+18. A key beside readable base64 is not marked and its line is masked, and readable base64 alone, once or twice, still is
+    (`test_a_key_beside_readable_base64_is_not_marked_and_the_text_alone_still_is`); a value reads as text only when the whole of it is
+    readable base64 (`test_a_value_reads_as_text_only_when_the_whole_of_it_is_readable_base64`); fixture rows
+    `base64-text-alone-is-marked`, `secret-beside-base64-text`, and `secret-beside-base64-text-not-marked` (`beside-base64.md`). On a whole
+    run, neither key is in a report or a step output (`06-report/tests/test_run.py`,
+    `test_a_key_beside_readable_base64_is_in_no_report_and_no_step_output`).
+
 ### Likely not a secret (2026-10-09)
 
 On six real repositories every flagged line checked held no secret: hashes under `sha256` or
@@ -1153,10 +1161,12 @@ kept with `likely_not_secret: <reason>` (benign hits are recorded, never dropped
   summary): it ends in `...` or `…`, is in angle brackets (`<your-key>`), starts with `your`, is
   only `x`, `*`, or `.` (three or more), starts with `abc123`, or is `changeme`, `placeholder`,
   `dummy`, `example`, or `redacted` (any case): "a placeholder, not a value".
-- entropy kinds only, and a base64 run on the line decodes to readable text
-  (`foldtext.base64_texts`): "base64 that decodes to readable text, not a key" (2026-10-25,
+- entropy kinds only, a base64 run on the line decodes to readable text
+  (`foldtext.base64_texts`), and every value detect-secrets flagged on the line is itself such a run (`reads_as_text`; only the
+  answer is kept, never the value): "base64 that decodes to readable text, not a key" (2026-10-25,
   review C42: an instruction hidden in base64 was filed as a committed secret; `02.4-phrases` matches
-  the decoded text itself).
+  the decoded text itself). Before 2026-11-02 the rule asked only the line, so a hex key, or base64 of random bytes, beside an
+  instruction hidden in base64 got the mark, and its line was shown.
 
 A comment after the code (from `#`, `//`, `/*`, `<!--`, `-- `, or `' `, `COMMENT_TAIL`) comes off the line before any of these rules
 reads it: its spaces would read as prose, and a hash key, an address, or base64 in it as the line's own (2026-11-01). A line that is
@@ -1197,6 +1207,10 @@ The report counts these apart and lists them with the reason in the full report 
 - 2026-11-02: `key_end` on a private key's first line. The scan flags only that line, so a finding of another step that quoted a later
   line of the key was not masked: on a made-up skill with hidden characters on two lines of a key's body, `full.md` and
   `data/02.2-reader.json` repeated both lines. No row is added or removed, and `line` stays. `terms.code` moves with this file.
+- 2026-11-02: `BASE64_TEXT` asks every value the scanner flagged on the line (`reads_as_text`), not the line alone. A hex key, or base64 of
+  random bytes, beside an instruction hidden in base64 was marked as no key: on a made-up skill both keys reached `full.md`,
+  `data/02.4-phrases.json`, and `data/hits.json`, and the brief said Walkdown found none of the concerns it looks for. Such a line now counts
+  among the lines that may hold a secret, and every quote on it is masked, the decoded instruction included. `terms.code` moves with this file.
 
 ## terms
 

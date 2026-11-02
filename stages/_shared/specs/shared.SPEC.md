@@ -2164,8 +2164,8 @@ phrase report, in place. It returns whether a finding of the reader is masked no
 - `lines(rel, lines)`: the lines as a read uses them, each one left out a blank at its place (`LEFT_OUT`), so every other line keeps
   its number. The list it was given when nothing is left out. None when the scan did not read the file, or there are no lines.
 - `left_out(rel, lines)`: the numbers of the lines left out. Each line with a `secret.found` that is no skip, whatever its
-  `likely_not_secret` says: a page shows a line marked `BASE64_TEXT`, and that mark looks at the line as a whole, so a key beside
-  readable base64 gets it too. For a kind that names a private key (`PRIVATE_KEY`: `Private Key`, `private-key`), the rest of the key
+  `likely_not_secret` says: a page shows a line marked `BASE64_TEXT`, and that mark asks only the values the scanner flagged, so a key
+  it did not flag beside readable base64 can stand on such a line. For a kind that names a private key (`PRIVATE_KEY`: `Private Key`, `private-key`), the rest of the key
   as well, since the scan flags only its first line: through the next line holding `-----END`, or with none through the line
   before the next blank line (a PuTTY file has no such line); nothing more when `-----END` is on the flagged line (`key_end`). The
   row's `key_end` is taken too, never past the file's last line, and the rule over the lines stands for a row saved before it. A row

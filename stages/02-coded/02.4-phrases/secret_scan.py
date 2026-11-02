@@ -45,22 +45,26 @@ PLACEHOLDER = re.compile(r".*(\.\.\.|…)|<[^<>]+>|your\b.*|your[-_].*|[x*.]{3,}
 # Key shapes no installed scanner may know (2026-10-25, review C43: detect-secrets has no rule
 # for Anthropic keys, and a real-looking one in prose was missed).
 KEY_SHAPES = {"Anthropic API Key": re.compile(r"\bsk-ant-(?:api|admin)\d{2}-[A-Za-z0-9_-]{32,}")}
+# A flagged value that is one base64 run, as `foldtext.base64_texts` reads one: only then can the whole of it be readable text.
+B64_VALUE = re.compile(r"[A-Za-z0-9+/]{24,}={0,2}")
 # A comment is the audited repository's own word about a line, and neither the scanner nor the mark takes it (2026-11-01: this filter
 # dropped a line carrying `# pragma: allowlist secret`, with no record).
 ALLOWLIST_FILTER = "detect_secrets.filters.allowlist.is_line_allowlisted"
 COMMENT_TAIL = re.compile(r"(?<=\S)\s+(?:#|//|/\*|<!--|--\s|'\s).*$")
 
 
-def likely_not_secret(line: str, kinds: list[str]) -> str | None:
+def likely_not_secret(line: str, kinds: list[str], all_text: bool = True) -> str | None:
     """Why a flagged line holds no secret, or None. Only plain cases: a hash under a key named
     for a hash, a password in a URL for a local or reserved test host, a keyword whose value is
     a variable name, a plain lowercase word, or prose. A comment after the code is no part of the
-    line here: its spaces would read as prose, and a hash key or an address in it as the line's own."""
+    line here: its spaces would read as prose, and a hash key or an address in it as the line's own.
+    `all_text`: whether every value the scanner flagged on the line is base64 that decodes to readable text (`reads_as_text`); a
+    line with readable base64 and a flagged value that is not (a key beside the text) is no `BASE64_TEXT` (2026-11-02)."""
     ks = set(kinds)
     line = COMMENT_TAIL.sub("", line)
     if ks <= ENTROPY and HASH_KEY.search(line):
         return "a hash under a key named for one"
-    if ks <= ENTROPY and base64_texts(line):
+    if ks <= ENTROPY and all_text and base64_texts(line):
         return BASE64_TEXT
     if ks <= URL_KINDS and LOCAL_URL.search(line):
         return "a password in a URL for a local test address"
@@ -74,6 +78,14 @@ def likely_not_secret(line: str, kinds: list[str]) -> str | None:
         if PLACEHOLDER.fullmatch(value):
             return "a placeholder, not a value"
     return None
+
+
+def reads_as_text(value) -> bool:
+    """Whether a value the scanner flagged is base64 that decodes to readable text (`foldtext.base64_texts` finds it whole), as an
+    instruction hidden in base64 is (review C42). A key, hex or base64 of random bytes, is not. Only this answer is kept, never the
+    value."""
+    value = str(value or "").strip()
+    return bool(B64_VALUE.fullmatch(value)) and bool(base64_texts(value))
 
 
 def _could_not(rel: str) -> dict:
@@ -158,7 +170,8 @@ def _detect_secrets(root: Path, rels: set[str], skips: list | None = None) -> li
                 if skips is not None:
                     skips.append(_could_not(rel))
                 continue
-            out += [{"file": rel, "line": s.line_number, "kind": s.type or "secret", "engine": "detect-secrets"} for s in hits]
+            out += [{"file": rel, "line": s.line_number, "kind": s.type or "secret", "engine": "detect-secrets",
+                     "text": reads_as_text(s.secret_value)} for s in hits]
     return out
 
 
@@ -184,6 +197,7 @@ def scan(root, files: dict[str, str]) -> list[dict]:
     hits = hits + _shapes(root, rels, file_skips, unscanned)
     merged: dict[tuple, dict] = {}
     lines: dict[str, list[str]] = {}
+    not_text = {(h["file"], h["line"]) for h in hits if not h.get("text")}  # a line with a flagged value that is no readable base64
     for h in hits:
         key = (h["file"], h["line"])
         m = merged.setdefault(key, {"check": "secret.found", "file": h["file"], "line": h["line"],
@@ -196,7 +210,7 @@ def scan(root, files: dict[str, str]) -> list[dict]:
             lines[rel] = readtext.split_lines(_text(root, rel) or "")
         inside = isinstance(ln, int) and 0 < ln <= len(lines[rel])
         text = lines[rel][ln - 1] if inside else ""
-        why = likely_not_secret(text, m["kinds"])
+        why = likely_not_secret(text, m["kinds"], all_text=(rel, ln) not in not_text)
         if why:
             m["likely_not_secret"] = why
         # A private key's first line is the one flagged, and the lines below it are the key: `key_end` is its last, so the mask
