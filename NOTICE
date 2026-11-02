@@ -3,6 +3,6 @@ Copyright 2026 BytesFromToby
 
 This product is licensed under the Apache License, Version 2.0 (see LICENSE).
 
-Fixtures/06-soft/real-lines/ contains short excerpts from three MIT-licensed
+tools/model-eval/real-lines/ contains short excerpts from three MIT-licensed
 repositories, used as test data for stage 6. Those excerpts remain under their
 own licenses; the notices are reproduced in THIRD-PARTY-NOTICES.md.

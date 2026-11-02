@@ -1,0 +1,51 @@
+{
+ "stage": "02.6-builder",
+ "contract": 1,
+ "findings": [],
+ "coverage": [
+  {
+   "checks": [
+    "need.command",
+    "need.package",
+    "port.path",
+    "port.crlf",
+    "port.os",
+    "port.backslash",
+    "port.exec",
+    "port.python",
+    "host.coverage",
+    "host.drift",
+    "host.feature",
+    "trig.entry",
+    "trig.frontmatter",
+    "trig.rule",
+    "trig.guidance",
+    "trig.key",
+    "trig.value",
+    "trig.tool",
+    "trig.overlap",
+    "trig.listing",
+    "ask.tools",
+    "ask.named",
+    "fit.loop",
+    "clean.unfinished",
+    "clean.dated",
+    "clean.model",
+    "clean.older",
+    "clean.checked",
+    "fit.unused",
+    "fit.missing",
+    "fit.inherits",
+    "fit.checked",
+    "fit.hook",
+    "cap.ship",
+    "cap.context"
+   ],
+   "unit": "files",
+   "of": 3,
+   "looked_at": 3,
+   "explained": 0,
+   "found": 0
+  }
+ ]
+}

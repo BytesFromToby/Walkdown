@@ -18,3 +18,6 @@ RepoResults/**/normalized/
 
 # Validation stamps reused across runs with the same code and fixtures (validate.py)
 .cache/
+
+# Agent worktrees made during the restructure (2026-10-28); never committed.
+.claude/worktrees/

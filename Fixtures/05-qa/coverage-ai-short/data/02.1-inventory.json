@@ -1,0 +1,25 @@
+{
+ "stage": "02.1-inventory",
+ "contract": 1,
+ "findings": [],
+ "coverage": [
+  {
+   "checks": [
+    "inv.pin",
+    "inv.file",
+    "struct.description",
+    "struct.agent-tools",
+    "struct.hooks",
+    "struct.manifests",
+    "struct.mcp",
+    "inv.license",
+    "struct.census"
+   ],
+   "unit": "files",
+   "of": 3,
+   "looked_at": 3,
+   "explained": 0,
+   "found": 0
+  }
+ ]
+}

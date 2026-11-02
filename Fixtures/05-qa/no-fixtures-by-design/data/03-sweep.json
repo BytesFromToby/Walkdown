@@ -1,0 +1,25 @@
+{
+ "stage": "03-sweep",
+ "contract": 1,
+ "backends": [
+  {
+   "role": "sweep",
+   "backend": "jev",
+   "remote": true,
+   "model": "fixture-model"
+  }
+ ],
+ "findings": [],
+ "coverage": [
+  {
+   "checks": [
+    "soft.sweep"
+   ],
+   "unit": "passages",
+   "of": 0,
+   "looked_at": 0,
+   "explained": 0,
+   "found": 0
+  }
+ ]
+}

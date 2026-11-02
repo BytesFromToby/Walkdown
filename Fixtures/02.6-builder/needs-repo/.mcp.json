@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "notes": {
+      "command": "uvx",
+      "args": ["notes-server"]
+    }
+  }
+}

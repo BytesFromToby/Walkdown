@@ -1,0 +1,98 @@
+# The AI hosts Walkdown reports on, and what each reads from a repository (I14, plan for builders,
+# slice 3, owner 2026-10-26). One row per host with its source and the date checked; a host that
+# changes is a data edit here. Paths are relative to the repository; `**/` means at any depth.
+# `hooks` says whose a hook file 02.1-inventory found is (a file no other host claims is Claude Code's).
+
+checked: 2026-10-26
+
+hosts:
+  claude:
+    name: Claude Code
+    instructions: [CLAUDE.md, "**/CLAUDE.md", CLAUDE.local.md, .claude/CLAUDE.md, ".claude/rules/*.md"]
+    fallback: [AGENTS.md]          # read only when there is no CLAUDE.md
+    skills: [.claude/skills]       # and a plugin's skills/ (beside .claude-plugin/plugin.json)
+    plugin_skills: true
+    mcp: [.mcp.json]
+    hooks: [.claude/settings.json, .claude/settings.local.json, hooks/hooks.json, "**/hooks/hooks.json"]
+    source: S07; S03
+  codex:
+    name: Codex
+    instructions: [AGENTS.md, "**/AGENTS.md"]
+    skills: [.agents/skills]
+    mcp: []
+    hooks: []
+    source: S09
+  gemini:
+    name: Gemini CLI
+    instructions: [GEMINI.md, "**/GEMINI.md"]
+    note: reads AGENTS.md too when its settings name it (context.fileName)
+    skills: [.gemini/skills, .agents/skills]
+    mcp: [.gemini/settings.json]
+    hooks: []
+    source: S10; S11
+  cursor:
+    name: Cursor
+    instructions: [".cursor/rules/*.mdc", "**/.cursor/rules/*.mdc", AGENTS.md, "**/AGENTS.md", .cursorrules]
+    skills: [.agents/skills, .cursor/skills, .claude/skills, .codex/skills]
+    mcp: [.cursor/mcp.json]
+    hooks: [.cursor/hooks.json, .cursor/environment.json]   # environment.json: its cloud agents
+    source: S12; S13; S14
+  copilot:
+    name: GitHub Copilot
+    instructions: [.github/copilot-instructions.md, ".github/instructions/*.instructions.md", AGENTS.md, "**/AGENTS.md", CLAUDE.md, GEMINI.md]
+    skills: [.github/skills, .claude/skills, .agents/skills]
+    mcp: [.vscode/mcp.json]
+    hooks: [".github/hooks/*.json"]
+    source: S15
+  windsurf:
+    name: Windsurf
+    instructions: [".windsurf/rules/*.md", AGENTS.md, "**/AGENTS.md", .windsurfrules]
+    skills: []
+    mcp: []
+    hooks: []
+    source: S16
+  agents-md:
+    name: Other tools that read AGENTS.md
+    short: other AGENTS.md readers   # in a list of hosts
+    instructions: [AGENTS.md, "**/AGENTS.md"]
+    skills: []
+    mcp: []
+    hooks: []
+    source: S17
+
+# Instruction files kept for one host each; two in one folder are compared (host.drift).
+copies: [CLAUDE.md, AGENTS.md, GEMINI.md, .github/copilot-instructions.md, .cursorrules, .windsurfrules, .clinerules]
+
+# The frontmatter keys of the Agent Skills format (S01); outside Claude Code (claude.ai, the Skills API)
+# a skill with any other key is refused.
+skill_keys: [name, description, license, compatibility, metadata, allowed-tools]
+
+# Claude Code's own words and tool names: other hosts see them as written.
+claude_words: ["$ARGUMENTS", "${CLAUDE_PLUGIN_ROOT}", "$CLAUDE_PLUGIN_ROOT", "${CLAUDE_PROJECT_DIR}", "$CLAUDE_PROJECT_DIR"]
+claude_tools: [WebFetch, WebSearch, TodoWrite, NotebookEdit, MultiEdit, AskUserQuestion]
+
+# The features that work on one host only, in the order the report lists them (restructure step 3b,
+# moved 2026-10-29 from the report code: FEATURE_KINDS in render.py and FEATURE_PLAIN in glance.py;
+# the words are Walkdown's own). `kind` is the host.feature kind. `name` and `why` head its section
+# in the full report and the details page; `plain` is the phrase on the summary page, after "it uses".
+feature_kinds:
+  - kind: frontmatter
+    name: 'Skill frontmatter keys outside the Agent Skills set'
+    why: 'claude.ai and the Skills API refuse the skill; other hosts ignore the key'
+    plain: 'skill settings only Claude Code reads (claude.ai and the Skills API refuse a skill with them)'
+  - kind: claude-words
+    name: 'Claude Code''s own words'
+    why: 'other hosts pass them to the AI as written'
+    plain: 'wording only Claude Code fills in, such as the folder where the plugin is installed'
+  - kind: claude-tool
+    name: 'Claude Code''s tool names'
+    why: 'other hosts have no tool by that name'
+    plain: 'tool names only Claude Code has'
+  - kind: import
+    name: '@ imports in AGENTS.md'
+    why: 'AGENTS.md has no imports, so other hosts see the line as written'
+    plain: "\u201c@\u201d imports in AGENTS.md, which other tools show to the AI as written"
+  - kind: hooks
+    name: 'Hook files'
+    why: 'each runs on its own host only'
+    plain: 'hooks, which run on one tool only'

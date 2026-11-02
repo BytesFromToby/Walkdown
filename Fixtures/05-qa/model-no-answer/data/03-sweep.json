@@ -1,0 +1,58 @@
+{
+ "stage": "03-sweep",
+ "contract": 1,
+ "backends": [
+  {
+   "role": "sweep",
+   "backend": "jev",
+   "remote": true,
+   "model": "fixture-model"
+  }
+ ],
+ "calls": {
+  "log": "03-sweep.calls.jsonl",
+  "answered_on_retry": 0,
+  "not_sent": 3
+ },
+ "findings": [
+  {
+   "check": "soft.sweep",
+   "file": "fixture.md",
+   "line": 1,
+   "end_line": 2,
+   "qid": "sweep:fixture.md:1",
+   "backend": "jev",
+   "skipped": "jev: no key"
+  },
+  {
+   "check": "soft.sweep",
+   "file": "fixture.md",
+   "line": 5,
+   "end_line": 6,
+   "qid": "sweep:fixture.md:5",
+   "backend": "jev",
+   "skipped": "jev: no key"
+  },
+  {
+   "check": "soft.sweep",
+   "file": "fixture.md",
+   "line": 9,
+   "end_line": 10,
+   "qid": "sweep:fixture.md:9",
+   "backend": "jev",
+   "skipped": "jev: no key"
+  }
+ ],
+ "coverage": [
+  {
+   "checks": [
+    "soft.sweep"
+   ],
+   "unit": "passages",
+   "of": 3,
+   "looked_at": 0,
+   "explained": 3,
+   "found": 0
+  }
+ ]
+}

@@ -1,0 +1,24 @@
+{
+ "stage": "02.5-capability",
+ "contract": 1,
+ "findings": [],
+ "coverage": [
+  {
+   "checks": [
+    "cap.leg",
+    "cap.grant",
+    "cap.injection",
+    "cap.load-bytes",
+    "cap.posture",
+    "cap.pair",
+    "cap.limit",
+    "cap.testdata"
+   ],
+   "unit": "files",
+   "of": 3,
+   "looked_at": 3,
+   "explained": 0,
+   "found": 0
+  }
+ ]
+}

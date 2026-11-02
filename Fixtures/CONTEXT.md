@@ -16,11 +16,17 @@ inputs and the answers live apart so a stage cannot be built to pass them.
 ```
 Fixtures/
   CONTEXT.md
-  01-inventory/      stage 1: one mini repo per class folder (class06, 09, 15, 16, 18)
-  02-reader/         stage 2: zero-width, bidi, language shift, HTML/SVG/PDF/image/DOCX, metadata PDF
-  03-graph/          stage 3: sample-repo/ (entry points, orphans, dangling ref, glob)
-  04-phrases/        stage 4: one file per phrase class, gate / recall / negative sections
-  _generators/       scripts that rebuild the binary fixtures (dev-only; not stage input)
+  01-intake/         intake: folder-target/, a small inert folder read in place (a URL is not graded)
+  02.1-inventory/    one mini repo per class folder (class06, 09, 15, 16, 18)
+  02.2-reader/       zero-width, bidi, more invisible characters, language shift, HTML/SVG/PDF/image/DOCX, metadata PDF
+  02.3-graph/        sample-repo/ (entry points, orphans, dangling ref, glob)
+  02.4-phrases/      one file per phrase class, gate / recall / negative sections
+  02.5-capability/   mini repos for the trifecta legs, install grants, pairs, and posture
+  02.6-builder/      one mini repo per builder check (needs, hosts, trigger, asks, clean, fit, cost)
+  03-sweep/          sweep-repo/: passages for the coverage sweep (recall rows, measured with a backend)
+  05-qa/             one small synthetic run folder per case (a data/ with run.json and the saved outputs): the
+                     check of the run holds the runs with a gap and not the others (M9 slice B; made by
+                     tools/fixture-generators/make_qa_runs.py)
   ANSWERS/           the answer sheet: one JSON per stage. GRADER-ONLY.
 ```
 
@@ -28,7 +34,9 @@ Fixtures/
 - **`ANSWERS/`**: expected results per fixture: which checks must fire, which must
   **not**, expected counts, and the reasoning. **Only the grader reads it.** The
   person building a stage does not open it. Format: `ANSWERS/README.md`.
-- **The grader** (`../grader/grader.py`) runs `stages/NN-name/run.py` on the
+- **The generators** that rebuild the binary fixtures are in `../tools/fixture-generators/` (dev-only; not
+  stage input; they write into these folders).
+- **The grader** (`../tools/grader/grader.py`) runs `stages/<folder>/run.py` (the folder is in `../stages/stages.json`) on the
   stage's fixtures and scores the output. Stages report in the format fixed by
   `../stages/CONTRACT.md`, which is visible to builders: it names checks and
   fields, never expected values.
@@ -42,7 +50,7 @@ Fixtures/
 
 - **Detector fixtures** — the smallest input that triggers one detector/class
   (a planted traffic-redirect env line, a `fetch and follow` string).
-- **Reader test documents** — whole crafted files that exercise the stage 2
+- **Reader test documents** — whole crafted files that exercise the `02.2-reader`
   reader, not just a regex (a PDF whose text layer differs from its render, an
   SVG with `<text>`, a BOM-prefixed file). A hand-typed string never exercises a
   real parser; these do.
@@ -86,8 +94,8 @@ never "safe."
 ## Adding a fixture
 
 1. Put the file in the stage folder that must catch it (a new mini repo folder
-   for stage 1). Inert and marked, per the safety rules above.
+   for `02.1-inventory`). Inert and marked, per the safety rules above.
 2. Add its expectations to `ANSWERS/<stage>.json` (positives and negatives),
    with the reasoning in `note`.
-3. `python grader/grader.py --rehash <stage>`, then `--check-answers`.
+3. `python tools/grader/grader.py --rehash <stage>`, then `--check-answers`.
 4. If a new check ID is needed, add it to `stages/CONTRACT.md` first.

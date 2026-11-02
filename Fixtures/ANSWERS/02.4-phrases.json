@@ -1,0 +1,2359 @@
+{
+  "stage": "02.4-phrases",
+  "answers_version": 1,
+  "note": "One file per class: gate lines must fire, recall lines are measured, negatives must not fire. Line numbers derived from each fixture's section headings.",
+  "cases": [
+    {
+      "root": ".",
+      "expect": [
+        {
+          "id": "ph-01-gate-6",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 6,
+          "note": "Discriminator: private data leaving to a destination the user did not choose, not the words send/post."
+        },
+        {
+          "id": "ph-01-gate-7",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 7
+        },
+        {
+          "id": "ph-01-recall-10",
+          "polarity": "recall",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 10
+        },
+        {
+          "id": "ph-01-recall-11",
+          "polarity": "recall",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 11
+        },
+        {
+          "id": "ph-01-recall-12",
+          "polarity": "recall",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 12
+        },
+        {
+          "id": "ph-01-negative-15",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 15
+        },
+        {
+          "id": "ph-01-negative-16",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 16
+        },
+        {
+          "id": "ph-01-negative-17",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 17
+        },
+        {
+          "id": "ph-01-negative-18",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 18
+        },
+        {
+          "id": "ph-01-gate-21-linkdef-url",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 21,
+          "match": {
+            "patterns": {
+              "includes": "K.md-carrier"
+            }
+          },
+          "note": "A link definition to a web address can carry data out in its query (review C43, 2026-10-25)."
+        },
+        {
+          "id": "ph-01-negative-22-linkdef-local",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 22,
+          "note": "A link definition to a file in the repository is a reference, not a carrier (review C43, an outside tester: every [r1]: path was filed under Reaching out)."
+        },
+        {
+          "id": "ph-01-gate-23-linkdef-local-hidden",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "class01-exfiltration.md",
+          "line": 23,
+          "match": {
+            "patterns": {
+              "includes": "K.md-carrier"
+            }
+          },
+          "note": "Narrowing survival: a local link definition on a line that also has the hidden attribute still fires."
+        },
+        {
+          "id": "ph-02-gate-6",
+          "polarity": "gate",
+          "check": "phrase.creds",
+          "file": "class02-credentials.md",
+          "line": 6,
+          "note": "Discriminator: hunting/collecting credentials vs a single configured read or security advice."
+        },
+        {
+          "id": "ph-02-gate-7",
+          "polarity": "gate",
+          "check": "phrase.creds",
+          "file": "class02-credentials.md",
+          "line": 7
+        },
+        {
+          "id": "ph-02-recall-10",
+          "polarity": "recall",
+          "check": "phrase.creds",
+          "file": "class02-credentials.md",
+          "line": 10
+        },
+        {
+          "id": "ph-02-recall-11",
+          "polarity": "recall",
+          "check": "phrase.creds",
+          "file": "class02-credentials.md",
+          "line": 11
+        },
+        {
+          "id": "ph-02-recall-12",
+          "polarity": "recall",
+          "check": "phrase.creds",
+          "file": "class02-credentials.md",
+          "line": 12
+        },
+        {
+          "id": "ph-02-negative-15",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "class02-credentials.md",
+          "line": 15
+        },
+        {
+          "id": "ph-02-negative-16",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "class02-credentials.md",
+          "line": 16
+        },
+        {
+          "id": "ph-02-negative-17",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "class02-credentials.md",
+          "line": 17
+        },
+        {
+          "id": "ph-03-gate-6",
+          "polarity": "gate",
+          "check": "phrase.remote-load",
+          "file": "class03-remote-load.md",
+          "line": 6,
+          "note": "Negatives share the URL shape but not fetch-and-execute; they force the detector past 'contains a URL'."
+        },
+        {
+          "id": "ph-03-gate-7",
+          "polarity": "gate",
+          "check": "phrase.remote-load",
+          "file": "class03-remote-load.md",
+          "line": 7
+        },
+        {
+          "id": "ph-03-recall-10",
+          "polarity": "recall",
+          "check": "phrase.remote-load",
+          "file": "class03-remote-load.md",
+          "line": 10
+        },
+        {
+          "id": "ph-03-recall-11",
+          "polarity": "recall",
+          "check": "phrase.remote-load",
+          "file": "class03-remote-load.md",
+          "line": 11
+        },
+        {
+          "id": "ph-03-negative-14",
+          "polarity": "negative",
+          "check": "phrase.remote-load",
+          "file": "class03-remote-load.md",
+          "line": 14
+        },
+        {
+          "id": "ph-03-negative-15",
+          "polarity": "negative",
+          "check": "phrase.remote-load",
+          "file": "class03-remote-load.md",
+          "line": 15
+        },
+        {
+          "id": "ph-03-negative-16",
+          "polarity": "negative",
+          "check": "phrase.remote-load",
+          "file": "class03-remote-load.md",
+          "line": 16
+        },
+        {
+          "id": "ph-05-gate-6",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 6,
+          "note": "Negatives: in-scope precedence, emphasis, a documented user command, overriding a tool not the model."
+        },
+        {
+          "id": "ph-05-gate-7",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 7
+        },
+        {
+          "id": "ph-05-gate-8",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 8
+        },
+        {
+          "id": "ph-05-gate-9",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 9
+        },
+        {
+          "id": "ph-05-recall-12",
+          "polarity": "recall",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 12
+        },
+        {
+          "id": "ph-05-recall-13",
+          "polarity": "recall",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 13
+        },
+        {
+          "id": "ph-05-recall-14",
+          "polarity": "recall",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 14
+        },
+        {
+          "id": "ph-05-recall-15",
+          "polarity": "recall",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 15
+        },
+        {
+          "id": "ph-05-negative-18",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 18
+        },
+        {
+          "id": "ph-05-negative-19",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 19
+        },
+        {
+          "id": "ph-05-negative-20",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 20
+        },
+        {
+          "id": "ph-05-negative-21",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 21
+        },
+        {
+          "id": "ph-05-negative-24",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 24,
+          "note": "Narrowing pair (owner, 2026-10-12): \"don't ask hypothetical questions\" asks for a style of question and skips no confirmation; the same words before the user or an action still hit, on the same line too."
+        },
+        {
+          "id": "ph-05-gate-25",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 25
+        },
+        {
+          "id": "ph-05-gate-26",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 26
+        },
+        {
+          "id": "ph-05-negative-27",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 27
+        },
+        {
+          "id": "ph-05-negative-28",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 28
+        },
+        {
+          "id": "ph-05-gate-29",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class05-override.md",
+          "line": 29
+        },
+        {
+          "id": "ph-07-gate-6",
+          "polarity": "gate",
+          "check": "phrase.E.perms",
+          "file": "class07-execution-privilege.md",
+          "line": 6,
+          "note": "Install-by-instruction is noisy; negatives teach that a documented ordinary install is benign."
+        },
+        {
+          "id": "ph-07-gate-7",
+          "polarity": "gate",
+          "check": "phrase.E.perms",
+          "file": "class07-execution-privilege.md",
+          "line": 7
+        },
+        {
+          "id": "ph-07-recall-10",
+          "polarity": "recall",
+          "check": "phrase.E.perms",
+          "file": "class07-execution-privilege.md",
+          "line": 10
+        },
+        {
+          "id": "ph-07-recall-11",
+          "polarity": "recall",
+          "check": "phrase.E.perms",
+          "file": "class07-execution-privilege.md",
+          "line": 11
+        },
+        {
+          "id": "ph-07-recall-12",
+          "polarity": "recall",
+          "check": "phrase.E.perms",
+          "file": "class07-execution-privilege.md",
+          "line": 12
+        },
+        {
+          "id": "ph-07-negative-15",
+          "polarity": "negative",
+          "check": "phrase.E.perms",
+          "file": "class07-execution-privilege.md",
+          "line": 15
+        },
+        {
+          "id": "ph-07-negative-16",
+          "polarity": "negative",
+          "check": "phrase.E.perms",
+          "file": "class07-execution-privilege.md",
+          "line": 16
+        },
+        {
+          "id": "ph-07-negative-17",
+          "polarity": "negative",
+          "check": "phrase.E.perms",
+          "file": "class07-execution-privilege.md",
+          "line": 17
+        },
+        {
+          "id": "ph-13-gate-6",
+          "polarity": "gate",
+          "check": "phrase.A.consent",
+          "file": "class13-claimed-consent.md",
+          "line": 6,
+          "note": "Must separate fabricated consent from requesting it."
+        },
+        {
+          "id": "ph-13-gate-7",
+          "polarity": "gate",
+          "check": "phrase.A.consent",
+          "file": "class13-claimed-consent.md",
+          "line": 7
+        },
+        {
+          "id": "ph-13-recall-10",
+          "polarity": "recall",
+          "check": "phrase.A.consent",
+          "file": "class13-claimed-consent.md",
+          "line": 10
+        },
+        {
+          "id": "ph-13-recall-11",
+          "polarity": "recall",
+          "check": "phrase.A.consent",
+          "file": "class13-claimed-consent.md",
+          "line": 11
+        },
+        {
+          "id": "ph-13-recall-12",
+          "polarity": "recall",
+          "check": "phrase.A.consent",
+          "file": "class13-claimed-consent.md",
+          "line": 12
+        },
+        {
+          "id": "ph-13-negative-15",
+          "polarity": "negative",
+          "check": "phrase.A.consent",
+          "file": "class13-claimed-consent.md",
+          "line": 15
+        },
+        {
+          "id": "ph-13-negative-16",
+          "polarity": "negative",
+          "check": "phrase.A.consent",
+          "file": "class13-claimed-consent.md",
+          "line": 16
+        },
+        {
+          "id": "ph-13-negative-17",
+          "polarity": "negative",
+          "check": "phrase.A.consent",
+          "file": "class13-claimed-consent.md",
+          "line": 17
+        },
+        {
+          "id": "ph-14-gate-6",
+          "polarity": "gate",
+          "check": "phrase.B.defs",
+          "file": "class14-definitional-hijacking.md",
+          "line": 6,
+          "note": "A redefinition is a hit only when the new meaning is destructive or exfil; surprise is the soft read."
+        },
+        {
+          "id": "ph-14-gate-7",
+          "polarity": "gate",
+          "check": "phrase.B.defs",
+          "file": "class14-definitional-hijacking.md",
+          "line": 7
+        },
+        {
+          "id": "ph-14-recall-10",
+          "polarity": "recall",
+          "check": "phrase.B.defs",
+          "file": "class14-definitional-hijacking.md",
+          "line": 10
+        },
+        {
+          "id": "ph-14-recall-11",
+          "polarity": "recall",
+          "check": "phrase.B.defs",
+          "file": "class14-definitional-hijacking.md",
+          "line": 11
+        },
+        {
+          "id": "ph-14-recall-12",
+          "polarity": "recall",
+          "check": "phrase.B.defs",
+          "file": "class14-definitional-hijacking.md",
+          "line": 12
+        },
+        {
+          "id": "ph-14-negative-15",
+          "polarity": "negative",
+          "check": "phrase.B.defs",
+          "file": "class14-definitional-hijacking.md",
+          "line": 15
+        },
+        {
+          "id": "ph-14-negative-16",
+          "polarity": "negative",
+          "check": "phrase.B.defs",
+          "file": "class14-definitional-hijacking.md",
+          "line": 16
+        },
+        {
+          "id": "ph-14-negative-17",
+          "polarity": "negative",
+          "check": "phrase.B.defs",
+          "file": "class14-definitional-hijacking.md",
+          "line": 17
+        },
+        {
+          "id": "ph-15-gate-6",
+          "polarity": "gate",
+          "check": "phrase.C.second-order",
+          "file": "class15-second-order.md",
+          "line": 6,
+          "note": "Phrase half only; tool grants are the stage 1 fixture."
+        },
+        {
+          "id": "ph-15-gate-7",
+          "polarity": "gate",
+          "check": "phrase.C.second-order",
+          "file": "class15-second-order.md",
+          "line": 7
+        },
+        {
+          "id": "ph-15-recall-10",
+          "polarity": "recall",
+          "check": "phrase.C.second-order",
+          "file": "class15-second-order.md",
+          "line": 10
+        },
+        {
+          "id": "ph-15-recall-11",
+          "polarity": "recall",
+          "check": "phrase.C.second-order",
+          "file": "class15-second-order.md",
+          "line": 11
+        },
+        {
+          "id": "ph-15-negative-14",
+          "polarity": "negative",
+          "check": "phrase.C.second-order",
+          "file": "class15-second-order.md",
+          "line": 14
+        },
+        {
+          "id": "ph-15-negative-15",
+          "polarity": "negative",
+          "check": "phrase.C.second-order",
+          "file": "class15-second-order.md",
+          "line": 15
+        },
+        {
+          "id": "ph-15-negative-16",
+          "polarity": "negative",
+          "check": "phrase.C.second-order",
+          "file": "class15-second-order.md",
+          "line": 16
+        },
+        {
+          "id": "ph-16-gate-6",
+          "polarity": "gate",
+          "check": "phrase.D.trust",
+          "file": "class16-trust-elevation.md",
+          "line": 6,
+          "note": "Phrase half only; the hook census is the stage 1 fixture."
+        },
+        {
+          "id": "ph-16-gate-7",
+          "polarity": "gate",
+          "check": "phrase.D.trust",
+          "file": "class16-trust-elevation.md",
+          "line": 7
+        },
+        {
+          "id": "ph-16-recall-10",
+          "polarity": "recall",
+          "check": "phrase.D.trust",
+          "file": "class16-trust-elevation.md",
+          "line": 10
+        },
+        {
+          "id": "ph-16-recall-11",
+          "polarity": "recall",
+          "check": "phrase.D.trust",
+          "file": "class16-trust-elevation.md",
+          "line": 11
+        },
+        {
+          "id": "ph-16-negative-14",
+          "polarity": "negative",
+          "check": "phrase.D.trust",
+          "file": "class16-trust-elevation.md",
+          "line": 14
+        },
+        {
+          "id": "ph-16-negative-15",
+          "polarity": "negative",
+          "check": "phrase.D.trust",
+          "file": "class16-trust-elevation.md",
+          "line": 15
+        },
+        {
+          "id": "ph-16-negative-16",
+          "polarity": "negative",
+          "check": "phrase.D.trust",
+          "file": "class16-trust-elevation.md",
+          "line": 16
+        },
+        {
+          "id": "ph-17-gate-6",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "class17-env-mutation.md",
+          "line": 6,
+          "note": "Gate: base-URL var, git insteadOf, mcpServers. Recall: PIP_INDEX_URL, credential helper, shell-profile persistence."
+        },
+        {
+          "id": "ph-17-gate-7",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "class17-env-mutation.md",
+          "line": 7
+        },
+        {
+          "id": "ph-17-gate-8",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "class17-env-mutation.md",
+          "line": 8
+        },
+        {
+          "id": "ph-17-recall-11",
+          "polarity": "recall",
+          "check": "phrase.E.env",
+          "file": "class17-env-mutation.md",
+          "line": 11
+        },
+        {
+          "id": "ph-17-recall-12",
+          "polarity": "recall",
+          "check": "phrase.E.env",
+          "file": "class17-env-mutation.md",
+          "line": 12
+        },
+        {
+          "id": "ph-17-recall-13",
+          "polarity": "recall",
+          "check": "phrase.E.env",
+          "file": "class17-env-mutation.md",
+          "line": 13
+        },
+        {
+          "id": "ph-17-negative-16",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "class17-env-mutation.md",
+          "line": 16
+        },
+        {
+          "id": "ph-17-negative-17",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "class17-env-mutation.md",
+          "line": 17
+        },
+        {
+          "id": "ph-17-negative-18",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "class17-env-mutation.md",
+          "line": 18
+        },
+        {
+          "id": "ph-19-gate-6",
+          "polarity": "gate",
+          "check": "phrase.G.human",
+          "file": "class19-human-inbound.md",
+          "line": 6,
+          "note": "Discriminator: lowering the human's defenses, not any install instruction."
+        },
+        {
+          "id": "ph-19-gate-7",
+          "polarity": "gate",
+          "check": "phrase.G.human",
+          "file": "class19-human-inbound.md",
+          "line": 7
+        },
+        {
+          "id": "ph-19-recall-10",
+          "polarity": "recall",
+          "check": "phrase.G.human",
+          "file": "class19-human-inbound.md",
+          "line": 10
+        },
+        {
+          "id": "ph-19-recall-11",
+          "polarity": "recall",
+          "check": "phrase.G.human",
+          "file": "class19-human-inbound.md",
+          "line": 11
+        },
+        {
+          "id": "ph-19-negative-14",
+          "polarity": "negative",
+          "check": "phrase.G.human",
+          "file": "class19-human-inbound.md",
+          "line": 14
+        },
+        {
+          "id": "ph-19-negative-15",
+          "polarity": "negative",
+          "check": "phrase.G.human",
+          "file": "class19-human-inbound.md",
+          "line": 15
+        },
+        {
+          "id": "ph-19-negative-16",
+          "polarity": "negative",
+          "check": "phrase.G.human",
+          "file": "class19-human-inbound.md",
+          "line": 16
+        },
+        {
+          "id": "ph-20-gate-6",
+          "polarity": "gate",
+          "check": "phrase.H.anti-review",
+          "file": "class20-anti-review.md",
+          "line": 6,
+          "note": "Includes the 'silently' line (Case 002 house-word false positive) as a precision guard."
+        },
+        {
+          "id": "ph-20-gate-7",
+          "polarity": "gate",
+          "check": "phrase.H.anti-review",
+          "file": "class20-anti-review.md",
+          "line": 7
+        },
+        {
+          "id": "ph-20-recall-10",
+          "polarity": "recall",
+          "check": "phrase.H.anti-review",
+          "file": "class20-anti-review.md",
+          "line": 10
+        },
+        {
+          "id": "ph-20-recall-11",
+          "polarity": "recall",
+          "check": "phrase.H.anti-review",
+          "file": "class20-anti-review.md",
+          "line": 11
+        },
+        {
+          "id": "ph-20-recall-12",
+          "polarity": "recall",
+          "check": "phrase.H.anti-review",
+          "file": "class20-anti-review.md",
+          "line": 12
+        },
+        {
+          "id": "ph-20-negative-15",
+          "polarity": "negative",
+          "check": "phrase.H.anti-review",
+          "file": "class20-anti-review.md",
+          "line": 15
+        },
+        {
+          "id": "ph-20-negative-16",
+          "polarity": "negative",
+          "check": "phrase.H.anti-review",
+          "file": "class20-anti-review.md",
+          "line": 16
+        },
+        {
+          "id": "ph-20-negative-17",
+          "polarity": "negative",
+          "check": "phrase.H.anti-review",
+          "file": "class20-anti-review.md",
+          "line": 17
+        },
+        {
+          "id": "ph-20-negative-18",
+          "polarity": "negative",
+          "check": "phrase.H.anti-review",
+          "file": "class20-anti-review.md",
+          "line": 18
+        },
+        {
+          "id": "ph-20-negative-19",
+          "polarity": "negative",
+          "check": "phrase.H.anti-review",
+          "file": "class20-anti-review.md",
+          "line": 19
+        },
+        {
+          "id": "ph-21-gate-6",
+          "polarity": "gate",
+          "check": "phrase.I.conditional",
+          "file": "class21-conditional.md",
+          "line": 6,
+          "note": "Platform/error handling is legitimate; a hit only when the branch body is covert."
+        },
+        {
+          "id": "ph-21-gate-7",
+          "polarity": "gate",
+          "check": "phrase.I.conditional",
+          "file": "class21-conditional.md",
+          "line": 7
+        },
+        {
+          "id": "ph-21-recall-10",
+          "polarity": "recall",
+          "check": "phrase.I.conditional",
+          "file": "class21-conditional.md",
+          "line": 10
+        },
+        {
+          "id": "ph-21-recall-11",
+          "polarity": "recall",
+          "check": "phrase.I.conditional",
+          "file": "class21-conditional.md",
+          "line": 11
+        },
+        {
+          "id": "ph-21-recall-12",
+          "polarity": "recall",
+          "check": "phrase.I.conditional",
+          "file": "class21-conditional.md",
+          "line": 12
+        },
+        {
+          "id": "ph-21-negative-15",
+          "polarity": "negative",
+          "check": "phrase.I.conditional",
+          "file": "class21-conditional.md",
+          "line": 15
+        },
+        {
+          "id": "ph-21-negative-16",
+          "polarity": "negative",
+          "check": "phrase.I.conditional",
+          "file": "class21-conditional.md",
+          "line": 16
+        },
+        {
+          "id": "ph-21-negative-17",
+          "polarity": "negative",
+          "check": "phrase.I.conditional",
+          "file": "class21-conditional.md",
+          "line": 17
+        },
+        {
+          "id": "ph-22-gate-6",
+          "polarity": "gate",
+          "check": "phrase.J.prohibited",
+          "file": "class22-harness-prohibited.md",
+          "line": 6,
+          "note": "Discriminator: the prohibited action without a confirmation step."
+        },
+        {
+          "id": "ph-22-gate-7",
+          "polarity": "gate",
+          "check": "phrase.J.prohibited",
+          "file": "class22-harness-prohibited.md",
+          "line": 7
+        },
+        {
+          "id": "ph-22-recall-10",
+          "polarity": "recall",
+          "check": "phrase.J.prohibited",
+          "file": "class22-harness-prohibited.md",
+          "line": 10
+        },
+        {
+          "id": "ph-22-recall-11",
+          "polarity": "recall",
+          "check": "phrase.J.prohibited",
+          "file": "class22-harness-prohibited.md",
+          "line": 11
+        },
+        {
+          "id": "ph-22-recall-12",
+          "polarity": "recall",
+          "check": "phrase.J.prohibited",
+          "file": "class22-harness-prohibited.md",
+          "line": 12
+        },
+        {
+          "id": "ph-22-negative-15",
+          "polarity": "negative",
+          "check": "phrase.J.prohibited",
+          "file": "class22-harness-prohibited.md",
+          "line": 15
+        },
+        {
+          "id": "ph-22-negative-16",
+          "polarity": "negative",
+          "check": "phrase.J.prohibited",
+          "file": "class22-harness-prohibited.md",
+          "line": 16
+        },
+        {
+          "id": "ph-22-negative-17",
+          "polarity": "negative",
+          "check": "phrase.J.prohibited",
+          "file": "class22-harness-prohibited.md",
+          "line": 17
+        },
+        {
+          "id": "ph-15s-gate-4",
+          "polarity": "gate",
+          "check": "phrase.C.second-order",
+          "file": "class15-script-instruction.sh",
+          "line": 4,
+          "note": "Runnable command handed over as an instruction inside a script string (\"Run: npx ... install\"). A hook that prints this puts it in the model's context (seen in a calibration audit)."
+        },
+        {
+          "id": "ph-15s-gate-5",
+          "polarity": "gate",
+          "check": "phrase.C.second-order",
+          "file": "class15-script-instruction.sh",
+          "line": 5,
+          "note": "Same shape, lowercase run with a backticked command."
+        },
+        {
+          "id": "ph-15s-recall-7",
+          "polarity": "recall",
+          "check": "phrase.C.second-order",
+          "file": "class15-script-instruction.sh",
+          "line": 7,
+          "note": "\"execute:\" variant."
+        },
+        {
+          "id": "ph-15s-neg-9",
+          "polarity": "negative",
+          "check": "phrase.C.second-order",
+          "file": "class15-script-instruction.sh",
+          "line": 9,
+          "note": "A usage line to a human on stderr, not a run instruction."
+        },
+        {
+          "id": "ph-15s-neg-10",
+          "polarity": "negative",
+          "check": "phrase.C.second-order",
+          "file": "class15-script-instruction.sh",
+          "line": 10,
+          "note": "\"run complete\": status, not an instruction."
+        },
+        {
+          "id": "ph-15s-neg-11",
+          "polarity": "negative",
+          "check": "phrase.C.second-order",
+          "file": "class15-script-instruction.sh",
+          "line": 11,
+          "note": "\"Running tests\": status."
+        },
+        {
+          "id": "ph-17b-gate-3",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "class17-harness-binary.ts",
+          "line": 3,
+          "note": "Force re-signing a binary located as the host agent (seen in a calibration audit): changing the harness itself."
+        },
+        {
+          "id": "ph-17b-gate-4",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "class17-harness-binary.ts",
+          "line": 4,
+          "note": "Stated modification of the Claude Code binary."
+        },
+        {
+          "id": "ph-17b-neg-6",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "class17-harness-binary.ts",
+          "line": 6,
+          "note": "codesign --verify reads, it does not re-sign."
+        },
+        {
+          "id": "ph-17b-neg-7",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "class17-harness-binary.ts",
+          "line": 7,
+          "note": "Building your own binary is not changing the host agent."
+        },
+        {
+          "id": "ph-17c-gate-6",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "class17-clone-connect.md",
+          "line": 6,
+          "note": "git clone of a third-party repository: outside code brought in (leg 2, Takes outside input)."
+        },
+        {
+          "id": "ph-17c-gate-7",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "class17-clone-connect.md",
+          "line": 7,
+          "note": "Connecting a personal account: the user's data wherever it lives (leg 1, Reads your data)."
+        },
+        {
+          "id": "ph-17c-recall-10",
+          "polarity": "recall",
+          "check": "phrase.E.env",
+          "file": "class17-clone-connect.md",
+          "line": 10,
+          "note": "gh repo clone variant."
+        },
+        {
+          "id": "ph-17c-recall-11",
+          "polarity": "recall",
+          "check": "phrase.E.env",
+          "file": "class17-clone-connect.md",
+          "line": 11,
+          "note": "Sign in with a personal account."
+        },
+        {
+          "id": "ph-17c-neg-14",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "class17-clone-connect.md",
+          "line": 14,
+          "note": "\"a clone of\" describes history, nothing is cloned."
+        },
+        {
+          "id": "ph-17c-neg-15",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "class17-clone-connect.md",
+          "line": 15,
+          "note": "Mentions connector settings; connects nothing."
+        },
+        {
+          "id": "ph-17c-neg-16",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "class17-clone-connect.md",
+          "line": 16,
+          "note": "\"drive folder\" of a repo is not a Google Drive account."
+        },
+        {
+          "id": "ph-11-nul-gate-6",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-nul-split.md",
+          "line": 6,
+          "note": "A NUL inside a word; the file used to read as binary and was skipped whole (2026-10-09)."
+        },
+        {
+          "id": "ph-11-nul-negative-9",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class11-nul-split.md",
+          "line": 9
+        },
+        {
+          "id": "ph-wrap-gate-7",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 7,
+          "match": {
+            "patterns": {
+              "includes": "E.persist-target"
+            },
+            "wrapped": {
+              "eq": true
+            },
+            "end_line": {
+              "eq": 8
+            }
+          },
+          "note": "Stage 4 matches one line at a time; an instruction hard-wrapped across two lines of one paragraph is caught by the wrap pass, cited at the line where it starts (review C37)."
+        },
+        {
+          "id": "ph-wrap-gate-10",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 10,
+          "match": {
+            "patterns": {
+              "includes": "E.persist-target"
+            },
+            "wrapped": {
+              "eq": true
+            }
+          }
+        },
+        {
+          "id": "ph-wrap-gate-13",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "wrapped-lines.md",
+          "line": 13,
+          "match": {
+            "patterns": {
+              "includes": "L.skip-confirm"
+            },
+            "wrapped": {
+              "eq": true
+            }
+          }
+        },
+        {
+          "id": "ph-wrap-gate-18",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 18,
+          "note": "The same instruction on one line is caught by the line pass, as before."
+        },
+        {
+          "id": "ph-wrap-neg-22",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 22,
+          "note": "Verb and target in two sentences: the sentence span stops at the full stop."
+        },
+        {
+          "id": "ph-wrap-neg-25",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 25,
+          "note": "The next line starts a list item: a new block, never joined."
+        },
+        {
+          "id": "ph-wrap-neg-29",
+          "polarity": "negative",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 29,
+          "note": "Inside a fenced code block: never joined."
+        },
+        {
+          "id": "ph-wrap3-gate-35",
+          "polarity": "gate",
+          "check": "phrase.E.env",
+          "file": "wrapped-lines.md",
+          "line": 35,
+          "match": {
+            "patterns": {
+              "includes": "E.persist-target"
+            },
+            "wrapped": {
+              "eq": true
+            },
+            "end_line": {
+              "eq": 37
+            }
+          },
+          "note": "Verb on line 35, target on line 37: runs of up to four lines are joined (C37 follow-up, 2026-10-20)."
+        },
+        {
+          "id": "ph-wrap-neg-39",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "wrapped-lines.md",
+          "line": 39,
+          "note": "\"don't ask\" ends the line and \"hypothetical questions\" starts the next: L.skip-confirm's own lookahead cancels it once the sentence is read across the break."
+        },
+        {
+          "id": "ph-wrap-gate-42",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "wrapped-lines.md",
+          "line": 42,
+          "match": {
+            "patterns": {
+              "includes": "L.skip-confirm"
+            }
+          },
+          "note": "The twin: the next line continues with an object, so the line hit stands."
+        },
+        {
+          "id": "c42-tags-decoded",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-encoded.md",
+          "line": 4,
+          "match": {
+            "patterns": {
+              "includes": "L.ignore"
+            }
+          },
+          "note": "A sentence written in Unicode tag characters is read as the ASCII it spells (review C42, an outside tester, 2026-10-25)."
+        },
+        {
+          "id": "c42-base64-decoded",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-encoded.md",
+          "line": 5,
+          "match": {
+            "decoded": {
+              "eq": "base64"
+            }
+          },
+          "note": "Readable text inside base64 is decoded and matched (review C42, an outside tester, 2026-10-25)."
+        },
+        {
+          "id": "c42-accent-folded",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-encoded.md",
+          "line": 6,
+          "note": "Accents on Latin letters are dropped before matching (review C42, an outside tester, 2026-10-25)."
+        },
+        {
+          "id": "c42-image-template",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "class11-encoded.md",
+          "line": 7,
+          "match": {
+            "patterns": {
+              "includes": "K.url-template"
+            }
+          },
+          "note": "An image address with a template slot can carry the conversation out when rendered (review C42, an outside tester, 2026-10-25)."
+        },
+        {
+          "id": "c42-lookalike-host",
+          "polarity": "gate",
+          "check": "endpoint.host",
+          "match": {
+            "lookalike_of": {
+              "eq": "github.com"
+            }
+          },
+          "note": "A host written with look-alike letters is listed as itself and marked, never as the real host (review C42, an outside tester, 2026-10-25)."
+        },
+        {
+          "id": "c42-binary-base64-not-read",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class11-encoded.md",
+          "line": 11,
+          "note": "Base64 of binary bytes is not text and adds no hit."
+        },
+        {
+          "id": "c42-accent-benign",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class11-encoded.md",
+          "line": 12,
+          "note": "Accented prose with no instruction stays quiet once folded."
+        },
+        {
+          "id": "c42-image-plain-query",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "class11-encoded.md",
+          "line": 13,
+          "match": {
+            "patterns": {
+              "includes": "K.url-template"
+            }
+          },
+          "note": "An image address with an ordinary query is not a template slot."
+        },
+        {
+          "id": "c42-real-host-not-lookalike",
+          "polarity": "negative",
+          "check": "endpoint.host",
+          "match": {
+            "lookalike_of": {
+              "eq": "github.com"
+            },
+            "host": {
+              "eq": "github.com"
+            }
+          },
+          "note": "The real github.com is never marked as a look-alike."
+        },
+        {
+          "id": "c42-frontmatter-joined",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-folded-frontmatter.md",
+          "line": 4,
+          "match": {
+            "patterns": {
+              "includes": "L.ignore"
+            }
+          },
+          "note": "A folded frontmatter value split over lines is matched as one (review C42, an outside tester, 2026-10-25)."
+        },
+        {
+          "id": "inv2-180e",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-invisible-more.md",
+          "line": 4,
+          "match": {
+            "patterns": {
+              "includes": "L.ignore"
+            }
+          },
+          "note": "U+180E inside 'Ignore' is folded away before matching (an outside note, 2026-10-28)."
+        },
+        {
+          "id": "inv2-3164",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-invisible-more.md",
+          "line": 5,
+          "match": {
+            "patterns": {
+              "includes": "L.ignore"
+            }
+          },
+          "note": "A Hangul filler inside 'Ignore' is folded away before matching."
+        },
+        {
+          "id": "inv2-2800",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-invisible-more.md",
+          "line": 6,
+          "match": {
+            "patterns": {
+              "includes": "L.ignore"
+            }
+          },
+          "note": "A blank braille cell inside 'Ignore' is folded away before matching."
+        },
+        {
+          "id": "inv2-vs-decoded",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class11-invisible-more.md",
+          "line": 7,
+          "match": {
+            "patterns": {
+              "includes": "L.ignore"
+            }
+          },
+          "note": "A run of variation selectors after an emoji is read as the text it spells, as tag characters are (review C42)."
+        },
+        {
+          "id": "inv2-neg-10",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class11-invisible-more.md",
+          "line": 10,
+          "note": "One variation selector after an emoji or a CJK character adds no hit."
+        },
+        {
+          "id": "inv2-neg-11",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class11-invisible-more.md",
+          "line": 11,
+          "note": "One variation selector after an emoji or a CJK character adds no hit."
+        }
+      ],
+      "deferred": [],
+      "fixtures": {
+        "class01-exfiltration.md": "60ee1f222ffd2cbd7543d83b0522351c75857c0a67ce7325b40cea7c341f3e8b",
+        "class02-credentials.md": "8338a544fd991234c7b181ccf26fd81e0df056c167cc492a2aa9f7fe47f25d9b",
+        "class03-remote-load.md": "92456ac6f7e89f387c0fabd56de42894b67942e6c860c5cd2c993656ec52e135",
+        "class05-override.md": "5cd9fb5cbf17bc41ddf99b36d561d1eadfc8dfa1d3e2a3323e605391059d0d35",
+        "class07-execution-privilege.md": "3c6c5c5499029967dbba4e8284931a89d6c1c8bf5d52d7bcd5d5188ce20cb10c",
+        "class11-encoded.md": "608ca75c717c8ec0263fedf9fc9f063455fb5c45c5cb9313d4dc9e298534550e",
+        "class11-folded-frontmatter.md": "b50e633c1dd1d268d8a8ffda930205bbb80f203a6f35c2a480bbd23e825c0d5e",
+        "class11-invisible-more.md": "16930ec8471b1dd7925f6d03a8121496165eea6623dab79224140f209680028a",
+        "class11-nul-split.md": "d83c80b271907b4f449e0d582a32545f7f5dea8931639712fc21bc140a5ba698",
+        "class13-claimed-consent.md": "a700f94420c3d4650029146fc98d230d96d0bc0e69f73a206c9684a0c661a23b",
+        "class14-definitional-hijacking.md": "09d9075c6828b07d6d74d65d0e9ee4668b40917628d5f0ffc14d4286686dfe29",
+        "class15-script-instruction.sh": "dd67b303e969c4e7a1fe72789b41e4b60d5297cc01d729f48e234e086e76d8ad",
+        "class15-second-order.md": "73874bfd55a4892de28d65e0622960345f532b5f91bce0b45eb844f9c1dbc0cf",
+        "class16-trust-elevation.md": "eacea5f11d9c59aea798fb6c4457174597a0bda433bf8fc54ea05abb8b9e60d3",
+        "class17-clone-connect.md": "3c3784c70b6f57527a1496127b08cdf37b072504eeaa1424d167f0b4e151b6e8",
+        "class17-env-mutation.md": "458a27a1d99f884c00ab76ba3f062ce67bafd84f36e7d04b8c7d4cb6c50022c1",
+        "class17-harness-binary.ts": "d6f8e3849e5ca7bb538649e3e3cd2c05788cb0a3942b9dd5891afb3f6380ad42",
+        "class19-human-inbound.md": "bff0ecae372cc205c5846e704d9951026b4ecd1abd30e7ee0a8a7f1897980290",
+        "class20-anti-review.md": "54f3e20a73153777546346c9bc2a53d5d9591d7d67fdf8d45775940a2fc00986",
+        "class21-conditional.md": "ee546cee1d82f3e6ec968a183f5186e81d4a137dfe0755b08406e489a84114ff",
+        "class22-harness-prohibited.md": "1b189e2795f718a5f5e881079a3b34b6e096299838b9883c6e92f4c9fe7532c8",
+        "negation-repo/references/brainstorm.md": "56289fad73bec42d70a21c16d9bfd42e13535ad96d0769dc0bb787bc4e5277fc",
+        "negation-repo/references/confirm.md": "41112c08eb191bd6213f8daa2b162c0952c436914b1e92b47254e54a38e1ea54",
+        "negation-repo/references/deploy.md": "2122d83262735508708433d02799a8156ddf98f20dc823375b27a17a2d33f01e",
+        "negation-repo/references/ideate.md": "96af79d9c3f1a978efb38d5045edbd36623a72197e08c65384715797bf321372",
+        "negation-repo/SKILL.md": "c2d63d9eacaae47fef3129bc0a8bb41b8b62bd617230fc70dd4dba9b09a5d640",
+        "part2-repo/README.md": "edc1129c857147888b767103151bdfee36f58d491ab4091b0483b5c134e8daf1",
+        "part2-repo/references/style.md": "a79c0c83d7e8a99bf4a8170518819a0fef367162336b9b1521b3f705bb33f11b",
+        "part2-repo/scripts/post.sh": "483f1559b935b0f47f46fc6fb7e61e24e8da213e27e015508d0628ede2c80ccd",
+        "part2-repo/scripts/review.sh": "31131b56ed08eccc51db9c75923ae6510d46f5aacbc6f000746b7462c5c79f09",
+        "part2-repo/SKILL.md": "9edaeb794fc940d1f411fc82e70e83d570665836f4b5e55c2f806985f8d87cf0",
+        "position-repo/skills/a/meta.json": "a1bb0050f42a9940652e5b182d53e0fdf3c9c67acdf7d27cdfbdaeb025c61727",
+        "position-repo/skills/a/SKILL.md": "27b88ee5b18a42b3af6507f6723beed4a111f2ca4a0a4173ff0c1e706f0d9b6e",
+        "position-repo/skills/b/meta.json": "a1bb0050f42a9940652e5b182d53e0fdf3c9c67acdf7d27cdfbdaeb025c61727",
+        "position-repo/skills/b/SKILL.md": "3ae3dc4114f69f8e5f93e7adbc109e343cc1b2974c8ea9b836af920f62d5ef8a",
+        "position-repo/skills/long/SKILL.md": "d69dfafa94c0b4012db359821fcca4cc3c340251d16cea968d6372071011370f",
+        "secrets-repo/.gitmodules": "025dde09679c99a0be74b1347ab9daed809eb035713d0177d8bee44b64b8cb3b",
+        "secrets-repo/.npmrc": "4ec91d69e2dbe8aa4f6450c33515e628122af107107385fa9a67e0dbf4bd022b",
+        "secrets-repo/allowlisted.md": "aa94a026df5311a2456cb6cdcd06a2f516fa373a63d3f1404b3b67fa3bccc602",
+        "secrets-repo/checklist.md": "6b08b800ae97abda32a6797f6a5e273da7b8a175ef03b5e60b5c615d732e7074",
+        "secrets-repo/docker-compose.yml": "0df6c7614c430949939f405b1c96450a761d151917fe3bd1d221fc2ca73a97c4",
+        "secrets-repo/notes.md": "e0176ca0d9c22e171fd6cf05cfae5aafb976e9b4eadbfabf89a0cee16fbb9dd5",
+        "secrets-repo/package-lock.json": "a64daf7505864c82834460ddc8ce9eaa718f584e5d4cb97658e5b0fde52aedd9",
+        "secrets-repo/package.json": "5f6ebeb7ca79e483d7c2dc4560fd321a145ebe7686bf69c88737b108dfe76978",
+        "secrets-repo/SKILL.md": "7c2f14b0c5eb6f4aab5c6f83a2bc66000640d3d3953989510bed24365ecbc0f6",
+        "secrets-repo/tagged.md": "5e83a2f7c9b8108320afdb1ebf06d76547cee4a91938df4c2fb9dfe345785bd0",
+        "wrapped-lines.md": "3e3c6bdb4a27fbddbebe721a788153f7d03fe4f50488a97d14f68204bba91d01"
+      }
+    },
+    {
+      "root": "part2-repo",
+      "fixtures": {
+        "README.md": "edc1129c857147888b767103151bdfee36f58d491ab4091b0483b5c134e8daf1",
+        "references/style.md": "a79c0c83d7e8a99bf4a8170518819a0fef367162336b9b1521b3f705bb33f11b",
+        "scripts/post.sh": "483f1559b935b0f47f46fc6fb7e61e24e8da213e27e015508d0628ede2c80ccd",
+        "scripts/review.sh": "31131b56ed08eccc51db9c75923ae6510d46f5aacbc6f000746b7462c5c79f09",
+        "SKILL.md": "9edaeb794fc940d1f411fc82e70e83d570665836f4b5e55c2f806985f8d87cf0"
+      },
+      "expect": [
+        {
+          "id": "p2-ep-undoc",
+          "polarity": "gate",
+          "check": "endpoint.host",
+          "match": {
+            "host": {
+              "eq": "collect.undocumented.invalid"
+            },
+            "documented": {
+              "eq": false
+            }
+          },
+          "note": "Named in SKILL.md and a script, never in README or docs: the cheapest high-signal check (REPORTING 4.1)."
+        },
+        {
+          "id": "p2-ep-doc",
+          "polarity": "gate",
+          "check": "endpoint.host",
+          "match": {
+            "host": {
+              "eq": "api.documented.invalid"
+            },
+            "documented": {
+              "eq": true
+            }
+          },
+          "note": "Used in SKILL.md and named in README."
+        },
+        {
+          "id": "p2-ep-docsonly-neg",
+          "polarity": "negative",
+          "check": "endpoint.host",
+          "match": {
+            "host": {
+              "eq": "docs.only.invalid"
+            },
+            "documented": {
+              "eq": false
+            }
+          },
+          "note": "A host that appears only in documentation is documented by definition."
+        },
+        {
+          "id": "p2-rb-noconfirm",
+          "polarity": "gate",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 13,
+          "match": {
+            "confirmation": {
+              "eq": false
+            }
+          },
+          "note": "Confirm-first action (posting a message) with no confirmation in the same step (THREATS 22)."
+        },
+        {
+          "id": "p2-rb-confirm",
+          "polarity": "gate",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 15,
+          "match": {
+            "confirmation": {
+              "eq": true
+            }
+          },
+          "note": "Publish, with \"ask the user to confirm\" in the same sentence."
+        },
+        {
+          "id": "p2-rb-confirm-neg",
+          "polarity": "negative",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 15,
+          "match": {
+            "confirmation": {
+              "eq": false
+            }
+          }
+        },
+        {
+          "id": "p2-rb-block",
+          "polarity": "recall",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 17,
+          "match": {
+            "confirmation": {
+              "eq": true
+            }
+          },
+          "note": "The confirmation is on the next line of the same list item: the step is the item, not the line."
+        },
+        {
+          "id": "p2-rb-script-neg",
+          "polarity": "negative",
+          "check": "rubric.action",
+          "file": "scripts/post.sh",
+          "note": "A POST in a script is code, not an instruction to the model; the rubric reads instruction text."
+        },
+        {
+          "id": "p2-term-ship-a",
+          "polarity": "gate",
+          "check": "term.def",
+          "file": "SKILL.md",
+          "line": 26,
+          "match": {
+            "term": {
+              "eq": "ship"
+            }
+          }
+        },
+        {
+          "id": "p2-term-ship-b",
+          "polarity": "gate",
+          "check": "term.def",
+          "file": "references/style.md",
+          "line": 5,
+          "match": {
+            "term": {
+              "eq": "ship"
+            }
+          }
+        },
+        {
+          "id": "p2-term-conflict",
+          "polarity": "gate",
+          "check": "term.conflict",
+          "match": {
+            "term": {
+              "eq": "ship"
+            }
+          },
+          "note": "Same word, two definitions, in the front door and a reference file (THREATS 14). Report both; never pick one."
+        },
+        {
+          "id": "p2-term-confirm",
+          "polarity": "gate",
+          "check": "term.def",
+          "file": "SKILL.md",
+          "line": 27,
+          "match": {
+            "term": {
+              "contains": "confirm"
+            }
+          }
+        },
+        {
+          "id": "p2-term-safety",
+          "polarity": "gate",
+          "check": "term.safety",
+          "file": "SKILL.md",
+          "line": 27,
+          "note": "Redefining a safety word (\"confirmation\") hollows out every harness rule written in it."
+        },
+        {
+          "id": "p2-term-safety-neg",
+          "polarity": "negative",
+          "check": "term.safety",
+          "file": "SKILL.md",
+          "line": 26
+        },
+        {
+          "id": "p2-term-neg",
+          "polarity": "negative",
+          "check": "term.def",
+          "file": "references/style.md",
+          "line": 6
+        },
+        {
+          "id": "p2-lim-tools",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 3,
+          "match": {
+            "kind": {
+              "eq": "tools-flag"
+            },
+            "tools": {
+              "same_items": [
+                "Read",
+                "Grep",
+                "Glob"
+              ]
+            },
+            "rules_out": {
+              "same_items": [
+                "write",
+                "shell",
+                "network"
+              ]
+            },
+            "grants_write": {
+              "eq": false
+            }
+          },
+          "note": "A flag or setting that restricts what tools an agent can use (review C32): a fact for stage 5 to pair with read-only wording; never a risk on its own."
+        },
+        {
+          "id": "p2-lim-tools-bash",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 4,
+          "match": {
+            "kind": {
+              "eq": "tools-flag"
+            },
+            "rules_out": {
+              "same_items": []
+            },
+            "grants_write": {
+              "eq": true
+            }
+          },
+          "note": "Bash can write and reach the network, so this list rules nothing out."
+        },
+        {
+          "id": "p2-lim-tools-empty",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 5,
+          "match": {
+            "kind": {
+              "eq": "tools-flag"
+            },
+            "tools": {
+              "same_items": []
+            },
+            "rules_out": {
+              "same_items": [
+                "write",
+                "shell",
+                "network"
+              ]
+            }
+          },
+          "note": "An explicitly empty list leaves no tools."
+        },
+        {
+          "id": "p2-lim-sandbox-ro",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 6,
+          "match": {
+            "kind": {
+              "eq": "sandbox"
+            },
+            "value": {
+              "eq": "read-only"
+            },
+            "rules_out": {
+              "includes": "write"
+            }
+          }
+        },
+        {
+          "id": "p2-lim-sandbox-full",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 7,
+          "match": {
+            "kind": {
+              "eq": "sandbox"
+            },
+            "value": {
+              "eq": "danger-full-access"
+            },
+            "grants_write": {
+              "eq": true
+            },
+            "rules_out": {
+              "same_items": []
+            }
+          }
+        },
+        {
+          "id": "p2-lim-deny",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 8,
+          "match": {
+            "kind": {
+              "eq": "deny"
+            },
+            "rules_out": {
+              "same_items": [
+                "write",
+                "shell"
+              ]
+            }
+          },
+          "note": "Denies every writing tool and Bash; web tools stay, so network is not ruled out."
+        },
+        {
+          "id": "p2-lim-plan",
+          "polarity": "gate",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 9,
+          "match": {
+            "kind": {
+              "eq": "permission-mode"
+            },
+            "value": {
+              "eq": "plan"
+            },
+            "rules_out": {
+              "same_items": [
+                "write",
+                "shell"
+              ]
+            }
+          }
+        },
+        {
+          "id": "p2-lim-allowed-neg",
+          "polarity": "negative",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 10,
+          "note": "--allowedTools pre-approves tools and leaves every other tool available: no restriction."
+        },
+        {
+          "id": "p2-lim-docs-neg",
+          "polarity": "negative",
+          "check": "limit.setting",
+          "file": "scripts/review.sh",
+          "line": 11,
+          "note": "Names the flag with no list: not a setting."
+        }
+      ]
+    },
+    {
+      "root": "position-repo",
+      "fixtures": {
+        "skills/a/meta.json": "a1bb0050f42a9940652e5b182d53e0fdf3c9c67acdf7d27cdfbdaeb025c61727",
+        "skills/a/SKILL.md": "27b88ee5b18a42b3af6507f6723beed4a111f2ca4a0a4173ff0c1e706f0d9b6e",
+        "skills/b/meta.json": "a1bb0050f42a9940652e5b182d53e0fdf3c9c67acdf7d27cdfbdaeb025c61727",
+        "skills/b/SKILL.md": "3ae3dc4114f69f8e5f93e7adbc109e343cc1b2974c8ea9b836af920f62d5ef8a",
+        "skills/long/SKILL.md": "d69dfafa94c0b4012db359821fcca4cc3c340251d16cea968d6372071011370f"
+      },
+      "note": "REPORTING 4.4 and 4.5 (built 2026-10-04): instruction position in a file over the reader window, and an instruction sentence repeated across model-read files.",
+      "expect": [
+        {
+          "id": "pos-long-tail",
+          "polarity": "gate",
+          "check": "pos.density",
+          "file": "skills/long/SKILL.md",
+          "match": {
+            "first10": {
+              "eq": 0
+            },
+            "last10": {
+              "eq": 1
+            },
+            "beyond_window": {
+              "eq": 1
+            }
+          },
+          "note": "The only flagged instruction sits at the end of a 2,310-line file, past the 50 KB reader window (line 690)."
+        },
+        {
+          "id": "rep-shared-override",
+          "polarity": "gate",
+          "check": "rep.sentence",
+          "file": "skills/a/SKILL.md",
+          "line": 10,
+          "match": {
+            "files": {
+              "eq": 2
+            },
+            "patterns": {
+              "includes": "L.ignore"
+            }
+          },
+          "note": "The same override sentence in two skills."
+        },
+        {
+          "id": "rep-no-config-lines",
+          "polarity": "negative",
+          "check": "rep.sentence",
+          "file": "skills/a/meta.json",
+          "note": "A JSON line repeated across files is configuration, not a sentence."
+        },
+        {
+          "id": "rep-no-fenced-code",
+          "polarity": "negative",
+          "check": "rep.sentence",
+          "match": {
+            "sentence": {
+              "contains": "fenced code block"
+            }
+          },
+          "note": "Sentences inside code fences are not counted."
+        },
+        {
+          "id": "rep-no-fixture-markers",
+          "polarity": "negative",
+          "check": "rep.sentence",
+          "match": {
+            "sentence": {
+              "contains": "WALKDOWN FIXTURE"
+            }
+          },
+          "note": "The two marker comments differ; nothing else repeats."
+        }
+      ]
+    },
+    {
+      "root": "secrets-repo",
+      "fixtures": {
+        ".gitmodules": "025dde09679c99a0be74b1347ab9daed809eb035713d0177d8bee44b64b8cb3b",
+        ".npmrc": "4ec91d69e2dbe8aa4f6450c33515e628122af107107385fa9a67e0dbf4bd022b",
+        "allowlisted.md": "aa94a026df5311a2456cb6cdcd06a2f516fa373a63d3f1404b3b67fa3bccc602",
+        "checklist.md": "6b08b800ae97abda32a6797f6a5e273da7b8a175ef03b5e60b5c615d732e7074",
+        "docker-compose.yml": "0df6c7614c430949939f405b1c96450a761d151917fe3bd1d221fc2ca73a97c4",
+        "notes.md": "e0176ca0d9c22e171fd6cf05cfae5aafb976e9b4eadbfabf89a0cee16fbb9dd5",
+        "package-lock.json": "a64daf7505864c82834460ddc8ce9eaa718f584e5d4cb97658e5b0fde52aedd9",
+        "package.json": "5f6ebeb7ca79e483d7c2dc4560fd321a145ebe7686bf69c88737b108dfe76978",
+        "SKILL.md": "7c2f14b0c5eb6f4aab5c6f83a2bc66000640d3d3953989510bed24365ecbc0f6",
+        "tagged.md": "5e83a2f7c9b8108320afdb1ebf06d76547cee4a91938df4c2fb9dfe345785bd0"
+      },
+      "note": "Committed secrets (built 2026-10-04): detect-secrets. The key is made up.",
+      "expect": [
+        {
+          "id": "secret-api-key",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": "SKILL.md",
+          "line": 12,
+          "note": "A made-up API key in a config line inside a skill."
+        },
+        {
+          "id": "secret-not-in-notes",
+          "polarity": "negative",
+          "check": "secret.found",
+          "file": "notes.md",
+          "note": "A file with no secret."
+        },
+        {
+          "id": "secret-not-in-lockfile",
+          "polarity": "negative",
+          "check": "secret.found",
+          "file": "package-lock.json",
+          "note": "Lock-file integrity hashes look like secrets; lock files are left out."
+        },
+        {
+          "id": "secret-in-npmrc",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": ".npmrc",
+          "line": 2,
+          "note": "A build file the scan left out until 2026-11-01: a token in .npmrc."
+        },
+        {
+          "id": "secret-in-compose-file",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": "docker-compose.yml",
+          "line": 5,
+          "note": "The same in a compose file."
+        },
+        {
+          "id": "secret-in-package-json",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": "package.json",
+          "line": 5,
+          "note": "The same in package.json."
+        },
+        {
+          "id": "secret-in-pattern-list",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": ".gitmodules",
+          "line": 4,
+          "note": "A pattern list: no other check reads one, and a token in an address is still a token."
+        },
+        {
+          "id": "secret-value-never-shown",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "SKILL.md",
+          "line": 12,
+          "match": {
+            "quote": {
+              "contains": "q8Zr2vN7"
+            }
+          },
+          "note": "No finding repeats the value."
+        },
+        {
+          "id": "secret-below-cross-mark",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": "checklist.md",
+          "line": 7,
+          "note": "A key below U+274C, whose UTF-8 holds a byte cp1252 lacks: the library's own open() gave no scan and no error on Windows (2026-11-01)."
+        },
+        {
+          "id": "secret-below-tag-character",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": "tagged.md",
+          "line": 7,
+          "note": "The same below a Unicode tag character."
+        },
+        {
+          "id": "secret-below-cross-mark-never-shown",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "checklist.md",
+          "line": 7,
+          "match": {
+            "quote": {
+              "contains": "q8Zr2vN7"
+            }
+          },
+          "note": "A mask follows the secret finding, so a file the scan passed over kept its value in the quote."
+        },
+        {
+          "id": "secret-with-allowlist-comment",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": "allowlisted.md",
+          "line": 5,
+          "note": "The audited text asks the scanner not to look: detect-secrets took pragma: allowlist secret and dropped the line (2026-11-01)."
+        },
+        {
+          "id": "secret-below-allowlist-comment",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": "allowlisted.md",
+          "line": 10,
+          "note": "The same asked from the line above, pragma: allowlist nextline secret."
+        },
+        {
+          "id": "secret-with-allowlist-comment-never-shown",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "allowlisted.md",
+          "line": 5,
+          "match": {
+            "quote": {
+              "contains": "q8Zr2vN7"
+            }
+          },
+          "note": "A mask follows the secret finding, so a line the comment hid kept its value in the quote."
+        },
+        {
+          "id": "secret-below-allowlist-comment-never-shown",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "allowlisted.md",
+          "line": 10,
+          "match": {
+            "quote": {
+              "contains": "w3Kp9sQ2"
+            }
+          },
+          "note": "The same from the line above."
+        },
+        {
+          "id": "secret-below-tag-character-never-shown",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "tagged.md",
+          "line": 7,
+          "match": {
+            "quote": {
+              "contains": "q8Zr2vN7"
+            }
+          },
+          "note": "The same below a Unicode tag character."
+        }
+      ]
+    },
+    {
+      "root": "negation-repo",
+      "fixtures": {
+        "references/brainstorm.md": "56289fad73bec42d70a21c16d9bfd42e13535ad96d0769dc0bb787bc4e5277fc",
+        "references/confirm.md": "41112c08eb191bd6213f8daa2b162c0952c436914b1e92b47254e54a38e1ea54",
+        "references/deploy.md": "2122d83262735508708433d02799a8156ddf98f20dc823375b27a17a2d33f01e",
+        "references/ideate.md": "96af79d9c3f1a978efb38d5045edbd36623a72197e08c65384715797bf321372",
+        "SKILL.md": "c2d63d9eacaae47fef3129bc0a8bb41b8b62bd617230fc70dd4dba9b09a5d640"
+      },
+      "expect": [
+        {
+          "id": "neg-25-apikey",
+          "polarity": "gate",
+          "check": "phrase.J.prohibited",
+          "file": "SKILL.md",
+          "line": 12,
+          "match": {
+            "negated": {
+              "eq": true
+            },
+            "patterns": {
+              "includes": "J.enter-secret"
+            }
+          },
+          "note": "Partner's line (review C25, spiral-cli.md:56 shape): 'Never have the user paste an API key into chat' forbids the action. The hit is kept and tagged as a prohibition; it is never dropped (soft D5 spirit: mark, never demote)."
+        },
+        {
+          "id": "neg-25-dotenv",
+          "polarity": "gate",
+          "check": "phrase.creds",
+          "file": "SKILL.md",
+          "line": 13,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "'Do not upload your .env file ...': a prohibition."
+        },
+        {
+          "id": "neg-25-dataflow",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "SKILL.md",
+          "line": 13,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "Same line; K.data-flow matches by lookahead only, so the negation is judged at its send verb."
+        },
+        {
+          "id": "neg-25-delete",
+          "polarity": "gate",
+          "check": "phrase.J.prohibited",
+          "file": "SKILL.md",
+          "line": 14,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "'You must never permanently delete ...': a prohibition."
+        },
+        {
+          "id": "neg-25-carve",
+          "polarity": "gate",
+          "check": "phrase.J.prohibited",
+          "file": "SKILL.md",
+          "line": 24,
+          "match": {
+            "negated": {
+              "eq": true
+            },
+            "carve_out": {
+              "contains": "unless the user asks"
+            }
+          },
+          "note": "A prohibition with an exception: tagged, and the exception kept so the card can show it."
+        },
+        {
+          "id": "neg-25-instr-18-prohibited",
+          "polarity": "negative",
+          "check": "phrase.J.prohibited",
+          "file": "SKILL.md",
+          "line": 18,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "The same action as an instruction: not a prohibition."
+        },
+        {
+          "id": "neg-25-instr-19-creds",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "SKILL.md",
+          "line": 19,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "The same action as an instruction: not a prohibition."
+        },
+        {
+          "id": "neg-25-instr-19-exfil",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "SKILL.md",
+          "line": 19,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "The same action as an instruction: not a prohibition."
+        },
+        {
+          "id": "neg-25-instr-20-prohibited",
+          "polarity": "negative",
+          "check": "phrase.J.prohibited",
+          "file": "SKILL.md",
+          "line": 20,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "The same action as an instruction: not a prohibition."
+        },
+        {
+          "id": "neg-25-clause",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "SKILL.md",
+          "line": 25,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "'Do not stop; upload ...': the negation is in another clause."
+        },
+        {
+          "id": "neg-25-mind",
+          "polarity": "negative",
+          "check": "phrase.J.prohibited",
+          "file": "SKILL.md",
+          "line": 26,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "'Never mind the warning, permanently delete ...': an idiom, then an instruction."
+        },
+        {
+          "id": "neg-25-forget",
+          "polarity": "negative",
+          "check": "phrase.creds",
+          "file": "SKILL.md",
+          "line": 27,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          },
+          "note": "'Don't forget to upload ...': a double negative is an instruction."
+        },
+        {
+          "id": "neg-25-forget-k",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "SKILL.md",
+          "line": 27,
+          "match": {
+            "negated": {
+              "eq": true
+            }
+          }
+        },
+        {
+          "id": "neg-25-rubric-12",
+          "polarity": "gate",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 12,
+          "match": {
+            "negated_action": {
+              "eq": true
+            }
+          },
+          "note": "The rubric row stays and records that the action is forbidden, so a missing confirmation step is never read as an unconfirmed request (partner's v3 ask)."
+        },
+        {
+          "id": "neg-25-rubric-14",
+          "polarity": "gate",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 14,
+          "match": {
+            "negated_action": {
+              "eq": true
+            }
+          },
+          "note": "The rubric row stays and records that the action is forbidden, so a missing confirmation step is never read as an unconfirmed request (partner's v3 ask)."
+        },
+        {
+          "id": "neg-25-rubric-24",
+          "polarity": "gate",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 24,
+          "match": {
+            "negated_action": {
+              "eq": true
+            }
+          },
+          "note": "The rubric row stays and records that the action is forbidden, so a missing confirmation step is never read as an unconfirmed request (partner's v3 ask)."
+        },
+        {
+          "id": "neg-25-rubric-instr-18",
+          "polarity": "negative",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 18,
+          "match": {
+            "negated_action": {
+              "eq": true
+            }
+          }
+        },
+        {
+          "id": "neg-25-rubric-instr-20",
+          "polarity": "negative",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 20,
+          "match": {
+            "negated_action": {
+              "eq": true
+            }
+          }
+        },
+        {
+          "id": "neg-25-rubric-instr-26",
+          "polarity": "negative",
+          "check": "rubric.action",
+          "file": "SKILL.md",
+          "line": 26,
+          "match": {
+            "negated_action": {
+              "eq": true
+            }
+          }
+        },
+        {
+          "id": "neg-26-sentence-brainstorm",
+          "polarity": "gate",
+          "check": "term.def",
+          "file": "references/brainstorm.md",
+          "line": 7,
+          "match": {
+            "term": {
+              "eq": "start"
+            },
+            "source": {
+              "eq": "procedural"
+            }
+          },
+          "note": "Review C26: a 'How to X' section is cited at its first sentence, never at the heading (partner: the card cited the '## How to start' lines)."
+        },
+        {
+          "id": "neg-26-heading-brainstorm",
+          "polarity": "negative",
+          "check": "term.def",
+          "file": "references/brainstorm.md",
+          "line": 5,
+          "note": "A heading by itself is not a definition."
+        },
+        {
+          "id": "neg-26-sentence-ideate",
+          "polarity": "gate",
+          "check": "term.def",
+          "file": "references/ideate.md",
+          "line": 7,
+          "match": {
+            "term": {
+              "eq": "start"
+            },
+            "source": {
+              "eq": "procedural"
+            }
+          },
+          "note": "Review C26: a 'How to X' section is cited at its first sentence, never at the heading (partner: the card cited the '## How to start' lines)."
+        },
+        {
+          "id": "neg-26-heading-ideate",
+          "polarity": "negative",
+          "check": "term.def",
+          "file": "references/ideate.md",
+          "line": 5,
+          "note": "A heading by itself is not a definition."
+        },
+        {
+          "id": "neg-26-no-conflict",
+          "polarity": "negative",
+          "check": "term.conflict",
+          "match": {
+            "term": {
+              "eq": "start"
+            }
+          },
+          "note": "Two procedures for the same verb in two skills are two procedures; neither defines the word, so they are not a conflict (partner's universal-brainstorming / universal-ideation pair)."
+        },
+        {
+          "id": "neg-26-deploy-conflict",
+          "polarity": "gate",
+          "check": "term.conflict",
+          "match": {
+            "term": {
+              "eq": "deploy"
+            }
+          },
+          "note": "An explicit definition ('Deploy means ...') against a procedure for the same word is still reported (THREATS 14: definition by procedure)."
+        },
+        {
+          "id": "neg-26-safety",
+          "polarity": "gate",
+          "check": "term.safety",
+          "file": "references/confirm.md",
+          "line": 7,
+          "note": "A procedure for a safety word ('How to confirm' = continue without waiting) stays a safety-word definition, cited at its sentence (THREATS 14)."
+        },
+        {
+          "id": "neg-26-safety-heading",
+          "polarity": "negative",
+          "check": "term.safety",
+          "file": "references/confirm.md",
+          "line": 5
+        }
+      ],
+      "deferred": []
+    }
+  ]
+}

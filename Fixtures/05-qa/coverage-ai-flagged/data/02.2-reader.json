@@ -1,0 +1,22 @@
+{
+ "stage": "02.2-reader",
+ "contract": 1,
+ "findings": [],
+ "coverage": [
+  {
+   "checks": [
+    "read.fold",
+    "read.script",
+    "read.language",
+    "read.divergence",
+    "read.metadata",
+    "read.unread"
+   ],
+   "unit": "files",
+   "of": 3,
+   "looked_at": 3,
+   "explained": 0,
+   "found": 0
+  }
+ ]
+}

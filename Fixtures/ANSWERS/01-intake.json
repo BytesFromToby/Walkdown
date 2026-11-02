@@ -1,0 +1,53 @@
+{
+  "stage": "01-intake",
+  "answers_version": 1,
+  "note": "Intake gets the copy in place: a folder is read where it is. Fetching from a URL is covered by tests (no network in the grader).",
+  "cases": [
+    {
+      "root": "folder-target",
+      "fixtures": {
+        "notes.txt": "ff707e8891364965d44c02dd06e81187c8c4d02c440d787044b5b3089497c836",
+        "README.md": "ba0b1a418993dcf70729121246d1a660e459c84833742216ba4adb56dd0ae468"
+      },
+      "expect": [
+        {
+          "id": "in-folder-gate",
+          "polarity": "gate",
+          "check": "intake.source",
+          "count": 1,
+          "match": {
+            "kind": {
+              "eq": "folder"
+            },
+            "action": {
+              "eq": "read in place"
+            }
+          },
+          "note": "A folder target: exactly one intake.source, read where it is."
+        },
+        {
+          "id": "in-folder-not-url",
+          "polarity": "negative",
+          "check": "intake.source",
+          "match": {
+            "kind": {
+              "eq": "url"
+            }
+          },
+          "note": "A folder is never reported as a URL."
+        },
+        {
+          "id": "in-folder-not-cloned",
+          "polarity": "negative",
+          "check": "intake.source",
+          "match": {
+            "action": {
+              "eq": "cloned"
+            }
+          },
+          "note": "A folder is never cloned."
+        }
+      ]
+    }
+  ]
+}

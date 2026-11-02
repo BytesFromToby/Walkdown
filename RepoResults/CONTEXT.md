@@ -1,42 +1,38 @@
 # RepoResults: audit outputs (ICM Layer 4: the product)
 
 One folder per repository examined, one folder per run inside it. This is the
-**per-run product**, not the factory: the method, stages, phrases, fixtures, and
-detectors are the authority and stay stable across runs. Nothing here feeds back
-as doctrine. A run is **evidence, not a rule** (ICM: *docs over outputs*). If a
-run reveals a detector flaw, fix it in the factory, not here.
+**per-run product**. The method, the steps, the Library, the fixtures, and
+the detectors are the factory: they are the authority and stay stable across runs. Nothing here feeds back
+as doctrine. A run is **evidence** (ICM: *docs over outputs*). If a
+run reveals a detector flaw, fix it in the factory.
 
 Inputs live separately in `ReposToExamine/` (pinned repo copies). Outputs never
 get written into the examined tree (RED-TEAM §19).
 
-## Shape (2026-09-25)
+## Shape
 
 ```
 RepoResults/
   <repo>/
-    <date>_<hash7>/     one run, e.g. 2026-09-25_28295e9
-      LOG.md            this run's log: one row per stage
-      01-inventory.md … 07-limits.md, normalized/, report/
+    <date>_<hash7>/     one run, e.g. 2026-10-29_28295e9
+      summary.html  details.html  review.html  full.md     the reports
+      brief.md          the brief the command printed
+      LOG.md            this run's log: one row per step, with its validation stamp
+      data/             <step>.json and <step>.notes.txt, run.json (the record), limits.md,
+                        graph.json, hits.json, capability.json, normalized/
 ```
 
 The full file list, the run-folder naming rule, and the LOG.md format are in
-`../pre-planning/RUN-LAYOUT.md`. That doc is the spec; this file is the pointer.
+`../docs/RUN-FOLDER.md`. That doc is the spec; this file is the pointer.
 
-In short: **one log per run.** One row per stage, written when the stage
-finishes. A row with no Finished mark means the stage did not complete (ICM
-status: has-mark = COMPLETE, no-mark = PENDING / failed). The next step is the
-first unmarked row, derived, never written. A stage may record a zero only with
-its validation stamp. The log is a ledger, not a report: it records what ran,
-never what it means.
+In short: **one log per run.** One row per step, written when the run ends, from the
+record in `data/run.json`. A step may record a zero only with its validation stamp. The
+log is a ledger: it records what ran, and never what it means.
 
 A finished, published case is promoted out of here to `cases/NNN-<name>.md`.
 
-## History
+## Older runs
 
-`superpowers/v6.3.0/` and `plumbline/28295e9/` predate the stage structure. They
-keep their old pass-numbered files and their per-repo `LOG.md` (the earlier
-design: one log per repo, spanning versions). Read them as history; METHOD.md
-maps old pass numbers to stages.
-
-Comparing runs of one repo over time is a future feature. Per-run folders keep
-it possible: a later tool reads `<repo>/*/LOG.md` in date order.
+A run made by a version of Walkdown before 0.4.0 keeps the files it was made with. It is
+not re-rendered, and a new run of the same repository does not compare itself with it
+(`docs/RUN-FOLDER.md`, "Runs made before 0.4.0"). Read such a run as history.

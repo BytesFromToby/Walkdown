@@ -1,0 +1,17 @@
+{
+ "stage": "04-pinpoint",
+ "contract": 1,
+ "findings": [],
+ "coverage": [
+  {
+   "checks": [
+    "soft.pinpoint"
+   ],
+   "unit": "passages",
+   "of": 0,
+   "looked_at": 0,
+   "explained": 0,
+   "found": 0
+  }
+ ]
+}

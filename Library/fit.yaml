@@ -1,0 +1,92 @@
+# Do the tools fit the job? (I14, plan for builders, slice 5, owner 2026-10-26). Which tools do each
+# kind of work, which are reported when unused, and what each hook event costs. Each fact names
+# its source and the date it was checked; a host that changes is a data edit here.
+
+checked: 2026-10-26
+sources:
+  subagents: S04
+  skills: S03
+  hooks: S06
+
+# Families of work and the tools that do them. Only these are reported as granted and never used
+# (owner, 2026-10-26: reading tools, Read, Grep, Glob, never are); MCP tools too.
+families:
+  shell: [Bash, PowerShell, Monitor]
+  write: [Write, Edit, NotebookEdit, MultiEdit]
+  web: [WebFetch]
+  search: [WebSearch]
+  agent: [Agent, Task]
+
+# Claude Code's hook events, exact names (hooks page). Another host's hook (slice 3's hook_host),
+# or another spelling, gets how often it runs by name and no claim about its output.
+claude_events: [SessionStart, Setup, UserPromptSubmit, UserPromptExpansion, PreToolUse, PermissionRequest,
+                PermissionDenied, PostToolUse, PostToolUseFailure, PostToolBatch, Notification, MessageDisplay,
+                SubagentStart, SubagentStop, TaskCreated, TaskCompleted, Stop, StopFailure, TeammateIdle,
+                InstructionsLoaded, ConfigChange, CwdChanged, DirectoryAdded, FileChanged, WorktreeCreate,
+                WorktreeRemove, PreCompact, PostCompact, PreModelSwitch, PostModelSwitch, Elicitation,
+                ElicitationResult, SessionEnd]
+
+# How often a hook runs, by event (any letter case). A tool event's matcher of "*", "", or none matches every call.
+how_often:
+  every-prompt: [UserPromptSubmit, UserPromptExpansion]
+  every-tool-call: [PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest]
+  every-turn: [Stop, PostToolBatch, StopFailure]
+  once-a-session: [SessionStart, SessionEnd, Setup]
+tool_events: [PreToolUse, PostToolUse, PostToolUseFailure, PermissionRequest]
+# Plain stdout becomes context on these; additionalContext on more (not knowable statically).
+stdout_context: [UserPromptSubmit, UserPromptExpansion, SessionStart, PostModelSwitch]
+output_cap_chars: 10000      # over it, a file and a 2,000-character preview
+
+# What the report says about whether the tools fit the job (restructure step 3b, moved 2026-10-29
+# from the report code: FIT_KINDS, FAMILY_TEXT, and OFTEN_TEXT in render.py and FIT_PLAIN in
+# glance.py; the words are Walkdown's own, and the hook facts they repeat are sourced at the top of
+# this file). `kind` groups the fit.* findings; `name` and `why` head its section in the full report
+# and the details page. `plain` is the sentence on the summary page: {n} is the count with no
+# noun, and {s}, {v}, {is}, {has}, {it_gets}, and {itself} take the singular or plural form the
+# sentence needs (stages/06-report/specs/report.SPEC.md, section "glance").
+fit_kinds:
+  - kind: unused
+    name: 'Tools granted and never used'
+    why: 'nothing the entry reads asks for the work they do (a skill''s are pre-approved, never required)'
+    plain: '{n} tool{s} {is} allowed but never used by what the words ask for.'
+  - kind: missing
+    name: 'Tasks with no tool to do them'
+    why: 'the words ask for the work and no tool it may use does it'
+    plain: '{n} task{s} the words ask for that no allowed tool can do.'
+  - kind: inherits
+    name: 'Agents that inherit every tool'
+    why: 'no tools list, so every tool and MCP tool'
+    plain: '{n} helper{s} {has} no tools list, so {it_gets} every tool.'
+  - kind: readonly
+    name: 'Read-only claims the tools contradict'
+    why: 'the words say read-only and a tool or setting beside them can write'
+    plain: '{n} place{s} say{v} read-only, but a tool or setting beside it can change files.'
+  - kind: loops
+    name: 'Loops with no stated limit'
+    why: 'no number of tries, give-up, or time on the line or the next (a limit may be stated elsewhere)'
+    plain: "{n} step{s} repeat{v} \u201cuntil it works\u201d with no limit stated."
+  - kind: hooks
+    name: 'Hooks that run on every prompt or tool call'
+    why: 'each run takes time, and output that becomes context takes tokens'
+    plain: '{n} hook{s} run{v} by {itself} on every message or action.'
+
+# The work a family of tools does, in words ("nothing it reads asks for ..."). `mcp` is the family
+# of any MCP tool, which `families` above does not list.
+family_text:
+  shell: 'running commands'
+  write: 'writing files'
+  web: 'fetching pages'
+  search: 'searching the web'
+  agent: 'starting subagents'
+  mcp: 'this MCP server''s tools'
+
+# How often a hook runs, in words. `matching-tool-calls` and `other` have no event list in
+# `how_often`: the first is a tool event with a matcher, the second an event it does not name
+# (another host's, or another spelling).
+often_text:
+  every-prompt: 'on every prompt'
+  every-tool-call: 'on every tool call'
+  matching-tool-calls: 'on every tool call its matcher names'
+  every-turn: 'at the end of every turn'
+  once-a-session: 'once a session'
+  other: 'on its event'

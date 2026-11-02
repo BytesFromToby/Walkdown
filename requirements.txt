@@ -1,5 +1,5 @@
 # Walkdown core dependencies: pip-installable only (TOOLING "Usable by everyone").
-# Optional tools (Tesseract, Playwright, gitleaks) are never listed here;
+# Optional tools (Tesseract, Playwright) are never listed here;
 # a stage that lacks one emits a skip. Versions pinned 2026-09-25 (stage 2 build).
 pytest==9.1.1
 PyYAML==6.0.3
@@ -13,5 +13,5 @@ Pillow==12.3.0
 regex==2026.9.10
 confusable_homoglyphs==3.3.1
 
-# Committed-secret scan fallback (stage 4); gitleaks is preferred when installed
+# Committed-secret scan (02.4-phrases)
 detect-secrets==1.5.0

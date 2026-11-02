@@ -1,0 +1,277 @@
+# Invisible characters: the one list. Data only (Library/README.md).
+#
+# A person cannot see these in a rendered file, and a model receives them. Three stages used
+# to keep their own copy of this list; they now read this file through stages/_shared/library.py,
+# and so do two later readers:
+#   02.2-reader (fold.py): strips `strip` and every run, turns `space` characters into a space, and
+#       names the kind of every character that has one (a hidden-character finding).
+#   02.3-graph (invisible.py): strips `strip` and every run, before matching a reference.
+#   02.4-phrases (foldtext.py): strips `strip` and every run and turns `space` characters into a
+#       space, before matching a phrase. Its terms.code hash covers this list (termset.py).
+#   02.5-capability (pairs.py): drops `strip` and every run before it compares a match with hidden text.
+#   06-report (details_html.py): calls a code point this list strips, or that stands in a run, an
+#       invisible character (a separator turned into a space keeps its category).
+# A test (stages/_shared/tests/test_invisible_sets.py) holds each stage's set to exactly what it
+# was before the list moved here (150 characters to strip, three separators), U+180E aside, and
+# to the counts now: 181 to strip, 3 separators, 260 that strip in a run. The same test holds the
+# list to the Unicode property S19 names: every assigned code point with it is listed.
+#
+# Each entry is a range of code points, written U+XXXX:
+#   action  strip: removed from the text.
+#           space: replaced by one space, never a new line.
+#           run: removed and reported only where `run_length` or more stand in a run, which is in a
+#                row or with only `strip` characters between them (a zero-width space between two
+#                selectors does not break the run); one alone is left in place and not reported (one
+#                after an emoji or a CJK character is ordinary, and a run of them can hide bytes
+#                after one visible character). What a run spells is read from its own characters.
+#   kind    what 02.2-reader calls it in a finding (read.divergence carrier); none for a separator.
+#   added   the date the range was first handled by a stage (from the project history).
+#   source  where the range comes from: IDs from SOURCES.md, or THREATS:<class>. S19 is the Unicode
+#           property Default_Ignorable_Code_Point: a range cites it when every code point in it has it.
+#
+# Two rules about what text spells live in code; the list only says which characters are listed.
+# A run of tag characters U+E0020 to U+E007E spells ASCII (each minus U+E0000). A run of variation
+# selectors spells bytes: U+FE00 to U+FE0F are 0 to 15 and U+E0100 to U+E01EF are 16 to 255; the
+# Mongolian selectors carry no byte and are skipped. 02.2-reader, 02.4-phrases, and 02.5-capability
+# read both. The second is stages/_shared/library.py (run_text).
+
+moved: 2026-10-29        # the day the three copies became this one file (restructure step 3)
+
+# How many characters with action `run` make a run.
+run_length: 2
+
+# The order kinds are joined in a finding's carrier ("zero-width+bidi").
+kind_order: [zero-width, bidi, soft-hyphen, filler, tag-chars, variation-selectors, nul]
+
+ranges:
+  - name: zero-width space, joiners, and direction marks
+    from: U+200B
+    to: U+200F
+    action: strip
+    kind: zero-width
+    added: 2026-09-25
+    source: THREATS:4; I09; S19
+    note: U+200B space, U+200C non-joiner, U+200D joiner, U+200E and U+200F left and right marks.
+
+  - name: word joiner and invisible math operators
+    from: U+2060
+    to: U+2064
+    action: strip
+    kind: zero-width
+    added: 2026-09-25
+    source: THREATS:4; I09; S19
+    note: U+2060 word joiner, then function application, invisible times, separator, and plus.
+
+  - name: byte order mark inside text
+    from: U+FEFF
+    to: U+FEFF
+    action: strip
+    kind: zero-width
+    added: 2026-09-25
+    source: THREATS:4; I09; S19
+    note: A file's leading mark is read as an encoding by each stage's decode; one in the middle of text is invisible.
+
+  - name: direction embeddings and overrides
+    from: U+202A
+    to: U+202E
+    action: strip
+    kind: bidi
+    added: 2026-09-25
+    source: THREATS:4; I09; S19
+    note: Left-to-right and right-to-left embedding and override, and pop directional formatting.
+
+  - name: direction isolates
+    from: U+2066
+    to: U+2069
+    action: strip
+    kind: bidi
+    added: 2026-09-25
+    source: THREATS:4; I09; S19
+    note: Left-to-right, right-to-left, and first-strong isolate, and pop directional isolate.
+
+  - name: soft hyphen
+    from: U+00AD
+    to: U+00AD
+    action: strip
+    kind: soft-hyphen
+    added: 2026-09-25
+    source: I09; S19
+    note: Shown only at a line break, so a word split by it reads whole to a person and in two pieces to a search.
+
+  - name: Unicode tag characters
+    from: U+E0000
+    to: U+E007F
+    action: strip
+    kind: tag-chars
+    added: 2026-09-25
+    source: THREATS:4; I09; S19
+    note: The Tags block spells ASCII without showing it. Stage 2 strips them and reports them; stage 4 reads a run of them as the ASCII it spells (review C42, 2026-10-25).
+
+  - name: NUL
+    from: U+0000
+    to: U+0000
+    action: strip
+    kind: nul
+    added: 2026-10-09
+    source: I09
+    note: A NUL inside a word split a phrase for a search while a person saw one word.
+
+  - name: Mongolian vowel separator
+    from: U+180E
+    to: U+180E
+    action: strip
+    kind: zero-width
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: An outside note (2026-10-28) named it. Before that date 02.2-reader reported it under the tag-chars kind and no stage stripped it; it is stripped and reported as zero-width now.
+
+  - name: combining grapheme joiner
+    from: U+034F
+    to: U+034F
+    action: strip
+    kind: zero-width
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: Joins nothing a reader can see; it sits inside a word and splits it for a search.
+
+  - name: deprecated format controls
+    from: U+206A
+    to: U+206F
+    action: strip
+    kind: zero-width
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: Inhibit and activate symmetric swapping, Arabic form shaping, and national digit shapes. Deprecated, drawn as nothing.
+
+  - name: interlinear annotation
+    from: U+FFF9
+    to: U+FFFB
+    action: strip
+    kind: zero-width
+    added: 2026-10-28
+    source: I09
+    note: Anchor, separator, and terminator of an annotation. Not default-ignorable in Unicode.
+
+  - name: musical format controls
+    from: U+1D173
+    to: U+1D17A
+    action: strip
+    kind: zero-width
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: Begin and end beam, tie, slur, and phrase.
+
+  - name: shorthand format controls
+    from: U+1BCA0
+    to: U+1BCA3
+    action: strip
+    kind: zero-width
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: Shorthand letter overlap, continuing overlap, and the up and down steps.
+
+  - name: Arabic letter mark
+    from: U+061C
+    to: U+061C
+    action: strip
+    kind: bidi
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: A text-direction mark, kept with the other direction controls.
+
+  - name: Hangul choseong and jungseong fillers
+    from: U+115F
+    to: U+1160
+    action: strip
+    kind: filler
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: Letters that fill a syllable position and draw as a blank.
+
+  - name: Hangul filler
+    from: U+3164
+    to: U+3164
+    action: strip
+    kind: filler
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: A compatibility letter that draws as a blank.
+
+  - name: halfwidth Hangul filler
+    from: U+FFA0
+    to: U+FFA0
+    action: strip
+    kind: filler
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: The halfwidth form of the Hangul filler.
+
+  - name: Khmer inherent vowels
+    from: U+17B4
+    to: U+17B5
+    action: strip
+    kind: filler
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: Vowels that carry no sound and draw as nothing.
+
+  - name: blank braille cell
+    from: U+2800
+    to: U+2800
+    action: strip
+    kind: filler
+    added: 2026-10-28
+    source: I09
+    note: A braille pattern with no dots. Not default-ignorable in Unicode. Braille-drawn graphs can use it as a space, so a finding for it may be ordinary.
+
+  - name: variation selectors
+    from: U+FE00
+    to: U+FE0F
+    action: run
+    kind: variation-selectors
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: One after an emoji or a CJK character picks its form and is ordinary. A run of them hides bytes after one visible character (0 to 15 as these, 16 to 255 as the supplement below).
+
+  - name: variation selectors supplement
+    from: U+E0100
+    to: U+E01EF
+    action: run
+    kind: variation-selectors
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: The second half of the byte alphabet for a run of selectors (16 to 255).
+
+  - name: Mongolian free variation selectors
+    from: U+180B
+    to: U+180D
+    action: run
+    kind: variation-selectors
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: Form selectors for Mongolian text. They carry no byte, so a run of them alone spells nothing and one among byte selectors is skipped when the text is read.
+
+  - name: Mongolian free variation selector four
+    from: U+180F
+    to: U+180F
+    action: run
+    kind: variation-selectors
+    added: 2026-10-28
+    source: THREATS:4; I09; S19
+    note: The fourth Mongolian form selector. U+180E, the vowel separator, sits before it and is its own entry.
+
+  - name: line and paragraph separators, next line
+    from: U+2028
+    to: U+2029
+    action: space
+    added: 2026-09-25
+    source: I09; I10
+    note: Each becomes one space, so every tool counts the same lines (a line is split on a line feed only). Stage 3 leaves them as they are.
+
+  - name: next line
+    from: U+0085
+    to: U+0085
+    action: space
+    added: 2026-09-25
+    source: I09; I10
+    note: Same as the separators above.

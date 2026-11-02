@@ -1,0 +1,131 @@
+# Rule tables of 02.5-capability: which evidence makes each trifecta leg, which install
+# grants count, which hook events inject context, and how a tool maps to a posture word. Data only
+# (Library/README.md). stages/02-coded/02.5-capability/rules.py reads this file and gives the other
+# scripts the same names the constants had when they were Python there. Read it beside the stage's
+# spec (I08: stages/02-coded/02.5-capability/specs/capability.SPEC.md, "The rules"): each table here
+# is one table there.
+#
+# Every name a leg rule or grant rule lists is a 02.4-phrases pattern id (patterns.yaml) under the check
+# it is filed under; stages/02-coded/02.5-capability/tests/test_rules.py holds them to that.
+
+moved: 2026-10-29        # from rules.py, where the dates below were comments (restructure step 3b)
+source: I08; THREATS:trifecta
+
+# The names, in report order.
+legs: [private-data, untrusted-content, external-comms]
+grants: [exec-at-load, context-injection, persistence, network, elevated]
+pairs: [orphan+phrase, dynamic+phrase, hidden+phrase, hook+phrase]
+
+# 02.4-phrases patterns that are instruction text inside a script string. In a script a
+# context-injecting hook runs, such a string can reach the model at harness trust: the hook+phrase
+# pair (2026-09-29, found in an audit of a plugin whose start-up hook printed an instruction).
+hook_instruction_patterns: [C.script-instruction, C.emit-instruction]
+
+# 02.4-phrases patterns that detect a markdown carrier itself (link definitions, <details>, alt text). A
+# hit made only of these on hidden text is the same fact as the 02.2-reader divergence, so it makes no
+# hidden+phrase pair (2026-09-29, found in the same audit).
+carrier_patterns: [K.md-carrier]
+
+# I08 "Trifecta legs". Bash is deliberately absent from external-comms, and K.telemetry /
+# K.md-carrier from every rule (I08 "What does not establish a leg").
+leg_rules:
+  private-data:
+    phrase_any: [phrase.creds]
+    phrase_patterns:
+      phrase.K.exfil: [K.data-flow]
+      # a connected account is the user's data too (locked 2026-09-30)
+      phrase.E.env: [E.connector]
+    tools: [Read, Grep, Glob, Bash]
+    connector_names: true
+    inherit_all: true
+    hook_events: [PreToolUse, PostToolUse, UserPromptSubmit]
+  untrusted-content:
+    phrase_any: [phrase.remote-load]
+    phrase_patterns:
+      # third-party code brought onto the machine (locked 2026-09-30)
+      phrase.E.env: [E.clone, E.install]
+      phrase.E.perms: [E.install-global, E.runtime-install]
+    tools: [WebFetch, WebSearch]
+    inherit_all: true
+    entry_points: [mcp-config]
+    mcp_servers: true        # struct.mcp: a server declared in a manifest or .mcp.json (2026-09-29)
+  external-comms:
+    phrase_any: [phrase.remote-load]
+    phrase_patterns:
+      phrase.K.exfil: [K.http-verb, K.relay-host, K.chat-webhook, K.dns, K.encode-send, K.data-flow,
+                       K.dest-ref, K.dest-stored, K.telemetry-send]
+    tools: [WebFetch, WebSearch]
+    inherit_all: true
+    entry_points: [mcp-config]
+    mcp_servers: true        # struct.mcp: a server declared in a manifest or .mcp.json (2026-09-29)
+
+# I08 "Install grants".
+grant_rules:
+  exec-at-load:
+    hook_events: "*"
+  context-injection:
+    descriptions: true
+    hook_events: [SessionStart, UserPromptSubmit]
+  persistence:
+    phrase_patterns:
+      phrase.E.env: [E.persist-target, E.persist-redirect, E.memory, E.self-install, E.git-keys,
+                     E.editor-autorun]
+      phrase.E.perms: [E.outlives-session, E.install-global]
+  network:
+    legs: [external-comms]
+    phrase_patterns:
+      phrase.E.perms: [E.install-global]
+  elevated:
+    phrase_patterns:
+      phrase.E.perms: [E.perm-flags, E.allowlist, E.confirm-off]
+    inherit_all: true
+
+# I08 "Injection paths and bytes at load".
+injection_events: [SessionStart, UserPromptSubmit]
+load_bytes_events: [SessionStart]
+
+# I08 "Agent posture". A tool maps to one word; a name that starts with a prefix maps to that
+# prefix's word; no tools list is `all`; a name nothing here covers is `other`; the least-privilege
+# posture is the list under `least_privilege`.
+posture_words:
+  Read: read
+  Grep: read
+  Glob: read
+  LS: read
+  NotebookRead: read
+  TodoRead: read
+  TodoWrite: read
+  Write: write
+  Edit: write
+  MultiEdit: write
+  NotebookEdit: write
+  Bash: execute
+  PowerShell: execute
+  WebFetch: network
+  WebSearch: network
+  Task: delegate
+  Agent: delegate
+posture_prefixes:
+  mcp__: network
+posture_inherit_all: all
+posture_other: other
+least_privilege: [read]
+
+evidence_cap: 20         # evidence entries kept per finding on stdout
+
+# The standing limits of this step, printed on stderr every run. Each begins "standing limit:"
+# (the report reads that to count them apart from the limits of one run).
+limits:
+  - >-
+    standing limit: a Bash grant is recorded under private-data and as execute posture,
+    never as external-comms; Bash can reach the network, as can every shell, so this map
+    does not count it there
+  - >-
+    standing limit: hook bytes are an estimate from the sizes of files the hook script
+    references (the direct references the step "What loads what" found); hooks are never
+    run to measure their output
+
+# Services whose MCP servers or tools reach the user's own data (trifecta leg 1, Reads your data:
+# "connected accounts", THREATS:trifecta, locked 2026-09-30). Matched against struct.mcp names and
+# commands and against agent tool names such as mcp__gmail__search.
+connector_names: 'gmail|google[-_ ]?drive|gdrive|google[-_ ]?calendar|gcal|outlook|onedrive|sharepoint|dropbox|slack|notion|github|gitlab|jira|linear|confluence|salesforce|hubspot|icloud|imap|contacts|calendar|mail'

@@ -1,0 +1,1905 @@
+{
+  "stage": "05-qa",
+  "answers_version": 1,
+  "note": "The check of the run (M9 slice B, 2026-10-30): one small synthetic run folder per case. A gate row is a gap it must find, a negative row a run it must not hold, and a gate row on qa.limit what the run says instead. Rebuilt by tools/fixture-generators/make_qa_runs.py.",
+  "cases": [
+    {
+      "root": "clean",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "Every step ran, every fixture check passed: nothing to hold.",
+      "expect": [
+        {
+          "id": "qa-clean-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "a complete run is not held"
+        },
+        {
+          "id": "qa-clean-standing-limits",
+          "polarity": "gate",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "standing"
+            }
+          },
+          "note": "the standing limits of the method are in every run"
+        },
+        {
+          "id": "qa-clean-checked-found-none",
+          "polarity": "gate",
+          "check": "qa.checked",
+          "match": {
+            "kind": {
+              "eq": "checked"
+            },
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "looked_at": {
+              "eq": 3
+            },
+            "unit": {
+              "eq": "files"
+            }
+          },
+          "note": "a check that found nothing says what it looked at (M9 slice C)"
+        },
+        {
+          "id": "qa-clean-checked-is-no-limit",
+          "polarity": "negative",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "checked"
+            }
+          },
+          "note": "what a check looked at is no limit"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "step-failed",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/run.json": "2a4531e50fb64da6c356504f05e2af19646fc73a46a297ac688a3b3b31b0ab43"
+      },
+      "note": "A step failed in the record and left no output; the three after it never started.",
+      "expect": [
+        {
+          "id": "qa-failed-step",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.3-graph"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "failed"
+            },
+            "found": {
+              "contains": "failed"
+            }
+          },
+          "note": "gap 1: the step that failed"
+        },
+        {
+          "id": "qa-failed-later-phrases",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "not-started"
+            }
+          },
+          "note": "never started after the failure"
+        },
+        {
+          "id": "qa-failed-later-capability",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.5-capability"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "not-started"
+            }
+          },
+          "note": "never started after the failure"
+        },
+        {
+          "id": "qa-failed-later-builder",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.6-builder"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "not-started"
+            }
+          },
+          "note": "never started after the failure"
+        },
+        {
+          "id": "qa-failed-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "kind": {
+              "eq": "step-missing"
+            }
+          },
+          "note": "one gap for each of the four steps",
+          "count": 4
+        },
+        {
+          "id": "qa-failed-earlier-step-is-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.2-reader"
+            }
+          },
+          "note": "a step that went well before it is no gap"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "output-missing",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "The record says every step went well; one saved output is not in the folder.",
+      "expect": [
+        {
+          "id": "qa-output-missing",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.2-reader"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "output-missing"
+            }
+          },
+          "note": "a step with no saved output"
+        },
+        {
+          "id": "qa-output-missing-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "this one gap and no other",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "output-unreadable",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "bf27e9a87567dfb5822ad9d10908ed65e0398c73851a75918867c416a699aca2",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "The record says every step went well; one saved output is there and does not read as a report.",
+      "expect": [
+        {
+          "id": "qa-output-unreadable",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.3-graph"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "output-unreadable"
+            }
+          },
+          "note": "an output that cannot be read is no output"
+        },
+        {
+          "id": "qa-output-unreadable-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "this one gap and no other",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "fixture-failed",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "a40325d253faa62fcf05ef6418c3135c447d939253c54375942856a7736a62cf"
+      },
+      "note": "Two steps ran and did not pass their fixture check: their zeros cannot be trusted.",
+      "expect": [
+        {
+          "id": "qa-fixture-fail",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "fixture-failed"
+            },
+            "result": {
+              "eq": "FAIL"
+            }
+          },
+          "note": "FAIL: the step ran and failed its check"
+        },
+        {
+          "id": "qa-fixture-error",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.1-inventory"
+            },
+            "kind": {
+              "eq": "fixture-unchecked"
+            },
+            "result": {
+              "eq": "ERROR"
+            }
+          },
+          "note": "ERROR: the check gave no result"
+        },
+        {
+          "id": "qa-fixture-count-failed",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "kind": {
+              "eq": "fixture-failed"
+            }
+          },
+          "note": "one step failed its check",
+          "count": 1
+        },
+        {
+          "id": "qa-fixture-count-unchecked",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "kind": {
+              "eq": "fixture-unchecked"
+            }
+          },
+          "note": "one step could not be checked",
+          "count": 1
+        },
+        {
+          "id": "qa-fixture-pass-is-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.3-graph"
+            }
+          },
+          "note": "a step that passed is no gap"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "fixture-unchecked",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "54efa6966582d5744faf9670f197d6c61a113f75555bac5c61626f7846322401"
+      },
+      "note": "Three steps could not be checked against their fixtures (the grader could not run, the check is not built, no fixtures are in the folder): a zero is not validated.",
+      "expect": [
+        {
+          "id": "qa-unchecked-setup-error",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.1-inventory"
+            },
+            "kind": {
+              "eq": "fixture-unchecked"
+            },
+            "result": {
+              "eq": "SETUP ERROR"
+            }
+          },
+          "note": "SETUP ERROR is no pass"
+        },
+        {
+          "id": "qa-unchecked-not-built",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.2-reader"
+            },
+            "kind": {
+              "eq": "fixture-unchecked"
+            },
+            "result": {
+              "eq": "NOT BUILT"
+            }
+          },
+          "note": "NOT BUILT is no pass"
+        },
+        {
+          "id": "qa-unchecked-no-fixtures",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.3-graph"
+            },
+            "kind": {
+              "eq": "fixture-unchecked"
+            },
+            "result": {
+              "eq": "no fixture set"
+            }
+          },
+          "note": "a coded step with no fixture set is no pass"
+        },
+        {
+          "id": "qa-unchecked-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "kind": {
+              "eq": "fixture-unchecked"
+            }
+          },
+          "note": "the three, and not the steps that passed",
+          "count": 3
+        },
+        {
+          "id": "qa-unchecked-pass-is-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            }
+          },
+          "note": "a step that passed is no gap"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "no-fixtures-by-design",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/03-sweep.json": "b3cdfd66e9cfba60338d1adaad0162873074587adf900101fd559ac56803c4ae",
+        "data/04-pinpoint.json": "91d29e6056274459dede5e348b27ec4880b46935b5e19907aba51214bac65c15",
+        "data/run.json": "401afd1df503ede79557c2382d1e4facb78338dbed464ba5e448255af53ed50b"
+      },
+      "note": "A pinpoint that read nothing, stamped no fixture set: Pinpoint has no fixtures by design, so nothing is wrong with it.",
+      "expect": [
+        {
+          "id": "qa-pinpoint-no-fixtures-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "no fixture set is a gap on every step but Pinpoint"
+        },
+        {
+          "id": "qa-pinpoint-no-checked",
+          "polarity": "negative",
+          "check": "qa.checked",
+          "match": {
+            "step": {
+              "eq": "04-pinpoint"
+            }
+          },
+          "note": "its none is not measured, so it gets no line"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "own-check-failed",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "5539a965b7e9c2fc09e8b1312216de96de3f576e796eb7b2f5484b7b05ecd8c4"
+      },
+      "note": "The stamp of the check of the run itself is FAIL: its zero cannot be trusted either.",
+      "expect": [
+        {
+          "id": "qa-own-fail",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "05-qa"
+            },
+            "kind": {
+              "eq": "fixture-failed"
+            },
+            "result": {
+              "eq": "FAIL"
+            }
+          },
+          "note": "the check holds a run when its own fixtures fail"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "model-no-answer",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/03-sweep.calls.jsonl": "4efbd251e4a79c548e87bed577af0dbff907155e614b3603edbaaa95ffd5c007",
+        "data/03-sweep.json": "58f36dff5b09015e54e429eba7d33369c298b6ba0b7c33ac43fa44bde55cdf8a",
+        "data/run.json": "430a1ae5da001e75da243d1643450c018679c445e74ab14205cf53ec022c6c34"
+      },
+      "note": "A chosen sweep asked about three passages and none got an answer (no key); the pinpoint was not started.",
+      "expect": [
+        {
+          "id": "qa-model-none",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "03-sweep"
+            },
+            "kind": {
+              "eq": "model-no-answer"
+            },
+            "step_check": {
+              "eq": "soft.sweep"
+            },
+            "asked": {
+              "eq": 3
+            },
+            "none": {
+              "eq": 3
+            }
+          },
+          "note": "no passage got an answer"
+        },
+        {
+          "id": "qa-model-counted-once",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "the pinpoint that was not started is no second gap",
+          "count": 1
+        },
+        {
+          "id": "qa-model-pinpoint-not-started",
+          "polarity": "gate",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "not-started"
+            },
+            "step": {
+              "eq": "04-pinpoint"
+            }
+          },
+          "note": "the pinpoint is named as not started"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "ai-step-failed",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "76cabf67844375e701a4b1c3810604e6f386a8c599445ce26991e33b6921d254"
+      },
+      "note": "A chosen sweep crashed and left no output.",
+      "expect": [
+        {
+          "id": "qa-ai-failed",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "03-sweep"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "failed"
+            }
+          },
+          "note": "a chosen model read with no output"
+        },
+        {
+          "id": "qa-ai-failed-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "that one gap",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "optional-tool-missing",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "b694ba6f0bc524bea808224e24ee9b73fdbc6d7ea14fdd23c9ba85e2e6a8ac2c",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "9076c7efdd1ad94317fb997806e8691cde030dd976ae28f6b8734d53dac5fac4"
+      },
+      "note": "A check was skipped because an optional tool is not installed (INCOMPLETE): named in the limits, the run goes on.",
+      "expect": [
+        {
+          "id": "qa-tool-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "a missing optional tool is not a gap (owner, 2026-10-25)"
+        },
+        {
+          "id": "qa-tool-incomplete",
+          "polarity": "gate",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "fixture-incomplete"
+            },
+            "step": {
+              "eq": "02.2-reader"
+            }
+          },
+          "note": "the INCOMPLETE stamp is a limit"
+        },
+        {
+          "id": "qa-tool-skip",
+          "polarity": "gate",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "skip"
+            },
+            "step": {
+              "eq": "02.2-reader"
+            }
+          },
+          "note": "the skipped check is a limit"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "stopped",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/run.json": "5a0ff69775a8eaa3e40dfdabf3e0d29c2f008f6d781c9cdb930f9fc64e8a1839"
+      },
+      "note": "The run stopped after 02.3-graph, as asked: the steps after it are left out and nothing is missing.",
+      "expect": [
+        {
+          "id": "qa-stopped-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "the steps a stop left out are not gaps"
+        },
+        {
+          "id": "qa-stopped-limits",
+          "polarity": "gate",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "stopped"
+            }
+          },
+          "note": "each step the stop left out is named",
+          "count": 3
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "partial-read",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/03-sweep.calls.jsonl": "3599686a519d88034de8e97b2490f92afa45882a905e0908ea8bdaba502fc40f",
+        "data/03-sweep.json": "d4a0cdf308c0ab4e054e17b37e1f870d5dc220a2f2b5c9a3213a5684547049ad",
+        "data/run.json": "c8cdd7309999e6fc108e1efaf48173aa9198bb3ea2500722b8cdf4f4f74656d0"
+      },
+      "note": "A sweep got answers for three of five passages: counted in section 7 and nothing is held.",
+      "expect": [
+        {
+          "id": "qa-partial-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "a read with some passages unanswered is not a gap (owner, 2026-10-30)"
+        },
+        {
+          "id": "qa-partial-limit",
+          "polarity": "gate",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "model-partial"
+            },
+            "step": {
+              "eq": "03-sweep"
+            },
+            "asked": {
+              "eq": 5
+            },
+            "none": {
+              "eq": 2
+            }
+          },
+          "note": "the count is a limit"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "waiting-read",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "06924a6abaead64fcc5d1ad01a6fa383896ddce787864fac96575db06c4b2746"
+      },
+      "note": "The run stopped before a chosen model read, which wrote its input file and sent nothing: nothing is missing, and the read is not counted a second time.",
+      "expect": [
+        {
+          "id": "qa-waiting-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "a model read waiting after a stop is not a gap, chosen and not started"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "stopped-before-chosen-read",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/run.json": "3921bcbecbb991fe8ec67509ea66fac14f65e0ee567093a4ce2dd955051edaf5"
+      },
+      "note": "The run stopped after 02.3-graph, as asked, with a sweep chosen: the sweep is left out by the stop and is not a gap.",
+      "expect": [
+        {
+          "id": "qa-stopped-chosen-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "a chosen read that a stop is before is not a read that did not start"
+        },
+        {
+          "id": "qa-stopped-chosen-limits",
+          "polarity": "gate",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "stopped"
+            }
+          },
+          "note": "the coded steps the stop left out",
+          "count": 3
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "chosen-read-not-started",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/run.json": "e1dc2bbf78070f991a44ef870c0282b8532be4f0f6890b8b92b72bea7b865ee4"
+      },
+      "note": "The graph step crashed with a sweep and a pinpoint chosen: neither read started, and each is a gap like the coded steps after the crash.",
+      "expect": [
+        {
+          "id": "qa-chosen-sweep-not-started",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "03-sweep"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "not-started"
+            }
+          },
+          "note": "a chosen read that never started"
+        },
+        {
+          "id": "qa-chosen-pinpoint-not-started",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "04-pinpoint"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "not-started"
+            }
+          },
+          "note": "a chosen read that never started"
+        },
+        {
+          "id": "qa-chosen-gap-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "kind": {
+              "eq": "step-missing"
+            }
+          },
+          "note": "the crashed step, the three coded steps after it, and the two reads",
+          "count": 6
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "output-empty-list",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "data/02.4-phrases.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "Two saved outputs read as JSON and are not reports (a bare list, an empty object): no output, the same as one that cannot be read.",
+      "expect": [
+        {
+          "id": "qa-empty-list",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.3-graph"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "output-unreadable"
+            }
+          },
+          "note": "a list is not a report"
+        },
+        {
+          "id": "qa-empty-object",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "output-unreadable"
+            }
+          },
+          "note": "an empty object is not a report"
+        },
+        {
+          "id": "qa-empty-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "those two gaps and no other",
+          "count": 2
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "output-bad-findings",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "1104a7f2c114d309a23968f2da408cadfd1bc344d7b49ec61dc698b280bf5a65",
+        "data/02.3-graph.json": "217cbbb7a979e9c5cb19a040d015a7b24a570b49aabad5972d5b94c3371ae562",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "Two saved outputs hold a list of findings and a finding is not one (a number, an object with no check): no output, the same as one that cannot be read.",
+      "expect": [
+        {
+          "id": "qa-bad-number",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.2-reader"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "output-unreadable"
+            }
+          },
+          "note": "a finding that is a number is no report"
+        },
+        {
+          "id": "qa-bad-object",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.3-graph"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "output-unreadable"
+            }
+          },
+          "note": "a finding with no check is no report"
+        },
+        {
+          "id": "qa-bad-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "those two gaps and no other",
+          "count": 2
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "read-dropped",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "4dbffc8dc263ef8615f8108a631629723636113283e4efc2eb2bfeb3ab6e0256"
+      },
+      "note": "A sweep and a pinpoint were chosen by the first command, which stopped; `continue` did not choose them: neither ran, and the run says so as a limit.",
+      "expect": [
+        {
+          "id": "qa-dropped-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "a read the person went on without is not a gap"
+        },
+        {
+          "id": "qa-dropped-sweep",
+          "polarity": "gate",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "read-dropped"
+            },
+            "step": {
+              "eq": "03-sweep"
+            },
+            "stopped": {
+              "eq": false
+            }
+          },
+          "note": "the sweep chosen earlier and not run"
+        },
+        {
+          "id": "qa-dropped-pinpoint",
+          "polarity": "gate",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "read-dropped"
+            },
+            "step": {
+              "eq": "04-pinpoint"
+            },
+            "stopped": {
+              "eq": false
+            }
+          },
+          "note": "the pinpoint chosen earlier and not run"
+        },
+        {
+          "id": "qa-dropped-count",
+          "polarity": "gate",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "read-dropped"
+            }
+          },
+          "note": "those two and no other",
+          "count": 2
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "one-read-dropped",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/03-sweep.json": "b3cdfd66e9cfba60338d1adaad0162873074587adf900101fd559ac56803c4ae",
+        "data/run.json": "5c59830ff54a5f07549535e82105b6602ef90a6a00fd0c3efe9b9951b81436bc"
+      },
+      "note": "The sweep ran; the pinpoint, chosen by the first command, was not chosen at `continue`: one limit, and no gap.",
+      "expect": [
+        {
+          "id": "qa-one-dropped-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "the read that ran and the one dropped are no gap"
+        },
+        {
+          "id": "qa-one-dropped",
+          "polarity": "gate",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "read-dropped"
+            },
+            "step": {
+              "eq": "04-pinpoint"
+            }
+          },
+          "note": "only the pinpoint is dropped",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "no-validation",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "e34966f67796e3ae5c040f9dc250338abb70e7ab7a74372592eec1d0d0c5ffeb"
+      },
+      "note": "A run made without validation: no stamp, no fixture gap.",
+      "expect": [
+        {
+          "id": "qa-no-validation-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "no stamp is not a failed stamp"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "empty-read",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/03-sweep.json": "b3cdfd66e9cfba60338d1adaad0162873074587adf900101fd559ac56803c4ae",
+        "data/run.json": "c8cdd7309999e6fc108e1efaf48173aa9198bb3ea2500722b8cdf4f4f74656d0"
+      },
+      "note": "A sweep that had no passages to ask about did not fail.",
+      "expect": [
+        {
+          "id": "qa-empty-read-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "a read of nothing is not a read that got no answer"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-missing",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "45a1218fff63e66da9ab1d0403c765cb04a29f99190cec363db28e46648ba76c",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "The phrase step's coverage has no line for two of its checks: it cannot say what they looked at.",
+      "expect": [
+        {
+          "id": "qa-coverage-missing",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "coverage-missing"
+            },
+            "missing": {
+              "includes": "phrase.remote-load"
+            }
+          },
+          "note": "a check with no coverage line is a gap, once for the step"
+        },
+        {
+          "id": "qa-coverage-missing-second",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "coverage-missing"
+            },
+            "missing": {
+              "includes": "rep.sentence"
+            },
+            "checks_total": {
+              "eq": 23
+            }
+          },
+          "note": "the second check left out is in the same gap"
+        },
+        {
+          "id": "qa-coverage-missing-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "that one gap and no other",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-none",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "42f53e42edc148574e036c821fd83a1e956b79283af3b400264df4daa979eefc",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "The capability step's report has no coverage list: one gap for the step, naming every check.",
+      "expect": [
+        {
+          "id": "qa-coverage-none",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.5-capability"
+            },
+            "kind": {
+              "eq": "coverage-missing"
+            },
+            "missing": {
+              "includes": "cap.leg"
+            },
+            "checks_total": {
+              "eq": 8
+            }
+          },
+          "note": "no list at all is one gap for the step"
+        },
+        {
+          "id": "qa-coverage-none-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "that one gap and no other",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-short",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "11275b3d1b2606e7496077ef678909dab07f3cc5c17a2d8813ff3f6c6285747f",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "The phrase checks looked at three of five files and explain none of the other two: the zeros of those checks cannot be trusted.",
+      "expect": [
+        {
+          "id": "qa-coverage-short",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "coverage-short"
+            },
+            "of": {
+              "eq": 5
+            },
+            "looked_at": {
+              "eq": 3
+            },
+            "explained": {
+              "eq": 0
+            },
+            "unit": {
+              "eq": "files"
+            },
+            "checks": {
+              "includes": "phrase.remote-load"
+            }
+          },
+          "note": "two files neither looked at nor explained"
+        },
+        {
+          "id": "qa-coverage-short-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "that one gap and no other",
+          "count": 1
+        },
+        {
+          "id": "qa-coverage-short-whole-line-is-fine",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "checks": {
+              "includes": "rep.sentence"
+            }
+          },
+          "note": "the line that adds up is no gap"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-explained",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "c8ed934f73ecd5b9d3b54a2803814a7cc0eb2541bcdd91bedf83f4ac127a67ab",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "9076c7efdd1ad94317fb997806e8691cde030dd976ae28f6b8734d53dac5fac4"
+      },
+      "note": "The reader looked at three of five files and two were skipped for a missing optional tool, each with its skip: the line adds up and the run goes on.",
+      "expect": [
+        {
+          "id": "qa-coverage-explained-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "items explained by a skip are no gap (owner, 2026-10-25)"
+        },
+        {
+          "id": "qa-coverage-explained-skips",
+          "polarity": "gate",
+          "check": "qa.limit",
+          "match": {
+            "kind": {
+              "eq": "skip"
+            }
+          },
+          "note": "the two skips are limits",
+          "count": 2
+        },
+        {
+          "id": "qa-coverage-explained-checked",
+          "polarity": "gate",
+          "check": "qa.checked",
+          "match": {
+            "kind": {
+              "eq": "checked"
+            },
+            "step": {
+              "eq": "02.2-reader"
+            },
+            "looked_at": {
+              "eq": 3
+            },
+            "explained": {
+              "eq": 2
+            },
+            "of": {
+              "eq": 5
+            }
+          },
+          "note": "what the reader's checks looked at, the skipped files said too"
+        },
+        {
+          "id": "qa-coverage-explained-skipped-check-not-named",
+          "polarity": "negative",
+          "check": "qa.checked",
+          "match": {
+            "step": {
+              "eq": "02.2-reader"
+            },
+            "checks": {
+              "includes": "read.divergence"
+            }
+          },
+          "note": "a check with a skip of its own is not said to have found none"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-broken",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "7b7fe3fa8f173c0563b038b67e80f429602b90d892c7a2fcbde941da6585282c",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "A phrase line looked at three of three files and explains two more: the counts do not add up, which is a broken count.",
+      "expect": [
+        {
+          "id": "qa-coverage-broken",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "coverage-broken"
+            },
+            "of": {
+              "eq": 3
+            },
+            "looked_at": {
+              "eq": 3
+            },
+            "explained": {
+              "eq": 2
+            }
+          },
+          "note": "more looked at and explained than there were"
+        },
+        {
+          "id": "qa-coverage-broken-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "that one gap and no other",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-ai-short",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/03-sweep.json": "c2cb9fcb8b9b89ac596862250e90b8f923ff55e3406f35fc2fb1c9045a0e7234",
+        "data/run.json": "a19fd4b6d2e8ab12ead4f2f2641939bfbde76fbb5720d228a699a30680ff6b5e"
+      },
+      "note": "A sweep built four passages and wrote a finding for three: the fourth is neither answered nor skipped.",
+      "expect": [
+        {
+          "id": "qa-coverage-ai-short",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "03-sweep"
+            },
+            "kind": {
+              "eq": "coverage-short"
+            },
+            "of": {
+              "eq": 4
+            },
+            "looked_at": {
+              "eq": 3
+            },
+            "explained": {
+              "eq": 0
+            },
+            "unit": {
+              "eq": "passages"
+            }
+          },
+          "note": "a passage with no answer and no skip"
+        },
+        {
+          "id": "qa-coverage-ai-short-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "that one gap and no other",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "output-bad-coverage",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "3539620c7035e887b402a298958485a0707a709311ce2b9afcf9683e44e690c6",
+        "data/02.4-phrases.json": "a7ade533e9a79e1d5e480334dc369845f9703511e4ad4d642324d8cb23283872",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "Two saved outputs hold a coverage that is not a list of lines (a word, a count that is not a whole number): no output, the same as one that cannot be read.",
+      "expect": [
+        {
+          "id": "qa-bad-coverage-word",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.3-graph"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "output-unreadable"
+            }
+          },
+          "note": "a coverage that is not a list is no report"
+        },
+        {
+          "id": "qa-bad-coverage-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "step-missing"
+            },
+            "why": {
+              "eq": "output-unreadable"
+            }
+          },
+          "note": "a count that is not whole is no report"
+        },
+        {
+          "id": "qa-bad-coverage-count-only",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "those two gaps and no coverage gap on top",
+          "count": 2
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-old-reader",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "0520c5fd2ae3f0a8f1fd8c49a4143e796649eadec383beb28a91a4d334fae551",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "A reader report made before coverage lines (an object under `coverage`) reads as a report with no lines: its checks have no coverage line.",
+      "expect": [
+        {
+          "id": "qa-old-reader",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.2-reader"
+            },
+            "kind": {
+              "eq": "coverage-missing"
+            },
+            "missing": {
+              "includes": "read.fold"
+            },
+            "checks_total": {
+              "eq": 6
+            }
+          },
+          "note": "no lines, so every check is missing"
+        },
+        {
+          "id": "qa-old-reader-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "that one gap and no other",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-found-wrong",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "3d569c0b6b3fbd30bb55afb0e80cdc498b102ef609ea992b6836804b36317e0e",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "A phrase line says its checks found two and the report holds no finding of them: the counts do not add up.",
+      "expect": [
+        {
+          "id": "qa-coverage-found-wrong",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "coverage-broken"
+            },
+            "why": {
+              "eq": "found"
+            },
+            "found_line": {
+              "eq": 2
+            },
+            "found_actual": {
+              "eq": 0
+            }
+          },
+          "note": "a found that is not the findings of the line's checks"
+        },
+        {
+          "id": "qa-coverage-found-wrong-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "that one gap and no other",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-unknown-id",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "d49de9dbdc5e94d73c461fb680473289901bdb42a49f0cf255b0976124fc31a1",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "A phrase line names a check the step does not make: the line cannot be trusted.",
+      "expect": [
+        {
+          "id": "qa-coverage-unknown-id",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "coverage-broken"
+            },
+            "why": {
+              "eq": "check"
+            },
+            "ids": {
+              "includes": "phrase.not-a-check"
+            }
+          },
+          "note": "an id that is not on the step's list"
+        },
+        {
+          "id": "qa-coverage-unknown-id-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "that one gap and no other",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-other-steps-id",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "2567e029cb9f3eaef5488a9651482e3dc31fbc94d2be4eb12a424d72d4df69a0",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "A phrase line names a check that belongs to the capability step.",
+      "expect": [
+        {
+          "id": "qa-coverage-other-steps-id",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "coverage-broken"
+            },
+            "why": {
+              "eq": "check"
+            },
+            "ids": {
+              "includes": "cap.leg"
+            }
+          },
+          "note": "another step's id"
+        },
+        {
+          "id": "qa-coverage-other-steps-id-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "that one gap and no other",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-twice",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "a0a3f0f0b4783e4d8f8caec5274db5cfce0f0e652bc045e0f47100df3c680353",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "A check is named by two phrase lines: each of the two lines is a broken line.",
+      "expect": [
+        {
+          "id": "qa-coverage-twice",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "coverage-broken"
+            },
+            "why": {
+              "eq": "check"
+            },
+            "ids": {
+              "includes": "rep.sentence"
+            }
+          },
+          "note": "an id two lines name"
+        },
+        {
+          "id": "qa-coverage-twice-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "both lines are held",
+          "count": 2
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-stray-finding",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "1a2d0d72e7caa22514d6553faa1b26c86e4605cf69456928d4733fa0043c7756",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/run.json": "23d99e219a3863649e3bfaf08464b331a836f96eed9fa01c35e47e90eb841eae"
+      },
+      "note": "The phrase step's report has a skip for a check that is not on its list: no line says what that check looked at.",
+      "expect": [
+        {
+          "id": "qa-coverage-stray-finding",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            },
+            "kind": {
+              "eq": "coverage-missing"
+            },
+            "missing": {
+              "includes": "phrase.not-a-check"
+            },
+            "checks_total": {
+              "eq": 24
+            }
+          },
+          "note": "a finding's check with no line is missing"
+        },
+        {
+          "id": "qa-coverage-stray-finding-count",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "note": "that one gap and no other",
+          "count": 1
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "coverage-ai-flagged",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/03-sweep.json": "661445344da8fc63a1bc742c1d4dc9cbeac4922218e2ce877d7efa5cff1ff5a2",
+        "data/run.json": "a19fd4b6d2e8ab12ead4f2f2641939bfbde76fbb5720d228a699a30680ff6b5e"
+      },
+      "note": "A sweep answered three passages and flagged one: `found` is the one flag, and nothing is held.",
+      "expect": [
+        {
+          "id": "qa-coverage-ai-flagged-no-gap",
+          "polarity": "negative",
+          "check": "qa.gap",
+          "note": "a read's found is its flags"
+        },
+        {
+          "id": "qa-coverage-ai-flagged-not-checked",
+          "polarity": "negative",
+          "check": "qa.checked",
+          "match": {
+            "step": {
+              "eq": "03-sweep"
+            }
+          },
+          "note": "a read that flagged something found something"
+        }
+      ],
+      "deferred": []
+    },
+    {
+      "root": "checked-not-measured",
+      "fixtures": {
+        "data/01-intake.json": "2a37194865d34098b585e6dbb47a01ce0ac333a202c9202950e634f524086997",
+        "data/02.1-inventory.json": "6ea265d77daf81a1ec48bea1931bdc18d8c9bb6fea736538884bffed9778f561",
+        "data/02.2-reader.json": "af29e4d81d016c9ad9e0110b99de7aeb03c7d024d1951534548ba4890ee8bce8",
+        "data/02.3-graph.json": "89ab81d8aae988e860fae5d38920fd7ebc5ea0725c91b4193d34f42eb8afbbb7",
+        "data/02.4-phrases.json": "370cd01735a47fe1b38091c88ab40595ca501ca48addf94ba1709333fe123e3b",
+        "data/02.5-capability.json": "086b6bec33a28fd8247de12de4ed3b7841defb2ce3c338456b3965064327424f",
+        "data/02.6-builder.json": "cbfa4edada80ce4fdc8ea253ffbb5e63a78a82b130ccfbecc4275d9dc41cff1b",
+        "data/03-sweep.json": "ad5892b447819d20d1562521661601b9c82559e9fbf82b6060efdea99fa94a76",
+        "data/run.json": "593352f5bcd3976b23171fb572534d8008283726737fe5ed5f6457134ec6547f"
+      },
+      "note": "The phrase check was skipped and measured no rows, the graph step has no fixture set, and the sweep answered with all 32 of its recall rows skipped: none of them says 'checked, found none'.",
+      "expect": [
+        {
+          "id": "qa-not-measured-phrases",
+          "polarity": "negative",
+          "check": "qa.checked",
+          "match": {
+            "step": {
+              "eq": "02.4-phrases"
+            }
+          },
+          "note": "no rows measured: no line"
+        },
+        {
+          "id": "qa-not-measured-graph",
+          "polarity": "negative",
+          "check": "qa.checked",
+          "match": {
+            "step": {
+              "eq": "02.3-graph"
+            }
+          },
+          "note": "no fixture set: no line"
+        },
+        {
+          "id": "qa-not-measured-sweep",
+          "polarity": "negative",
+          "check": "qa.checked",
+          "match": {
+            "step": {
+              "eq": "03-sweep"
+            }
+          },
+          "note": "every row skipped: no line"
+        },
+        {
+          "id": "qa-not-measured-graph-gap",
+          "polarity": "gate",
+          "check": "qa.gap",
+          "match": {
+            "step": {
+              "eq": "02.3-graph"
+            },
+            "kind": {
+              "eq": "fixture-unchecked"
+            },
+            "result": {
+              "eq": "no fixture set"
+            }
+          },
+          "note": "no fixture set is a gap on a coded step"
+        },
+        {
+          "id": "qa-not-measured-others",
+          "polarity": "gate",
+          "check": "qa.checked",
+          "match": {
+            "step": {
+              "eq": "02.1-inventory"
+            }
+          },
+          "note": "a step that passed still gets its line"
+        }
+      ],
+      "deferred": []
+    }
+  ]
+}

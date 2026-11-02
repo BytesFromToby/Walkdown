@@ -1,0 +1,35 @@
+{
+ "stage": "02.2-reader",
+ "contract": 1,
+ "findings": [
+  {
+   "check": "read.divergence",
+   "file": "fixture-1.png",
+   "line": null,
+   "skipped": "tesseract not installed"
+  },
+  {
+   "check": "read.divergence",
+   "file": "fixture-2.png",
+   "line": null,
+   "skipped": "tesseract not installed"
+  }
+ ],
+ "coverage": [
+  {
+   "checks": [
+    "read.fold",
+    "read.script",
+    "read.language",
+    "read.divergence",
+    "read.metadata",
+    "read.unread"
+   ],
+   "unit": "files",
+   "of": 5,
+   "looked_at": 3,
+   "explained": 2,
+   "found": 0
+  }
+ ]
+}

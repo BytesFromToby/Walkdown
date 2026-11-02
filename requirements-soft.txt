@@ -1,7 +1,5 @@
-# Optional stage 6 (soft reads) backends. Not needed for stages 1-5 or 8; stage 6 without them writes the packet only.
+# Optional AI stages (03-sweep, 04-pinpoint). Not needed for the coded stages or the report; a run that does not choose them uses no model.
+# 03-sweep with --sweep jev needs the TypeSafe SDK. 04-pinpoint with --pinpoint claude-cli needs the Claude Code CLI (not a Python package).
+# --reads uses whichever of the two is there: the sweep on Jev (TypeSafe) when the SDK is installed and a key can be read, else on the Claude Code CLI; the pinpoint on the Claude Code CLI.
 typesafe-sdk==0.7.2
-# torch is only for laya (retired, below). If you still install it, CPU torch first:
-# CPU torch first: pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cpu
-torch==2.14.0
-# laya is retired (2026-10-03): kept so its backend still imports; not needed for any current use
-laya==0.3.22
+# laya and torch left with the Laya backend (retired 2026-10-03, removed in restructure step 5; git history keeps it).

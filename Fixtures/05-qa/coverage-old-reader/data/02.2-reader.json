@@ -1,0 +1,9 @@
+{
+ "stage": "02.2-reader",
+ "contract": 1,
+ "findings": [],
+ "coverage": {
+  "files": 3,
+  "files_read": 3
+ }
+}

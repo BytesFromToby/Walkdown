@@ -1,0 +1,58 @@
+{
+ "format": 3,
+ "finished": "2026-01-01T00:01:00+00:00",
+ "context": 32000,
+ "hosts": [],
+ "steps": [
+  {
+   "stage": "01-intake",
+   "ok": true,
+   "started": "2026-01-01T00:00:00+00:00",
+   "finished": "2026-01-01T00:01:00+00:00",
+   "error": null
+  },
+  {
+   "stage": "02.1-inventory",
+   "ok": true,
+   "started": "2026-01-01T00:00:00+00:00",
+   "finished": "2026-01-01T00:01:00+00:00",
+   "error": null
+  },
+  {
+   "stage": "02.2-reader",
+   "ok": true,
+   "started": "2026-01-01T00:00:00+00:00",
+   "finished": "2026-01-01T00:01:00+00:00",
+   "error": null
+  },
+  {
+   "stage": "02.3-graph",
+   "ok": true,
+   "started": "2026-01-01T00:00:00+00:00",
+   "finished": "2026-01-01T00:01:00+00:00",
+   "error": null
+  },
+  {
+   "stage": "02.4-phrases",
+   "ok": true,
+   "started": "2026-01-01T00:00:00+00:00",
+   "finished": "2026-01-01T00:01:00+00:00",
+   "error": null
+  },
+  {
+   "stage": "02.5-capability",
+   "ok": true,
+   "started": "2026-01-01T00:00:00+00:00",
+   "finished": "2026-01-01T00:01:00+00:00",
+   "error": null
+  },
+  {
+   "stage": "02.6-builder",
+   "ok": true,
+   "started": "2026-01-01T00:00:00+00:00",
+   "finished": "2026-01-01T00:01:00+00:00",
+   "error": null
+  }
+ ],
+ "stamps": {}
+}

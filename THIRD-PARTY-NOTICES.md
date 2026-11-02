@@ -1,6 +1,6 @@
 # Third-party notices
 
-`Fixtures/06-soft/real-lines/` holds short excerpts (five-line excerpts: one line and two lines of context each side)
+`tools/model-eval/real-lines/` holds short excerpts (five-line excerpts: one line and two lines of context each side)
 from the repositories below, used as labeled test data for stage 6. The excerpts remain under
 their original licenses, reproduced here.
 

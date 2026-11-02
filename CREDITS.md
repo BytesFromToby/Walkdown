@@ -6,11 +6,11 @@ Walkdown builds on other people's ideas, research, and tools. This page names th
 
 - **The lethal trifecta**, by Simon Willison. An agent that combines access to private data,
   exposure to untrusted content, and a way to communicate externally can be made to leak that
-  data. Walkdown's stage 5 and the checklist at the top of every report are organized around it;
+  data. Walkdown's "What this touches" step and the checklist at the top of every report are organized around it;
   the plain terms ("Can read your data", "Can take outside input", "Can send data out") are Walkdown's.
   [The lethal trifecta for AI agents](https://simonw.substack.com/p/the-lethal-trifecta-for-ai-agents)
 - **Interpretable Context Methodology (ICM)**, by Jake Van Clief: context kept in inspectable
-  files, organized as numbered stages that each have a written contract. Walkdown is laid out as
+  files, organized as numbered steps that each have a written contract. Walkdown is laid out as
   an ICM workspace.
 
 ## Prior work on agent skill security
@@ -40,10 +40,9 @@ packages, coding-agent supply chain attacks, and others) are cited with their so
 
 ## Test data
 
-Short excerpts from three MIT-licensed repositories are used as labeled test lines for stage 6:
-[obra/superpowers](https://github.com/obra/superpowers), backloghq/backlog, and
-yaniv-golan/claude-familiar. Their licenses are reproduced in
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+Short excerpts from three MIT-licensed repositories are used as labeled test lines for the model-read
+measurements, kept under `tools/model-eval/`. The three repositories are named, and their licenses
+reproduced, in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Software
 
@@ -51,7 +50,7 @@ Required (`requirements.txt`):
 
 | Package | License | Used for |
 |---|---|---|
-| PyYAML | MIT | the pattern table and stage data |
+| PyYAML | MIT | the Library tables and the fixture data |
 | charset-normalizer | MIT | detecting text encodings |
 | pdfminer.six | MIT | reading PDF text |
 | pypdf | BSD-3-Clause | reading PDF structure |
@@ -68,13 +67,17 @@ Optional, used when installed:
 
 - [Tesseract](https://github.com/tesseract-ocr/tesseract): text inside images and PDF pages.
 - [Playwright](https://playwright.dev): drawing HTML as a browser shows it (with its Chromium).
-- [gitleaks](https://github.com/gitleaks/gitleaks): finding committed secrets (preferred over detect-secrets when installed).
 
-Stage 6 backends, chosen at run time (`requirements-soft.txt`):
+Optional model reads, chosen at run time (`requirements-soft.txt`):
 
-- **Jev** by TypeSafe (`typesafe-sdk`, MIT): labeling and the coverage sweep.
+- **Jev** by TypeSafe (`typesafe-sdk`, MIT): the coverage sweep (`--sweep jev`). Before 0.4.0 it also
+  did the labeling.
   [docs.typesafe.ai](https://docs.typesafe.ai)
-- **Laya** by Convai Innovations (`laya`, Apache-2.0, with PyTorch): a small local labeler,
-  evaluated and retired (2026-10-03); its backend code remains.
+- **Claude Code CLI** by Anthropic: the pinpoint read (`--pinpoint claude-cli`), run with no tools and
+  no project context. Before 0.4.0 it also did the relational reads.
+
+Used before 0.4.0 and no longer part of Walkdown:
+
+- **Laya** by Convai Innovations (`laya`, Apache-2.0, with PyTorch): a small local labeler. It was
+  evaluated and retired (2026-10-03), and its backend code was removed in 0.4.0.
   [convaiinnovations/laya](https://huggingface.co/convaiinnovations/laya)
-- **Claude Code CLI** by Anthropic: relational reads, run with no tools and no project context.

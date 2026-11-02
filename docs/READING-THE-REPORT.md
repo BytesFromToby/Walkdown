@@ -8,17 +8,18 @@ A run produces these reports, at the top of its run folder
 | `summary.html` | anyone, no computer skills needed | one page, eight questions at a glance, each with a short label and a one-line answer; tap a line for more |
 | `details.html` | improving or investigating it | the same eight questions with everything behind them: tables, charts, and every place in folded lists; then what Walkdown didn't check |
 | `review.html` | walking through the places | one card per place, with the lines around it, for you to mark |
-| `full.md` | checking a point | every finding, by stage, with file and line |
+| `full.md` | checking a point | every finding, by section, with file and line |
 
 Start with `summary.html`. Its footer links the other pages; `details.html` links back to it, and
 `review.html` links both at the top right. Go to `full.md` for the evidence behind a point.
-`LOG.md`, next to them, says whether each stage passed its validation; the data the reports were
-built from is in `data/` ([RUN-FOLDER.md](RUN-FOLDER.md)). What each check means, and why it
-exists, is in [HOW-IT-WORKS.md](HOW-IT-WORKS.md).
+`LOG.md`, next to them, says whether each step passed its validation; `brief.md` is the short
+summary the command printed; the data the reports were built from is in `data/`
+([RUN-FOLDER.md](RUN-FOLDER.md)). What each check means, and why it exists, is in
+[HOW-IT-WORKS.md](HOW-IT-WORKS.md).
 
-Runs made before 2026-10-20 also had `summary.md` (the summary as text) and `summary-v1.html` (an
-earlier summary page). Re-rendering such a run removes them. Re-rendering any older run draws its
-pages in the current design; a question the older run did not check says "Not measured".
+A run made by an earlier version of Walkdown (before 0.4.0) is not re-rendered, and a new run of the
+same repository does not compare itself with it: audit the repository again to get the current
+pages. The marks you saved on the earlier run still carry over to the new one.
 
 ## Three rules behind every page
 
@@ -53,14 +54,14 @@ for a few plain bullets.
 | **N notes** (amber) | published guidance and harmless facts |
 | a measure (blue) | a fact such as "up to 21%" or "3 of 7 tools" |
 | **Nothing to look at** (green) | the question's checks ran and found nothing |
-| **Not measured** (grey) | the run was made before this check, or a step did not run |
+| **Not measured** (grey) | a step did not run, or the run was stopped before it (`--until`) |
 
 1. **Will its skills switch on when they should?** Whether each skill, command, and helper will
    be picked up as written: settings at the top the AI can't read, names and descriptions that
    break a rule, settings that look like a typo, tool names the AI doesn't know, descriptions that
    overlap or are cut short, and published guidance (say when to use it; describe what it does
    instead of writing "I" or "you"). Every rule is dated, with its source, in
-   `stages/04-phrases/trigger.yaml`.
+   `Library/trigger.yaml`.
 2. **How much of the AI's memory does it use?** The one place the page counts **tokens** (pieces
    of text, about ¾ of a word each). The table shows what is always there once installed, its
    biggest skill or helper with everything it reads, any extra for someone working inside the
@@ -84,26 +85,29 @@ for a few plain bullets.
    understands. Run with `--hosts claude,codex` (any of `claude`, `codex`, `gemini`, `cursor`,
    `copilot`, `windsurf`, `agents-md`) and the label counts what the tools you named are missing.
    Which tools to support is yours. What each tool reads is a dated list in
-   `stages/04-phrases/hosts.yaml`.
+   `Library/hosts.yaml`.
 6. **Does it ask only for the tools it needs?** Each skill's, command's, and helper's own words,
    over the files it reads, against the tools it is allowed: tools allowed and never used, work it
    asks for that no allowed tool can do, helpers with no tools list (they get every tool), read-only
    claims a tool beside them contradicts, steps that repeat "until it works" with no stated limit,
-   and hooks that run on every message or action. The cue lists are in `stages/04-phrases/asks.yaml`
-   and `stages/05-capability/fit.yaml`.
+   and hooks that run on every message or action. The cue lists are in `Library/asks.yaml`
+   and `Library/fit.yaml`.
 7. **Is it finished and up to date?** "To do" marks and placeholders in what ships, claims tied to
    a date ("before August 2025, use the old API" becomes wrong), AI model versions fixed in place
    (a fact: a name like "sonnet" follows the newest version), and older tool names. The summary
    shows no line of the repository's here; `details.html` quotes each one.
-8. **Anything to be careful about?** The places in five fixed security kinds, always in this order:
+8. **Anything to be careful about?** The places in six fixed security kinds, always in this order:
    1. **Hidden text that reads like an instruction**: text the AI receives and a person does not
       see, which also matches the wording of an instruction. The summary quotes what it says, up
       to 80 characters: the only text from the repository on this page.
-   2. **Runs code**: hooks, commands run when the skill loads, commands you are asked to run.
-   3. **Looks like a committed secret**: a password, key, or token saved in the files (test data
+   2. **Hidden characters that spell out text**: invisible characters in a file the AI reads that
+      spell words no pattern matched. The summary names the place; `details.html` and the place's
+      card on `review.html` say what they spell.
+   3. **Runs code**: hooks, commands run when the skill loads, commands you are asked to run.
+   4. **Looks like a committed secret**: a password, key, or token saved in the files (test data
       and lines that only look like one are left out).
-   4. **Reads secrets, calls out, or shares**: credentials, network calls, data sent elsewhere.
-   5. **Lasting changes or permissions**: settings, profiles, permissions, actions that are hard to
+   5. **Reads secrets, calls out, or shares**: credentials, network calls, data sent elsewhere.
+   6. **Lasting changes or permissions**: settings, profiles, permissions, actions that are hard to
       undo, and read-only claims a tools list contradicts.
 
    A place counts once, as `review.html` counts it, even when it falls in two kinds. Each kind
@@ -114,10 +118,17 @@ for a few plain bullets.
    installing it allows (runs commands by itself, adds its own text before you type, and so on).
    Model reads are never counted here.
 
-When a step did not work in this run (it did not run, or it did not pass its fixture check), a
-line at the bottom names it: a step that did not work can miss places, so the page may show fewer
-than there are. When Walkdown found nothing, question 8 says so too: "Not every step worked, so it
-may have missed some." When a step did not run at all, it never says "found none". A missing
+When a model read got an answer for some passages and none for others, one line under the cards gives how many
+("Needs a human read: 5 of 12 passages got no answer, after one retry."). When a step did not work in this run
+(it did not run, it did not pass its fixture check, or a model read got no answer for any passage), a
+line at the bottom names it. A step that did not work can miss places, so the page may show fewer
+than there are; a model read adds no place to this page, so that is left out when the model read is the only
+step that did not work. When Walkdown found nothing, question 8 says so too: "Not every step worked, so it
+may have missed some." Steps that ran and whose fixture check could not be made are said in a sentence of their
+own ('8 steps could not be checked against their fixtures, so a "none" from them is not measured.'), which does not say a
+step failed. When a step did not run at all, it never says "found none". A run you
+stopped with `--until` says it stopped after a step as you asked, and the steps after it are not
+named as steps that did not work; the cards no step measured say "Not measured" and why. A missing
 optional tool (OCR, HTML as a browser draws it) is never named on this page; "What Walkdown didn't
 check" on `details.html` and `full.md` list what it left unread.
 
@@ -176,9 +187,8 @@ steered by text from outside into sending your data away. Every citation is in `
 section 5.
 
 **Every place, by kind.** One folded list per security kind, each place linked to its card on the
-review page, with what was found, the line quoted, Walkdown's note (a hook's host, what hidden
-characters spell), and a model read that questions it, when one did ("A reviewer model's reading
-questions this").
+review page, with what was found, the line quoted, and Walkdown's note (a hook's host, what hidden
+characters spell).
 
 **Text hidden from people.** Text the AI receives that a person reading the file on screen would
 not see: how many places, by how they hide (hidden comments, invisible characters, text colored
@@ -206,7 +216,16 @@ a link works or what it serves.
 
 **Passwords and keys.** Lines that look like a password, key, or token saved in the files, and how
 many in test data were set aside. The value is never shown: open the file to check it. When no
-scanner ran, it says it was not checked.
+scanner ran, it says it was not checked. A file the scanner could not scan is named here as well,
+and it may hold one. So is a lock file, which the scan leaves out because the hashes in one look like keys. A model read does not send a line flagged here, so it did not read what else stands on that line: "What
+Walkdown didn't check" says how many lines, and names a file a read did not send because the scanner could not scan it.
+
+The scan goes by the shapes of known keys and by keywords, so finding nothing here does not prove no key is there. It does not flag a key
+in a shape it does not know, a key spelled only in hidden characters, a password in a sentence ("the password is ..."), `token = value`,
+or `password = value` with no quotes in a Markdown file. Nothing marks such a line, so a page can show it and a model read sends it. One
+kind of flagged line also keeps its text: when the flagged text on a line is random-looking and part of it is base64 that decodes to
+readable words, the line reads as holding no key, so a key of no known shape beside that text can still show in `full.md` and `data/`. A
+model read leaves that line out.
 
 ### What changed since an earlier run
 
@@ -219,21 +238,49 @@ repository, Walkdown's search terms, or Walkdown's matching code.
 
 Last on the page: a step that did not work, the optional model reads when they did not run, or
 that every step ran and passed its own checks. Then every limit of this run, folded: checks
-skipped (usually an optional tool not installed), and the limits of every run (static only,
-English only, patterns can miss). Recommendations for the builder, each tied to a file and line
-and never ranked, are in `full.md`.
+skipped (usually an optional tool not installed), and the limits of every run (static only, English only, patterns can miss).
+After that, in a fold of its own, "Checks that found nothing (N)": what the checks that found nothing looked at, a line for each step,
+as counts ("What the text asks for: checked 64 files with 9 checks and 20 entries with 1 check, found none. Some were skipped
+(listed above)."; "What this touches: checked 382 findings with 1 check, found none. 1 check had nothing to look at."). N counts
+checks. `full.md` says it under "Checks that found nothing" at the end of section 7, a line for each pass, with the check ids.
+Recommendations for the builder, each tied to a file and line and never ranked, are in `full.md`.
+
+How far to trust "found none". A step's "found none" is as good as its fixture check, and a count of what it looked at is as good as
+the count. Walkdown says "checked N, found none" only for a step whose fixture check passed, or passed with a check skipped for a missing tool,
+and asked at least one row (a model read whose rows were all skipped asked none), never for a step that has no fixtures (the
+pinpoint), failed its check, or could not be checked. And the count is of the files the check reads: a check of what a model
+follows does not count the README written for people. And the counts have a limit: the checks
+that run in one pass over the same files are counted together, so one check inside a pass that stops working while the checks
+beside it run shows in the step's fixture check and nowhere in the counts. The page says "checked 66 files with 2 checks", and that is
+all it knows about those 2 checks.
+
+**After a hold.** Before the report is written, Walkdown checks that everything that should have run
+is there with its results (`05-qa`). When a step failed, a step did not pass its fixture check (or the
+check could not be made), a chosen model read got no answer for any passage, or a check looked at fewer files than it
+should have and does not say why ("The check ... looked at 3 of 5 files; 2 are not explained."), the command stops with a brief and no report, and asks
+which way you want to go: `walkdown.py continue <run folder>` writes the report with what ran, or you fix
+the cause and audit again. If you continue, this section and section 7 of `full.md` name each gap in the
+same words as any other step that did not work ("The step ... did not run to completion", "... did not pass
+its fixture check (FAIL)", "... could not be checked against its fixtures: it gave SETUP ERROR", "... has no fixtures to
+be checked against", "... got no answer for any passage"), and the page's last line says not every
+step worked (the steps that only could not be checked against their fixtures are in the sentence of their own above;
+they ran). A model read that the first command chose and `continue` left out is named in section 6, in the log, and
+in section 7 as not run. Read a page like that as the part of the run that did work: a step that did not run can
+miss places, so the page may show fewer than there are.
 
 ## review.html
 
-Every place to check, one card at a time: places the fixed rules found first, places only a model
-flagged at the end.
+Every place to check, one card at a time: places the fixed rules found first, places only an
+optional model read flagged at the end.
 
 **One card per place.** Every finding on the same line is one card, whichever step found it. A
 file loaded only by a folder load whose line also matches two patterns is one card that says "and
-2 more findings on this line" and tags each step that found something. A model read of that line
-joins the same card under "What the model said", marked experimental. A sentence repeated across
+2 more findings on this line" and tags each step that found something. A sentence repeated across
 files is one card that lists every place it appears, and the findings at those places join it. A
-passage of several lines stays on its own card.
+passage of several lines stays on its own card. A passage the optional sweep flagged, with no
+pattern hit inside it, is a card of its own: "What the model said" comes first, with its score, then
+(when the pinpoint read ran and its quote is found in the passage) "Where in the passage", the line
+it names and a plain sentence on it. Those cards are marked experimental.
 
 **On each card**: the file and line, linked to the text this run read; "What was flagged", one
 block per finding, each pattern described once in plain words (what it looks for, and why a
@@ -241,13 +288,13 @@ pattern would care); when the line tells the AI to stay read-only, "Is it enforc
 whether a tool setting backs it (a restricting flag on the line, or the owner's tools list), or that
 it is stated in the text only, and names other routes in the same skill that can write; then the
 line with three lines either side (from `data/normalized/text/`),
-the matched words highlighted. Invisible characters show as `U+XXXX`. In a file where the run
+the matched words highlighted. Invisible characters show as `U+XXXX`: every character on the
+invisible-character list, a variation selector where two or more stand together (one selector after an
+emoji is ordinary and shows as it is), and any other format or control character. When a place's line hides text in tag characters or in a run of
+variation selectors, the card's note says what it spells. In a file where the run
 found what looks like a secret, no lines around the place are shown.
 
-When a model read of the line says it is not an instruction (a prohibition, a description, a
-quote, the words in another sense), the card says so in one line: "A reviewer model's reading
-questions this", with who read it and the score. The finding stays; the same line appears under
-the place on `details.html`. Each card ends with one line on what only running the skill can
+Each card ends with one line on what only running the skill can
 show for that kind of place ("Only running it shows whether the AI acts on this line"); cards
 that state a fixed fact, such as a committed secret, have none. A line that tells the AI to stay
 read-only in a skill whose own tools list can write is a place of its own: "Says read-only, but
@@ -279,7 +326,7 @@ far. The marks are yours: Walkdown never sets one, and a mark changes no finding
 Marks are kept in your browser as you go. To keep them with the run, use "Download marks.json"
 at the end of `review.html` and save the file in the run folder, next to the pages. "Load a marks
 file" reads a saved file into the page. Re-rendering the reports
-(`python stages/08-report/run.py --rerender <run folder>`) reads the file into all three pages, and
+(`python stages/06-report/run.py <run folder>`) reads the file into all three pages, and
 the other two count your marks. A file saved from the Not concerned boxes `details.html` had
 before 2026-10-27 still loads, and its marks are kept.
 
@@ -288,36 +335,55 @@ from the newest earlier run's marks. Each mark names what was flagged (the file 
 the line, or the address, or the file and the reason), never the line number alone, so a mark
 follows its line when lines move and drops away when the line itself changes. A carried mark says
 which run it is from until you change it, and `review.html` says how many earlier marks match
-nothing in this run. Files saved before 2026-10-20 still load, matched by place id.
+nothing in this run. Files saved before 2026-10-20 still load, matched by place id. Marks saved
+before 0.4.0 still carry over too: the pages recognize a place by either of its two keys.
 
 ## full.md
 
-Every finding, grouped by stage:
+Every finding, grouped by section:
 
 | Section | Holds |
 |---|---|
 | 1 What ships | entry points, the structural census, descriptions, tool grants, hooks, manifests |
 | 2 What the model actually reads | divergences (raw against rendered, and PDF pages as drawn against their text layer), lines changed by folding, non-Latin runs, passages in another language, metadata, unread files |
 | 3 What loads what | entry points used, orphans, load-only files, dynamic loads, components on disk a manifest leaves out, dangling references, depth |
-| 4 What the text asks for | every hit, by group (4a to 4d) and check, then the tables: endpoints, guarded actions, conditionals, definitions, conflicts, safety words |
-| 5 What this touches | each trifecta leg with every citation, install grants with evidence, bytes in context at load, agent posture, pairs |
-| 6 Needs a human read | the stage 6 models used, the sweep's flagged passages, every question and every answer |
-| 7 Not examined | the same list as `data/07-limits.md` |
+| 4 What the text asks for | every hit, by group (4a to 4d) and check, then the tables: endpoints, guarded actions, definitions, conflicts, safety words; and the builder checks on triggering, other AI hosts, and what is current and clean |
+| 5 What this touches | each trifecta leg with every citation, install grants with evidence, bytes in context at load, agent posture, pairs; and the builder checks on what it costs and what ships, and whether the tools fit |
+| 6 Needs a human read | the model reads that ran (the sweep's flagged passages, with the pinpoint's line when it ran), or one line saying none was chosen |
+| 7 Not examined | the same list as `data/limits.md`, including, for each model read that has passages with no answer, how many ("5 of 12 passages got no answer, after one retry"), the reasons counted, and the call log |
 
 Every line in it has a file and line you can open.
 
-## Stage 6 in the reports
+## The optional model reads in the reports
 
-Stage 6 is optional and experimental; with no model chosen, its section says "packet only". When
-models ran:
+The sweep and the pinpoint are optional and experimental; with neither chosen, section 6 says "No
+model read was chosen" and names the two options. `--reads` chooses them without naming a backend, and the reports then name the
+backends it chose, as they do for `--sweep` and `--pinpoint`. When they ran:
 
-- **Sweep passages** with no stage 4 hit come first, strongest first.
-- **"Do" reads** are listed at p >= 0.9; 0.7 to 0.9 is counted as near the line; lower reads are
-  counted only. For the sweep the bands are p >= 0.6 listed and 0.4 to 0.6 near the line.
-- **Why bands:** the same line read twice moves by up to about 0.1, so a single cutoff would put
-  lines in or out of the review page by chance.
-- **Evidence marks:** a confident read that a line is not an instruction marks it where stage 5
-  cites it as evidence, and never removes it.
+- **Sweep passages** with no phrase pattern hit come first, strongest first.
+- **Bands.** A sweep passage is listed at p >= 0.6; 0.4 to 0.6 is counted as near the line; lower
+  reads are counted only. A model that takes text gives no probability: its flagged passages are listed with the words
+  "(this model gives no probability)" where the number would be, and it has no near-the-line band.
+- **Tokens.** Section 6 and the brief name what each read used: `Model reads used: Sweep 596,200 in, 31,464 out;
+  Pinpoint 1,490 in, 73 out; Sweep's fixture check 39,823 in.` These are the counts the backends reported ("not
+  reported" where one gave none). A total with "(from 5 of 9 calls)" after it is partial: only 5 of the 9 calls reported a count, so
+  the real total is higher. The fixture check is named only when it was run in this run.
+- **The sweep's own fixtures.** The brief says `Sweep on jev: found 33 of 34 in its fixtures.`: how many of Walkdown's
+  own test passages, which have known answers, the model read as expected. It is a number to look at and holds
+  nothing.
+- **Why bands:** the same passage read twice moves by up to about 0.1, so a single cutoff would
+  put passages in or out of the review page by chance.
+- **No effect on findings.** A model read never changes, removes, or adds a coded finding, and a
+  confident read of a passage does not uncheck a trifecta leg.
+- **A call that got no answer** (an error from the service, an answer that is not one of the options,
+  an answer that cannot be read) is tried once more after 2 seconds, and logged in
+  `data/03-sweep.calls.jsonl` or `data/04-pinpoint.calls.jsonl`. A passage that still has no answer is
+  skipped. Section 7 and the details page say how many passages got no answer, with the reasons by kind of
+  failure and a status (429, 503), and the summary says it for a read that answered some. A read in
+  which no passage got an answer (no key, a rejected key, the service down) is named as a step that did
+  not work, and the headline says the coded checks are complete and the model read did not work (with a
+  check skipped for a missing tool, that the coded checks ran, and where the skipped ones are named). The
+  pinpoint does not run after a sweep like that.
 
 How accurate these reads are, and what that was measured on: [MODEL-ACCURACY.md](MODEL-ACCURACY.md).
 
@@ -330,10 +396,10 @@ quote attacks to describe them.
 - **Test data.** About 950 findings sit in `Fixtures/` and the test folders. They are set aside,
   counted in section 5, and kept off the summary. The "runs at load" grant disappears with them:
   every hook in the repository is a fixture.
-- **What remains.** All three trifecta legs and many stage 4 points, almost all from the design
-  documents and stage specs, which describe attacks in detail. Stage 6 reads most of those lines
-  as descriptions or quotes, and the sweep flagged one passage across all the prose a model
-  reads outside the fixtures.
+- **What remains.** All three trifecta legs and many phrase points, almost all from the design
+  documents and the specs, which describe attacks in detail. The review page walks each place, and
+  you tell the quotes from the instructions. In the audit of 2026-10-02 the optional sweep also
+  flagged one passage across all the prose a model reads outside the fixtures.
 - **The lesson.** The report shows where everything is. A repository whose documentation
-  discusses attacks will read as capable of them, and section 6 is where the quotes separate from
-  the instructions.
+  discusses attacks will read as capable of them, and the review page is where the quotes separate
+  from the instructions.

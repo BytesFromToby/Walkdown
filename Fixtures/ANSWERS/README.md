@@ -38,7 +38,7 @@ which is kept here as `_history-ANSWERS-2026-09-14.md`.
 - **case.fixtures**: sha256 of every file under the root. The grader refuses to
   grade when a file changed, appeared, or disappeared since the answers were
   written. After a deliberate fixture change, re-verify its expectations, then
-  run `python grader/grader.py --rehash <stage>`.
+  run `python tools/grader/grader.py --rehash <stage>`.
 - **expect**: one row per expectation.
   - `polarity`: `gate` (must be found; a miss fails the stage), `recall`
     (measured, reported as a percentage, never fails the stage), `negative`

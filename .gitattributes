@@ -1,3 +1,4 @@
 # Fixtures are byte-exact test inputs: their sha256 is recorded in Fixtures/ANSWERS/.
 # No line-ending conversion, or a fresh checkout on Windows would fail the hash check.
 Fixtures/** -text
+tools/model-eval/** -text

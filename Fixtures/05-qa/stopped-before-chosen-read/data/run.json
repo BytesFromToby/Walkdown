@@ -1,0 +1,74 @@
+{
+ "format": 3,
+ "finished": "2026-01-01T00:01:00+00:00",
+ "context": 32000,
+ "hosts": [],
+ "steps": [
+  {
+   "stage": "01-intake",
+   "ok": true,
+   "started": "2026-01-01T00:00:00+00:00",
+   "finished": "2026-01-01T00:01:00+00:00",
+   "error": null
+  },
+  {
+   "stage": "02.1-inventory",
+   "ok": true,
+   "started": "2026-01-01T00:00:00+00:00",
+   "finished": "2026-01-01T00:01:00+00:00",
+   "error": null
+  },
+  {
+   "stage": "02.2-reader",
+   "ok": true,
+   "started": "2026-01-01T00:00:00+00:00",
+   "finished": "2026-01-01T00:01:00+00:00",
+   "error": null
+  },
+  {
+   "stage": "02.3-graph",
+   "ok": true,
+   "started": "2026-01-01T00:00:00+00:00",
+   "finished": "2026-01-01T00:01:00+00:00",
+   "error": null
+  }
+ ],
+ "stamps": {
+  "01-intake": {
+   "result": "PASS",
+   "gate": "1/1",
+   "negative": "1/1",
+   "recall": null,
+   "skipped": [],
+   "cached": null
+  },
+  "02.1-inventory": {
+   "result": "PASS",
+   "gate": "1/1",
+   "negative": "1/1",
+   "recall": null,
+   "skipped": [],
+   "cached": null
+  },
+  "02.2-reader": {
+   "result": "PASS",
+   "gate": "1/1",
+   "negative": "1/1",
+   "recall": null,
+   "skipped": [],
+   "cached": null
+  },
+  "02.3-graph": {
+   "result": "PASS",
+   "gate": "1/1",
+   "negative": "1/1",
+   "recall": null,
+   "skipped": [],
+   "cached": null
+  }
+ },
+ "until": "02.3-graph",
+ "chosen": [
+  "03-sweep"
+ ]
+}

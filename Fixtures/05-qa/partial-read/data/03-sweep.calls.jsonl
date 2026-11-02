@@ -1,0 +1,3 @@
+{"qid": "sweep:fixture.md:3", "backend": "jev", "first": {"kind": "TypeSafeRateLimitError", "status": 429}, "retry": {"result": "no answer", "kind": "TypeSafeRateLimitError", "status": 429}, "at": "2026-01-01T00:00:00+00:00"}
+{"qid": "sweep:fixture.md:5", "backend": "jev", "first": {"kind": "TypeSafeRateLimitError", "status": 429}, "retry": {"result": "answered"}, "at": "2026-01-01T00:00:00+00:00"}
+{"qid": "sweep:fixture.md:7", "backend": "jev", "first": {"kind": "TypeSafeRateLimitError", "status": 429}, "retry": {"result": "no answer", "kind": "TypeSafeRateLimitError", "status": 429}, "at": "2026-01-01T00:00:00+00:00"}

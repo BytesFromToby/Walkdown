@@ -1,9 +1,10 @@
 name: tests
 
 # Every push and pull request: the spec tests, then every stage against its fixtures.
-# Tesseract is installed here so stage 2's image check runs (locally it is optional and
-# its absence gives INCOMPLETE); Playwright's Chromium likewise, so HTML is drawn. Stage 6 runs
-# with no model backend: the packet gates only.
+# Tesseract is installed here so 02.2-reader's image check runs (locally it is optional and
+# its absence gives INCOMPLETE); Playwright's Chromium likewise, so HTML is drawn. The AI stages
+# (03-sweep, 04-pinpoint) run with no model backend: Sweep's recall rows are skipped, and Pinpoint
+# has no fixture set.
 # Each runner version is named explicitly, so GitHub moving a "-latest" label cannot change
 # results unannounced. Both Ubuntu versions are tested because their Tesseract differs; macOS and
 # Windows (added 2026-10-20) run one Python each, to catch path, line-ending, and install
@@ -55,4 +56,4 @@ jobs:
       - name: Spec tests
         run: python -m pytest -q
       - name: Stage fixtures (grader)
-        run: python grader/grader.py all
+        run: python tools/grader/grader.py all
