@@ -363,7 +363,7 @@ with `--confcutdir` or `-c` below the root, or in a Python process started with 
 | ICM rule | What is there now |
 |---|---|
 | 1. One folder, one job | Each step answers one question. `06-report` writes the reports and runs nothing; the runner is in `stages/_shared/`. The builder questions are `02.6-builder`, apart from `02.4-phrases`. The limits have no folder: each step names its skips, `05-qa` gathers them, and `06-report` words them. |
-| 2. A small, stable entry file | `CLAUDE.md` is 59 lines: what Walkdown is, the locked rules, the layout, how to run, where to read next. Status and history moved to `pre-planning/history/BUILD-RECORD.md`. |
+| 2. A small, stable entry file | `CLAUDE.md` is 61 lines: what Walkdown is, the locked rules, the layout, how to run, where to read next. Status and history moved to `pre-planning/history/BUILD-RECORD.md`. |
 | 3. Numbering encodes order | `01` to `06`, and `02.1` to `02.6` inside the coded step, with no gaps. A step has the same name in its folder, its output in a run, its fixtures, and its spec. |
 | 4. An explicit contract per folder | Each step folder has `CONTEXT.md` (inputs, process, outputs, the human check, the spec). `stages/CONTRACT.md` is the shared output contract. Build briefs and how-tos are in `pre-planning/history/`. |
 | 5. Factory apart from product | Yes: see "the three layers" above. |
