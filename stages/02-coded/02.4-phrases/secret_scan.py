@@ -45,6 +45,9 @@ PLACEHOLDER = re.compile(r".*(\.\.\.|…)|<[^<>]+>|your\b.*|your[-_].*|[x*.]{3,}
 # Key shapes no installed scanner may know (2026-10-25, review C43: detect-secrets has no rule
 # for Anthropic keys, and a real-looking one in prose was missed).
 KEY_SHAPES = {"Anthropic API Key": re.compile(r"\bsk-ant-(?:api|admin)\d{2}-[A-Za-z0-9_-]{32,}")}
+# The kind of a key found in text decoded from base64 on a line (2026-11-03): the scan reads a line as written, so a key that readable
+# base64 spells was flagged nowhere, and the decoded text a phrase hit keeps showed it. `in_base64` on the row says so to the mask.
+IN_BASE64 = " (in text decoded from base64)"
 # A flagged value that is one base64 run, as `foldtext.base64_texts` reads one: only then can the whole of it be readable text.
 B64_VALUE = re.compile(r"[A-Za-z0-9+/]{24,}={0,2}")
 # A comment is the audited repository's own word about a line, and neither the scanner nor the mark takes it (2026-11-01: this filter
@@ -102,6 +105,16 @@ def _text(root: Path, rel: str) -> str | None:
         return None
 
 
+def _decoded_lines(text: str) -> list[tuple[int, str]]:
+    """(line, the readable text its base64 decodes to) for each line that has some, every run's text on its own line (`base64_texts`)."""
+    out = []
+    for n, line in enumerate(readtext.split_lines(text), 1):
+        texts = base64_texts(line) if len(line) >= 24 else []
+        if texts:
+            out.append((n, "\n".join(texts)))
+    return out
+
+
 def _shapes(root: Path, rels: set[str], skips: list | None = None, unscanned=()) -> list[dict]:
     """KEY_SHAPES on every line of the scanned files: kind and place, never the value. This is the pass that reads every file
     in our own process, so it is where a file counts for the line of `secret.found` (`coverlines`): as looked at once its
@@ -122,6 +135,9 @@ def _shapes(root: Path, rels: set[str], skips: list | None = None, unscanned=())
         for n, line in enumerate(readtext.split_lines(text), 1):
             out += [{"file": rel, "line": n, "kind": kind, "engine": "walkdown"}
                     for kind, rx in KEY_SHAPES.items() if rx.search(line)]
+        for n, decoded in _decoded_lines(text):
+            out += [{"file": rel, "line": n, "kind": kind + IN_BASE64, "engine": "walkdown", "in_base64": True}
+                    for kind, rx in KEY_SHAPES.items() if rx.search(decoded)]
     return out
 
 
@@ -164,14 +180,18 @@ def _detect_secrets(root: Path, rels: set[str], skips: list | None = None) -> li
             text = _text(root, rel)
             try:
                 hits = None if text is None else _scan_decoded(library, str(root / rel), text)
+                inside = [] if hits is None else [(n, _scan_decoded(library, str(root / rel), d)) for n, d in _decoded_lines(text)]
             except Exception:  # the exception's text is not kept: it could hold words from the repository
                 hits = None
-            if hits is None:
+            if hits is None or any(h is None for _, h in inside):
                 if skips is not None:
                     skips.append(_could_not(rel))
                 continue
             out += [{"file": rel, "line": s.line_number, "kind": s.type or "secret", "engine": "detect-secrets",
                      "text": reads_as_text(s.secret_value)} for s in hits]
+            # A hit in the decoded text stands at the line of its base64, and is never readable base64 itself.
+            out += [{"file": rel, "line": n, "kind": (s.type or "secret") + IN_BASE64, "engine": "detect-secrets",
+                     "text": False, "in_base64": True} for n, found in inside for s in found]
     return out
 
 
@@ -205,6 +225,8 @@ def scan(root, files: dict[str, str]) -> list[dict]:
                                     "audience": files.get(h["file"])})
         if h["kind"] not in m["kinds"]:
             m["kinds"].append(h["kind"])
+        if h.get("in_base64"):
+            m["in_base64"] = True
     for (rel, ln), m in merged.items():
         if rel not in lines:
             lines[rel] = readtext.split_lines(_text(root, rel) or "")

@@ -1405,7 +1405,7 @@
         "secrets-repo/.gitmodules": "025dde09679c99a0be74b1347ab9daed809eb035713d0177d8bee44b64b8cb3b",
         "secrets-repo/.npmrc": "4ec91d69e2dbe8aa4f6450c33515e628122af107107385fa9a67e0dbf4bd022b",
         "secrets-repo/allowlisted.md": "aa94a026df5311a2456cb6cdcd06a2f516fa373a63d3f1404b3b67fa3bccc602",
-        "secrets-repo/beside-base64.md": "4da50853a2f4cb1552e4da4c0ac780baff8981a5c1b9d41fc0f74cb4940ebb0d",
+        "secrets-repo/beside-base64.md": "8dcc2c63e70a2d1cac47b55d42412095ec8a54f8e77df0682e927d66136e2c64",
         "secrets-repo/checklist.md": "6b08b800ae97abda32a6797f6a5e273da7b8a175ef03b5e60b5c615d732e7074",
         "secrets-repo/docker-compose.yml": "0df6c7614c430949939f405b1c96450a761d151917fe3bd1d221fc2ca73a97c4",
         "secrets-repo/notes.md": "e0176ca0d9c22e171fd6cf05cfae5aafb976e9b4eadbfabf89a0cee16fbb9dd5",
@@ -1846,7 +1846,7 @@
         ".gitmodules": "025dde09679c99a0be74b1347ab9daed809eb035713d0177d8bee44b64b8cb3b",
         ".npmrc": "4ec91d69e2dbe8aa4f6450c33515e628122af107107385fa9a67e0dbf4bd022b",
         "allowlisted.md": "aa94a026df5311a2456cb6cdcd06a2f516fa373a63d3f1404b3b67fa3bccc602",
-        "beside-base64.md": "4da50853a2f4cb1552e4da4c0ac780baff8981a5c1b9d41fc0f74cb4940ebb0d",
+        "beside-base64.md": "8dcc2c63e70a2d1cac47b55d42412095ec8a54f8e77df0682e927d66136e2c64",
         "checklist.md": "6b08b800ae97abda32a6797f6a5e273da7b8a175ef03b5e60b5c615d732e7074",
         "docker-compose.yml": "0df6c7614c430949939f405b1c96450a761d151917fe3bd1d221fc2ca73a97c4",
         "notes.md": "e0176ca0d9c22e171fd6cf05cfae5aafb976e9b4eadbfabf89a0cee16fbb9dd5",
@@ -2041,6 +2041,48 @@
             }
           },
           "note": "The mark went by the line as a whole, so the key beside the text read as no key and its line was shown: the mark needs every flagged value on the line to be readable base64 (2026-11-02)."
+        },
+        {
+          "id": "secret-inside-base64-text",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": "beside-base64.md",
+          "line": 7,
+          "match": {
+            "kinds": {
+              "includes": "Anthropic API Key (in text decoded from base64)"
+            },
+            "in_base64": {
+              "eq": true
+            }
+          },
+          "note": "A key that readable base64 spells is found in the decoded text and cited at the line of its base64 (2026-11-03)."
+        },
+        {
+          "id": "secret-inside-base64-text-not-marked",
+          "polarity": "negative",
+          "check": "secret.found",
+          "file": "beside-base64.md",
+          "line": 7,
+          "match": {
+            "likely_not_secret": {
+              "eq": "base64 that decodes to readable text, not a key"
+            }
+          },
+          "note": "The base64 is readable text, but the text holds a key: no mark."
+        },
+        {
+          "id": "secret-inside-base64-text-never-shown",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "beside-base64.md",
+          "line": 7,
+          "match": {
+            "decoded_text": {
+              "contains": "Zx4QZx4Q"
+            }
+          },
+          "note": "The decoded text a phrase hit keeps is masked when the key is in it."
         }
       ]
     },

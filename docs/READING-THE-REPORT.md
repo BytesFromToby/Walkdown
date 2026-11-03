@@ -226,7 +226,8 @@ or `password = value` with no quotes in a Markdown file. Nothing marks such a li
 kind of flagged line also keeps its text: when everything flagged on a line is base64 that decodes to readable words, the line reads as
 holding no key, so a key the scanner did not flag beside that text can still show in `full.md` and `data/`. A model read leaves that line
 out. When a key does stand beside such text, the line is hidden and the decoded words are still shown, since a key never decodes to
-readable words. A key spelled inside the readable text itself is not flagged, and shows with the decoded words.
+readable words. The decoded words are scanned too: a key in them is flagged at the line, its kind ends in "(in text decoded from
+base64)", and the decoded words are hidden with the line.
 
 ### What changed since an earlier run
 

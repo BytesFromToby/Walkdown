@@ -19,7 +19,8 @@ TEXT_FIELDS = ("quote", "definition", "condition", "body", "decoded_text", "text
 NOT_TEXT = {"limit.setting": ("value",)}
 # A phrase hit on readable text hidden in base64 (review C42) keeps what it decoded and the words it matched there: a value the scanner
 # flags is random-looking, so it never decodes to readable text, and the decoded instruction is what a reader needs (owner, 2026-11-03).
-# Its `quote`, the line as written, is masked as any other. `decoded` here is the fixed word "base64".
+# Its `quote`, the line as written, is masked as any other. `decoded` here is the fixed word "base64". When the scan found a key in that
+# decoded text (`in_base64` on the row), it goes too.
 DECODED = ("decoded", "decoded_text")
 # Lists whose items a person wrote and whose plain words are what a page is for: a tool's name stays, and anything else goes.
 WORD_LISTS = ("tools", "grants", "disallowed", "preloads", "env_keys", "types")
@@ -89,8 +90,10 @@ def _is_plain(word) -> bool:
     return bool(PLAIN.fullmatch(str(word)))
 
 
-def _mask_fields(f: dict, was: set) -> bool:
-    """Every field of a finding that holds a person's words, in place, each kept in `was`. Whether any was masked now."""
+def _mask_fields(f: dict, was: set, keep_decoded: bool = True) -> bool:
+    """Every field of a finding that holds a person's words, in place, each kept in `was`. Whether any was masked now.
+    `keep_decoded`: false when the scan found a key in the text the line's base64 decodes to (`in_base64`), so what a base64 hit
+    decoded goes too."""
     changed = False
 
     def gone(word):
@@ -99,7 +102,7 @@ def _mask_fields(f: dict, was: set) -> bool:
         was.add(word)
         return SECRET_MASK
 
-    from_base64 = f.get("decoded") == "base64"
+    from_base64 = keep_decoded and f.get("decoded") == "base64"
     fixed = NOT_TEXT.get(f.get("check"), ()) + (DECODED if from_base64 else ())
     for k in TEXT_FIELDS:
         if k not in fixed and isinstance(f.get(k), str) and f[k] != SECRET_MASK:
@@ -179,6 +182,8 @@ def mask_secret_lines(findings: list[dict], was: dict | None = None) -> None:
     masked}, for `mask_copies`."""
     lines = flagged_lines(findings)
     files = {file for file, _ in lines}
+    in_base64 = {(f["file"], f["line"]) for f in findings
+                 if f.get("check") == "secret.found" and f.get("in_base64") and "skipped" not in f}
     for f in findings:
         if f.get("check") == "secret.found":
             continue
@@ -187,7 +192,7 @@ def mask_secret_lines(findings: list[dict], was: dict | None = None) -> None:
         hit = f.get("file") in files if lines_of is None else any((f.get("file"), n) in lines for n in lines_of)
         changed = _mask_places(f, lines, files, gone)
         if hit:
-            changed = _mask_fields(f, gone) or changed
+            changed = _mask_fields(f, gone, keep_decoded=(f.get("file"), f.get("line")) not in in_base64) or changed
         elif f.get("event_line") and (f.get("file"), f["event_line"]) in lines and not _is_plain(f.get("event")):
             changed = _replace(f, "event", gone) or changed
         # a parser's finding is masked for what it held; a finding that quotes the line is masked for where it is, as it was
