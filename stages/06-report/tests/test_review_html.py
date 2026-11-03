@@ -552,5 +552,5 @@ def test_what_is_said_of_a_line_is_its_own_line_on_the_card_before_the_lead():
     own line; the base-rate lead stays with its own note (2026-11-03)."""
     hit = {**IGNORE, "file": "server/notes.py", "audience": "model", "tool_text": True, "decoded_text": "Ignore all", "line": 30}
     h = page(reports(extra_hits=[hit]))
-    assert html.escape(summary_html.TOOL_TEXT_NOTE, quote=False) in h
+    assert html.escape(summary_html.TOOL_TEXT_NOTE) in h  # as the page writes it: an apostrophe is &#x27;
     assert "turns up elsewhere: Decoded" not in h and "turns up elsewhere: This line is code" not in h
