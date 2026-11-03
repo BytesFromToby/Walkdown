@@ -18,23 +18,36 @@ PY_EXTS = ("py",)
 JS_EXTS = ("js", "mjs", "cjs", "ts", "mts", "cts")
 GO_EXTS = ("go",)
 PY_MCP = re.compile(r"^\s*(?:from|import)\s+(?:mcp|fastmcp)\b", re.M)
+# A server's import (2026-11-03): only a server's code holds the text a prompt or a tool's reply sends (`REPLY_KEYS`,
+# `REPLY_CALLS`, a prompt's body). A client's sends a server its arguments (`call_tool("echo", {"text": "hi"})`), which no model
+# reads, and a client and its server can share a file's imports, so this is asked of the server's import alone.
+PY_SERVER = re.compile(r"^\s*(?:from\s+(?:mcp\.server|fastmcp)\b|import\s+(?:mcp\.server|fastmcp)\b"
+                       r"|from\s+mcp\s+import\s+[^\n]*\b(?:FastMCP|Server|MCPServer)\b)", re.M)
+JS_SERVER = re.compile(r"""["'](?:@modelcontextprotocol/sdk/server[^"']*|fastmcp(?:/[^"']*)?)["']""")
 JS_MCP = re.compile(r"""@modelcontextprotocol/sdk|\bfrom\s+["']fastmcp["']|\brequire\(\s*["']fastmcp["']\s*\)""")
 # The official Go SDK and mcp-go, imported by path (2026-11-03).
 GO_MCP = re.compile(r'"github\.com/(?:modelcontextprotocol/go-sdk|mark3labs/mcp-go)/(?:mcp|server)"')
 # A Go struct tag that gives a schema field its description: the official SDK's `jsonschema:"..."`, invopop's
 # `jsonschema_description:"..."`. The field's description goes into the tool's input or output schema.
 GO_SCHEMA_TAG = re.compile(r'\bjsonschema(?:_description)?:"')
-# A key, keyword, or field whose value a client shows the model.
+# A key, keyword, or field whose value a client shows the model: a description or title, and (2026-11-03) the `text` of the
+# content a prompt or a tool's reply sends (`TextContent(text=...)`, `{type: "text", text: ...}`, Go's `Text:`).
 TEXT_KEYS = {"description", "title"}
+REPLY_KEYS = {"text"}
 # Methods whose string arguments are a description: zod's `.describe(...)`; mcp-go's `mcp.WithDescription(...)`,
 # `mcp.Description(...)`, `mcp.WithTitleAnnotation(...)`, and the prompt, argument, resource, and template forms. A plain call
 # is not one: a test suite's `describe(...)`.
 TEXT_CALLS = {"describe", "withdescription", "description", "withtitleannotation", "withpromptdescription",
               "argumentdescription", "withresourcedescription", "withtemplatedescription"}
+# What a prompt or a tool's reply sends (2026-11-03): mcp-go's and github-mcp-server's builders of a reply.
+REPLY_CALLS = {"newtextcontent", "newtoolresulttext", "newtoolresulterror", "newtoolresulterrorf", "newtoolresulterrorfromerr"}
 # Calls that declare a tool, prompt, or resource with positional strings: `server.tool("name", "description", ...)`.
 DECLARE_CALLS = {"tool", "prompt", "resource"}
 # Python decorators whose function's docstring is the description (FastMCP: `@mcp.tool()`, `@mcp.prompt`, `@mcp.resource(...)`).
 DECORATORS = {"tool", "prompt", "resource"}
+# A prompt's function returns the text the client sends the model (a string, an f-string, `UserMessage(...)`), so every string
+# in its body is read (2026-11-03).
+PROMPT_DECORATORS = {"prompt"}
 
 
 def _ext(rel: str) -> str:
@@ -54,13 +67,24 @@ def is_mcp_code(rel: str, text: str) -> bool:
     return False
 
 
+def is_server_code(rel: str, text: str) -> bool:
+    """Whether MCP code is a server's, so the text its prompts and replies send is read too (`PY_SERVER`, `JS_SERVER`; Go by
+    `GO_MCP`, which names the packages a server builds its replies with)."""
+    ext = _ext(rel)
+    if ext in PY_EXTS:
+        return bool(PY_SERVER.search(text))
+    if ext in JS_EXTS:
+        return bool(JS_SERVER.search(text))
+    return ext in GO_EXTS and bool(GO_MCP.search(text))
+
+
 def tool_text_lines(rel: str, text: str) -> set[int]:
     """The lines of an MCP code file that hold text a model reads, or an empty set for any other file or code that does not
     parse."""
     if not is_mcp_code(rel, text):
         return set()
-    ext = _ext(rel)
-    return _python(text) if ext in PY_EXTS else _go(text) if ext in GO_EXTS else _js(text)
+    ext, replies = _ext(rel), is_server_code(rel, text)
+    return _python(text, replies) if ext in PY_EXTS else _go(text, replies) if ext in GO_EXTS else _js(text, replies)
 
 
 # ---------------------------------------------------------------- Python
@@ -79,16 +103,16 @@ def _strings(node) -> set[int]:
     return out
 
 
-def _decorated(fn) -> bool:
+def _decorated(fn, names=DECORATORS) -> bool:
     for d in fn.decorator_list:
         target = d.func if isinstance(d, ast.Call) else d
         name = target.attr if isinstance(target, ast.Attribute) else target.id if isinstance(target, ast.Name) else None
-        if name in DECORATORS:
+        if name in names:
             return True
     return False
 
 
-def _python(text: str) -> set[int]:
+def _python(text: str, replies: bool = False) -> set[int]:
     try:
         tree = ast.parse(text)
     except (SyntaxError, ValueError):
@@ -99,11 +123,16 @@ def _python(text: str) -> set[int]:
             first = node.body[0] if node.body else None
             if isinstance(first, ast.Expr) and isinstance(first.value, ast.Constant) and isinstance(first.value.value, str):
                 out |= _span(first.value)
+            if replies and _decorated(node, PROMPT_DECORATORS):  # what a prompt returns is what the model reads
+                for stmt in node.body:
+                    out |= _strings(stmt)
         elif isinstance(node, ast.Call):
-            out |= {n for kw in node.keywords if kw.arg in TEXT_KEYS for n in _strings(kw.value)}
+            keys = TEXT_KEYS | REPLY_KEYS if replies else TEXT_KEYS
+            out |= {n for kw in node.keywords if kw.arg in keys for n in _strings(kw.value)}
         elif isinstance(node, ast.Dict):
+            keys = TEXT_KEYS | REPLY_KEYS if replies else TEXT_KEYS
             for k, v in zip(node.keys, node.values):
-                if isinstance(k, ast.Constant) and isinstance(k.value, str) and k.value.lower() in TEXT_KEYS:
+                if isinstance(k, ast.Constant) and isinstance(k.value, str) and k.value.lower() in keys:
                     out |= _strings(v)
     return out
 
@@ -191,29 +220,30 @@ def _args(toks, i) -> list[tuple[set[int], bool]]:
     return args
 
 
-def _js(text: str) -> set[int]:
-    return _c_like(_tokens(text))
+def _js(text: str, replies: bool = False) -> set[int]:
+    return _c_like(_tokens(text), replies)
 
 
-def _go(text: str) -> set[int]:
+def _go(text: str, replies: bool = False) -> set[int]:
     """Go: the rules of `_c_like` (a `Description:` or `Title:` field of a struct literal, the official SDK's form; mcp-go's
     `mcp.WithDescription(...)` and its kin), and a struct tag that describes a schema field (`GO_SCHEMA_TAG`)."""
     toks = _tokens(text, raw_backtick=True)
-    out = _c_like(toks)
+    out = _c_like(toks, replies)
     for kind, val, a, b in toks:
         if kind == "str" and GO_SCHEMA_TAG.search(val):
             out |= set(range(a, b + 1))
     return out
 
 
-def _c_like(toks) -> set[int]:
+def _c_like(toks, replies: bool = False) -> set[int]:
+    keys, calls = (TEXT_KEYS | REPLY_KEYS, TEXT_CALLS | REPLY_CALLS) if replies else (TEXT_KEYS, TEXT_CALLS)
     out: set[int] = set()
     for i, (kind, val, _, _) in enumerate(toks):
         nxt = toks[i + 1][1] if i + 1 < len(toks) and toks[i + 1][0] == "p" else None
         name = val.lower() if kind in ("id", "str") else None
-        if name in TEXT_KEYS and nxt in (":", "="):
+        if name in keys and (nxt == ":" or (nxt == "=" and name not in REPLY_KEYS)):  # `let text = ...` is a variable
             out |= _value(toks, i + 2)[0]
-        elif kind == "id" and nxt == "(" and name in TEXT_CALLS and i > 0 and toks[i - 1][1] == ".":  # a method: not a test's describe()
+        elif kind == "id" and nxt == "(" and name in calls and i > 0 and toks[i - 1][1] == ".":  # a method: not a test's describe()
             out |= {n for lines, _ in _args(toks, i + 1) for n in lines}
         elif kind == "id" and nxt == "(" and name in DECLARE_CALLS and i > 0 and toks[i - 1][1] == ".":
             args = _args(toks, i + 1)  # `server.tool("name", "description", schema, handler)`: a plain string after the name

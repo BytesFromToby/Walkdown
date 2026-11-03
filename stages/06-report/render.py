@@ -1988,7 +1988,7 @@ def _f4(r, _):
             if pc:
                 L += ["Patterns: " + ", ".join(f"{k} {v}" for k, v in sorted(pc.items())), ""]
             L += [f"- {loc(h)} [{', '.join(h.get('patterns', []))}] ({h.get('audience')}"
-                  f"{', in an MCP description' if h.get('tool_text') else ''})"
+                  f"{', sent to the AI by an MCP server' if h.get('tool_text') else ''})"
                   f"{' (matched only after folding)' if h.get('folded') else ''}"
                   f"{' (decoded from base64: ' + code(h['decoded_text']) + ')' if h.get('decoded_text') else ''}"
                   f"{prohibition_note(h)}: "

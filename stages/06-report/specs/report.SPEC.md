@@ -2182,7 +2182,7 @@ check". Any other run has none.
   (`tests/test_details_html.py::test_the_four_rows_from_skillspector_are_places_and_decoding_code_runs_code`).
 - 2026-11-03: `context` on a place (`_item`): what hidden characters spell, what base64 decodes to, and, new, that a line of
   code is an MCP description the AI reads (`TOOL_TEXT_NOTE`). It is its own line on a review card, so the base-rate lead no longer
-  runs into it, and `details.html` shows it for phrase places too. `full.md`'s phrase hit says `(model, in an MCP description)` for
-  a `tool_text` hit (`tests/test_details_html.py::test_what_is_said_of_the_line_is_its_own_line_and_a_lead_never_runs_into_it`,
+  runs into it, and `details.html` shows it for phrase places too. `full.md`'s phrase hit says `(model, sent to the AI by an MCP
+  server)` for a `tool_text` hit (it said `in an MCP description` until prompt and reply text were read, the same day) (`tests/test_details_html.py::test_what_is_said_of_the_line_is_its_own_line_and_a_lead_never_runs_into_it`,
   `tests/test_review_html.py::test_what_is_said_of_a_line_is_its_own_line_on_the_card_before_the_lead`).
 - 2026-11-01: `hidden+spelled`: a hidden place whose characters spell text and that has no phrase hit is a place of its own (a row here, a card on `review.html`), and `details.html`'s list of every hidden place says what each one's characters spell (`spelled_note`). Until now only a line with a phrase hit said it on these two pages, and `full.md` alone said it for the rest. A default run with no such line has the same pages.

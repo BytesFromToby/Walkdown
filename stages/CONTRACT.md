@@ -213,9 +213,9 @@ not a folder to read. It has no section in any report (`stages/01-intake/specs/i
 
 One check per PHRASES set or detector. Every finding carries `quote` (the
 original line, verbatim) and may carry `audience` (`model`, `subagent`, `human`,
-`tool`, `test-data` (added 2026-10-02)). A phrase finding with `tool_text: true` (added 2026-11-03) is a hit in the description of
-a tool, prompt, resource, or parameter in an MCP server's code, read as text a model reads: its `audience` is `model` though its
-file is code. The report also carries `terms` beside `findings`
+`tool`, `test-data` (added 2026-10-02)). A phrase finding with `tool_text: true` (added 2026-11-03) is a hit in what an MCP server's
+code sends the model (the description of a tool, prompt, resource, or parameter; a prompt's text; a tool's reply, added later the
+same day), read as text a model reads: its `audience` is `model` though its file is code. The report also carries `terms` beside `findings`
 (added 2026-10-19, review C22 b): the version of the search terms and matching code it came from
 (`version`, `count`, `rows` with one short hash per pattern id, `vocab`, `code`), so two runs can
 tell a hit from a repository change from one from a Walkdown change. It also carries

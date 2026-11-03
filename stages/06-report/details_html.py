@@ -85,8 +85,8 @@ def is_model_read(it) -> bool:
 
 HOOK_NOTE = "A hook runs whenever the harness fires its event, without anyone asking."
 # A phrase hit in an MCP server's code that the AI reads (`02.4-phrases`, `tool_text`): the file is code, so say why it counts.
-TOOL_TEXT_NOTE = ("This line is code, but it is part of a description in an MCP server: the tool, prompt, or setting it describes "
-                  "is listed for the AI with these words, so the AI reads them.")
+TOOL_TEXT_NOTE = ("This line is code, but an MCP server sends these words to the AI: in the description of a tool, prompt, or "
+                  "setting, in a prompt's text, or in a tool's reply. So the AI reads them.")
 # Where a host-run command runs, by its hook format (review C31, 2026-10-17).
 HOOK_NOTES = {
     "cursor-environment": "Cursor runs this on its own cloud machine when it sets up or starts a cloud "
