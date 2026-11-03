@@ -1455,8 +1455,10 @@ stands, so an instruction hidden there is an instruction to the model.
 A set of line numbers, empty for any file that is not MCP code or does not parse:
 
 - **Which files.** `is_mcp_code`: a `.py` file that imports `mcp` or `fastmcp`; a `.js`, `.mjs`, `.cjs`, `.ts`, `.mts`, or `.cts`
-  file that names `@modelcontextprotocol/sdk` or imports `fastmcp`. Go and other languages are not read this way: `audience`
-  already reads a `.go` file as text a model reads.
+  file that names `@modelcontextprotocol/sdk` or imports `fastmcp`. A server in Go, Rust, Java, or another language is not read
+  this way: the inventory lists such a file as a script, so `audience` reads it as code, and its descriptions count as code.
+  (Corrected 2026-11-03: this line said a `.go` file was read as model text, from a check that called `audience` without the
+  inventory's script list. On `github/github-mcp-server` every Go file outside its tests is code.)
 - **Python** (`ast`): the docstring of a function decorated `@<x>.tool`, `@<x>.prompt`, or `@<x>.resource` (called or not); every
   string in the value of a `description=` or `title=` keyword of any call (`Field(description=...)`, `Tool(description=...)`, a
   decorator's own), a call around it included (`t("KEY", "default")`); every string in the value of a dict key `"description"` or

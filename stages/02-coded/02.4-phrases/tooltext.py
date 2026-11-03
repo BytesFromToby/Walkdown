@@ -21,7 +21,8 @@ JS_MCP = re.compile(r"""@modelcontextprotocol/sdk|\bfrom\s+["']fastmcp["']|\breq
 # A key, keyword, or field whose value a client shows the model.
 TEXT_KEYS = {"description", "title"}
 # Methods whose string arguments are a description: zod's `.describe(...)`, mcp-go's `mcp.WithDescription(...)` and
-# `mcp.Description(...)` (for a Go file that is ever read as code). A plain call is not one: a test suite's `describe(...)`.
+# `mcp.Description(...)` (mcp-go's names, for when Go is read; it is not yet). A plain call is not one: a test suite's
+# `describe(...)`.
 TEXT_CALLS = {"describe", "withdescription", "description", "withtitleannotation"}
 # Calls that declare a tool, prompt, or resource with positional strings: `server.tool("name", "description", ...)`.
 DECLARE_CALLS = {"tool", "prompt", "resource"}
