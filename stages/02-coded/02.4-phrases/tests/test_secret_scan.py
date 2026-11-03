@@ -256,15 +256,31 @@ def test_bytes_that_do_not_decode_are_a_skip_in_our_words(tmp_path):
     assert (line["of"], line["looked_at"], line["explained"], line["found"]) == (1, 0, 1, 0)
 
 
-@pytest.mark.parametrize("name", ["logo.svg", "site.css", "docs/swagger-notes.md"])
-def test_a_file_the_library_leaves_out_by_its_name_is_a_skip(tmp_path, name):
-    """Its filters drop these before they read a byte. The file was not scanned, so its line must not say it was."""
+@pytest.mark.parametrize("name", ["logo.svg", "site.css", "app.js.map", "docs/swagger-notes.md", "api/swagger.json"])
+def test_a_file_the_library_would_leave_out_by_its_name_is_scanned(tmp_path, name):
+    """Its filters dropped these before they read a byte, and the scan wrote a "could not scan" skip (owner, 2026-11-03: scan them).
+    Every file the scan is given is text, so the name filters are off and the file is looked at."""
     (tmp_path / name).parent.mkdir(exist_ok=True)
     (tmp_path / name).write_text(KEY_LINE, encoding="utf-8")
     out = counted_scan(tmp_path, {name: "model"})
-    assert out == [secret_scan._could_not(name)]
+    assert [(f["file"], f["line"], "skipped" in f) for f in out] == [(name, 1, False)] and FAKE not in repr(out)
     line = coverage(out)
-    assert (line["looked_at"], line["explained"]) == (0, 1)
+    assert (line["looked_at"], line["explained"], line["found"]) == (1, 0, 1)
+
+
+def test_an_embedded_image_or_a_source_map_gives_no_flag(tmp_path):
+    """What those names hold most often: a picture or a font as a data address, and a source map's mappings."""
+    blob = __import__("base64").b64encode(hashlib.sha256(b"img").digest() * 20).decode()
+    (tmp_path / "pic.svg").write_text(f'<svg><image href="data:image/png;base64,{blob}"/></svg>\n', encoding="utf-8")
+    (tmp_path / "a.min.css").write_text(f'@font-face{{src:url("data:font/woff2;base64,{blob}")}}.a{{background:url(data:image/png;base64,{blob})}}\n',
+                                        encoding="utf-8")
+    (tmp_path / "a.js.map").write_text('{"version":3,"mappings":"AAAA,SAASA,EAAEC,GAAG,OAAOA,EAAE,CAAC,IAAIC,EAAEC,EAAE,CAAC"}\n', encoding="utf-8")
+    assert secret_scan.scan(tmp_path, {"pic.svg": "model", "a.min.css": "model", "a.js.map": "model"}) == []
+
+
+def test_the_library_lock_filter_stays_on():
+    """Only the name filters for text files are off: a lock name `LOCK_FILES` does not hold is still the library's to refuse."""
+    assert "detect_secrets.filters.heuristic.is_lock_file" not in secret_scan.NAME_FILTERS
 
 
 def test_a_library_that_stops_asking_for_our_text_gives_skips_and_no_zero(tmp_path, monkeypatch):

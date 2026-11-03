@@ -1034,8 +1034,10 @@ and `BUILD_GLOBS` say who reads a file, and do not decide what the scan reads.
 - No scanner available: one skip finding (`file` null) naming what to install; the limits (`data/limits.md`) list it.
 - A file detect-secrets did not scan: one skip finding for that file (`_could_not`, `the secret scan could not scan this file`),
   never the error's text. Those are a file whose bytes `readtext.decode` cannot read or that cannot be opened, a file it raised on,
-  and a file it never asked for the text of: its filters leave some out by name before reading them (`.svg`, `.css`, `.map`, and
-  the rest of `IGNORED_FILE_EXTENSIONS`; a path holding `swagger`), and a later version may read some other way. The check for this
+  and a file it never asked for the text of: its lock-file filter leaves some out by name before reading them (`composer.lock`,
+  `Podfile.lock`, and other lock names `LOCK_FILES` does not hold), and a later version may read some other way. Its filters that left
+  out `.svg`, `.css`, `.map`, the rest of `IGNORED_FILE_EXTENSIONS`, and a path holding `swagger` are off (`NAME_FILTERS`, owner,
+  2026-11-03): every file the scan is given is text, so those are read. The check for this
   is that the library asked for the text, so no silent zero stands behind `looked_at`. The file counts as explained, the shapes
   below still run on it, and `details.html` and `full.md` say the scan could not scan it beside what the scan found
   (`stages/06-report/specs/report.SPEC.md`, History).
@@ -1108,8 +1110,7 @@ see the same lines. The name `open` is taken back after each call, and `detect-s
    `test_a_key_shape_is_found_in_a_file_that_is_not_utf8`).
 9. A flagged line has the number and the text every step gives it (`test_a_flagged_line_has_the_number_and_the_text_every_step_gives_it`).
 10. These are a skip in our words, explained and not looked at: bytes that do not decode
-    (`test_bytes_that_do_not_decode_are_a_skip_in_our_words`), a file left out by its name
-    (`test_a_file_the_library_leaves_out_by_its_name_is_a_skip`), and a library that stops asking for the text
+    (`test_bytes_that_do_not_decode_are_a_skip_in_our_words`), and a library that stops asking for the text
     (`test_a_library_that_stops_asking_for_our_text_gives_skips_and_no_zero`). The library's `open` is its own again after a scan
     (`test_the_library_gets_its_own_open_back`).
 11. The key-shape pass numbers a line as every other step does, with a form feed, U+2028, or a lone CR before it
@@ -1151,6 +1152,11 @@ see the same lines. The name `open` is taken back after each call, and `detect-s
     `test_with_no_scanner_the_key_shapes_still_read_the_decoded_text`); fixture rows `secret-inside-base64-text`,
     `secret-inside-base64-text-not-marked`, and `secret-inside-base64-text-never-shown`. On a whole run the key is in no report and no
     step output (`06-report/tests/test_run.py`, `test_a_key_that_readable_base64_spells_is_in_no_report_and_no_step_output`).
+
+20. A `.svg`, `.css`, `.map`, or swagger file is scanned and looked at, and its key is found
+    (`test_a_file_the_library_would_leave_out_by_its_name_is_scanned`; fixture rows `secret-in-css`, `secret-in-svg`); an embedded
+    image, a font as a data address, and a source map's mappings give no flag (`test_an_embedded_image_or_a_source_map_gives_no_flag`);
+    the library's lock-file filter stays on (`test_the_library_lock_filter_stays_on`).
 
 ### Likely not a secret (2026-10-09)
 
@@ -1223,6 +1229,11 @@ The report counts these apart and lists them with the reason in the full report 
   `data/02.4-phrases.json`, and `data/hits.json`, and the brief said Walkdown found none of the concerns it looks for. Such a line now counts
   among the lines that may hold a secret, and its quotes are masked; the decoded instruction stays (`secretmask.DECODED`, owner, 2026-11-03).
   `terms.code` moves with this file.
+- 2026-11-03: the name filters are off (`NAME_FILTERS`, owner). detect-secrets left `.svg`, `.css`, `.map`, the rest of
+  `IGNORED_FILE_EXTENSIONS`, and a path holding `swagger` out before reading a byte, and the scan wrote a "could not scan" skip. Measured
+  first on three public skill repositories (`anthropics/skills`, `obra/superpowers`, `wshobson/agents`): one such text file in all (an `.svg`),
+  no line flagged; on made-up files, an embedded image, a font data address, and a source map's mappings flag nothing. `terms.code` moves
+  with this file.
 - 2026-11-03: the text decoded from base64 is scanned (`IN_BASE64`, `in_base64`). A key that readable base64 spells was flagged nowhere:
   the decoded text a phrase hit keeps showed it in `full.md`, `review.html`, `data/02.4-phrases.json`, and `data/hits.json` (on 0.4.0 too).
   `terms.code` moves with this file.

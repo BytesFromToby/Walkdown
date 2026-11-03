@@ -17,6 +17,9 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
   such a skill could read "found none of the security concerns it looks for". The mark now needs every flagged value on the line to
   decode to readable text. Such a line counts as looks like a committed secret and its quote is masked; the decoded instruction
   still shows beside it, since a flagged key never decodes to readable text.
+- **`.svg`, `.css`, and `.map` files are scanned for keys.** detect-secrets left them out by their extension, as it does a path
+  holding `swagger`, and the pages named each as a file the scan could not scan. They are text, so the scan reads them now. Embedded
+  images and source maps flag nothing in the cases checked.
 - **Two hidden lines in one file keep their own marks.** A line hidden because it may hold a secret shows the same words as every
   other such line, and the mark of a place was filed under its words, so two such places with the same headline in one file shared
   one mark: on loading a saved `marks.json`, or on the next run, both marks went to the first place and the other was lost. Such a

@@ -1408,11 +1408,13 @@
         "secrets-repo/beside-base64.md": "8dcc2c63e70a2d1cac47b55d42412095ec8a54f8e77df0682e927d66136e2c64",
         "secrets-repo/checklist.md": "6b08b800ae97abda32a6797f6a5e273da7b8a175ef03b5e60b5c615d732e7074",
         "secrets-repo/docker-compose.yml": "0df6c7614c430949939f405b1c96450a761d151917fe3bd1d221fc2ca73a97c4",
+        "secrets-repo/logo.svg": "1943ba53c68b268c684f7d33d256b6fea8320afef147ef0a652952815ca452bb",
         "secrets-repo/notes.md": "e0176ca0d9c22e171fd6cf05cfae5aafb976e9b4eadbfabf89a0cee16fbb9dd5",
         "secrets-repo/package-lock.json": "a64daf7505864c82834460ddc8ce9eaa718f584e5d4cb97658e5b0fde52aedd9",
         "secrets-repo/package.json": "5f6ebeb7ca79e483d7c2dc4560fd321a145ebe7686bf69c88737b108dfe76978",
         "secrets-repo/SKILL.md": "7c2f14b0c5eb6f4aab5c6f83a2bc66000640d3d3953989510bed24365ecbc0f6",
         "secrets-repo/tagged.md": "5e83a2f7c9b8108320afdb1ebf06d76547cee4a91938df4c2fb9dfe345785bd0",
+        "secrets-repo/theme.css": "0e9311095d7a21fbfadca4083bd1cb6b3f8baeaaf59c67945821fe84ca7097b6",
         "wrapped-lines.md": "3e3c6bdb4a27fbddbebe721a788153f7d03fe4f50488a97d14f68204bba91d01"
       }
     },
@@ -1849,11 +1851,13 @@
         "beside-base64.md": "8dcc2c63e70a2d1cac47b55d42412095ec8a54f8e77df0682e927d66136e2c64",
         "checklist.md": "6b08b800ae97abda32a6797f6a5e273da7b8a175ef03b5e60b5c615d732e7074",
         "docker-compose.yml": "0df6c7614c430949939f405b1c96450a761d151917fe3bd1d221fc2ca73a97c4",
+        "logo.svg": "1943ba53c68b268c684f7d33d256b6fea8320afef147ef0a652952815ca452bb",
         "notes.md": "e0176ca0d9c22e171fd6cf05cfae5aafb976e9b4eadbfabf89a0cee16fbb9dd5",
         "package-lock.json": "a64daf7505864c82834460ddc8ce9eaa718f584e5d4cb97658e5b0fde52aedd9",
         "package.json": "5f6ebeb7ca79e483d7c2dc4560fd321a145ebe7686bf69c88737b108dfe76978",
         "SKILL.md": "7c2f14b0c5eb6f4aab5c6f83a2bc66000640d3d3953989510bed24365ecbc0f6",
-        "tagged.md": "5e83a2f7c9b8108320afdb1ebf06d76547cee4a91938df4c2fb9dfe345785bd0"
+        "tagged.md": "5e83a2f7c9b8108320afdb1ebf06d76547cee4a91938df4c2fb9dfe345785bd0",
+        "theme.css": "0e9311095d7a21fbfadca4083bd1cb6b3f8baeaaf59c67945821fe84ca7097b6"
       },
       "note": "Committed secrets (built 2026-10-04): detect-secrets. The key is made up.",
       "expect": [
@@ -2083,6 +2087,22 @@
             }
           },
           "note": "The decoded text a phrase hit keeps is masked when the key is in it."
+        },
+        {
+          "id": "secret-in-css",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": "theme.css",
+          "line": 2,
+          "note": "detect-secrets leaves a .css file out by its name; the scan turns that filter off (owner, 2026-11-03)."
+        },
+        {
+          "id": "secret-in-svg",
+          "polarity": "gate",
+          "check": "secret.found",
+          "file": "logo.svg",
+          "line": 2,
+          "note": "The same for .svg, the rest of IGNORED_FILE_EXTENSIONS, and a path holding swagger."
         }
       ]
     },

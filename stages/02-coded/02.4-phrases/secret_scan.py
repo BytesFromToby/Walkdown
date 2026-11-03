@@ -53,6 +53,10 @@ B64_VALUE = re.compile(r"[A-Za-z0-9+/]{24,}={0,2}")
 # A comment is the audited repository's own word about a line, and neither the scanner nor the mark takes it (2026-11-01: this filter
 # dropped a line carrying `# pragma: allowlist secret`, with no record).
 ALLOWLIST_FILTER = "detect_secrets.filters.allowlist.is_line_allowlisted"
+# Filters that leave a file out by its name before reading a byte: `.svg`, `.css`, `.map`, and the rest of `IGNORED_FILE_EXTENSIONS`, and
+# a path holding `swagger`. Every file the scan is given is text (stage 1 decided by its bytes), so it is read (owner, 2026-11-03: they
+# were a "could not scan" skip). The library's lock-file filter stays: `LOCK_FILES` is the scan's own list.
+NAME_FILTERS = ("detect_secrets.filters.heuristic.is_non_text_file", "detect_secrets.filters.heuristic.is_swagger_file")
 COMMENT_TAIL = re.compile(r"(?<=\S)\s+(?:#|//|/\*|<!--|--\s|'\s).*$")
 
 
@@ -145,8 +149,8 @@ def _scan_decoded(library, path: str, text: str) -> list | None:
     """Every hit of one file through the library with the text we decoded, or None when the library did not ask for it. It opens a
     file itself with the machine's default encoding and takes a `UnicodeDecodeError` for a binary file: no scan and no error
     (2026-11-01: on cp1252, a file holding U+274C, U+1F4DD, or a tag character; on UTF-8, any file in another encoding). So for this
-    call the name `open` in its module is ours. It does not ask when its filters leave the file out by name (`.svg`, `.css`, a path
-    with `swagger`), or if a later version reads some other way. Its `scan_file` gives a hit for each line a secret stands on. Its
+    call the name `open` in its module is ours. It does not ask when a filter leaves the file out by name (its lock-file filter; the
+    others are off, `NAME_FILTERS`), or if a later version reads some other way. Its `scan_file` gives a hit for each line a secret stands on. Its
     `SecretsCollection` keeps one of a value in a file, and its GitHub rule captures only the prefix, so every token of a file is one
     value there: a later line had no row, so no mask (2026-11-01)."""
     asked = []
@@ -175,7 +179,7 @@ def _detect_secrets(root: Path, rels: set[str], skips: list | None = None) -> li
         return None
     out = []
     with default_settings() as settings:
-        settings.disable_filters(ALLOWLIST_FILTER)
+        settings.disable_filters(ALLOWLIST_FILTER, *NAME_FILTERS)
         for rel in sorted(rels):
             text = _text(root, rel)
             try:
