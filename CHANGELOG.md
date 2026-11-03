@@ -25,6 +25,9 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
   to leave out disclaimers or ethical commentary (`L.no-disclaimer`), decoding hidden code and running it at once
   (`E.decode-exec`), turning off certificate checks (`E.tls-off`), and pointing a package manager at another source
   (`E.registry-config`). Each was measured on nine repositories first and narrowed where it caught ordinary prose or code.
+  The never-refuse, no-disclaimer, and decode-and-run rows, and the prompt-extraction row, are places on `review.html` and count on
+  the summary (decoding code and running it as runs code); the certificate and package-source rows, which ordinary repositories
+  hit, are in `full.md` only.
 - **No line of a private key reaches a report.** The secret scan flags a private key's first line, and the mask covered only
   that line. Hidden characters on a later line of the key's body made the reader quote that line, and `full.md` and
   `data/02.2-reader.json` printed it whole. The scan now records where the key ends (`key_end` on its `secret.found` row), and

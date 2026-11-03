@@ -759,3 +759,20 @@ def test_programs_in_compiled_form_are_worth_a_look():
     assert "Programs in compiled form, which Walkdown cannot read (1)" in worth and "bin/tool" in worth
     assert "Compiled Python (.pyc), which Python can run without its source (1)" in worth
     assert "Archives or documents that hold a program, compiled Python, or Office macros (1)" in worth and "spec.docx" in worth
+
+
+def test_the_four_rows_from_skillspector_are_places_and_decoding_code_runs_code():
+    """2026-11-03 (owner): K.prompt-leak, L.never-refuse, L.no-disclaimer, and E.decode-exec are places, as the other rows
+    with none in ordinary repositories are; E.tls-off and E.registry-config stay in the full report. Decoding code and running
+    it is filed under its check, phrase.E.perms, but it runs code."""
+    hit = lambda check, pid, line: {"check": check, "file": "SKILL.md", "line": line, "quote": "q", "patterns": [pid],  # noqa: E731
+                                    "matches": [], "audience": "model", "folded": False}
+    r = add(reports(), "02.4-phrases", hit("phrase.K.exfil", "K.prompt-leak", 20), hit("phrase.L.override", "L.never-refuse", 21),
+            hit("phrase.L.override", "L.no-disclaimer", 22), hit("phrase.E.perms", "E.decode-exec", 23),
+            hit("phrase.E.env", "E.tls-off", 24), hit("phrase.E.env", "E.registry-config", 25))
+    places = {it["src"]["line"]: it for it in S.first_items(r) if it.get("kind") == "phrase" and (it.get("src") or {}).get("line", 0) >= 20}
+    assert sorted(places) == [20, 21, 22, 23]
+    assert places[20]["title"] == "Matches the wording of asking the AI to reveal its own instructions"
+    assert places[23]["title"] == "Matches the wording of decoding hidden code and running it"
+    assert S.action_group(places[23]) == "runs" and S.action_group(places[20]) == "out"
+    assert S.action_group(places[21]) == "words"

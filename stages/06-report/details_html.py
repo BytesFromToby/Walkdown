@@ -25,6 +25,8 @@ PLAIN_STAGE = dict(stagelist.STEP_WORDS)  # the words a reader meets for each st
 # Plain names for pattern families (`02.4-phrases`), used as the headline of an item.
 FAMILY = [  # "Matches ..." states what the pattern found, never what the author meant
     ("L.", "Matches the wording of an instruction override"),
+    ("K.prompt-leak", "Matches the wording of asking the AI to reveal its own instructions"),
+    ("E.decode-exec", "Matches the wording of decoding hidden code and running it"),
     ("RL.", "Matches the wording of fetching instructions from elsewhere"),
     ("K.", "Matches the wording of sending data out"),
     ("A.", "Matches the wording of a claimed permission"),
@@ -556,6 +558,9 @@ def changes(ch) -> str:
 CHECK_GROUP = {"phrase.G.human": "runs", "phrase.K.exfil": "out", "phrase.creds": "out",
                "phrase.remote-load": "out", "phrase.E.perms": "lasting", "phrase.E.env": "lasting",
                "phrase.C.second-order": "lasting", "phrase.J.prohibited": "lasting"}
+# A pattern whose check would file it elsewhere (2026-11-03): decoding code and running it is under phrase.E.perms, which reads
+# as a lasting change, and it runs code.
+PATTERN_GROUP = {"E.decode-exec": "runs"}
 KIND_GROUP = {"hook": "runs", "hook+phrase": "runs", "secret": "out", "rubric.prohibited": "lasting",
               "rubric.redefined": "lasting", "limit.contradicted": "lasting"}
 
@@ -565,6 +570,9 @@ def action_group(it) -> str:
     if it.get("kind") in KIND_GROUP:
         return KIND_GROUP[it["kind"]]
     src = it.get("src") or {}
+    for p in src.get("patterns") or []:
+        if p in PATTERN_GROUP:
+            return PATTERN_GROUP[p]
     check = src.get("check") if str(src.get("check", "")).startswith("phrase.") else src.get("phrase_check")
     return CHECK_GROUP.get(check, "words")
 
