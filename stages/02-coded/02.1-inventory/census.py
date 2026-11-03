@@ -2,11 +2,52 @@
 from __future__ import annotations
 
 import codecs
+import io
+import zipfile
 from dataclasses import dataclass
 
 READER_LINES = 2000
 READER_BYTES = 50_000
 LONG_LINE = 500
+# Padding that moves text out of sight (2026-11-03, SkillSpector P9, Library/SOURCES.md S20; its thresholds): a run of blank
+# lines with text after it, below where a reviewer stops scrolling, or a run of blank characters inside a line with text after
+# it, past the right edge of a viewer that does not wrap. Blank here is white space by Unicode (a no-break space or an
+# ideographic space too, which Markdown does not collapse) and the blank braille cell, which draws nothing.
+PAD_LINES = 20
+PAD_CHARS = 80
+
+
+def _blank(c: str) -> bool:
+    return c.isspace() or c == "\u2800"
+
+
+def padding_runs(text: str) -> list[dict]:
+    """Each padding run that text follows: `vertical` (`PAD_LINES` or more blank lines; `line` is where the text resumes,
+    `length` the blank lines) or `horizontal` (`PAD_CHARS` or more blank characters inside a line before more text; `line` is
+    that line, `length` the characters). Indentation at the start of a line is not a run: code nests. Nor is a run that ends
+    at `|`: a Markdown table pads its columns so (measured 2026-11-03: every such run in nine repositories was one)."""
+    out, blank_from = [], None
+    lines = text.split("\n")
+    for i, raw in enumerate(lines, start=1):
+        line = raw.rstrip("\r")
+        if all(_blank(c) for c in line):
+            blank_from = blank_from or i
+            continue
+        if blank_from is not None and i - blank_from >= PAD_LINES:
+            out.append({"kind": "vertical", "line": i, "length": i - blank_from})
+        blank_from = None
+        body = line.lstrip()
+        run = longest = 0
+        for c in body:
+            if _blank(c):
+                run += 1
+                continue
+            if c != "|":  # a run up to a table's cell border pads a column; text after a run is what it moves out of view
+                longest = max(longest, run)
+            run = 0
+        if longest >= PAD_CHARS:
+            out.append({"kind": "horizontal", "line": i, "length": longest})
+    return out
 
 BOMS = [  # longest first: UTF-32 LE starts with the UTF-16 LE mark
     (codecs.BOM_UTF32_LE, "utf-32-le", "UTF-32 LE"),
@@ -15,6 +56,50 @@ BOMS = [  # longest first: UTF-32 LE starts with the UTF-16 LE mark
     (codecs.BOM_UTF16_LE, "utf-16-le", "UTF-16 LE"),
     (codecs.BOM_UTF16_BE, "utf-16-be", "UTF-16 BE"),
 ]
+
+# Programs in compiled form (2026-11-03, SkillSpector SC8 and SC9, Library/SOURCES.md S20): Walkdown reads text, so what these
+# do is not read. By magic bytes for a native executable or library, whatever its name; by name for Python bytecode, which
+# Python runs without its source (a `.pyc` beside a `.py` need not match it).
+EXECUTABLES = {"application/x-executable", "application/x-msdownload", "application/x-mach-binary", "application/x-sharedlib",
+               "application/x-pie-executable", "application/x-dosexec", "application/vnd.microsoft.portable-executable",
+               "application/x-elf", "application/x-object", "application/x-coff"}
+BYTECODE_EXTS = {"pyc", "pyo"}
+# In a zip container (an archive, or an Office or OpenDocument file, a jar, a wheel): members that are programs by name, Python
+# bytecode, or Office macros, and members whose first bytes are a program's. Only names and the first bytes are read.
+INSIDE_EXTS = {"exe", "dll", "so", "dylib", "msi", "scr", "com", "sys", "ocx", "cpl"} | BYTECODE_EXTS
+INSIDE_NAMES = {"vbaproject.bin"}
+INSIDE_MEMBERS = 5000  # members looked at, at most
+INSIDE_HEAD = 64  # bytes read of each
+
+
+def is_bytecode(rel: str) -> bool:
+    return ext_of(rel) in BYTECODE_EXTS or "/__pycache__/" in f"/{rel}"
+
+
+def programs_inside(data: bytes) -> list[str]:
+    """The names of a zip container's members that are programs, Python bytecode, or Office macros, in member order. Nothing
+    is extracted; a container that does not open gives none."""
+    if not data.startswith(b"PK\x03\x04"):
+        return []
+    try:
+        z = zipfile.ZipFile(io.BytesIO(data))
+        out = []
+        for info in z.infolist()[:INSIDE_MEMBERS]:
+            name = info.filename
+            base = name.rsplit("/", 1)[-1].lower()
+            if info.is_dir() or not base:
+                continue
+            if ext_of(base) in INSIDE_EXTS or base in INSIDE_NAMES or is_bytecode(name):
+                out.append(name)
+                continue
+            with z.open(info) as member:
+                head = member.read(INSIDE_HEAD)
+            if builtin_magic(head) in EXECUTABLES:
+                out.append(name)
+        return out
+    except Exception:  # a broken or encrypted container: the archive flag already says its contents were not read
+        return []
+
 
 ARCHIVES = {"application/zip", "application/gzip", "application/x-bzip2", "application/x-xz",
             "application/x-7z-compressed", "application/vnd.rar", "application/x-rar-compressed",
@@ -184,6 +269,7 @@ class Facts:
     type: str
     exec: bool
     text_value: str | None
+    inside: list | None = None  # `programs_inside`, for a zip container
 
 
 def _decode(data: bytes):
@@ -230,7 +316,7 @@ def file_facts(rel: str, data: bytes, exec_bit: bool | None) -> Facts:
     decoded = None if magic else _decode(data)
     if decoded is None:
         return Facts(ext_of(rel), len(data), magic, False, None, False, None, None,
-                     magic or "application/octet-stream", bool(exec_bit), None)
+                     magic or "application/octet-stream", bool(exec_bit), None, programs_inside(data))
     text, enc, bom_kind = decoded
     return Facts(ext_of(rel), len(data), None, True, enc, bom_kind is not None, bom_kind,
                  count_lines(text), "text/plain", bool(exec_bit), text)
@@ -263,6 +349,10 @@ def census_flags(rel: str, f: Facts) -> list[dict]:
                 out.append(_flag(rel, "long-line",
                                  f"line {i}: {len(line)} characters (limit {LONG_LINE})",
                                  line=i, length=len(line)))
+        for run in padding_runs(f.text_value):  # SkillSpector P9 (S20)
+            detail = (f"text resumes at line {run['line']} after {run['length']} blank lines" if run["kind"] == "vertical"
+                      else f"line {run['line']}: text after {run['length']} blank characters")
+            out.append(_flag(rel, "padding", detail, line=run["line"], kind=run["kind"], length=run["length"]))
     if f.magic and f.ext not in EXT_FOR.get(f.magic, set()):
         ext = f".{f.ext}" if f.ext else "(no extension)"
         out.append(_flag(rel, "ext-magic-mismatch",
@@ -272,6 +362,13 @@ def census_flags(rel: str, f: Facts) -> list[dict]:
         out.append(_flag(rel, "bom", f"{f.bom_kind} byte-order mark at offset 0"))
     if f.magic in ARCHIVES:
         out.append(_flag(rel, "archive", f"magic bytes identify {f.magic}", detected=f.magic))
+    if f.magic in EXECUTABLES:  # SkillSpector SC9 (S20)
+        out.append(_flag(rel, "executable", f"magic bytes identify {f.magic}: a program in compiled form", detected=f.magic))
+    if is_bytecode(rel):  # SkillSpector SC8 (S20)
+        out.append(_flag(rel, "bytecode", "Python bytecode: Python runs it without the source"))
+    if f.inside:  # SkillSpector SC9 (S20)
+        named = ", ".join(f.inside[:5]) + (f", and {len(f.inside) - 5} more" if len(f.inside) > 5 else "")
+        out.append(_flag(rel, "archive-executable", f"holds {len(f.inside)}: {named}", members=f.inside[:50], count=len(f.inside)))
     return out
 
 

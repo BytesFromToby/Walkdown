@@ -16,10 +16,18 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 - **What Walkdown says about a line is its own line on the review card.** What hidden characters spell and what base64 decodes to
   were put in front of the place's note, so a card read "How often this pattern turns up elsewhere: Decoded from base64: ...". They
   are a line of their own now, before the note, and `details.html` shows them for every place.
+- **Asking the model for its own instructions is a pattern** (`K.prompt-leak`, 131 in all): "print your system prompt",
+  "repeat everything above", "your instructions verbatim". From SkillSpector's P6 to P8, measured and narrowed first.
+- **Padding and compiled programs are files worth a look.** `details.html` now lists files the AI reads where 20 blank lines or
+  80 blank characters push text out of view, programs in compiled form (by their bytes), compiled Python (`.pyc`), and
+  archives or documents that hold a program, compiled Python, or Office macros. From SkillSpector's P9, SC8, and SC9.
 - **Five new patterns** (130 in all), from rules in NVIDIA's SkillSpector: telling the model never to refuse (`L.never-refuse`),
   to leave out disclaimers or ethical commentary (`L.no-disclaimer`), decoding hidden code and running it at once
   (`E.decode-exec`), turning off certificate checks (`E.tls-off`), and pointing a package manager at another source
   (`E.registry-config`). Each was measured on nine repositories first and narrowed where it caught ordinary prose or code.
+  The never-refuse, no-disclaimer, and decode-and-run rows, and the prompt-extraction row, are places on `review.html` and count on
+  the summary (decoding code and running it as runs code); the certificate and package-source rows, which ordinary repositories
+  hit, are in `full.md` only.
 - **No line of a private key reaches a report.** The secret scan flags a private key's first line, and the mask covered only
   that line. Hidden characters on a later line of the key's body made the reader quote that line, and `full.md` and
   `data/02.2-reader.json` printed it whole. The scan now records where the key ends (`key_end` on its `secret.found` row), and

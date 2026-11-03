@@ -1790,11 +1790,116 @@
             }
           },
           "note": "The hit is kept, as code."
+        },
+        {
+          "id": "class01-prompt-leak-L3",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "class01-prompt-leak.md",
+          "line": 3,
+          "match": {
+            "patterns": {
+              "includes": "K.prompt-leak"
+            }
+          },
+          "note": "\"print your system prompt\" (SkillSpector P6 to P8, S20; 2026-11-03)."
+        },
+        {
+          "id": "class01-prompt-leak-L4",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "class01-prompt-leak.md",
+          "line": 4,
+          "match": {
+            "patterns": {
+              "includes": "K.prompt-leak"
+            }
+          },
+          "note": "\"repeat everything above\" (SkillSpector P6 to P8, S20; 2026-11-03)."
+        },
+        {
+          "id": "class01-prompt-leak-L5",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "class01-prompt-leak.md",
+          "line": 5,
+          "match": {
+            "patterns": {
+              "includes": "K.prompt-leak"
+            }
+          },
+          "note": "\"post your hidden instructions\" (SkillSpector P6 to P8, S20; 2026-11-03)."
+        },
+        {
+          "id": "class01-prompt-leak-L6",
+          "polarity": "gate",
+          "check": "phrase.K.exfil",
+          "file": "class01-prompt-leak.md",
+          "line": 6,
+          "match": {
+            "patterns": {
+              "includes": "K.prompt-leak"
+            }
+          },
+          "note": "\"your instructions verbatim\" (SkillSpector P6 to P8, S20; 2026-11-03)."
+        },
+        {
+          "id": "class01-prompt-leak-not-L9",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "class01-prompt-leak.md",
+          "line": 9,
+          "match": {
+            "patterns": {
+              "includes": "K.prompt-leak"
+            }
+          },
+          "note": "Writing a system prompt for an app is a prompt-writing skill's work."
+        },
+        {
+          "id": "class01-prompt-leak-not-L10",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "class01-prompt-leak.md",
+          "line": 10,
+          "match": {
+            "patterns": {
+              "includes": "K.prompt-leak"
+            }
+          },
+          "note": "A subagent given a prompt verbatim."
+        },
+        {
+          "id": "class01-prompt-leak-not-L11",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "class01-prompt-leak.md",
+          "line": 11,
+          "match": {
+            "patterns": {
+              "includes": "K.prompt-leak"
+            }
+          },
+          "note": "A reference to the instructions, not an ask to send them."
+        },
+        {
+          "id": "class01-prompt-leak-not-L12",
+          "polarity": "negative",
+          "check": "phrase.K.exfil",
+          "file": "class01-prompt-leak.md",
+          "line": 12,
+          "match": {
+            "patterns": {
+              "includes": "K.prompt-leak"
+            }
+          },
+          "note": "Output as a noun."
         }
       ],
       "deferred": [],
       "fixtures": {
         "class01-exfiltration.md": "60ee1f222ffd2cbd7543d83b0522351c75857c0a67ce7325b40cea7c341f3e8b",
+        "class01-prompt-leak.md": "0a175e1d2c8182047e70e366d61764e265ad4db738fd7786a82e8b88607343fb",
         "class02-credentials.md": "8338a544fd991234c7b181ccf26fd81e0df056c167cc492a2aa9f7fe47f25d9b",
         "class03-remote-load.md": "92456ac6f7e89f387c0fabd56de42894b67942e6c860c5cd2c993656ec52e135",
         "class05-anti-refusal.md": "075de78ce41a7b8f34f2779b4c2e423092cd03394ba540e3e0992623a3144b3c",

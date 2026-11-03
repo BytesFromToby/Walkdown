@@ -918,7 +918,9 @@ were `02.4-phrases`'s and `02.5-capability`'s); the questions, their wording, an
    <N> come along without being used." More: one stacked bar of the four groups (do the work, notes
    for people, tests and build tools, nothing refers to them), the legend, and the saving (a fact,
    never an order). Detail: every file by group; **Files worth a look** (`details_html.file_concerns`:
-   unknown or mismatched types, archives, symlinks, files longer than a reviewer's viewer shows).
+   unknown or mismatched types, programs in compiled form, compiled Python, archives or documents holding a program or macros
+   (these three added 2026-11-03), archives, symlinks, files the AI reads where blank lines or spaces push text out of view
+   (added 2026-11-03), files longer than a reviewer's viewer shows).
 4. **Will it work on someone else's computer?** (`elsewhere`; slice 2). Not measured unless the run
    found programs, packages, or places here, or holds slice 3's `host.coverage` (there is no marker
    finding; `render.needs_of`). Chip: one to look at per kind (programs never declared, or packages
@@ -2172,6 +2174,12 @@ check". Any other run has none.
 - 2026-10-31: M1 slice A, fix round: the backend is flattened and cut where the details page writes it (`Read by <backend> as telling the reader to:`, a clear place and a near one) and in the log header's line for a stop (`prepared.backend`). They wrote it as it came.
 - 2026-10-31: M1 slice A, fix round 2: the model name in the fixture line and in the waiting line of a stopped run is cut at `MODEL_CAP`; it was one line and uncut (the command to go on keeps the option as typed). Test: `test_tokens_line.py::test_the_model_name_in_the_line_is_cut_at_the_cap`.
 - 2026-10-31: M1 slice A, fix round 3: the command to go on, and the line above it, print a backend the record kept only if it is a model option (`common_lines.record_option`); a value changed by hand in `data/run.json` is left out, with one sentence. It printed whatever the record held, flattened.
+- 2026-11-03 (owner): `K.prompt-leak`, `L.never-refuse`, `L.no-disclaimer`, and `E.decode-exec` join `POINT_PATTERNS`: none hit in
+  seven ordinary repositories (three skill collections, four MCP servers), as the rows already there. `E.tls-off` and
+  `E.registry-config` hit in them (a `curl -k` to localhost, the public npm registry) and stay in `full.md`, as `E.mcp` does.
+  `FAMILY` gives `K.prompt-leak` and `E.decode-exec` headlines of their own, and `PATTERN_GROUP` files `E.decode-exec` under
+  runs code, though its check, `phrase.E.perms`, reads as a lasting change
+  (`tests/test_details_html.py::test_the_four_rows_from_skillspector_are_places_and_decoding_code_runs_code`).
 - 2026-11-03: `context` on a place (`_item`): what hidden characters spell, what base64 decodes to, and, new, that a line of
   code is an MCP description the AI reads (`TOOL_TEXT_NOTE`). It is its own line on a review card, so the base-rate lead no longer
   runs into it, and `details.html` shows it for phrase places too. `full.md`'s phrase hit says `(model, in an MCP description)` for

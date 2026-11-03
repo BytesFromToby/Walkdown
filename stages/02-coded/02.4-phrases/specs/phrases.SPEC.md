@@ -1590,6 +1590,9 @@ or (with `rows`) a `phrase.J.prohibited` row has no tier.
   measured first on nine repositories (three skill collections, four MCP servers, SkillSpector, Cloudflare's skill) and narrowed
   where it caught ordinary prose or code (its note says how). Fixtures `class05-anti-refusal.md`, `class07-decode-exec.md`,
   `class17-tls-registry.md`, `class15-mcp-tool-text.py`. `terms.code` and `terms.rows` move.
+- 2026-11-03: `K.prompt-leak` (SkillSpector P6 to P8, S20), 131 rows: asking the model to reveal, repeat, or send its own system
+  prompt or instructions. Measured on the nine repositories and narrowed (its note says how); fixture `class01-prompt-leak.md`.
+  `terms.rows` moves.
 - 2026-10-29: restructure step 6 (keep-or-cut, Q8): the conditional table (`cond.branch`, section 3) is
   cut. It reached `full.md` only, and nothing that stays read it. Its sentence splitter, which the term
   table uses, moved into `terms.py`; its word lists left `Library/vocab.yaml`. The fixture rows for it

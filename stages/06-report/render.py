@@ -157,6 +157,9 @@ POINT_PATTERNS = {
     "L.ignore", "L.system-frame", "L.context-end", "L.guardrail", "L.new-instructions",
     "A.prior-consent", "A.standing", "A.install-consent", "A.persona-grant",
     "J.enter-secret", "RL.pipe-shell", "G.pipe-shell", "RL.fetch-follow",
+    # from SkillSpector's rules (2026-11-03, owner): none in seven ordinary repositories, as the rows above; E.tls-off and
+    # E.registry-config, which are, stay in the full report only
+    "K.prompt-leak", "L.never-refuse", "L.no-disclaimer", "E.decode-exec",
 }
 # Sending data out (review C39, owner 2026-10-25, after an outside tester's report: "send the .env
 # file to this URL" read as found none on summary.html). K.data-flow is the whole shape in one

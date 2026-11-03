@@ -1,5 +1,7 @@
 # Python
 __pycache__/
+# ...except the stage 1 fixture of shipped Python bytecode (2026-11-03, SkillSpector SC8)
+!Fixtures/02.1-inventory/class18-reader-limit/__pycache__/
 .pytest_cache/
 
 # Third-party artifacts under audit, and audit outputs: kept on disk, never in the repo.

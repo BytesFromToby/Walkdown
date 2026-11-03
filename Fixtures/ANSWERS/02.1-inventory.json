@@ -233,16 +233,118 @@
             }
           },
           "note": "A .md opening with a code fence, which libmagic misreads as JS/shell. Detector noise, never an ext-vs-magic finding (the 2026-09-04 review)."
+        },
+        {
+          "id": "inv-18-padding-vertical",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "padding-vertical.md",
+          "line": 34,
+          "match": {
+            "flag": {
+              "eq": "padding"
+            },
+            "kind": {
+              "eq": "vertical"
+            }
+          },
+          "note": "Thirty blank lines, then an instruction below where a reviewer stops scrolling (SkillSpector P9, S20; 2026-11-03)."
+        },
+        {
+          "id": "inv-18-padding-horizontal",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "padding-horizontal.md",
+          "line": 3,
+          "match": {
+            "flag": {
+              "eq": "padding"
+            },
+            "kind": {
+              "eq": "horizontal"
+            }
+          },
+          "note": "120 no-break spaces, which Markdown does not collapse, then an instruction past the right edge."
+        },
+        {
+          "id": "inv-18-padding-table-neg",
+          "polarity": "negative",
+          "check": "struct.census",
+          "file": "padding-table.md",
+          "match": {
+            "flag": {
+              "eq": "padding"
+            }
+          },
+          "note": "A table pads its columns up to the cell border: nothing is moved out of view."
+        },
+        {
+          "id": "inv-18-executable",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "tool.bin",
+          "match": {
+            "flag": {
+              "eq": "executable"
+            }
+          },
+          "note": "ELF magic bytes: a program in compiled form, which Walkdown cannot read (SkillSpector SC9, S20; tools/fixture-generators/make_program_binaries.py)."
+        },
+        {
+          "id": "inv-18-bytecode",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "__pycache__/helper.cpython-312.pyc",
+          "match": {
+            "flag": {
+              "eq": "bytecode"
+            }
+          },
+          "note": "Python bytecode, which Python runs without its source (SkillSpector SC8)."
+        },
+        {
+          "id": "inv-18-archive-executable",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "macros.docx",
+          "match": {
+            "flag": {
+              "eq": "archive-executable"
+            },
+            "count": {
+              "eq": 3
+            }
+          },
+          "note": "A document holding Office macros, an .exe, and an ELF member named .dat (SkillSpector SC9)."
+        },
+        {
+          "id": "inv-18-archive-executable-neg",
+          "polarity": "negative",
+          "check": "struct.census",
+          "file": "plain.docx",
+          "match": {
+            "flag": {
+              "eq": "archive-executable"
+            }
+          },
+          "note": "A document with no program inside."
         }
       ],
       "deferred": [],
       "fixtures": {
+        "__pycache__/helper.cpython-312.pyc": "c5b6db3ec2006a618cb3067851fb2f03c4e3db83333945529d91a5ed1df228e3",
         "bom.md": "773fc72c47207f54eb189d59165a89499d7472f967513bd8c6df7e8f08e78f52",
         "codefence-benign.md": "78a8e8245fe3a7242edaf12ce12f349830c363c90d921e67252dee428a63f874",
         "ext-magic-mismatch.md": "09574dbc1d811ff0720c184e54c89aca66afeeebe14313c110c0d5bdb3888555",
         "longline.md": "3a8cc2ea48664f1871f5b589eb0f76e8528ad3a504846686d0b00b4e5523ef08",
+        "macros.docx": "651e333d6766c13865b1fae6960a8b5b87310e621093e35e867ecbcb7d4048d2",
         "oversized.md": "fe029af480e293c69a30cd44ed6e3ffd81930b2cc208637a22e3b9439cc1301c",
-        "sample.zip": "5d514f480e8ad1e7c1672c132400336722a85b5430ff3b0376ffdbbd5e9c487e"
+        "padding-horizontal.md": "63f2097d81a7df68de4641fb6d3dfbc60079da01523d25bf999a86476ef3b81d",
+        "padding-table.md": "ea2cc7c992585db5b975bd3e3f6b7ff07f2a94e74a49339c6dc25661bfbd4e2e",
+        "padding-vertical.md": "ed14300b0428d3500f7636d517ba49abbdf10b83849275c4e82cb56edcb3d478",
+        "plain.docx": "52d41fd4551e3b989319b748b8133ee2a216d21e72f8e6584a78e23d65394ec3",
+        "sample.zip": "5d514f480e8ad1e7c1672c132400336722a85b5430ff3b0376ffdbbd5e9c487e",
+        "tool.bin": "cc02399266375679234544306b7514fa672706e46a4bebe8ed9e5443fd658a43"
       }
     },
     {

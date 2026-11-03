@@ -168,9 +168,12 @@ holds because of the page.
 - Taken: the idea for five pattern rows and for reading MCP descriptions as model text, from its rule list: AR1 (refusal
   suppression) for `L.never-refuse`, AR2 (disclaimer suppression) for `L.no-disclaimer`, SC3 (obfuscated code) for `E.decode-exec`,
   TM3 (unsafe defaults: disabled TLS) for `E.tls-off`, SC10 (dependency source redirection) for `E.registry-config`, and TP1 and TP3
-  (hidden instructions in MCP tool and parameter descriptions) for `02.4-phrases`'s `tooltext`. Walkdown's regexes and code are its
-  own; none of its rules or tests were copied, and its scores and labels are not used.
-- Cited in: `patterns.yaml` (`source` of the five rows); `02.4-phrases`'s spec (`tooltext`).
+  (hidden instructions in MCP tool and parameter descriptions) for `02.4-phrases`'s `tooltext`; then P6 to P8 (system prompt
+  leakage) for `K.prompt-leak`, P9 (whitespace padding, with its thresholds of 20 lines and 80 characters) for the `padding`
+  census flag, and SC8 and SC9 (shipped bytecode, concealed executables) for the `bytecode`, `executable`, and
+  `archive-executable` census flags. Walkdown's regexes and code are its own; none of its rules or tests were copied, and its
+  scores and labels are not used.
+- Cited in: `patterns.yaml` (`source` of the six rows); `02.4-phrases`'s spec (`tooltext`); `02.1-inventory`'s `census.py` and spec.
 
 ### Named in a table, not listed above
 - `tools.yaml` says it was "checked 2026-10-26 against each system's own tools" and lists Node's
