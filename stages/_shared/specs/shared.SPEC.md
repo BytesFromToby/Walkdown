@@ -2096,7 +2096,10 @@ the findings of `02.4-phrases`, and each call the file's name and the lines `lin
 
 - each text field that is a string (`TEXT_FIELDS`: what a person wrote, as it stands in the file) and each matched word
   (`matches[].text`) is replaced by `SECRET_MASK`. `NOT_TEXT` names a field that is a word from a fixed list for its check
-  (`limit.setting`'s `value`, which `02.5-capability` reads);
+  (`limit.setting`'s `value`, which `02.5-capability` reads). A phrase hit on readable text hidden in base64 (`decoded` is
+  `base64`, review C42) keeps `decoded`, `decoded_text`, and its matched words, which are words of the decoded text (`DECODED`): a value
+  the scanner flags is random-looking and never decodes to readable text, so what the base64 says is not the flagged key, and it is
+  what a reader needs (owner, 2026-11-03). Its `quote`, the line as written, is replaced as any other;
 - in a list whose items a person wrote and whose plain words are what a page is for (`WORD_LISTS`: `tools`, `grants`,
   `disallowed`, `preloads`, `env_keys`, `types`), an item that is a plain word stays and any other is replaced. A plain word
   (`PLAIN`) is letters, `-`, and `_`, up to 24 characters: `Read` stays, and `Bash(curl ...)` goes;
@@ -2257,6 +2260,8 @@ file's own text.
     (`test_key_end_is_the_end_line_or_the_line_before_a_blank_one_and_none_on_one_line`). On a whole run of a made-up skill with
     hidden characters on two lines of a key's body, no line of the body is in any report or step output, and the hidden places
     are still counted (`06-report/tests/test_run.py`, `test_no_line_of_a_private_key_is_in_a_report_or_a_step_output`).
+17. A phrase hit made from base64 on a flagged line keeps what it decoded and its matched words, its `quote` is masked, and another
+    finding's `decoded` (hidden text) is masked (`test_a_base64_hit_on_a_flagged_line_keeps_what_it_decoded_and_its_line_goes`).
 
 ### History
 
@@ -2277,6 +2282,8 @@ file's own text.
   `rep.sentence`, `term.conflict`, `trig.*`, `host.feature`, `clean.model`, `need.package`, and the copies in `cap.*` and `fit.*`, some
   of them on `summary.html`. `span`, `mask_copies`, `mask_edges`, and `mask_reports` are new, and `_mask_places` for the findings of
   several places.
+- 2026-11-03: a phrase hit made from base64 keeps what it decoded on a flagged line (`DECODED`; owner). Since `BASE64_TEXT` asks every
+  flagged value (`02.4-phrases`, 2026-11-02), a key beside readable base64 masks the line, and the decoded instruction went with it.
 - 2026-11-02: the whole of a private key is flagged. The scan flags only a key's first line, so hidden text on a later line of its body
   reached `full.md` and `data/02.2-reader.json` whole. `flagged_lines` (was `_flagged`) takes each row's `key_end`, which `02.4-phrases`
   now writes, and `key_end` and `is_private_key` are public so the scan and `ToSend` share one rule. A finding that quotes the `-----END`

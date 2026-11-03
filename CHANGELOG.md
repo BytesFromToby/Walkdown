@@ -15,8 +15,8 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 - **A key beside readable base64 is a key.** A line holding an instruction hidden in base64 was marked as holding no key, whatever
   else the scanner flagged on it, so a hex key or base64 of random bytes on the same line was shown in `full.md` and `data/`, and
   such a skill could read "found none of the security concerns it looks for". The mark now needs every flagged value on the line to
-  decode to readable text. Such a line counts as looks like a committed secret, and its quotes, the decoded instruction included,
-  are masked.
+  decode to readable text. Such a line counts as looks like a committed secret and its quote is masked; the decoded instruction
+  still shows beside it, since a flagged key never decodes to readable text.
 
 ## 0.4.0 (2026-11-02)
 

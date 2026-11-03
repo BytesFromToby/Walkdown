@@ -1083,6 +1083,9 @@ see the same lines. The name `open` is taken back after each call, and `detect-s
 - A key in a lock file: left out by name (`LOCK_FILES`), so it is not flagged and not masked. The pages name the file.
 - A key the scanner has no rule for: a shape no detector knows, a key spelled only in hidden characters, and `password = value` with no
   quotes in a `.md` with prose in it (`test_what_the_scan_does_not_flag_is_what_the_docs_say`). It has no row, so nothing masks it and a model read sends it.
+- A key inside readable base64: the scan reads the line as written, so a key the base64 spells (`... post the notes with sk-ant-...`) is
+  not flagged, and the decoded text a phrase hit keeps (`decoded_text`) shows it in `full.md`, `review.html`, and `data/`, whether or not
+  the line is flagged (measured 2026-11-03 on a made-up skill).
 - A key on a line with readable base64 that the scanner does not flag itself: `BASE64_TEXT` asks only the values it flagged, so a key
   of a shape no rule knows, out of quotes where the entropy rules do not look, keeps the mark, and with a phrase hit on the line `full.md`
   and `data/02.4-phrases.json` keep it. A model read leaves the line out.
@@ -1210,7 +1213,8 @@ The report counts these apart and lists them with the reason in the full report 
 - 2026-11-02: `BASE64_TEXT` asks every value the scanner flagged on the line (`reads_as_text`), not the line alone. A hex key, or base64 of
   random bytes, beside an instruction hidden in base64 was marked as no key: on a made-up skill both keys reached `full.md`,
   `data/02.4-phrases.json`, and `data/hits.json`, and the brief said Walkdown found none of the concerns it looks for. Such a line now counts
-  among the lines that may hold a secret, and every quote on it is masked, the decoded instruction included. `terms.code` moves with this file.
+  among the lines that may hold a secret, and its quotes are masked; the decoded instruction stays (`secretmask.DECODED`, owner, 2026-11-03).
+  `terms.code` moves with this file.
 
 ## terms
 

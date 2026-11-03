@@ -225,7 +225,8 @@ in a shape it does not know, a key spelled only in hidden characters, a password
 or `password = value` with no quotes in a Markdown file. Nothing marks such a line, so a page can show it and a model read sends it. One
 kind of flagged line also keeps its text: when everything flagged on a line is base64 that decodes to readable words, the line reads as
 holding no key, so a key the scanner did not flag beside that text can still show in `full.md` and `data/`. A model read leaves that line
-out.
+out. When a key does stand beside such text, the line is hidden and the decoded words are still shown, since a key never decodes to
+readable words. A key spelled inside the readable text itself is not flagged, and shows with the decoded words.
 
 ### What changed since an earlier run
 

@@ -17,6 +17,10 @@ TEXT_FIELDS = ("quote", "definition", "condition", "body", "decoded_text", "text
                "target", "pattern", "action", "carve_out", "term",
                "key", "value", "tool", "model", "what", "error", "plain")
 NOT_TEXT = {"limit.setting": ("value",)}
+# A phrase hit on readable text hidden in base64 (review C42) keeps what it decoded and the words it matched there: a value the scanner
+# flags is random-looking, so it never decodes to readable text, and the decoded instruction is what a reader needs (owner, 2026-11-03).
+# Its `quote`, the line as written, is masked as any other. `decoded` here is the fixed word "base64".
+DECODED = ("decoded", "decoded_text")
 # Lists whose items a person wrote and whose plain words are what a page is for: a tool's name stays, and anything else goes.
 WORD_LISTS = ("tools", "grants", "disallowed", "preloads", "env_keys", "types")
 # Lists with nothing to keep: how many there are stays.
@@ -95,7 +99,8 @@ def _mask_fields(f: dict, was: set) -> bool:
         was.add(word)
         return SECRET_MASK
 
-    fixed = NOT_TEXT.get(f.get("check"), ())
+    from_base64 = f.get("decoded") == "base64"
+    fixed = NOT_TEXT.get(f.get("check"), ()) + (DECODED if from_base64 else ())
     for k in TEXT_FIELDS:
         if k not in fixed and isinstance(f.get(k), str) and f[k] != SECRET_MASK:
             f[k] = gone(f[k])
@@ -111,7 +116,7 @@ def _mask_fields(f: dict, was: set) -> bool:
     for k in CODE_POINTS:
         if isinstance(f.get(k), list):
             f[k] = sorted(set(f[k]))
-    for m in f.get("matches") or []:
+    for m in [] if from_base64 else f.get("matches") or []:  # the words of a base64 hit are words of its decoded text
         if m.get("text") != SECRET_MASK:
             m["text"] = gone(m.get("text"))
     return changed
