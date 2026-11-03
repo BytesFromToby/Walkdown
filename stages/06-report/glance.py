@@ -740,7 +740,8 @@ def place_li(it, pid) -> str:
     on it (a hook's host, what hidden text spells; never a pattern ID)."""
     at = (f'<a href="review.html#{esc(pid)}">{esc(it["where"])}</a>' if pid
           else f'<span class="where">{esc(it["where"])}</span>')
-    note = f" {esc(it['note'])}" if it.get("note") and it.get("kind") != "phrase" else ""
+    note = "".join(f" {esc(c)}" for c in it.get("context") or [])  # what Walkdown says of the line, for every kind
+    note += f" {esc(it['note'])}" if it.get("note") and it.get("kind") != "phrase" else ""
     text = (it.get("quote") or "").strip()  # details.html quotes every place (owner, 2026-10-27)
     said = f" <i>“{esc(text[:120])}{'…' if len(text) > 120 else ''}”</i>" if text else ""
     return f"<li>{at} {esc(it['title'])}.{said}{note}</li>"

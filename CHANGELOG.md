@@ -11,7 +11,11 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
   an instruction hidden in a tool's docstring or a parameter's description counted as "not in text a model reads". In a file
   that imports an MCP library, those strings are now scanned again as model text, and a hit there counts as in text a model
   reads (`tool_text` on the finding). Measured on the official servers, the Python SDK, and fastmcp: only declarations' strings
-  are read this way.
+  are read this way. Its review card and `details.html` say why: "This line is code, but it is part of a description in an MCP
+  server: ... so the AI reads them." `full.md` says `(model, in an MCP description)`.
+- **What Walkdown says about a line is its own line on the review card.** What hidden characters spell and what base64 decodes to
+  were put in front of the place's note, so a card read "How often this pattern turns up elsewhere: Decoded from base64: ...". They
+  are a line of their own now, before the note, and `details.html` shows them for every place.
 - **Five new patterns** (130 in all), from rules in NVIDIA's SkillSpector: telling the model never to refuse (`L.never-refuse`),
   to leave out disclaimers or ethical commentary (`L.no-disclaimer`), decoding hidden code and running it at once
   (`E.decode-exec`), turning off certificate checks (`E.tls-off`), and pointing a package manager at another source
