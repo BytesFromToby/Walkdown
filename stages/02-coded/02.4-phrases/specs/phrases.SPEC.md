@@ -1455,8 +1455,11 @@ stands, so an instruction hidden there is an instruction to the model.
 A set of line numbers, empty for any file that is not MCP code or does not parse:
 
 - **Which files.** `is_mcp_code`: a `.py` file that imports `mcp` or `fastmcp`; a `.js`, `.mjs`, `.cjs`, `.ts`, `.mts`, or `.cts`
-  file that names `@modelcontextprotocol/sdk` or imports `fastmcp`. Go and other languages are not read this way: `audience`
-  already reads a `.go` file as text a model reads.
+  file that names `@modelcontextprotocol/sdk` or imports `fastmcp`; a `.go` file that imports the official Go SDK
+  (`github.com/modelcontextprotocol/go-sdk/mcp`) or mcp-go (`github.com/mark3labs/mcp-go/mcp` or `/server`). A server in Rust, Java,
+  or another language is not read this way: the inventory lists such a file as a script, so `audience` reads it as code, and its
+  descriptions count as code. (Corrected 2026-11-03: this line said a `.go` file was read as model text, from a check that called
+  `audience` without the inventory's script list. On `github/github-mcp-server` every Go file outside its tests is code.)
 - **Python** (`ast`): the docstring of a function decorated `@<x>.tool`, `@<x>.prompt`, or `@<x>.resource` (called or not); every
   string in the value of a `description=` or `title=` keyword of any call (`Field(description=...)`, `Tool(description=...)`, a
   decorator's own), a call around it included (`t("KEY", "default")`); every string in the value of a dict key `"description"` or
@@ -1466,6 +1469,12 @@ A set of line numbers, empty for any file that is not MCP code or does not parse
   the strings of a method call `.describe(...)` (zod), `.WithDescription(...)`, `.Description(...)`, or `.WithTitleAnnotation(...)`;
   and the second argument of `.tool(...)`, `.prompt(...)`, or `.resource(...)` when it is one string literal. A plain call
   `describe(...)` is a test suite, not a description. A string in a comment is never one.
+- **Go** (the same tokenizer, with a backtick string read as Go's raw string: a backslash in it is a character): the same key and
+  method rules, which read the official SDK's struct literals (`Description:` and `Title:` fields, through a translation call such
+  as `t("KEY", "default")` too) and mcp-go's calls (`mcp.WithDescription`, `mcp.Description`, `mcp.WithTitleAnnotation`,
+  `mcp.WithPromptDescription`, `mcp.ArgumentDescription`, `mcp.WithResourceDescription`, `mcp.WithTemplateDescription`); and a
+  struct tag that describes a schema field (`jsonschema:"..."`, `jsonschema_description:"..."`, `GO_SCHEMA_TAG`). A `Title:` set
+  from a variable has no string, so no line.
 
 `run.tool_text_scan(rel, text, rows, aud, found)`: for a file read as code only, the lines `tool_text_lines` gives are scanned
 again (`scan.scan_text`, every other line blank so numbers stay) with audience `model`. Each such hit carries `tool_text: true`
@@ -1478,7 +1487,10 @@ returns them and how many lines were read this way (`hits.json`'s `tool_text`).
 On code that is not test data: `modelcontextprotocol/servers` 4 files, 33 lines; `punkpeye/fastmcp` 5 files, 20 lines;
 `modelcontextprotocol/python-sdk` 239 files, 420 lines, 5 phrase hits on them (`J.confirm-first` on "Send a text message" and the
 like). Sampled lines were descriptions; the one other kind seen is a `Field(description=...)` in the SDK's own library code. Every
-tool and parameter description of the git, fetch, and time servers was found, and no helper docstring.
+tool and parameter description of the git, fetch, and time servers was found, and no helper docstring. Go, on
+`github/github-mcp-server` (the official Go SDK): 67 files, 1,449 lines, 19 phrase hits on them, all in tool and parameter
+descriptions; every one of the 997 lines a plain search finds (`Description:` or `Title:` with a string, or a `jsonschema` tag) is
+among them.
 
 ### Must never
 
@@ -1489,7 +1501,7 @@ tool and parameter description of the git, fetch, and time servers was found, an
 ### What it does not reach
 
 Static text a prompt or tool returns (a prompt's message body, `TextContent(text=...)`), which a model also reads; descriptions
-built at run time from strings elsewhere; a server in a language other than Python, JavaScript, and TypeScript, read as code.
+built at run time from strings elsewhere; a server in a language other than Python, JavaScript, TypeScript, and Go, read as code.
 Hidden characters in a description are found by `02.2-reader` and counted by the file's audience, as before.
 
 ### Done when (tests in `tests/test_tooltext.py`)
@@ -1505,6 +1517,11 @@ Hidden characters in a description are found by `02.2-reader` and counted by the
 3. Fixture `class15-mcp-tool-text.py`: a tool's docstring and a parameter's description are model text (`mcp-tool-docstring-read-by-model`,
    `mcp-parameter-description-read-by-model`), and a helper's docstring stays code (`mcp-helper-docstring-stays-code`,
    `mcp-helper-docstring-still-found`).
+4. Go declarations give their description lines and nothing else, a file with no Go MCP import gives none
+   (`test_go_declarations_give_their_description_lines_and_nothing_else`), and a Go raw string has no escapes
+   (`test_a_go_raw_string_has_no_escapes`). Fixture `class15-mcp-tool-text.go`: a tool's `Description` and a schema field's
+   `jsonschema` tag are model text (`mcp-go-tool-description-read-by-model`, `mcp-go-schema-tag-read-by-model`), and a string in a
+   function body stays code (`mcp-go-plain-string-stays-code`, `mcp-go-plain-string-still-found`).
 
 ## vocab
 

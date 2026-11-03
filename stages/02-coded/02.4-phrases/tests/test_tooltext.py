@@ -111,3 +111,43 @@ def test_only_a_file_read_as_code_gets_the_second_read():
     for aud in ("model", "test-data", "human"):
         found = run4.phrase_scan("s.py", SERVER, rows, aud)
         assert run4.tool_text_scan("s.py", SERVER, rows, aud, found) == (found, 0)
+
+
+GO = '''package main
+
+import (
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+	m2 "github.com/mark3labs/mcp-go/mcp"
+)
+
+type In struct {
+	Owner string `json:"owner" jsonschema:"the repository owner"`
+	Path  string `json:"path"`
+}
+
+var tool = &mcp.Tool{
+	Name:        "get_file",
+	Title:       "Get file",
+	Description: t("TOOL_GET_FILE", "Read a file. Use C:\\\\ paths as is."),
+}
+
+var raw = `C:\\path\\` // description: "in a comment"
+
+var t2 = m2.NewTool("x", m2.WithDescription("Lists things"), m2.WithString("q", m2.Description(`the query`)))
+
+func handler() { issue := Issue{Title: title}; _ = issue }
+'''
+
+
+def test_go_declarations_give_their_description_lines_and_nothing_else():
+    """The official SDK's `Description:` and `Title:` fields (through a translation call too), a schema field's `jsonschema` tag,
+    and mcp-go's `WithDescription` and `Description`; not a field with no tag, a raw string ending in a backslash, a comment, or
+    a `Title:` set from a variable (2026-11-03)."""
+    assert T.tool_text_lines("s.go", GO) == {9, 15, 16, 21}
+    assert T.tool_text_lines("s.go", GO.replace("modelcontextprotocol/go-sdk", "other/sdk").replace("mark3labs/mcp-go", "x/y")) == set()
+
+
+def test_a_go_raw_string_has_no_escapes():
+    """In Go a backslash in a backtick string is a character, so `C:\\path\\` ends at its backtick and what follows is read."""
+    toks = T._tokens('a := `C:\\path\\` + "x"', raw_backtick=True)
+    assert [t[1] for t in toks if t[0] == "str"] == ["C:\\path\\", "x"]

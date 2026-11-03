@@ -1732,6 +1732,64 @@
             }
           },
           "note": "registry = load_registry(root) is code, with no address."
+        },
+        {
+          "id": "mcp-go-tool-description-read-by-model",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class15-mcp-tool-text.go",
+          "line": 12,
+          "match": {
+            "audience": {
+              "eq": "model"
+            },
+            "tool_text": {
+              "eq": true
+            }
+          },
+          "note": "A Go tool's Description field (the official Go SDK) is sent to the model (SkillSpector TP1; 2026-11-03)."
+        },
+        {
+          "id": "mcp-go-schema-tag-read-by-model",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class15-mcp-tool-text.go",
+          "line": 7,
+          "match": {
+            "audience": {
+              "eq": "model"
+            },
+            "tool_text": {
+              "eq": true
+            }
+          },
+          "note": "A jsonschema struct tag describes a field of the tool's input schema, which the model reads (SkillSpector TP3)."
+        },
+        {
+          "id": "mcp-go-plain-string-stays-code",
+          "polarity": "negative",
+          "check": "phrase.L.override",
+          "file": "class15-mcp-tool-text.go",
+          "line": 16,
+          "match": {
+            "audience": {
+              "eq": "model"
+            }
+          },
+          "note": "A string in a function body is never sent to a model: it stays code."
+        },
+        {
+          "id": "mcp-go-plain-string-still-found",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class15-mcp-tool-text.go",
+          "line": 16,
+          "match": {
+            "audience": {
+              "eq": "tool"
+            }
+          },
+          "note": "The hit is kept, as code."
         }
       ],
       "deferred": [],
@@ -1749,6 +1807,7 @@
         "class11-nul-split.md": "d83c80b271907b4f449e0d582a32545f7f5dea8931639712fc21bc140a5ba698",
         "class13-claimed-consent.md": "a700f94420c3d4650029146fc98d230d96d0bc0e69f73a206c9684a0c661a23b",
         "class14-definitional-hijacking.md": "09d9075c6828b07d6d74d65d0e9ee4668b40917628d5f0ffc14d4286686dfe29",
+        "class15-mcp-tool-text.go": "2b9726ecfdd4aa03ab7d7c48cbdaf4bc06c2c07805d8a4c059f773f9cccd53c7",
         "class15-mcp-tool-text.py": "80844f0df005269621c17c1ece226508fc6f2516a1dd975be6e6f4759544a184",
         "class15-script-instruction.sh": "dd67b303e969c4e7a1fe72789b41e4b60d5297cc01d729f48e234e086e76d8ad",
         "class15-second-order.md": "73874bfd55a4892de28d65e0622960345f532b5f91bce0b45eb844f9c1dbc0cf",
