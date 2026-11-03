@@ -158,9 +158,11 @@ section 1.
 2. **Memory**: the summary's table, the room for the list of skills, and how big each skill and
    helper gets, as bars.
 3. **Package**: every file by group, with its size; then **Files worth a look**, when there is
-   something: a file of unknown type, contents of a different type than the name says, archives
-   (their contents are not read), symlinks, and files the AI reads that are longer than a
-   reviewer's viewer shows (2,000 lines or 50 KB).
+   something: a file of unknown type, contents of a different type than the name says, programs in compiled
+   form and compiled Python (which Walkdown cannot read, and which can run without their source), archives
+   or documents that hold a program or Office macros, archives (their contents are not read), symlinks, files
+   the AI reads where blank lines or spaces push text out of view, and files the AI reads that are longer
+   than a reviewer's viewer shows (2,000 lines or 50 KB).
 4. **Other computers**: the places by file, the programs it expects and whether it says to install
    each, and every place by kind.
 5. **Other AI tools**: every tool with the files here it reads, the skills to install, every copy

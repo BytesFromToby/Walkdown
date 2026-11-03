@@ -502,10 +502,20 @@ def file_concerns(r) -> list[tuple[str, str, list[str]]]:
     if by["ext-magic-mismatch"]:
         out.append(("ext-magic-mismatch", "Contents are a different type than the file name says",
                     by["ext-magic-mismatch"]))
+    if by["executable"]:  # SkillSpector SC9 (2026-11-03)
+        out.append(("executable", "Programs in compiled form, which Walkdown cannot read", by["executable"]))
+    if by["bytecode"]:  # SkillSpector SC8
+        out.append(("bytecode", "Compiled Python (.pyc), which Python can run without its source", by["bytecode"]))
+    if by["archive-executable"]:  # SkillSpector SC9
+        out.append(("archive-executable", "Archives or documents that hold a program, compiled Python, or Office macros",
+                    by["archive-executable"]))
     if by["archive"]:
         out.append(("archive", "Archives (their contents were not read)", by["archive"]))
     if by["symlink"]:
         out.append(("symlink", "Links to another file or folder (symlinks)", by["symlink"]))
+    padded = list(dict.fromkeys(f for f in by["padding"] if R.audience(f) in ("model", "subagent")))
+    if padded:  # SkillSpector P9 (2026-11-03)
+        out.append(("padding", "Files the AI reads where blank lines or spaces push text out of view", padded))
     long = [f for f in by["reader-window"] if R.audience(f) in ("model", "subagent")]
     if long:
         out.append(("reader-window", "Files the AI reads that are longer than a reviewer's viewer shows "

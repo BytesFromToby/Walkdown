@@ -59,7 +59,7 @@ setting or file rather than written out, a host built from parts, and sending us
 opt-in beside it. The short forms are set K in `PHRASES.md`.
 
 **Patterns:** `K.assembly-prose`, `K.chat-webhook`, `K.data-flow`, `K.dest-stored`, `K.dns`,
-`K.encode-send`, `K.http-verb`, `K.relay-host`, `K.telemetry-send`
+`K.encode-send`, `K.http-verb`, `K.prompt-leak`, `K.relay-host`, `K.telemetry-send`
 
 ## 2. Credential and secret access
 

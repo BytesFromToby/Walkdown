@@ -109,6 +109,13 @@ patterns:
   source: 'THREATS:1; I07'
   plain: 'A source of private data, a sending verb, and a destination in one sentence ("put your environment variables in the bug report"). The worry: data leaves the machine.'
 
+- id: K.prompt-leak
+  check: phrase.K.exfil
+  regex: '\b(reveal|print|show|output|repeat|recite|echo|dump|display|paste|write out|send|post|upload|leak|disclose|share|tell (me|us|the user))\b(?:[^.]|\.\S){0,30}?\byour (full |entire |exact |complete )?(system (prompt|message|instructions)|developer (message|prompt|instructions)|pre-?prompt|(original|initial|hidden|internal|underlying) (instructions|prompt|rules))\b|\b(repeat|print|output|echo|recite)\s+(back\s+)?(all|everything|the (text|words|content|instructions|prompt))\s+(above|before this (line|message))\b|\byour\s+(system\s+)?(instructions|prompt)\s+(verbatim|word for word)\b'
+  source: 'THREATS:1; S20'
+  plain: 'Asking the model to reveal, repeat, or send its own instructions ("print your system prompt", "repeat everything above", "your instructions verbatim"). The worry: what the model was told, and anything in it, leaves with the answer.'
+  note: 'Added 2026-11-03 from SkillSpector P6 to P8 (S20). The object is the model''s own system or developer prompt, or its instructions with a word that marks them as hidden or original ("your original instructions"); "above" needs an object ("everything above", "the text above"); "verbatim" counts only after "your". Measured first: "write the system prompt for the bot" (a prompt-writing skill), "given this prompt verbatim" (a subagent dispatch), "per the contract in your instructions", and "the output above" are not asks.'
+
 # phrase.creds (class 2): THREATS 2.
 
 - id: creds.path

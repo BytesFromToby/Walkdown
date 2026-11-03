@@ -143,6 +143,10 @@ text-versus-text is detector noise and never a finding.
 | `ext-magic-mismatch` | `magic` is set and the extension is not one that names that format (table in code: `png` for `image/png`, `zip`/`docx`/`jar`/... for `application/zip`, and so on) | null | extension and detected type |
 | `bom` | `bom` is True | null | which BOM |
 | `archive` | `magic` is an archive type (zip, gzip, bzip2, xz, 7z, RAR, zstd, tar) | null | detected type |
+| `padding` | text that follows 20 or more blank lines (`kind` `vertical`), or follows 80 or more blank characters inside a line (`kind` `horizontal`); blank is Unicode white space or the blank braille cell; indentation at a line's start and a run that ends at `\|` (a table's column padding) are not runs (`padding_runs`; added 2026-11-03, SkillSpector P9, S20) | where the text resumes | the run; `kind` and `length` fields too |
+| `executable` | `magic` is a program in compiled form (`EXECUTABLES`: ELF, Windows PE, Mach-O, and the names other backends give them), whatever the file is called (added 2026-11-03, SkillSpector SC9) | null | detected type; `detected` too |
+| `bytecode` | a `.pyc` or `.pyo` file, or a file under a `__pycache__` folder: Python runs it without its source (added 2026-11-03, SkillSpector SC8) | null | fixed words |
+| `archive-executable` | a zip container (an archive, or an Office or OpenDocument file, a jar, a wheel) holding members that are programs by name (`INSIDE_EXTS`), Python bytecode, Office macros (`vbaProject.bin`), or programs by their first 64 bytes (`programs_inside`: names and first bytes only, nothing extracted, at most 5,000 members; a container that does not open gives none; added 2026-11-03, SkillSpector SC9) | null | how many and the first five names; `members` (up to 50) and `count` too |
 
 `symlink_facts(rel, target)` returns the `inv.file` facts for a symlink
 (`type` `inode/symlink`, `bytes` = UTF-8 length of the target, no encoding, no
@@ -168,6 +172,19 @@ finding with the target as `detail`.
 9. A BOM file gives the `bom` flag.
 10. A symlink gives `inode/symlink` facts and a `symlink` flag with its target.
 11. The built-in signature table recognizes PNG, ZIP, gzip, PDF, and tar.
+12. Padding: 20 blank lines before text give a `vertical` run at the line where text resumes, 19 or trailing blank lines give
+    none; 80 blank characters (a no-break space, a blank braille cell) before text in a line give a `horizontal` run, 79 give
+    none, and neither indentation nor a table's column padding is a run
+    (`test_blank_lines_before_text_are_vertical_padding_and_fewer_or_trailing_are_not`,
+    `test_blank_characters_before_text_are_horizontal_padding_and_tables_and_indentation_are_not`). Measured first on nine
+    repositories (three skill collections, four MCP servers, SkillSpector, Cloudflare's skill): every horizontal run was a
+    table's column padding before that rule, and none is flagged after it.
+13. An ELF, PE, or Mach-O file is `executable` and a `.pyc` or a file in `__pycache__` is `bytecode`; a zip document names the
+    macros, programs, bytecode, and ELF-headed members inside it, a plain one names none, and a container that does not open
+    gives none (`test_a_program_in_compiled_form_is_flagged_by_its_bytes_and_bytecode_by_its_name`,
+    `test_a_zip_container_names_the_programs_inside_it_and_a_plain_one_names_none`). Fixtures `tool.bin`,
+    `__pycache__/helper.cpython-312.pyc`, `macros.docx`, and `plain.docx` in `class18-reader-limit`
+    (`tools/fixture-generators/make_program_binaries.py`). On the nine repositories, none of the three flags fired.
 
 ## configs
 

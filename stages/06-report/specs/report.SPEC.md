@@ -918,7 +918,9 @@ were `02.4-phrases`'s and `02.5-capability`'s); the questions, their wording, an
    <N> come along without being used." More: one stacked bar of the four groups (do the work, notes
    for people, tests and build tools, nothing refers to them), the legend, and the saving (a fact,
    never an order). Detail: every file by group; **Files worth a look** (`details_html.file_concerns`:
-   unknown or mismatched types, archives, symlinks, files longer than a reviewer's viewer shows).
+   unknown or mismatched types, programs in compiled form, compiled Python, archives or documents holding a program or macros
+   (these three added 2026-11-03), archives, symlinks, files the AI reads where blank lines or spaces push text out of view
+   (added 2026-11-03), files longer than a reviewer's viewer shows).
 4. **Will it work on someone else's computer?** (`elsewhere`; slice 2). Not measured unless the run
    found programs, packages, or places here, or holds slice 3's `host.coverage` (there is no marker
    finding; `render.needs_of`). Chip: one to look at per kind (programs never declared, or packages

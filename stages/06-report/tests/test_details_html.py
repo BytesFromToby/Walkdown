@@ -738,3 +738,24 @@ def test_what_is_said_of_the_line_is_its_own_line_and_a_lead_never_runs_into_it(
     assert S.TOOL_TEXT_NOTE in li and "Decoded from base64" in li and "L.ignore, rare" not in li  # a phrase's rate note stays off
     merged = S.unique([it, {**it, "src": {"tool_text": True}, "context": [S.TOOL_TEXT_NOTE]}])
     assert len(merged) == 1 and merged[0]["context"] == it["context"]
+
+
+def test_a_file_the_ai_reads_with_padding_is_worth_a_look_once_and_a_readme_is_not():
+    """SkillSpector P9 (2026-11-03): blank lines or spaces that push text out of view, in a file the AI reads; a file with two
+    padding runs is listed once."""
+    pad = lambda f, line: {"check": "struct.census", "file": f, "line": line, "flag": "padding", "kind": "vertical"}  # noqa: E731
+    r = add(_tr.costed(reports()), "02.1-inventory", pad("SKILL.md", 40), pad("SKILL.md", 90), pad("README.md", 30))
+    worth = text(page(r), "package").split("Files worth a look", 1)[1]
+    assert "Files the AI reads where blank lines or spaces push text out of view (1)" in worth
+    assert "SKILL.md" in worth and "README.md" not in worth
+
+
+def test_programs_in_compiled_form_are_worth_a_look():
+    """SkillSpector SC8 and SC9 (2026-11-03): a native program, Python bytecode, and a document holding a program."""
+    c = lambda f, flag: {"check": "struct.census", "file": f, "line": None, "flag": flag}  # noqa: E731
+    r = add(_tr.costed(reports()), "02.1-inventory", c("bin/tool", "executable"), c("__pycache__/a.pyc", "bytecode"),
+            c("spec.docx", "archive-executable"))
+    worth = text(page(r), "package").split("Files worth a look", 1)[1]
+    assert "Programs in compiled form, which Walkdown cannot read (1)" in worth and "bin/tool" in worth
+    assert "Compiled Python (.pyc), which Python can run without its source (1)" in worth
+    assert "Archives or documents that hold a program, compiled Python, or Office macros (1)" in worth and "spec.docx" in worth

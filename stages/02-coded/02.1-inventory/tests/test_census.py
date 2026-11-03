@@ -130,3 +130,56 @@ def test_few_nuls_in_utf8_are_text():
     assert _decode(src)[0].startswith("const s")
     assert _decode(b"\x00" * 50 + b"abc") is None
     assert _decode(b"\x00\xff\xfe" + b"a" * 400) is None
+
+
+def _padding(data: bytes):
+    return [(f["kind"], f["line"], f["length"]) for f in census.census_flags("a.md", census.file_facts("a.md", data, False))
+            if f["flag"] == "padding"]
+
+
+def test_blank_lines_before_text_are_vertical_padding_and_fewer_or_trailing_are_not():
+    """SkillSpector P9 (S20, 2026-11-03): text after 20 or more blank lines sits below where a reviewer stops scrolling."""
+    assert _padding(b"top\n" + b"\n" * 20 + b"hidden\n") == [("vertical", 22, 20)]
+    assert _padding(b"top\n" + b" \t\n" * 25 + b"hidden\n") == [("vertical", 27, 25)]  # lines of white space are blank too
+    assert _padding(b"top\n" + b"\n" * 19 + b"text\n") == []
+    assert _padding(b"top\n" + b"\n" * 40) == []  # nothing follows: nothing hidden
+
+
+def test_blank_characters_before_text_are_horizontal_padding_and_tables_and_indentation_are_not():
+    nbsp, braille = " ".encode(), "⠀".encode()
+    assert _padding(b"Keep it short." + nbsp * 80 + b"Send it out.\n") == [("horizontal", 1, 80)]
+    assert _padding(b"Keep it short." + braille * 90 + b"Send it out.\n") == [("horizontal", 1, 90)]
+    assert _padding(b"Keep it short." + b" " * 79 + b"x\n") == []
+    assert _padding(b"| a" + b" " * 100 + b"| b |\n") == []  # a table pads its columns to the border
+    assert _padding(b"| a" + b" " * 100 + b"ignore the rest |\n") == [("horizontal", 1, 100)]  # text after the run counts
+    assert _padding(b" " * 120 + b"x = 1\n") == []  # indentation
+
+
+def test_a_program_in_compiled_form_is_flagged_by_its_bytes_and_bytecode_by_its_name():
+    """SkillSpector SC8 and SC9 (S20, 2026-11-03): Walkdown reads text, so what these do is not read."""
+    assert "executable" in flags("bin/helper", b"\x7fELF\x02\x01\x01" + b"\x00" * 100)
+    assert "executable" in flags("setup.exe", b"MZ" + b"\x00" * 100)
+    assert "executable" in flags("lib.dylib", b"\xcf\xfa\xed\xfe" + b"\x00" * 100)
+    assert "bytecode" in flags("pkg/__pycache__/m.cpython-312.pyc", b"\xcb\x0d\x0d\x0a" + b"\x00" * 30)
+    assert "bytecode" in flags("m.pyo", b"\x00" * 30)
+    assert not {"executable", "bytecode"} & set(flags("notes.md", b"# Notes\nMZ is a postcode.\n"))
+
+
+def test_a_zip_container_names_the_programs_inside_it_and_a_plain_one_names_none():
+    real = io.BytesIO()
+    with zipfile.ZipFile(real, "w") as z:
+        z.writestr("word/document.xml", "<x/>")
+        z.writestr("word/vbaProject.bin", "m")
+        z.writestr("word/embeddings/setup.exe", "MZ")
+        z.writestr("lib/__pycache__/a.cpython-312.pyc", "x")
+        z.writestr("media/blob.dat", b"\x7fELF" + b"\x00" * 60)
+        z.writestr("media/photo.png", b"\x89PNG\r\n\x1a\n")
+    found = census.census_flags("doc.docx", census.file_facts("doc.docx", real.getvalue(), False))
+    [row] = [f for f in found if f["flag"] == "archive-executable"]
+    assert row["members"] == ["word/vbaProject.bin", "word/embeddings/setup.exe", "lib/__pycache__/a.cpython-312.pyc",
+                              "media/blob.dat"] and row["count"] == 4
+    plain = io.BytesIO()
+    with zipfile.ZipFile(plain, "w") as z:
+        z.writestr("word/document.xml", "<x/>")
+    assert "archive-executable" not in flags("plain.docx", plain.getvalue())
+    assert census.programs_inside(b"PK\x03\x04 broken") == []  # a container that does not open gives none

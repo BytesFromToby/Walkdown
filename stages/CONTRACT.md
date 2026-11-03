@@ -183,7 +183,7 @@ not a folder to read. It has no section in any report (`stages/01-intake/specs/i
 | `struct.manifests` | set of platform manifests for one plugin | `files`: list; `divergent`: bool (declared permissions differ) |
 | `struct.mcp` | MCP server declared under `mcpServers` in any config (manifest, `.mcp.json`, settings) (added 2026-09-29) | `name`, `transport` (`stdio`, `http`, ...), `command` (command and args), `url`, `env_keys` (names only, never values) |
 | `inv.license` | a license file (by name: `LICENSE`, `COPYING`, ...) or a declared license field (frontmatter, `package.json`, plugin manifests, `pyproject.toml`, `Cargo.toml`) (added 2026-10-17) | `source`: `file` or `field`; `field`: the key, for a field; `license`: SPDX id or null when not recognized; `how`: `spdx-tag`, `text`, `title`, `field`, or null; `stated`: the declared value verbatim, or an unrecognized file's first line |
-| `struct.census` | structural flag on a file | `flag`: one of `reader-window`, `long-line`, `ext-magic-mismatch`, `bom`, `archive`, `symlink`; `detail`: free text (threshold, column, detected type) |
+| `struct.census` | structural flag on a file | `flag`: one of `reader-window`, `long-line`, `ext-magic-mismatch`, `bom`, `archive`, `symlink`, `padding`, `executable`, `bytecode`, `archive-executable` (the last four added 2026-11-03); `detail`: free text (threshold, column, detected type) |
 
 ### `02.2-reader`
 
@@ -348,7 +348,7 @@ the contract from here on:
 | `struct.agent-tools` | `field`, `kind` | the frontmatter key that granted tools; `agent` or `command` |
 | `struct.hooks` | `format`, `commands`, `types`, `async`, `host` | `nested` or `flat` hook config, or `cursor-environment` (a command in `.cursor/environment.json`, added 2026-10-17); each command, its type, and its async flag (nested format); `host` `cursor-cloud` when the command runs on Cursor's cloud machine, never the user's computer |
 | `struct.manifests` | `name`, `grants` | the plugin name; `{manifest: [grants]}` per manifest |
-| `struct.census` | `length`, `detected` | a long line's length; the content type the bytes reveal (extension mismatch, archive) |
+| `struct.census` | `length`, `detected`, `kind`, `members`, `count` | a long line's or a padding run's length; the content type the bytes reveal (extension mismatch, archive, executable); a padding run's `kind` (`vertical`, `horizontal`); the program members of a zip container (up to 50) and how many there are (added 2026-11-03) |
 | `read.divergence` | `chars`, `page`, `paragraph`, `text_line`, `used`, `end_line`, `masked` | invisible code points found; PDF page; DOCX paragraph; line in the extracted text for formats without source lines; whether a Markdown reference definition is used; the last line a text in a text format reaches, when that is past its first (added 2026-11-01); true when a line it quotes holds a `secret.found`, with `text` and `decoded` replaced and `chars` reduced to each code point once, sorted (added 2026-11-01) |
 | `read.fold` | `masked` | true when the line holds a `secret.found`, with `folded` replaced and `removed` reduced to each code point once, sorted (added 2026-11-01) |
 | `read.script` | `col`, `masked` | the column where the non-Latin run starts; true when the line holds a `secret.found`, with `text` replaced (added 2026-11-01) |
@@ -519,3 +519,4 @@ already (`step-missing`), a step a stop left out has no coverage to check, and a
 - 2026-11-02: `likely_not_secret` is `BASE64_TEXT` only when every value the scanner flagged on the line is readable base64. No check was added or removed; a line with a key beside such text now counts as one that may hold a secret.
 - 2026-11-03: `in_base64` on a `secret.found` found in text decoded from base64. No check was added or removed; a line whose readable base64 spells a key now counts as one that may hold a secret.
 - 2026-11-03: `tool_text` on a phrase finding in an MCP server's description (`specs/phrases.SPEC.md`, tooltext). No check was added or removed; such a hit counts as in text a model reads.
+- 2026-11-03: `struct.census` flags `padding`, `executable`, `bytecode`, and `archive-executable`, and the phrase row `K.prompt-leak`. No check was added or removed.
