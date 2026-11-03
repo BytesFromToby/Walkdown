@@ -6,6 +6,16 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- **Descriptions in an MCP server's code are read as text the model reads.** A client sends each tool's, prompt's, resource's,
+  and parameter's description to the model as it stands, but Walkdown read an MCP server's Python or JavaScript as code only, so
+  an instruction hidden in a tool's docstring or a parameter's description counted as "not in text a model reads". In a file
+  that imports an MCP library, those strings are now scanned again as model text, and a hit there counts as in text a model
+  reads (`tool_text` on the finding). Measured on the official servers, the Python SDK, and fastmcp: only declarations' strings
+  are read this way.
+- **Five new patterns** (130 in all), from rules in NVIDIA's SkillSpector: telling the model never to refuse (`L.never-refuse`),
+  to leave out disclaimers or ethical commentary (`L.no-disclaimer`), decoding hidden code and running it at once
+  (`E.decode-exec`), turning off certificate checks (`E.tls-off`), and pointing a package manager at another source
+  (`E.registry-config`). Each was measured on nine repositories first and narrowed where it caught ordinary prose or code.
 - **No line of a private key reaches a report.** The secret scan flags a private key's first line, and the mask covered only
   that line. Hidden characters on a later line of the key's body made the reader quote that line, and `full.md` and
   `data/02.2-reader.json` printed it whole. The scan now records where the key ends (`key_end` on its `secret.found` row), and

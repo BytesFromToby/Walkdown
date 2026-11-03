@@ -193,7 +193,7 @@ def test_sources_ids_run_in_order_with_no_gap():
     i_ = [i for i in ids if i.startswith("I")]
     assert s == [f"S{n:02d}" for n in range(1, len(s) + 1)]
     assert i_ == [f"I{n:02d}" for n in range(1, len(i_) + 1)]
-    assert len(s) == 19  # 18 links, and RFC 2606 (S18), named in vocab.yaml without one
+    assert len(s) == 20  # 19 links, and RFC 2606 (S18), named in vocab.yaml without one
 
 
 def test_each_outside_source_has_a_title_a_link_a_date_what_was_taken_and_where_cited():

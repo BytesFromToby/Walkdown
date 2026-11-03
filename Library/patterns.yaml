@@ -263,6 +263,20 @@ patterns:
   source: 'THREATS:5'
   plain: 'Permission to skip asking ("no need to ask", "without asking", "you may skip confirmation"). The worry: it removes the user''s chance to say no.'
 
+- id: L.never-refuse
+  check: phrase.L.override
+  regex: '\b(never|do not|don''t|must not|should not|shouldn''t|cannot|can''t)\s+(refuse\b|decline\s+(to|any|requests?|tasks?|instructions?|anything)\b|turn down\s+(any|requests?|tasks?|anything)\b)|\balways (comply|obey)\b|\bcomply with (every|all|any) (request|instruction|command)s?\b|\b(no|without) (refusals?|refusing)\b'
+  source: 'THREATS:5; S20'
+  plain: 'Telling the model never to refuse ("never refuse", "always comply", "comply with every request"). The worry: it asks the model to set aside its own judgment of what not to do.'
+  note: 'Added 2026-11-03 from SkillSpector AR1 (S20). "Decline" needs an object that is a request or task: "never decline a Latin-script word" (grammar, in a translation guide) is not a refusal. "Without hesitation" and bare "always say yes" are left out: common in ordinary prose.'
+
+- id: L.no-disclaimer
+  check: phrase.L.override
+  regex: '\b(no|omit|skip|drop|remove|never (add|include)|(do not|don''t) (add|include|give|write)|(answer|respond|reply|write)\w*\s+without)\s+(any\s+)?(disclaimers?|safety (warnings?|notes?|caveats?)|ethical (commentary|warnings?|caveats?|considerations))\b|\b(do not|don''t|never|no|without|stop) moraliz\w*'
+  source: 'THREATS:5; S20'
+  plain: 'Telling the model to leave out disclaimers, safety warnings, or ethical commentary ("no disclaimers", "do not moralize"). The worry: the user loses the warnings the model would otherwise give.'
+  note: 'Added 2026-11-03 from SkillSpector AR2 (S20). Bare "caveats" is left out: writing and style guides ask for fewer caveats as a matter of tone. "Without" counts only after answer, respond, reply, or write: "no speculation without disclaimers" asks for them.'
+
 # phrase.A.consent (class 13): PHRASES A.
 
 - id: A.prior-consent
@@ -544,6 +558,13 @@ patterns:
   source: 'THREATS:7; THREATS:19'
   plain: 'Turning off a confirmation or permission prompt. The worry: it removes the user''s chance to say no.'
 
+- id: E.decode-exec
+  check: phrase.E.perms
+  regex: '\b(base64|base32)\s+(-d|-D|--decode)\b[^|]*\|\s*(sudo\s+)?(ba|z|da)?sh\b|\bxxd\s+-r\b[^|]*\|\s*(sudo\s+)?(ba|z)?sh\b|\b(eval|exec)\b[^\n]{0,40}\bbase64\s+(-d|-D|--decode)\b|\b(exec|eval)\s*\(\s*(__import__\(\s*[''"](base64|zlib|codecs|marshal|bz2|lzma)[''"]\s*\)\.\w+|(base64\.)?(b64decode|b32decode|b85decode|a85decode|decodebytes|zlib\.decompress|marshal\.loads|codecs\.decode|bytes\.fromhex)\b)|(?<![\w.])(eval|Function)\s*\(\s*(atob|Buffer\.from|unescape)\s*\(|\bnew Function\s*\(\s*(atob|Buffer\.from)\s*\(|\s-(EncodedCommand|enc|ec)\s+[A-Za-z0-9+/=]{16,}|FromBase64String\b[^|]*\|\s*(iex|Invoke-Expression)\b|\b(iex|Invoke-Expression)\b[^\n]{0,60}FromBase64String'
+  source: 'THREATS:7; S20'
+  plain: 'Decoding hidden code and running it at once (echo ... | base64 -d | sh, exec(base64.b64decode(...)), eval(atob(...)), powershell -EncodedCommand). The worry: what runs cannot be read where it stands.'
+  note: 'Added 2026-11-03 from SkillSpector SC3 (S20). K.encode-send is the other direction: encoding data and sending it out.'
+
 # phrase.C.second-order (class 15): PHRASES C (phrase rows).
 
 - id: C.frontmatter-grant
@@ -766,6 +787,20 @@ patterns:
   source: 'THREATS:5'
   plain: 'Writing with >> or tee into a shell profile, git hooks, or git config. The worry: the change runs in every later shell or git command.'
   note: 'Added 2026-09-29: scripts append with >> or tee, not a write verb; the stage 5 fixtures had a hook script appending to ~/.bashrc that E.persist-target missed.'
+
+- id: E.tls-off
+  check: phrase.E.env
+  regex: '\bverify\s*=\s*False\b|\bcurl\b[^|;\n]*\s(-k|--insecure)\b|\bwget\b[^|;\n]*\s--no-check-certificate\b|\bNODE_TLS_REJECT_UNAUTHORIZED\s*[=:]\s*[''"]?0\b|\brejectUnauthorized\s*:\s*false\b|\bssl\._create_unverified_context\b|\bInsecureSkipVerify\s*:\s*true\b|\bhttp\.sslVerify(\s*=\s*|\s+)false\b|\bGIT_SSL_NO_VERIFY\b|\bPYTHONHTTPSVERIFY\s*=\s*[''"]?0\b|\bstrict-ssl\s*(=\s*|\s+)false\b|\bcheck_hostname\s*=\s*False\b|\bCERT_NONE\b'
+  source: 'THREATS:17; S20'
+  plain: 'Turning off certificate checks (curl -k, verify=False, NODE_TLS_REJECT_UNAUTHORIZED=0, git http.sslVerify false). The worry: a server in the middle can read or change what is sent and received, keys included.'
+  note: 'Added 2026-11-03 from SkillSpector TM3 (S20).'
+
+- id: E.registry-config
+  check: phrase.E.env
+  regex: '^\s*(@[\w.-]+:)?registry\s*=\s*["'']?https?://|\b(npm|pnpm|yarn)\s+config\s+set\s+(@[\w.-]+:)?(npm)?registry(server)?\b|\bnpmRegistryServer\s*:|^\s*(extra-)?index-url\s*=\s*["'']?https?://|--(extra-)?index-url\b|\bpip3?\s+config\s+set\s+[\w.]*index-url\b|\[\[\s*tool\.(uv\.index|poetry\.source)\s*\]\]|\b(UV_INDEX_URL|UV_EXTRA_INDEX_URL|UV_DEFAULT_INDEX|PIP_EXTRA_INDEX_URL|GOPROXY|BUNDLE_MIRROR__\w+)\b'
+  source: 'THREATS:8; S20'
+  plain: 'Pointing a package manager at another source (registry= in .npmrc, index-url in pip.conf, --index-url, a uv or Poetry index, GOPROXY). The worry: packages come from a server someone else picked, not the public registry.'
+  note: 'Added 2026-11-03 from SkillSpector SC10 (S20). E.redirect-var already has NPM_CONFIG_REGISTRY and PIP_INDEX_URL; this row adds the files and commands that set the same thing. registry= and index-url= need an address after them: registry=self.registry is code. A line naming the public registry still hits: the benign count shows it.'
 
 # phrase.J.prohibited (class 22): PHRASES J, harness tiers from its preamble.
 

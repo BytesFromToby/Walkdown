@@ -137,7 +137,8 @@ that tells the model to hide or omit something from the user, and writing to the
 later: instruction files, shell profiles, git hooks, editor and agent settings. The loud takeover
 phrasings are set L, and the audit-trail forms are set H.
 
-**Patterns:** `E.persist-redirect`, `E.persist-target`, `H.suppress`, `L.skip-confirm`
+**Patterns:** `E.persist-redirect`, `E.persist-target`, `H.suppress`, `L.never-refuse`,
+`L.no-disclaimer`, `L.skip-confirm`
 
 ## 7. Execution and privilege
 
@@ -153,8 +154,8 @@ background services and scheduled jobs, install commands in scripts and hooks, w
 temporary folders, allow lists and auto-approve lists, and turning off a confirmation. Global and
 plugin installs are the shape of this class; plain project installs are set E.
 
-**Patterns:** `E.allowlist`, `E.confirm-off`, `E.exec-primitive`, `E.install-global`,
-`E.outlives-session`, `E.runtime-install`, `E.write-then-exec`
+**Patterns:** `E.allowlist`, `E.confirm-off`, `E.decode-exec`, `E.exec-primitive`,
+`E.install-global`, `E.outlives-session`, `E.runtime-install`, `E.write-then-exec`
 
 ## 8. Supply chain and drift
 
@@ -169,7 +170,7 @@ variables that send traffic somewhere else (a proxy, a custom registry, a replac
 or server launcher. The traffic-redirection variables are in set E, and the moving references are
 class 3.
 
-**Patterns:** `E.runtime-install`
+**Patterns:** `E.registry-config`, `E.runtime-install`
 
 ## 13. Claimed authorization and fabricated consent
 
@@ -259,7 +260,7 @@ outside the repository, or a variable that another program reads.
 **What Walkdown looks for.** Writes to files outside the repository that load in later sessions, and
 patching or re-signing the host tool's binary. The rest of the class is set E in `PHRASES.md`.
 
-**Patterns:** `E.harness-binary`, `E.persist-target`
+**Patterns:** `E.harness-binary`, `E.persist-target`, `E.tls-off`
 
 ## 19. Human-audience instructions and inbound surface
 

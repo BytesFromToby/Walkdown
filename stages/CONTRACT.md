@@ -213,7 +213,9 @@ not a folder to read. It has no section in any report (`stages/01-intake/specs/i
 
 One check per PHRASES set or detector. Every finding carries `quote` (the
 original line, verbatim) and may carry `audience` (`model`, `subagent`, `human`,
-`tool`, `test-data` (added 2026-10-02)). The report also carries `terms` beside `findings`
+`tool`, `test-data` (added 2026-10-02)). A phrase finding with `tool_text: true` (added 2026-11-03) is a hit in the description of
+a tool, prompt, resource, or parameter in an MCP server's code, read as text a model reads: its `audience` is `model` though its
+file is code. The report also carries `terms` beside `findings`
 (added 2026-10-19, review C22 b): the version of the search terms and matching code it came from
 (`version`, `count`, `rows` with one short hash per pattern id, `vocab`, `code`), so two runs can
 tell a hit from a repository change from one from a Walkdown change. It also carries
@@ -516,3 +518,4 @@ already (`step-missing`), a step a stop left out has no coverage to check, and a
 - 2026-11-02: `key_end` on a private key's `secret.found`, and the mask covers the key through it. No check was added or removed, and no count moved.
 - 2026-11-02: `likely_not_secret` is `BASE64_TEXT` only when every value the scanner flagged on the line is readable base64. No check was added or removed; a line with a key beside such text now counts as one that may hold a secret.
 - 2026-11-03: `in_base64` on a `secret.found` found in text decoded from base64. No check was added or removed; a line whose readable base64 spells a key now counts as one that may hold a secret.
+- 2026-11-03: `tool_text` on a phrase finding in an MCP server's description (`specs/phrases.SPEC.md`, tooltext). No check was added or removed; such a hit counts as in text a model reads.

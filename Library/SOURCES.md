@@ -9,7 +9,7 @@ each source is, when it was last checked, and what Walkdown took from it.
 A `source` field (or each value of a `sources` mapping) in a Library table holds one or more
 references, joined with `; `. A reference is one of:
 
-- **An outside source**: `S01` to `S19`, below. The only place a link to an outside page is written.
+- **An outside source**: `S01` to `S20`, below. The only place a link to an outside page is written.
 - **A Walkdown document**: `I01` to `I15`, below. `I01` and `I02` are the two public reference
   documents (`PHRASES.md`, `THREATS.md`). The others are Walkdown's own design documents. Some are in
   the repository: a stage's `CONTEXT.md` and spec files ship with the code. Others are not published:
@@ -161,6 +161,16 @@ holds because of the page.
   listed. The interlinear annotation marks (U+FFF9 to U+FFFB) and the blank braille cell (U+2800) do
   not have the property and do not cite it.
 - Cited in: `invisible.yaml` (`source`, on each range whose code points have the property).
+
+### S20 NVIDIA SkillSpector
+- Link: https://github.com/NVIDIA/SkillSpector
+- Last checked: 2026-11-03 (commit e14c450; Apache-2.0)
+- Taken: the idea for five pattern rows and for reading MCP descriptions as model text, from its rule list: AR1 (refusal
+  suppression) for `L.never-refuse`, AR2 (disclaimer suppression) for `L.no-disclaimer`, SC3 (obfuscated code) for `E.decode-exec`,
+  TM3 (unsafe defaults: disabled TLS) for `E.tls-off`, SC10 (dependency source redirection) for `E.registry-config`, and TP1 and TP3
+  (hidden instructions in MCP tool and parameter descriptions) for `02.4-phrases`'s `tooltext`. Walkdown's regexes and code are its
+  own; none of its rules or tests were copied, and its scores and labels are not used.
+- Cited in: `patterns.yaml` (`source` of the five rows); `02.4-phrases`'s spec (`tooltext`).
 
 ### Named in a table, not listed above
 - `tools.yaml` says it was "checked 2026-10-26 against each system's own tools" and lists Node's

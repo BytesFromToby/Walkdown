@@ -282,7 +282,8 @@ scanned; plus a count of findings, with the part 2 counts. Every part 2 item is 
 (position and repetition and the secret scan since 2026-10-04), so none is named as not built.
 
 `--out <dir>`: also writes `<dir>/hits.json`: `undone_by_next_line` (line hits the next line
-of their paragraph cancelled, `scan.undone_by_next_line`, added 2026-10-20), `findings` (as stdout),
+of their paragraph cancelled, `scan.undone_by_next_line`, added 2026-10-20), `tool_text` (added 2026-11-03: `{file: lines}` for
+each file of MCP server code whose descriptions were read as text a model reads, `tooltext` below), `findings` (as stdout),
 `counts` (`per_check`: part 1 findings per phrase check, every check listed,
 zeros included; `per_pattern`: part 1 findings per pattern id, every id listed,
 zeros included; `part2`: `rubric` (`rows`, `with_confirmation`,
@@ -1437,6 +1438,74 @@ changes the version on the next run.
   did, and neither was in the hash, so a change to either read as no change to the matching code. The
   value changes once with this version.
 
+## tooltext
+
+Added 2026-11-03 (SkillSpector TP1 and TP3, `Library/SOURCES.md` S20). Text a model reads inside MCP server code.
+
+A file read by tools (`audience` `tool`) is code, and a phrase hit in it counts as not read by a model. An MCP server's code is
+the exception: a client sends the description of every tool, prompt, resource, and parameter it declares to the model as it
+stands, so an instruction hidden there is an instruction to the model.
+
+### Inputs
+
+`tool_text_lines(rel, text)`: a file's path and decoded text.
+
+### Outputs
+
+A set of line numbers, empty for any file that is not MCP code or does not parse:
+
+- **Which files.** `is_mcp_code`: a `.py` file that imports `mcp` or `fastmcp`; a `.js`, `.mjs`, `.cjs`, `.ts`, `.mts`, or `.cts`
+  file that names `@modelcontextprotocol/sdk` or imports `fastmcp`. Go and other languages are not read this way: `audience`
+  already reads a `.go` file as text a model reads.
+- **Python** (`ast`): the docstring of a function decorated `@<x>.tool`, `@<x>.prompt`, or `@<x>.resource` (called or not); every
+  string in the value of a `description=` or `title=` keyword of any call (`Field(description=...)`, `Tool(description=...)`, a
+  decorator's own), a call around it included (`t("KEY", "default")`); every string in the value of a dict key `"description"` or
+  `"title"` (an input schema). A multi-line string gives every line it spans.
+- **JavaScript and TypeScript** (a tokenizer that knows strings, template literals, comments, and brackets): every string in the
+  value of a `description` or `title` key or assignment, up to the `,` or `;` that ends it or the bracket that closes around it;
+  the strings of a method call `.describe(...)` (zod), `.WithDescription(...)`, `.Description(...)`, or `.WithTitleAnnotation(...)`;
+  and the second argument of `.tool(...)`, `.prompt(...)`, or `.resource(...)` when it is one string literal. A plain call
+  `describe(...)` is a test suite, not a description. A string in a comment is never one.
+
+`run.tool_text_scan(rel, text, rows, aud, found)`: for a file read as code only, the lines `tool_text_lines` gives are scanned
+again (`scan.scan_text`, every other line blank so numbers stay) with audience `model`. Each such hit carries `tool_text: true`
+and takes the place of the hit of the same check on that line made as code, so nothing is counted twice; a row that applies
+only to code (`E.runtime-install`, `C.script-instruction`) keeps its hit as code. The file's findings stay in line order. It
+returns them and how many lines were read this way (`hits.json`'s `tool_text`).
+
+### Measured (2026-11-03)
+
+On code that is not test data: `modelcontextprotocol/servers` 4 files, 33 lines; `punkpeye/fastmcp` 5 files, 20 lines;
+`modelcontextprotocol/python-sdk` 239 files, 420 lines, 5 phrase hits on them (`J.confirm-first` on "Send a text message" and the
+like). Sampled lines were descriptions; the one other kind seen is a `Field(description=...)` in the SDK's own library code. Every
+tool and parameter description of the git, fetch, and time servers was found, and no helper docstring.
+
+### Must never
+
+- Read a file of another audience this way, or a file that imports no MCP library.
+- Count a hit twice, or drop a hit made as code that no hit as model text replaces.
+- Keep any text: it gives line numbers.
+
+### What it does not reach
+
+Static text a prompt or tool returns (a prompt's message body, `TextContent(text=...)`), which a model also reads; descriptions
+built at run time from strings elsewhere; a server in a language other than Python, JavaScript, and TypeScript, read as code.
+Hidden characters in a description are found by `02.2-reader` and counted by the file's audience, as before.
+
+### Done when (tests in `tests/test_tooltext.py`)
+
+1. Python declarations give their description lines and nothing else
+   (`test_python_declarations_give_their_description_lines_and_nothing_else`); JavaScript and TypeScript the same, never a string in
+   a comment (`test_javascript_declarations_give_their_description_lines_and_not_comments`); a test suite's `describe` is not a
+   description (`test_a_test_suite_describe_is_not_a_description`); a file with no MCP import or that does not parse gives none
+   (`test_a_file_that_imports_no_mcp_library_or_does_not_parse_gives_no_lines`).
+2. A hit in a description is the model's, once, and a hit in code stays code; rows only for code keep their hits
+   (`test_a_hit_in_a_description_is_read_by_the_model_once_and_a_hit_in_code_stays_code`); only a file read as code gets the second
+   read (`test_only_a_file_read_as_code_gets_the_second_read`).
+3. Fixture `class15-mcp-tool-text.py`: a tool's docstring and a parameter's description are model text (`mcp-tool-docstring-read-by-model`,
+   `mcp-parameter-description-read-by-model`), and a helper's docstring stays code (`mcp-helper-docstring-stays-code`,
+   `mcp-helper-docstring-still-found`).
+
 ## vocab
 
 Loads `Library/vocab.yaml`, the one data file holding every `02.4-phrases` part 2 word list
@@ -1499,6 +1568,11 @@ or (with `rows`) a `phrase.J.prohibited` row has no tier.
 - 2026-09-29: the pattern engine and the 14 phrase checks (part 1) and the harness rubric, the endpoint census, and the term table (part 2) built, with their word lists in `Library/vocab.yaml`.
 - 2026-10-04: position and repetition (`position.py`) and the committed-secret scan (`secret_scan.py`: gitleaks when installed, detect-secrets otherwise; values never shown) built.
 - 2026-10-17: the settings that restrict tools (`restrictions.py`, review C32) added.
+- 2026-11-03: from SkillSpector's rules (S20): MCP descriptions read as text a model reads (`tooltext.py`); rows `L.never-refuse`,
+  `L.no-disclaimer` (AR1, AR2), `E.decode-exec` (SC3), `E.tls-off` (TM3), and `E.registry-config` (SC10), 130 rows in all. Each row
+  measured first on nine repositories (three skill collections, four MCP servers, SkillSpector, Cloudflare's skill) and narrowed
+  where it caught ordinary prose or code (its note says how). Fixtures `class05-anti-refusal.md`, `class07-decode-exec.md`,
+  `class17-tls-registry.md`, `class15-mcp-tool-text.py`. `terms.code` and `terms.rows` move.
 - 2026-10-29: restructure step 6 (keep-or-cut, Q8): the conditional table (`cond.branch`, section 3) is
   cut. It reached `full.md` only, and nothing that stays read it. Its sentence splitter, which the term
   table uses, moved into `terms.py`; its word lists left `Library/vocab.yaml`. The fixture rows for it
