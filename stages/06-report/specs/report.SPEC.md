@@ -1085,10 +1085,13 @@ A `walkdown_review: 1` file (made before this spec) still loads: its marks match
 
 ### The code: `marks.py`
 
-- `place_key(item)`, `link_key(url)`, `file_key(reason, path)`, `evidence_key(box, file, text)`,
+- `place_key(item)`, `link_key(url, file=None, line=None)`, `file_key(reason, path)`, `evidence_key(box, file, text, line=None)`,
   `hidden_key(file, carrier, text)`: the keys below, each a hash of its row kind and parts with
   white space collapsed. `details_html._hidden_key` gives the line in place of the text for a masked hidden place: a hash of the
-  words would be one of the secret, and two masked places in a file have the same text.
+  words would be one of the secret, and two masked places in a file have the same text. For the same reason a key never hashes the
+  mask (`secretmask.SECRET_MASK`): a place whose quote is the mask is keyed by where it is (`file:line`), as a masked hook is, an
+  address that is the mask by its file and line, and a trifecta place whose cited line is masked by its line number. A row with its
+  words keeps the key it had.
 - `load(path)`: `(data, None)`; `(None, reason)` for a file that is not JSON or has no list of
   marks; `(None, None)` when there is none.
 - `for_run(run_dir)`: `{data, error, carried}`: the run's own file, or the carried one with the
@@ -1190,6 +1193,9 @@ because its record is of an older format (`record.made_before`, step 7b): the ke
 7. End to end, two runs with the line moved: the mark carries; nothing in `data/`, `full.md`, or
    `changes.md` differs with and without marks; Walkdown writes no `marks.json`
    (`test_marks_carry_to_a_later_run_and_change_nothing_else`).
+8. Two masked places with one headline in a file each keep their own mark through `match`, and a place with its words keeps its key
+   (`test_two_masked_places_in_a_file_each_keep_their_own_mark`); a masked address or trifecta line is keyed by where it stands
+   (`test_a_masked_address_or_trifecta_line_is_keyed_by_where_it_stands`).
 
 ### History
 
@@ -1207,6 +1213,10 @@ because its record is of an older format (`record.made_before`, step 7b): the ke
 - 2026-11-01: a masked hook's key comes from its place (`file:line`): two masked hooks in a file have the same text, and a hash of the
   words would be one of the secret (`test_a_masked_hook_has_a_key_of_its_own`). A mark saved on such a hook before this has no row to
   carry over to.
+- 2026-11-03: a key never hashes the mask. Every masked quote has the same words, so two masked places with one headline in a file had
+  one key: a saved file held both marks under it, and `match` and the page's loader gave both to the first place, so one was lost. A
+  masked place is keyed by `file:line`, a masked address by its file and line, and a masked trifecta line by its number. A mark saved
+  on such a place before this has no row to carry over to; it was not certain to reach its own place before either.
 
 ## qaview
 

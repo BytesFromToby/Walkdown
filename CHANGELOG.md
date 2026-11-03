@@ -17,6 +17,10 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
   such a skill could read "found none of the security concerns it looks for". The mark now needs every flagged value on the line to
   decode to readable text. Such a line counts as looks like a committed secret and its quote is masked; the decoded instruction
   still shows beside it, since a flagged key never decodes to readable text.
+- **Two hidden lines in one file keep their own marks.** A line hidden because it may hold a secret shows the same words as every
+  other such line, and the mark of a place was filed under its words, so two such places with the same headline in one file shared
+  one mark: on loading a saved `marks.json`, or on the next run, both marks went to the first place and the other was lost. Such a
+  place is now filed under where it is. A mark saved on one before this does not carry over.
 - **A key inside readable base64 is found.** The scan read a line as written, so a key that base64 on the line spelled was flagged
   nowhere, and the decoded instruction Walkdown shows put it in `full.md`, `review.html`, and `data/`. The decoded text is scanned
   too: such a key is listed at the line, with "(in text decoded from base64)" after its kind, and the decoded text is hidden with

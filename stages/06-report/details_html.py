@@ -301,7 +301,7 @@ def _line_text(r) -> dict:
 
 
 def _ev_key(leg, e, texts) -> str:
-    return M.evidence_key(leg, e.get("file"), texts.get((e.get("file"), e.get("line"))) or e.get("line"))
+    return M.evidence_key(leg, e.get("file"), texts.get((e.get("file"), e.get("line"))) or e.get("line"), e.get("line"))
 
 
 # What `02.2-reader`'s fold swapped, by kind (owner, 2026-10-20: exact counts, never "most"). Only the
@@ -369,7 +369,7 @@ def mark_rows(r, cap_full=None) -> list[tuple[str, list[str]]]:
     import review_html
     rows = [(p["id"], p["keys"]) for p in review_html.places(r)]
     texts = _line_text(r)
-    ks = ({M.link_key(x["url"]) for x in link_rows(r)}
+    ks = ({M.link_key(x["url"], x.get("file"), x.get("line")) for x in link_rows(r)}
           | {M.file_key(rid, f) for rid, _, fs in file_concerns(r) for f in fs}
           | {_ev_key(leg, e, texts) for leg, (ev, _) in _leg_ev(r, cap_full).items() for e in ev}
           | {_hidden_key(d) for d in _divergences(r)})

@@ -18,6 +18,7 @@ from pathlib import Path
 
 import layout
 import record
+from secretmask import SECRET_MASK
 
 MARKS_FILE = "marks.json"
 FORMAT = 2
@@ -26,6 +27,12 @@ MARK_KEYS = ("concerned", "not-concerned", "not-sure")
 
 def _text(s) -> str:
     return " ".join(str(s if s is not None else "").split())
+
+
+def _masked(text) -> bool:
+    """Whether a row's text is the secret mask: every masked row has the same words, so a key hashed from them is every such row's
+    key, and a saved mark goes to the first of them (2026-11-03). Such a row is keyed by its place instead."""
+    return _text(text) == SECRET_MASK
 
 
 def key(kind, *parts) -> str:
@@ -42,7 +49,7 @@ def place_key(it) -> str:
         return key("place", it["stage"], it["title"], it.get("quote"))
     src = it.get("src") or {}
     file = src.get("file") or str(it.get("where") or "").split(":")[0]
-    if it.get("kind") == "hook" and src.get("masked"):  # no words to tell it from the next hook in its file
+    if (it.get("kind") == "hook" and src.get("masked")) or _masked(it.get("quote")):  # no words to tell it from the next one
         return key("place", it["stage"], it["title"], file, it.get("where"))
     return key("place", it["stage"], it["title"], file, it.get("quote") or it.get("where"))
 
@@ -80,17 +87,18 @@ def old_stage_part(stage):
     return BEFORE_7B_NUMBER.get(stage, stage)
 
 
-def link_key(url) -> str:
-    return key("link", url)
+def link_key(url, file=None, line=None) -> str:
+    """An outside link: its address, or where it stands when the address is masked."""
+    return key("link", url, file, line) if _masked(url) else key("link", url)
 
 
 def file_key(reason, path) -> str:
     return key("file", reason, path)
 
 
-def evidence_key(box, file, text) -> str:
-    """A trifecta place: the box, the file, and the text of the cited line (else its number)."""
-    return key("evidence", box, file, text)
+def evidence_key(box, file, text, line=None) -> str:
+    """A trifecta place: the box, the file, and the text of the cited line (else, or when the text is masked, its number)."""
+    return key("evidence", box, file, line if _masked(text) else text)
 
 
 def hidden_key(file, carrier, text) -> str:
