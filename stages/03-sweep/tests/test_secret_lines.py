@@ -305,7 +305,9 @@ def test_the_pages_say_what_was_left_out_and_hold_no_flagged_key(tmp_path):
     """The whole run behind the wall: no passage gets an answer, so the run is held, and `continue` writes the report with what ran."""
     inp, results = make_skill(tmp_path / "in"), tmp_path / "res"
     (inp / "agents").mkdir()
-    (inp / "agents" / "swagger-notes.md").write_text(f"# Notes\ntoken = \"{KEYS['alone']}\"\n", "utf-8")  # the library drops this name
+    # The library dropped this name and the read said it did not send the file; the scan reads it now (2026-11-03), so its key line
+    # is one more line left out, and the rest of the file is read.
+    (inp / "agents" / "swagger-notes.md").write_text(f"# Notes\ntoken = \"{KEYS['alone']}\"\n", "utf-8")
     runner = [sys.executable, str(ROOT / "stages" / "_shared" / "runner.py")]
     p = subprocess.run([*runner, str(inp), "--sweep", "jev", "--results", str(results), "--no-validate"],
                        capture_output=True, env=dict(CLEAN_ENV))
@@ -315,7 +317,7 @@ def test_the_pages_say_what_was_left_out_and_hold_no_flagged_key(tmp_path):
     assert p.returncode == 0, p.stderr.decode("utf-8", "replace")[-400:]
     full, details = (run_dir / "full.md").read_text("utf-8"), (run_dir / "details.html").read_text("utf-8")
     for page in (full, details):
-        assert secretmask.left_out_note(15) in page.replace("\n", " ")
-        assert f"soft.sweep skipped for agents/swagger-notes.md: {secretmask.NOT_READ}" in page.replace("\n", " ")
+        assert secretmask.left_out_note(16) in page.replace("\n", " ")
+        assert secretmask.NOT_READ not in page.replace("\n", " ")
     for p in [*run_dir.glob("*.*"), *(run_dir / "data").glob("03-sweep.*")]:
         assert holds_a_key(p.read_text("utf-8")) == [], p.name

@@ -381,12 +381,12 @@ at with no result.
     passage (`test_a_passage_with_nothing_left_is_no_passage`); with nothing flagged the passage is as it was and there is no note
     (`test_with_nothing_flagged_there_is_no_note_and_the_passage_is_as_it_was`).
 31. A file the scan could not read is not sent and has its skip, and no scanner sends nothing
-    (`test_a_file_the_scan_could_not_read_is_not_sent_and_says_so`, `test_no_scanner_sends_nothing_and_says_so_for_each_file`,
-    `test_a_model_read_file_the_scan_leaves_out_by_name_is_not_sent_and_says_so`), with no
-    second line for it on the pages (`test_the_skip_for_a_file_gets_no_second_line_on_the_pages`).
+    (`test_a_file_the_scan_could_not_read_is_not_sent_and_says_so`, `test_no_scanner_sends_nothing_and_says_so_for_each_file`), with no
+    second line for it on the pages (`test_the_skip_for_a_file_gets_no_second_line_on_the_pages`); a file of a build name goes out
+    without its flagged line (`test_a_model_read_file_with_a_build_name_goes_out_without_its_flagged_line`).
 32. The note counts the lines (`test_the_note_says_how_many_lines_were_left_out`), and on a whole run behind the wall `details.html` and
-    `full.md` say what was left out and the run's pages and the read's files hold no flagged key
-    (`test_the_pages_say_what_was_left_out_and_hold_no_flagged_key`).
+    `full.md` say what was left out and the run's pages and the read's files hold no flagged key, a file with `swagger` in its name
+    included, which the scan reads (`test_the_pages_say_what_was_left_out_and_hold_no_flagged_key`).
 
 ## History
 
@@ -436,3 +436,7 @@ at with no result.
 - 2026-11-01: a name the scan leaves out is a file it did not read. A model-read file named like a build file (`agents/requirements.txt`) had no row, so it was sent, keys and all.
 - 2026-11-01: the scan reads build files now, so a file named like one goes by its rows: its flagged lines are blank and the rest is sent. A lock file has no row, and a read takes none, since no lock file's name has a prose extension.
 - 2026-11-01: the loaded-model build: `read_key` and the registry read moved to `stages/_shared/jevkey.py`, which also says whether Jev is available (the package is found and a key can be read); `back_jev.read_key` is the same function. Nothing this step does changed.
+- 2026-11-03: the secret scan reads a `.svg`, `.css`, `.map`, or swagger file (`02.4-phrases`, `NAME_FILTERS`), so a model-read file with such
+  a name goes by its rows: its flagged lines are left out and the rest is sent, where the read said it did not send it. With detect-secrets
+  installed, a file the read takes is text and the scan reads every text file but a lock file, so `NOT_READ` comes only from a library that
+  stops asking for a file's text.
