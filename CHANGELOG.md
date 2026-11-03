@@ -7,11 +7,11 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 ## Unreleased
 
 - **Descriptions in an MCP server's code are read as text the model reads.** A client sends each tool's, prompt's, resource's,
-  and parameter's description to the model as it stands, but Walkdown read an MCP server's Python or JavaScript as code only, so
+  and parameter's description to the model as it stands, but Walkdown read an MCP server's Python, JavaScript, or Go as code only, so
   an instruction hidden in a tool's docstring or a parameter's description counted as "not in text a model reads". In a file
   that imports an MCP library, those strings are now scanned again as model text, and a hit there counts as in text a model
-  reads (`tool_text` on the finding). Measured on the official servers, the Python SDK, and fastmcp: only declarations' strings
-  are read this way. Its review card and `details.html` say why: "This line is code, but it is part of a description in an MCP
+  reads (`tool_text` on the finding). Measured on the official servers, the Python SDK, fastmcp, and GitHub's Go server: only
+  declarations' strings are read this way, Go's struct fields and schema tags included. Its review card and `details.html` say why: "This line is code, but it is part of a description in an MCP
   server: ... so the AI reads them." `full.md` says `(model, in an MCP description)`.
 - **What Walkdown says about a line is its own line on the review card.** What hidden characters spell and what base64 decodes to
   were put in front of the place's note, so a card read "How often this pattern turns up elsewhere: Decoded from base64: ...". They

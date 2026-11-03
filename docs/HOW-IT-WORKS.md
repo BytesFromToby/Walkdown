@@ -56,7 +56,7 @@ Most checks care about who reads a file. Walkdown decides it from the path:
 |---|---|---|
 | model | SKILL.md, CLAUDE.md, reference docs, anything not matched below | instructions the model reads |
 | subagent | files under `agents/` or `commands/`, `*prompt*.md` | instructions a dispatched agent reads |
-| tool | scripts (`.py`, `.sh`, `.js`, ...), hook configs, build and lock files | code; counted, read by tools. In an MCP server's code (Python, JavaScript, TypeScript), the descriptions of its tools, prompts, resources, and parameters are read as model text: a client sends them to the model |
+| tool | scripts (`.py`, `.sh`, `.js`, ...), hook configs, build and lock files | code; counted, read by tools. In an MCP server's code (Python, JavaScript, TypeScript, Go), the descriptions of its tools, prompts, resources, and parameters are read as model text: a client sends them to the model |
 | human | README, CHANGELOG, LICENSE, NOTICE and other license files (THIRD_PARTY_NOTICES, COPYING, CREDITS), INSTALL, guides, anything under `docs/` or `.github/` | written for people; counted, kept out of capability |
 | test-data | anything under `tests/`, `fixtures/`, `__tests__/`, `testdata/`, `spec/` and the like, or named `test_*.py`, `*.test.*`, `*.spec.*`, `conftest.py`, `*.fixtures.*` | never loaded on install; counted, kept out of capability and the pages |
 

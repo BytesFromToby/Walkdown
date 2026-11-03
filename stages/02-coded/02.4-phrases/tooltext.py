@@ -16,14 +16,21 @@ import re
 
 PY_EXTS = ("py",)
 JS_EXTS = ("js", "mjs", "cjs", "ts", "mts", "cts")
+GO_EXTS = ("go",)
 PY_MCP = re.compile(r"^\s*(?:from|import)\s+(?:mcp|fastmcp)\b", re.M)
 JS_MCP = re.compile(r"""@modelcontextprotocol/sdk|\bfrom\s+["']fastmcp["']|\brequire\(\s*["']fastmcp["']\s*\)""")
+# The official Go SDK and mcp-go, imported by path (2026-11-03).
+GO_MCP = re.compile(r'"github\.com/(?:modelcontextprotocol/go-sdk|mark3labs/mcp-go)/(?:mcp|server)"')
+# A Go struct tag that gives a schema field its description: the official SDK's `jsonschema:"..."`, invopop's
+# `jsonschema_description:"..."`. The field's description goes into the tool's input or output schema.
+GO_SCHEMA_TAG = re.compile(r'\bjsonschema(?:_description)?:"')
 # A key, keyword, or field whose value a client shows the model.
 TEXT_KEYS = {"description", "title"}
-# Methods whose string arguments are a description: zod's `.describe(...)`, mcp-go's `mcp.WithDescription(...)` and
-# `mcp.Description(...)` (mcp-go's names, for when Go is read; it is not yet). A plain call is not one: a test suite's
-# `describe(...)`.
-TEXT_CALLS = {"describe", "withdescription", "description", "withtitleannotation"}
+# Methods whose string arguments are a description: zod's `.describe(...)`; mcp-go's `mcp.WithDescription(...)`,
+# `mcp.Description(...)`, `mcp.WithTitleAnnotation(...)`, and the prompt, argument, resource, and template forms. A plain call
+# is not one: a test suite's `describe(...)`.
+TEXT_CALLS = {"describe", "withdescription", "description", "withtitleannotation", "withpromptdescription",
+              "argumentdescription", "withresourcedescription", "withtemplatedescription"}
 # Calls that declare a tool, prompt, or resource with positional strings: `server.tool("name", "description", ...)`.
 DECLARE_CALLS = {"tool", "prompt", "resource"}
 # Python decorators whose function's docstring is the description (FastMCP: `@mcp.tool()`, `@mcp.prompt`, `@mcp.resource(...)`).
@@ -42,6 +49,8 @@ def is_mcp_code(rel: str, text: str) -> bool:
         return bool(PY_MCP.search(text))
     if ext in JS_EXTS:
         return bool(JS_MCP.search(text))
+    if ext in GO_EXTS:
+        return bool(GO_MCP.search(text))
     return False
 
 
@@ -50,7 +59,8 @@ def tool_text_lines(rel: str, text: str) -> set[int]:
     parse."""
     if not is_mcp_code(rel, text):
         return set()
-    return _python(text) if _ext(rel) in PY_EXTS else _js(text)
+    ext = _ext(rel)
+    return _python(text) if ext in PY_EXTS else _go(text) if ext in GO_EXTS else _js(text)
 
 
 # ---------------------------------------------------------------- Python
@@ -103,9 +113,10 @@ def _python(text: str) -> set[int]:
 _IDENT = re.compile(r"[A-Za-z_$][\w$]*")
 
 
-def _tokens(text: str) -> list[tuple]:
+def _tokens(text: str, raw_backtick: bool = False) -> list[tuple]:
     """(kind, value, first line, last line): kind is `str`, `id`, or `p` (one punctuation character). Comments and white
-    space are dropped. A template literal is one string; what is inside `${...}` is not read apart from it."""
+    space are dropped. A template literal is one string; what is inside `${...}` is not read apart from it. `raw_backtick`:
+    a backtick string has no escapes (Go's raw string), so a backslash in it is a character."""
     out, i, line, n = [], 0, 1, len(text)
     while i < n:
         c = text[i]
@@ -125,7 +136,7 @@ def _tokens(text: str) -> list[tuple]:
         elif c in "\"'`":
             j, start = i + 1, line
             while j < n and text[j] != c:
-                if text[j] == "\\":
+                if text[j] == "\\" and not (raw_backtick and c == "`"):
                     j += 1
                 elif text[j] == "\n":
                     if c != "`":
@@ -181,7 +192,21 @@ def _args(toks, i) -> list[tuple[set[int], bool]]:
 
 
 def _js(text: str) -> set[int]:
-    toks = _tokens(text)
+    return _c_like(_tokens(text))
+
+
+def _go(text: str) -> set[int]:
+    """Go: the rules of `_c_like` (a `Description:` or `Title:` field of a struct literal, the official SDK's form; mcp-go's
+    `mcp.WithDescription(...)` and its kin), and a struct tag that describes a schema field (`GO_SCHEMA_TAG`)."""
+    toks = _tokens(text, raw_backtick=True)
+    out = _c_like(toks)
+    for kind, val, a, b in toks:
+        if kind == "str" and GO_SCHEMA_TAG.search(val):
+            out |= set(range(a, b + 1))
+    return out
+
+
+def _c_like(toks) -> set[int]:
     out: set[int] = set()
     for i, (kind, val, _, _) in enumerate(toks):
         nxt = toks[i + 1][1] if i + 1 < len(toks) and toks[i + 1][0] == "p" else None
