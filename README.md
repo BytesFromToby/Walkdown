@@ -83,7 +83,7 @@ Each step has a folder under `stages/` and a name the reports use.
 | `02-coded/02.1-inventory` | What ships | What ships? Files, formats, hooks, agents, manifests, MCP servers |
 | `02-coded/02.2-reader` | What the model actually reads | What does the model actually receive? Hidden text, invisible characters, rendered vs raw, text in images and on PDF pages, text in another language |
 | `02-coded/02.3-graph` | What loads what | What loads what? Entry points, references, files nothing names, components a manifest leaves out |
-| `02-coded/02.4-phrases` | What the text asks for | What does the text ask for? About 125 patterns for reaching out, taking the wheel, changing the environment, talking to the human |
+| `02-coded/02.4-phrases` | What the text asks for | What does the text ask for? About 130 patterns for reaching out, taking the wheel, changing the environment, talking to the human |
 | `02-coded/02.5-capability` | What this touches | What does installing it grant? The three legs of Simon Willison's lethal trifecta, install grants, pairs worth reading |
 | `02-coded/02.6-builder` | Builder checks | The builder's questions: what triggers it, what it costs, what ships, what ties it to one machine, which hosts read it, whether the tools fit, whether it is current and clean |
 | `03-sweep` | Needs a human read | Optional model read: is there prose no pattern matched that tells the AI to do something risky? (experimental) |

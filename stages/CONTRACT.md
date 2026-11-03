@@ -213,7 +213,9 @@ not a folder to read. It has no section in any report (`stages/01-intake/specs/i
 
 One check per PHRASES set or detector. Every finding carries `quote` (the
 original line, verbatim) and may carry `audience` (`model`, `subagent`, `human`,
-`tool`, `test-data` (added 2026-10-02)). The report also carries `terms` beside `findings`
+`tool`, `test-data` (added 2026-10-02)). A phrase finding with `tool_text: true` (added 2026-11-03) is a hit in the description of
+a tool, prompt, resource, or parameter in an MCP server's code, read as text a model reads: its `audience` is `model` though its
+file is code. The report also carries `terms` beside `findings`
 (added 2026-10-19, review C22 b): the version of the search terms and matching code it came from
 (`version`, `count`, `rows` with one short hash per pattern id, `vocab`, `code`), so two runs can
 tell a hit from a repository change from one from a Walkdown change. It also carries
@@ -252,7 +254,7 @@ same report after the phrase findings:
 | `term.conflict` | term with two or more different definitions (`file`, `line` null) | `term`; `definitions`: list of `{file, line, text}` |
 | `term.safety` | definition of a safety word | `term`; `quote` |
 | `pos.density` | model-read file over the reader window with phrase hits (`line` null; added 2026-10-04, REPORTING 4.4) | `lines`; `first10`, `middle80`, `last10`; `window_line`; `beyond_window`; `beyond_lines` |
-| `secret.found` | file and line that looks like a committed secret (added 2026-10-04) | `kinds`; `engine`: `detect-secrets` or `walkdown`; `audience`. Never the value. A key repeated in a file has a row on each line. Any finding of any step that keeps words from that line carries `masked: true` and has those words replaced (`stages/_shared/specs/shared.SPEC.md`, secretmask), once the last step that reads them has run. A file the scanner could not scan is a skip finding with `file` set and `line` null; no scanner at all is one with `file` null. A lock file has no row: the report's `secret_left_out` names it |
+| `secret.found` | file and line that looks like a committed secret (added 2026-10-04) | `kinds`; `engine`: `detect-secrets` or `walkdown`; `audience`; `key_end` on a private key's first line, the key's last line (added 2026-11-02); `in_base64` when a key was found in the text the line's base64 decodes to, whose kind then ends in ` (in text decoded from base64)` (added 2026-11-03). Never the value. A key repeated in a file has a row on each line. Any finding of any step that keeps words from that line, or from a line of a private key through its `key_end`, carries `masked: true` and has those words replaced (`stages/_shared/specs/shared.SPEC.md`, secretmask), once the last step that reads them has run. A file the scanner could not scan is a skip finding with `file` set and `line` null; no scanner at all is one with `file` null. A lock file has no row: the report's `secret_left_out` names it |
 | `rep.sentence` | sentence repeated across two or more model-read prose files (first occurrence; added 2026-10-04, REPORTING 4.5) | `sentence`; `files`; `count`; `where`: list of `{file, line}`; `patterns` |
 | `limit.setting` | flag or setting that restricts what tools an agent can use, any audience (added 2026-10-17, review C32; a fact, never a risk) | `kind`: `tools-flag`, `deny`, `sandbox`, `permission-mode`; `tools` (list; tools-flag and deny); `value` (sandbox and permission-mode); `rules_out`: list of `write`, `shell`, `network`; `grants_write`: bool; `audience`; `quote` |
 
@@ -513,3 +515,7 @@ already (`step-missing`), a step a stop left out has no coverage to check, and a
 - 2026-11-01: `secret.found` has a row on every line a repeated key stands on. No check was added or removed.
 - 2026-11-01: `span` and `event_line` (above, Additional fields), and `masked` on any finding that keeps words from a flagged line. No check was added or removed, and no count moved.
 - 2026-11-01: `secret.found` reads build files and pattern lists, and `secret_left_out` is new on `02.4-phrases`'s report. No check was added or removed.
+- 2026-11-02: `key_end` on a private key's `secret.found`, and the mask covers the key through it. No check was added or removed, and no count moved.
+- 2026-11-02: `likely_not_secret` is `BASE64_TEXT` only when every value the scanner flagged on the line is readable base64. No check was added or removed; a line with a key beside such text now counts as one that may hold a secret.
+- 2026-11-03: `in_base64` on a `secret.found` found in text decoded from base64. No check was added or removed; a line whose readable base64 spells a key now counts as one that may hold a secret.
+- 2026-11-03: `tool_text` on a phrase finding in an MCP server's description (`specs/phrases.SPEC.md`, tooltext). No check was added or removed; such a hit counts as in text a model reads.

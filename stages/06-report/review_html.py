@@ -423,6 +423,7 @@ def _flagged_one(p, title=False, seen=None, at=None) -> str:
     why = WHY.get(p.get("kind"))
     if why:
         rows.insert(0, f"<li>{esc(why)}</li>")
+    rows += [f'<li class="muted">{esc(c)}</li>' for c in p.get("context") or []]  # its own line: a lead never runs into it
     if p.get("note") and p.get("kind") not in WHY_SAYS_NOTE and not p["model"]:
         rows.append(f'<li class="muted">{esc((p.get("lead") or "") + p["note"])}</li>')
     if p.get("kind") == "term.conflict":

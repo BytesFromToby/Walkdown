@@ -56,7 +56,7 @@ Most checks care about who reads a file. Walkdown decides it from the path:
 |---|---|---|
 | model | SKILL.md, CLAUDE.md, reference docs, anything not matched below | instructions the model reads |
 | subagent | files under `agents/` or `commands/`, `*prompt*.md` | instructions a dispatched agent reads |
-| tool | scripts (`.py`, `.sh`, `.js`, ...), hook configs, build and lock files | code; counted, read by tools |
+| tool | scripts (`.py`, `.sh`, `.js`, ...), hook configs, build and lock files | code; counted, read by tools. In an MCP server's code (Python, JavaScript, TypeScript), the descriptions of its tools, prompts, resources, and parameters are read as model text: a client sends them to the model |
 | human | README, CHANGELOG, LICENSE, NOTICE and other license files (THIRD_PARTY_NOTICES, COPYING, CREDITS), INSTALL, guides, anything under `docs/` or `.github/` | written for people; counted, kept out of capability |
 | test-data | anything under `tests/`, `fixtures/`, `__tests__/`, `testdata/`, `spec/` and the like, or named `test_*.py`, `*.test.*`, `*.spec.*`, `conftest.py`, `*.fixtures.*` | never loaded on install; counted, kept out of capability and the pages |
 
@@ -192,7 +192,7 @@ matches is resolved as of the review), and the report says so.
 out, take control, change the environment, or work on the person, and builds tables of the
 things instructions depend on (hosts, confirmations, definitions).
 
-About 125 patterns (`Library/patterns.yaml`), each citing the threat class or phrase
+About 130 patterns (`Library/patterns.yaml`), each citing the threat class or phrase
 set it comes from (`Library/THREATS.md`, `Library/PHRASES.md`), with the plain words the review
 page shows beside it. Each hit records
 the line verbatim, the pattern ids, the matched words, and the file's audience. Matching runs on the

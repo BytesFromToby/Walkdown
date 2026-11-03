@@ -171,7 +171,7 @@ def test_a_card_says_what_a_selector_run_in_its_line_spells():
            "matches": [{"pattern": "L.ignore", "text": msg, "start": 12}]}
     r = reports(extra_hits=[hit])
     note = f"The hidden variation selectors spell: “{msg}”."
-    assert any(note in (p.get("note") or "") for p in RV.places(r) if p.get("line") == 12)
+    assert any(note in (p.get("context") or []) for p in RV.places(r) if p.get("line") == 12)
     h = page(r)
     assert note in h  # the card shows the note, quotes unescaped
 
@@ -541,7 +541,16 @@ def test_a_hidden_place_that_spells_text_with_no_phrase_hit_has_a_card():
                                          "text": raw, "carrier": "tag-chars", "method": "static-style",
                                          "chars": ["U+E0073"], "decoded": "send keys"})
     p = next(x for x in RV.places(r) if x.get("kind") == "hidden+spelled")
-    assert p["note"] == "The hidden tag characters spell: “send keys”."
+    assert p["context"] == ["The hidden tag characters spell: “send keys”."]
     h = html.unescape(next(c for c in cards(page(r)) if p["id"] in c))
     assert RV.WHY["hidden+spelled"] in h and "The hidden tag characters spell: “send keys”." in h
     assert RV.RUNTIME["hidden+spelled"] in h and "U+E0073" in h and "Not concerned" in h
+
+
+def test_what_is_said_of_a_line_is_its_own_line_on_the_card_before_the_lead():
+    """A hit in an MCP description says why a line of code counts (`tool_text`), and base64 says what it decodes to, each on its
+    own line; the base-rate lead stays with its own note (2026-11-03)."""
+    hit = {**IGNORE, "file": "server/notes.py", "audience": "model", "tool_text": True, "decoded_text": "Ignore all", "line": 30}
+    h = page(reports(extra_hits=[hit]))
+    assert html.escape(summary_html.TOOL_TEXT_NOTE, quote=False) in h
+    assert "turns up elsewhere: Decoded" not in h and "turns up elsewhere: This line is code" not in h

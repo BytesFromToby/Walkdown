@@ -19,6 +19,7 @@ import qaview
 import render as R
 import stagelist
 import library  # `render` has put stages/_shared on the path, as it did for `stagelist`
+import secretmask
 
 PLAIN_STAGE = dict(stagelist.STEP_WORDS)  # the words a reader meets for each step, from stages.json
 # Plain names for pattern families (`02.4-phrases`), used as the headline of an item.
@@ -60,14 +61,19 @@ def _item(stage, title, where, quote=None, note=None, lead=None, kind=None, src=
     paired with hidden text is listed under the reader's section), a name from `stages/stages.json`;
     before restructure step 7b it was a section number, 1 to 6. `lead`: words shown once before the
     card's notes, however many are merged. `kind` and `src` (the finding the item came from) are
-    for the review page (review_html.py, 2026-10-12); this page does not show them."""
+    for the review page (review_html.py, 2026-10-12); this page does not show them. `context`: what Walkdown says about the line
+    itself (what hidden characters spell, what base64 decodes to, that code is read by the AI), shown as its own line before
+    the note, so a `lead` never runs into it (2026-11-03: "How often this pattern turns up elsewhere: Decoded from base64: ...")."""
+    context = []
     spelled = spelled_note(quote)
     if spelled:
-        note = spelled + (f" {note}" if note else "")
+        context.append(spelled)
     if (src or {}).get("decoded_text"):  # review C42: an instruction hidden in base64
-        note = f"Decoded from base64: \u201c{src['decoded_text']}\u201d." + (f" {note}" if note else "")
+        context.append(f"Decoded from base64: \u201c{src['decoded_text']}\u201d.")
+    if (src or {}).get("tool_text"):  # a line of code the AI reads (`02.4-phrases` tooltext, 2026-11-03)
+        context.append(TOOL_TEXT_NOTE)
     return {"stage": stage, "title": title, "where": where, "quote": quote, "note": note,
-            "lead": lead, "kind": kind, "src": src}
+            "lead": lead, "kind": kind, "src": src, "context": context}
 
 
 def is_model_read(it) -> bool:
@@ -76,6 +82,9 @@ def is_model_read(it) -> bool:
 
 
 HOOK_NOTE = "A hook runs whenever the harness fires its event, without anyone asking."
+# A phrase hit in an MCP server's code that the AI reads (`02.4-phrases`, `tool_text`): the file is code, so say why it counts.
+TOOL_TEXT_NOTE = ("This line is code, but it is part of a description in an MCP server: the tool, prompt, or setting it describes "
+                  "is listed for the AI with these words, so the AI reads them.")
 # Where a host-run command runs, by its hook format (review C31, 2026-10-17).
 HOOK_NOTES = {
     "cursor-environment": "Cursor runs this on its own cloud machine when it sets up or starts a cloud "
@@ -178,8 +187,10 @@ def first_items(r) -> list[dict]:
 
 def secret_lines(r) -> set:
     """The lines the secret scan flagged, as (file, line). A divergence on one is masked by the time a page is drawn
-    (`run.load`); no page says what one of them spells either way: a report never repeats a secret."""
-    return {(x.get("file"), x.get("line")) for x in R.fnd(r, "02.4-phrases", "secret.found") if "skipped" not in x}
+    (`run.load`); no page says what one of them spells either way: a report never repeats a secret. A private key's lines below
+    its first are flagged with it (`secretmask.flagged_lines`)."""
+    found = R.fnd(r, "02.4-phrases", "secret.found")
+    return {(x.get("file"), x.get("line")) for x in found if "skipped" not in x} | secretmask.flagged_lines(found)
 
 
 def _spelled_places(r, items) -> list[dict]:
@@ -211,6 +222,7 @@ def unique(items) -> list[dict]:
             g["also"].append(it.get("src"))
             if it.get("note") and it["note"] not in (g.get("note") or "").split("; "):
                 g["note"] = f"{g['note']}; {it['note']}" if g.get("note") else it["note"]
+            g["context"] = list(dict.fromkeys((g.get("context") or []) + (it.get("context") or [])))
             continue
         by[k] = {**it, "also": []}
         out.append(by[k])
@@ -298,7 +310,7 @@ def _line_text(r) -> dict:
 
 
 def _ev_key(leg, e, texts) -> str:
-    return M.evidence_key(leg, e.get("file"), texts.get((e.get("file"), e.get("line"))) or e.get("line"))
+    return M.evidence_key(leg, e.get("file"), texts.get((e.get("file"), e.get("line"))) or e.get("line"), e.get("line"))
 
 
 # What `02.2-reader`'s fold swapped, by kind (owner, 2026-10-20: exact counts, never "most"). Only the
@@ -366,7 +378,7 @@ def mark_rows(r, cap_full=None) -> list[tuple[str, list[str]]]:
     import review_html
     rows = [(p["id"], p["keys"]) for p in review_html.places(r)]
     texts = _line_text(r)
-    ks = ({M.link_key(x["url"]) for x in link_rows(r)}
+    ks = ({M.link_key(x["url"], x.get("file"), x.get("line")) for x in link_rows(r)}
           | {M.file_key(rid, f) for rid, _, fs in file_concerns(r) for f in fs}
           | {_ev_key(leg, e, texts) for leg, (ev, _) in _leg_ev(r, cap_full).items() for e in ev}
           | {_hidden_key(d) for d in _divergences(r)})

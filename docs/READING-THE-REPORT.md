@@ -223,9 +223,11 @@ Walkdown didn't check" says how many lines, and names a file a read did not send
 The scan goes by the shapes of known keys and by keywords, so finding nothing here does not prove no key is there. It does not flag a key
 in a shape it does not know, a key spelled only in hidden characters, a password in a sentence ("the password is ..."), `token = value`,
 or `password = value` with no quotes in a Markdown file. Nothing marks such a line, so a page can show it and a model read sends it. One
-kind of flagged line also keeps its text: when the flagged text on a line is random-looking and part of it is base64 that decodes to
-readable words, the line reads as holding no key, so a key of no known shape beside that text can still show in `full.md` and `data/`. A
-model read leaves that line out.
+kind of flagged line also keeps its text: when everything flagged on a line is base64 that decodes to readable words, the line reads as
+holding no key, so a key the scanner did not flag beside that text can still show in `full.md` and `data/`. A model read leaves that line
+out. When a key does stand beside such text, the line is hidden and the decoded words are still shown, since a key never decodes to
+readable words. The decoded words are scanned too: a key in them is flagged at the line, its kind ends in "(in text decoded from
+base64)", and the decoded words are hidden with the line.
 
 ### What changed since an earlier run
 

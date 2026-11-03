@@ -520,12 +520,14 @@ No Not concerned boxes and no marks bar (owner, 2026-10-27): marking is on `revi
   and the brief in `walkdown.py`. A place carries `stage`: the name of the stage whose section lists
   it (`02.1-inventory` to `02.5-capability`, or `03-sweep` for a model's reading), from `stages.json`;
   `is_model_read(item)` asks whether that stage is an AI stage (`stagelist.AI_STAGES`), never a number.
-  `02.4-phrases` phrase places are `render.point_hits` (C39). `_item` notes
-  what a quote's hidden tag characters spell ("The hidden tag characters spell: ...", `render.tag_text`),
-  what its runs of variation selectors spell ("The hidden variation selectors spell: ...",
-  `render.selector_text`, from `library.runs`; P1 2026-10-29; tag note first, both before the place's
-  own note; `spelled_note(text)` holds those two sentences) and what a base64 stretch decodes to (C42).
-  `review.html` shows the same note. `_spelled_places` adds a place of its own, kind `hidden+spelled`,
+  `02.4-phrases` phrase places are `render.point_hits` (C39). `_item` gives a place `context`, what Walkdown says of the line itself,
+  in this order: what a quote's hidden tag characters spell ("The hidden tag characters spell: ...", `render.tag_text`) and what its
+  runs of variation selectors spell ("The hidden variation selectors spell: ...", `render.selector_text`, from `library.runs`; P1
+  2026-10-29; one sentence pair, `spelled_note(text)`), what a base64 stretch decodes to (C42), and, for a hit in an MCP server's
+  description (`tool_text`), `TOOL_TEXT_NOTE`, which says the line is code the AI reads as a description. Each is its own line on
+  `review.html` and stands before the place's note on `details.html`, for every kind of place; a phrase place's note (its base
+  rate) stays off `details.html`, as before. `unique` keeps each sentence once. Until 2026-11-03 these sentences were the start of
+  the note, so the base-rate `lead` ran into them ("How often this pattern turns up elsewhere: Decoded from base64: ..."). `_spelled_places` adds a place of its own, kind `hidden+spelled`,
   titled "Hidden characters that spell out text", under `02.2-reader` after the `hidden+phrase` places, for
   a `read.divergence` with `decoded` in a file the AI reads (`render.audience`: model or subagent): never
   when another place on that line says what it spells already, or when the secret scan flagged the line
@@ -1085,10 +1087,13 @@ A `walkdown_review: 1` file (made before this spec) still loads: its marks match
 
 ### The code: `marks.py`
 
-- `place_key(item)`, `link_key(url)`, `file_key(reason, path)`, `evidence_key(box, file, text)`,
+- `place_key(item)`, `link_key(url, file=None, line=None)`, `file_key(reason, path)`, `evidence_key(box, file, text, line=None)`,
   `hidden_key(file, carrier, text)`: the keys below, each a hash of its row kind and parts with
   white space collapsed. `details_html._hidden_key` gives the line in place of the text for a masked hidden place: a hash of the
-  words would be one of the secret, and two masked places in a file have the same text.
+  words would be one of the secret, and two masked places in a file have the same text. For the same reason a key never hashes the
+  mask (`secretmask.SECRET_MASK`): a place whose quote is the mask is keyed by where it is (`file:line`), as a masked hook is, an
+  address that is the mask by its file and line, and a trifecta place whose cited line is masked by its line number. A row with its
+  words keeps the key it had.
 - `load(path)`: `(data, None)`; `(None, reason)` for a file that is not JSON or has no list of
   marks; `(None, None)` when there is none.
 - `for_run(run_dir)`: `{data, error, carried}`: the run's own file, or the carried one with the
@@ -1190,6 +1195,9 @@ because its record is of an older format (`record.made_before`, step 7b): the ke
 7. End to end, two runs with the line moved: the mark carries; nothing in `data/`, `full.md`, or
    `changes.md` differs with and without marks; Walkdown writes no `marks.json`
    (`test_marks_carry_to_a_later_run_and_change_nothing_else`).
+8. Two masked places with one headline in a file each keep their own mark through `match`, and a place with its words keeps its key
+   (`test_two_masked_places_in_a_file_each_keep_their_own_mark`); a masked address or trifecta line is keyed by where it stands
+   (`test_a_masked_address_or_trifecta_line_is_keyed_by_where_it_stands`).
 
 ### History
 
@@ -1207,6 +1215,10 @@ because its record is of an older format (`record.made_before`, step 7b): the ke
 - 2026-11-01: a masked hook's key comes from its place (`file:line`): two masked hooks in a file have the same text, and a hash of the
   words would be one of the secret (`test_a_masked_hook_has_a_key_of_its_own`). A mark saved on such a hook before this has no row to
   carry over to.
+- 2026-11-03: a key never hashes the mask. Every masked quote has the same words, so two masked places with one headline in a file had
+  one key: a saved file held both marks under it, and `match` and the page's loader gave both to the first place, so one was lost. A
+  masked place is keyed by `file:line`, a masked address by its file and line, and a masked trifecta line by its number. A mark saved
+  on such a place before this has no row to carry over to; it was not certain to reach its own place before either.
 
 ## qaview
 
@@ -2160,4 +2172,9 @@ check". Any other run has none.
 - 2026-10-31: M1 slice A, fix round: the backend is flattened and cut where the details page writes it (`Read by <backend> as telling the reader to:`, a clear place and a near one) and in the log header's line for a stop (`prepared.backend`). They wrote it as it came.
 - 2026-10-31: M1 slice A, fix round 2: the model name in the fixture line and in the waiting line of a stopped run is cut at `MODEL_CAP`; it was one line and uncut (the command to go on keeps the option as typed). Test: `test_tokens_line.py::test_the_model_name_in_the_line_is_cut_at_the_cap`.
 - 2026-10-31: M1 slice A, fix round 3: the command to go on, and the line above it, print a backend the record kept only if it is a model option (`common_lines.record_option`); a value changed by hand in `data/run.json` is left out, with one sentence. It printed whatever the record held, flattened.
+- 2026-11-03: `context` on a place (`_item`): what hidden characters spell, what base64 decodes to, and, new, that a line of
+  code is an MCP description the AI reads (`TOOL_TEXT_NOTE`). It is its own line on a review card, so the base-rate lead no longer
+  runs into it, and `details.html` shows it for phrase places too. `full.md`'s phrase hit says `(model, in an MCP description)` for
+  a `tool_text` hit (`tests/test_details_html.py::test_what_is_said_of_the_line_is_its_own_line_and_a_lead_never_runs_into_it`,
+  `tests/test_review_html.py::test_what_is_said_of_a_line_is_its_own_line_on_the_card_before_the_lead`).
 - 2026-11-01: `hidden+spelled`: a hidden place whose characters spell text and that has no phrase hit is a place of its own (a row here, a card on `review.html`), and `details.html`'s list of every hidden place says what each one's characters spell (`spelled_note`). Until now only a line with a phrase hit said it on these two pages, and `full.md` alone said it for the rest. A default run with no such line has the same pages.

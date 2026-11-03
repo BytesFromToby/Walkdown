@@ -4,6 +4,45 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 `python walkdown.py --version`, and recorded in every run's LOG.md with the git commit
 ("+modified" when the code had uncommitted changes).
 
+## Unreleased
+
+- **Descriptions in an MCP server's code are read as text the model reads.** A client sends each tool's, prompt's, resource's,
+  and parameter's description to the model as it stands, but Walkdown read an MCP server's Python or JavaScript as code only, so
+  an instruction hidden in a tool's docstring or a parameter's description counted as "not in text a model reads". In a file
+  that imports an MCP library, those strings are now scanned again as model text, and a hit there counts as in text a model
+  reads (`tool_text` on the finding). Measured on the official servers, the Python SDK, and fastmcp: only declarations' strings
+  are read this way. Its review card and `details.html` say why: "This line is code, but it is part of a description in an MCP
+  server: ... so the AI reads them." `full.md` says `(model, in an MCP description)`.
+- **What Walkdown says about a line is its own line on the review card.** What hidden characters spell and what base64 decodes to
+  were put in front of the place's note, so a card read "How often this pattern turns up elsewhere: Decoded from base64: ...". They
+  are a line of their own now, before the note, and `details.html` shows them for every place.
+- **Five new patterns** (130 in all), from rules in NVIDIA's SkillSpector: telling the model never to refuse (`L.never-refuse`),
+  to leave out disclaimers or ethical commentary (`L.no-disclaimer`), decoding hidden code and running it at once
+  (`E.decode-exec`), turning off certificate checks (`E.tls-off`), and pointing a package manager at another source
+  (`E.registry-config`). Each was measured on nine repositories first and narrowed where it caught ordinary prose or code.
+- **No line of a private key reaches a report.** The secret scan flags a private key's first line, and the mask covered only
+  that line. Hidden characters on a later line of the key's body made the reader quote that line, and `full.md` and
+  `data/02.2-reader.json` printed it whole. The scan now records where the key ends (`key_end` on its `secret.found` row), and
+  every line through that one is masked, the `-----END` line included. A model read already left the whole key out, and now uses
+  the same lines. Counts, findings, and page wording are the same; a quote on a key's later line reads as masked, so a mark on
+  such a place does not carry over.
+- **A key beside readable base64 is a key.** A line holding an instruction hidden in base64 was marked as holding no key, whatever
+  else the scanner flagged on it, so a hex key or base64 of random bytes on the same line was shown in `full.md` and `data/`, and
+  such a skill could read "found none of the security concerns it looks for". The mark now needs every flagged value on the line to
+  decode to readable text. Such a line counts as looks like a committed secret and its quote is masked; the decoded instruction
+  still shows beside it, since a flagged key never decodes to readable text.
+- **`.svg`, `.css`, and `.map` files are scanned for keys.** detect-secrets left them out by their extension, as it does a path
+  holding `swagger`, and the pages named each as a file the scan could not scan. They are text, so the scan reads them now. Embedded
+  images and source maps flag nothing in the cases checked.
+- **Two hidden lines in one file keep their own marks.** A line hidden because it may hold a secret shows the same words as every
+  other such line, and the mark of a place was filed under its words, so two such places with the same headline in one file shared
+  one mark: on loading a saved `marks.json`, or on the next run, both marks went to the first place and the other was lost. Such a
+  place is now filed under where it is. A mark saved on one before this does not carry over.
+- **A key inside readable base64 is found.** The scan read a line as written, so a key that base64 on the line spelled was flagged
+  nowhere, and the decoded instruction Walkdown shows put it in `full.md`, `review.html`, and `data/`. The decoded text is scanned
+  too: such a key is listed at the line, with "(in text decoded from base64)" after its kind, and the decoded text is hidden with
+  the line.
+
 ## 0.4.0 (2026-11-02)
 
 The pages say what they said in 0.3.1 about the same repository, in the same order, except where

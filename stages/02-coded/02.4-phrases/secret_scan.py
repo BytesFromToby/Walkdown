@@ -14,7 +14,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "_shared"))
-from secretmask import BASE64_TEXT  # noqa: E402  (the mask must skip what scan marks with it)
+# The mask must skip what the scan marks with BASE64_TEXT, and cover the whole of a key whose first line the scan flags.
+from secretmask import BASE64_TEXT, is_private_key, key_end  # noqa: E402
 from foldtext import base64_texts  # noqa: E402
 import coverlines as cov  # noqa: E402
 import readtext  # noqa: E402
@@ -44,22 +45,33 @@ PLACEHOLDER = re.compile(r".*(\.\.\.|…)|<[^<>]+>|your\b.*|your[-_].*|[x*.]{3,}
 # Key shapes no installed scanner may know (2026-10-25, review C43: detect-secrets has no rule
 # for Anthropic keys, and a real-looking one in prose was missed).
 KEY_SHAPES = {"Anthropic API Key": re.compile(r"\bsk-ant-(?:api|admin)\d{2}-[A-Za-z0-9_-]{32,}")}
+# The kind of a key found in text decoded from base64 on a line (2026-11-03): the scan reads a line as written, so a key that readable
+# base64 spells was flagged nowhere, and the decoded text a phrase hit keeps showed it. `in_base64` on the row says so to the mask.
+IN_BASE64 = " (in text decoded from base64)"
+# A flagged value that is one base64 run, as `foldtext.base64_texts` reads one: only then can the whole of it be readable text.
+B64_VALUE = re.compile(r"[A-Za-z0-9+/]{24,}={0,2}")
 # A comment is the audited repository's own word about a line, and neither the scanner nor the mark takes it (2026-11-01: this filter
 # dropped a line carrying `# pragma: allowlist secret`, with no record).
 ALLOWLIST_FILTER = "detect_secrets.filters.allowlist.is_line_allowlisted"
+# Filters that leave a file out by its name before reading a byte: `.svg`, `.css`, `.map`, and the rest of `IGNORED_FILE_EXTENSIONS`, and
+# a path holding `swagger`. Every file the scan is given is text (stage 1 decided by its bytes), so it is read (owner, 2026-11-03: they
+# were a "could not scan" skip). The library's lock-file filter stays: `LOCK_FILES` is the scan's own list.
+NAME_FILTERS = ("detect_secrets.filters.heuristic.is_non_text_file", "detect_secrets.filters.heuristic.is_swagger_file")
 COMMENT_TAIL = re.compile(r"(?<=\S)\s+(?:#|//|/\*|<!--|--\s|'\s).*$")
 
 
-def likely_not_secret(line: str, kinds: list[str]) -> str | None:
+def likely_not_secret(line: str, kinds: list[str], all_text: bool = True) -> str | None:
     """Why a flagged line holds no secret, or None. Only plain cases: a hash under a key named
     for a hash, a password in a URL for a local or reserved test host, a keyword whose value is
     a variable name, a plain lowercase word, or prose. A comment after the code is no part of the
-    line here: its spaces would read as prose, and a hash key or an address in it as the line's own."""
+    line here: its spaces would read as prose, and a hash key or an address in it as the line's own.
+    `all_text`: whether every value the scanner flagged on the line is base64 that decodes to readable text (`reads_as_text`); a
+    line with readable base64 and a flagged value that is not (a key beside the text) is no `BASE64_TEXT` (2026-11-02)."""
     ks = set(kinds)
     line = COMMENT_TAIL.sub("", line)
     if ks <= ENTROPY and HASH_KEY.search(line):
         return "a hash under a key named for one"
-    if ks <= ENTROPY and base64_texts(line):
+    if ks <= ENTROPY and all_text and base64_texts(line):
         return BASE64_TEXT
     if ks <= URL_KINDS and LOCAL_URL.search(line):
         return "a password in a URL for a local test address"
@@ -75,6 +87,14 @@ def likely_not_secret(line: str, kinds: list[str]) -> str | None:
     return None
 
 
+def reads_as_text(value) -> bool:
+    """Whether a value the scanner flagged is base64 that decodes to readable text (`foldtext.base64_texts` finds it whole), as an
+    instruction hidden in base64 is (review C42). A key, hex or base64 of random bytes, is not. Only this answer is kept, never the
+    value."""
+    value = str(value or "").strip()
+    return bool(B64_VALUE.fullmatch(value)) and bool(base64_texts(value))
+
+
 def _could_not(rel: str) -> dict:
     """The skip finding for a file a scanner could not scan: our own words, and never the error's (its text could hold words
     from the repository)."""
@@ -87,6 +107,16 @@ def _text(root: Path, rel: str) -> str | None:
         return readtext.decode((root / rel).read_bytes())
     except OSError:
         return None
+
+
+def _decoded_lines(text: str) -> list[tuple[int, str]]:
+    """(line, the readable text its base64 decodes to) for each line that has some, every run's text on its own line (`base64_texts`)."""
+    out = []
+    for n, line in enumerate(readtext.split_lines(text), 1):
+        texts = base64_texts(line) if len(line) >= 24 else []
+        if texts:
+            out.append((n, "\n".join(texts)))
+    return out
 
 
 def _shapes(root: Path, rels: set[str], skips: list | None = None, unscanned=()) -> list[dict]:
@@ -109,6 +139,9 @@ def _shapes(root: Path, rels: set[str], skips: list | None = None, unscanned=())
         for n, line in enumerate(readtext.split_lines(text), 1):
             out += [{"file": rel, "line": n, "kind": kind, "engine": "walkdown"}
                     for kind, rx in KEY_SHAPES.items() if rx.search(line)]
+        for n, decoded in _decoded_lines(text):
+            out += [{"file": rel, "line": n, "kind": kind + IN_BASE64, "engine": "walkdown", "in_base64": True}
+                    for kind, rx in KEY_SHAPES.items() if rx.search(decoded)]
     return out
 
 
@@ -116,8 +149,8 @@ def _scan_decoded(library, path: str, text: str) -> list | None:
     """Every hit of one file through the library with the text we decoded, or None when the library did not ask for it. It opens a
     file itself with the machine's default encoding and takes a `UnicodeDecodeError` for a binary file: no scan and no error
     (2026-11-01: on cp1252, a file holding U+274C, U+1F4DD, or a tag character; on UTF-8, any file in another encoding). So for this
-    call the name `open` in its module is ours. It does not ask when its filters leave the file out by name (`.svg`, `.css`, a path
-    with `swagger`), or if a later version reads some other way. Its `scan_file` gives a hit for each line a secret stands on. Its
+    call the name `open` in its module is ours. It does not ask when a filter leaves the file out by name (its lock-file filter; the
+    others are off, `NAME_FILTERS`), or if a later version reads some other way. Its `scan_file` gives a hit for each line a secret stands on. Its
     `SecretsCollection` keeps one of a value in a file, and its GitHub rule captures only the prefix, so every token of a file is one
     value there: a later line had no row, so no mask (2026-11-01)."""
     asked = []
@@ -146,18 +179,23 @@ def _detect_secrets(root: Path, rels: set[str], skips: list | None = None) -> li
         return None
     out = []
     with default_settings() as settings:
-        settings.disable_filters(ALLOWLIST_FILTER)
+        settings.disable_filters(ALLOWLIST_FILTER, *NAME_FILTERS)
         for rel in sorted(rels):
             text = _text(root, rel)
             try:
                 hits = None if text is None else _scan_decoded(library, str(root / rel), text)
+                inside = [] if hits is None else [(n, _scan_decoded(library, str(root / rel), d)) for n, d in _decoded_lines(text)]
             except Exception:  # the exception's text is not kept: it could hold words from the repository
                 hits = None
-            if hits is None:
+            if hits is None or any(h is None for _, h in inside):
                 if skips is not None:
                     skips.append(_could_not(rel))
                 continue
-            out += [{"file": rel, "line": s.line_number, "kind": s.type or "secret", "engine": "detect-secrets"} for s in hits]
+            out += [{"file": rel, "line": s.line_number, "kind": s.type or "secret", "engine": "detect-secrets",
+                     "text": reads_as_text(s.secret_value)} for s in hits]
+            # A hit in the decoded text stands at the line of its base64, and is never readable base64 itself.
+            out += [{"file": rel, "line": n, "kind": (s.type or "secret") + IN_BASE64, "engine": "detect-secrets",
+                     "text": False, "in_base64": True} for n, found in inside for s in found]
     return out
 
 
@@ -183,6 +221,7 @@ def scan(root, files: dict[str, str]) -> list[dict]:
     hits = hits + _shapes(root, rels, file_skips, unscanned)
     merged: dict[tuple, dict] = {}
     lines: dict[str, list[str]] = {}
+    not_text = {(h["file"], h["line"]) for h in hits if not h.get("text")}  # a line with a flagged value that is no readable base64
     for h in hits:
         key = (h["file"], h["line"])
         m = merged.setdefault(key, {"check": "secret.found", "file": h["file"], "line": h["line"],
@@ -190,11 +229,19 @@ def scan(root, files: dict[str, str]) -> list[dict]:
                                     "audience": files.get(h["file"])})
         if h["kind"] not in m["kinds"]:
             m["kinds"].append(h["kind"])
+        if h.get("in_base64"):
+            m["in_base64"] = True
     for (rel, ln), m in merged.items():
         if rel not in lines:
             lines[rel] = readtext.split_lines(_text(root, rel) or "")
-        text = lines[rel][ln - 1] if isinstance(ln, int) and 0 < ln <= len(lines[rel]) else ""
-        why = likely_not_secret(text, m["kinds"])
+        inside = isinstance(ln, int) and 0 < ln <= len(lines[rel])
+        text = lines[rel][ln - 1] if inside else ""
+        why = likely_not_secret(text, m["kinds"], all_text=(rel, ln) not in not_text)
         if why:
             m["likely_not_secret"] = why
+        # A private key's first line is the one flagged, and the lines below it are the key: `key_end` is its last, so the mask
+        # covers every line a finding of another step could quote (2026-11-02).
+        last = key_end(lines[rel], ln) if inside and is_private_key(m["kinds"]) else None
+        if last:
+            m["key_end"] = last
     return skip + file_skips + [merged[k] for k in sorted(merged, key=lambda k: (k[0], k[1] or 0))]

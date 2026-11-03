@@ -22,6 +22,7 @@ import endpoints  # noqa: E402
 import restrictions  # noqa: E402
 import rubric  # noqa: E402
 import terms  # noqa: E402
+import tooltext  # noqa: E402
 import termset  # noqa: E402
 import readtext  # noqa: E402
 from audience import audience, inventory_sets  # noqa: E402
@@ -119,6 +120,23 @@ def phrase_scan(rel, text, rows, aud, undone=None) -> list[dict]:
     return scan_text(rel, text, rows, aud, undone)
 
 
+def tool_text_scan(rel, text, rows, aud, found) -> tuple[list[dict], int]:
+    """The descriptions an MCP server's code declares (`tooltext`), scanned again as text a model reads: a client sends each tool,
+    prompt, resource, and parameter description to the model as it stands (2026-11-03). Only a file read as code has them read
+    this way. A hit there is marked `tool_text` and takes the place of the hit of the same check on that line made as code, so
+    nothing is counted twice. Returns (the file's findings, the number of lines read this way)."""
+    lines = tooltext.tool_text_lines(rel, text) if aud == "tool" else set()
+    if not lines:
+        return found, 0
+    raw = split_lines(text)
+    model = scan_text(rel, "\n".join(x if n in lines else "" for n, x in enumerate(raw, 1)), rows, "model")
+    for f in model:
+        f["tool_text"] = True
+    took = {(f["line"], f["check"]) for f in model}
+    merged = [f for f in found if (f["line"], f["check"]) not in took] + model
+    return sorted(merged, key=lambda f: (f["line"], bool(f.get("wrapped")))), len(lines)
+
+
 def text_checks(rel, raw, folded, instr, aud, rows, vocab, lookalike):
     """The checks that read one text file for more than a phrase: the rubric of what a step asks (`rubric.action`), the
     definitions of terms, the settings that limit tools, and the hosts it names. Returns (rubric rows, definitions, limit
@@ -178,6 +196,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
     lookalike: dict[str, str] = {}  # name as written -> the host it imitates (review C42)
     undone: list[dict] = []  # line hits the next line cancelled (C37 follow-up)
     texts: dict[str, tuple] = {}  # rel -> (audience, raw lines, bytes): position and repetition
+    tool_text: dict[str, int] = {}  # rel -> lines of an MCP server's code read as text a model reads (`tool_text_scan`)
     for row in files:
         rel = row["file"]
         got = readtext.read_row(input_dir, row)  # the rules the builder step reads text by too
@@ -206,7 +225,10 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
         text = got.text
         scanned += 1
         aud = audience(rel, scripts, hook_configs)
-        findings.extend(phrase_scan(rel, text, rows, aud, undone))
+        found, read_as_model = tool_text_scan(rel, text, rows, aud, phrase_scan(rel, text, rows, aud, undone))
+        findings.extend(found)
+        if read_as_model:
+            tool_text[rel] = read_as_model
         raw = split_lines(text)
         texts[rel] = (aud, raw, got.size)
         folded = [fold_line(x) for x in raw]
@@ -243,7 +265,7 @@ def build_report(input_dir: Path, inv: dict, rows, vocab=None,
     hits = {"findings": findings,
             "counts": {"per_check": per_check, "per_pattern": per_pattern,
                        "part2": part2_counts(p2)},
-            "scanned": scanned, "not_scanned": not_scanned, "undone_by_next_line": undone,
+            "scanned": scanned, "not_scanned": not_scanned, "undone_by_next_line": undone, "tool_text": tool_text,
             "limits": [EXTRACTED_LIMIT] if normalized is not None else LIMITS}
     return report, hits
 

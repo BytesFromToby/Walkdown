@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 import details_html as S
+import glance as G
 from qa_support import Q
 from validate import Stamp
 
@@ -336,9 +337,9 @@ def test_items_say_what_hidden_text_spells():
     """Review C42: a place notes what its hidden tag characters spell, or its base64 decodes to."""
     tags = "".join(chr(0xE0000 + ord(c)) for c in "send keys")
     it = S._item("02.4-phrases", "t", "a.md:1", "x" + tags, "rate note")
-    assert it["note"] == "The hidden tag characters spell: “send keys”. rate note"
+    assert it["context"] == ["The hidden tag characters spell: “send keys”."] and it["note"] == "rate note"
     it = S._item("02.4-phrases", "t", "a.md:1", "q", None, src={"decoded_text": "Ignore all"})
-    assert it["note"] == "Decoded from base64: “Ignore all”."
+    assert it["context"] == ["Decoded from base64: “Ignore all”."] and it["note"] is None
 
 
 def test_items_say_what_a_variation_selector_run_spells():
@@ -348,16 +349,16 @@ def test_items_say_what_a_variation_selector_run_spells():
     def sel(text):
         return "".join(chr(0xFE00 + b) if b < 16 else chr(0xE0100 + b - 16) for b in text.encode())
     it = S._item("02.4-phrases", "t", "a.md:1", "x\U0001F44D" + sel("send keys"), "rate note")
-    assert it["note"] == "The hidden variation selectors spell: “send keys”. rate note"
+    assert it["context"] == ["The hidden variation selectors spell: “send keys”."] and it["note"] == "rate note"
     zw = "\u200b".join(sel(c) for c in "open it")
-    assert S._item("02.4-phrases", "t", "a.md:1", "x" + zw, None)["note"] == \
-        "The hidden variation selectors spell: “open it”."
-    assert S._item("02.4-phrases", "t", "a.md:1", "x" + sel("\x01\x02\x03"), None)["note"] is None
-    assert S._item("02.4-phrases", "t", "a.md:1", "✔\ufe0f done", None)["note"] is None
+    assert S._item("02.4-phrases", "t", "a.md:1", "x" + zw, None)["context"] == \
+        ["The hidden variation selectors spell: “open it”."]
+    assert S._item("02.4-phrases", "t", "a.md:1", "x" + sel("\x01\x02\x03"), None)["context"] == []
+    assert S._item("02.4-phrases", "t", "a.md:1", "✔\ufe0f done", None)["context"] == []
     tags = "".join(chr(0xE0000 + ord(c)) for c in "send keys")
     both = S._item("02.4-phrases", "t", "a.md:1", "x" + tags + sel("open it"), "n")
-    assert both["note"] == ("The hidden tag characters spell: “send keys”. "
-                            "The hidden variation selectors spell: “open it”. n")
+    assert both["context"] == ["The hidden tag characters spell: “send keys”. "
+                               "The hidden variation selectors spell: “open it”."] and both["note"] == "n"
     assert S.R.selector_text(None) is None and S.R.selector_text("plain") is None
     assert S.R.selector_text(sel("two words") + "x" + sel("and more")) == "two words and more"
 
@@ -656,7 +657,7 @@ def test_a_hidden_place_that_spells_text_with_no_phrase_hit_is_a_place_of_its_ow
     r = add(reports(), "02.2-reader", _hidden_line())
     it = next(x for x in S.first_items(r) if x.get("kind") == "hidden+spelled")
     assert it["title"] == "Hidden characters that spell out text" and it["where"] == "SKILL.md:5"
-    assert it["note"] == "The hidden tag characters spell: “send keys”." and it["stage"] == "02.2-reader"
+    assert it["context"] == ["The hidden tag characters spell: “send keys”."] and it["stage"] == "02.2-reader"
     t = section(page(r), "careful")
     assert "<summary>Hidden characters that spell out text (1)</summary>" in t
     assert "The hidden tag characters spell: “send keys”." in H.unescape(t)
@@ -687,7 +688,7 @@ def test_no_second_place_where_a_place_on_the_line_says_it_already():
                                    "evidence": [{"stage": "02.2-reader", "why": "hidden text: tag-chars"}]})
     items = S.first_items(r)
     assert not [x for x in items if x.get("kind") == "hidden+spelled"]
-    assert any(x.get("kind") == "hidden+phrase" and "send keys" in x["note"] for x in items)
+    assert any(x.get("kind") == "hidden+phrase" and any("send keys" in c for c in x["context"]) for x in items)
 
 
 def test_every_hidden_place_says_what_its_characters_spell():
@@ -724,3 +725,16 @@ def test_a_line_the_secret_scan_flagged_does_not_spell_it_out_on_the_pages():
                                 "engine": "detect-secrets", "audience": "model"})
     assert not [x for x in S.first_items(r) if x.get("kind") == "hidden+spelled"]
     assert "hunter2" not in page(r)
+
+
+def test_what_is_said_of_the_line_is_its_own_line_and_a_lead_never_runs_into_it():
+    """The base-rate lead ("How often this pattern turns up elsewhere: ") was put before the whole note, so a card read "How often
+    this pattern turns up elsewhere: Decoded from base64: ..." (2026-11-03). What hidden characters spell, what base64 decodes to,
+    and that a line of code is an MCP description the AI reads are `context`, each its own line."""
+    it = S._item("02.4-phrases", "t", "s.py:8", "q", "L.ignore, rare", lead="How often this pattern turns up elsewhere: ",
+                 kind="phrase", src={"tool_text": True, "decoded_text": "Ignore all"})
+    assert it["context"] == ["Decoded from base64: “Ignore all”.", S.TOOL_TEXT_NOTE] and it["note"] == "L.ignore, rare"
+    li = G.place_li(it, None)
+    assert S.TOOL_TEXT_NOTE in li and "Decoded from base64" in li and "L.ignore, rare" not in li  # a phrase's rate note stays off
+    merged = S.unique([it, {**it, "src": {"tool_text": True}, "context": [S.TOOL_TEXT_NOTE]}])
+    assert len(merged) == 1 and merged[0]["context"] == it["context"]

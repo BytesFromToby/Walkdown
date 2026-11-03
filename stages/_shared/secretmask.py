@@ -17,6 +17,11 @@ TEXT_FIELDS = ("quote", "definition", "condition", "body", "decoded_text", "text
                "target", "pattern", "action", "carve_out", "term",
                "key", "value", "tool", "model", "what", "error", "plain")
 NOT_TEXT = {"limit.setting": ("value",)}
+# A phrase hit on readable text hidden in base64 (review C42) keeps what it decoded and the words it matched there: a value the scanner
+# flags is random-looking, so it never decodes to readable text, and the decoded instruction is what a reader needs (owner, 2026-11-03).
+# Its `quote`, the line as written, is masked as any other. `decoded` here is the fixed word "base64". When the scan found a key in that
+# decoded text (`in_base64` on the row), it goes too.
+DECODED = ("decoded", "decoded_text")
 # Lists whose items a person wrote and whose plain words are what a page is for: a tool's name stays, and anything else goes.
 WORD_LISTS = ("tools", "grants", "disallowed", "preloads", "env_keys", "types")
 # Lists with nothing to keep: how many there are stays.
@@ -65,20 +70,30 @@ def _lines_of(f: dict) -> set | None:
     return {line}
 
 
-def _flagged(findings: list[dict]) -> set:
-    """The lines the secret scan flagged, as (file, line). A line whose secret is only base64 that decodes to readable text holds
-    no key: its text is the instruction a reader needs (review C42)."""
-    return {(f["file"], f["line"]) for f in findings
-            if f.get("check") == "secret.found" and "skipped" not in f
-            and f.get("likely_not_secret") != BASE64_TEXT}
+def flagged_lines(findings: list[dict]) -> set:
+    """The lines the secret scan flagged, as (file, line), with the rest of each private key it starts (`key_end`): the scan flags
+    only a key's first line, and its body is the key. A line whose secret is only base64 that decodes to readable text holds no key:
+    its text is the instruction a reader needs (review C42)."""
+    out = set()
+    for f in findings:
+        if f.get("check") != "secret.found" or "skipped" in f or f.get("likely_not_secret") == BASE64_TEXT:
+            continue
+        line, last = f.get("line"), f.get("key_end")
+        if isinstance(line, int) and isinstance(last, int):
+            out.update((f["file"], n) for n in range(line, last + 1))
+        else:
+            out.add((f["file"], line))
+    return out
 
 
 def _is_plain(word) -> bool:
     return bool(PLAIN.fullmatch(str(word)))
 
 
-def _mask_fields(f: dict, was: set) -> bool:
-    """Every field of a finding that holds a person's words, in place, each kept in `was`. Whether any was masked now."""
+def _mask_fields(f: dict, was: set, keep_decoded: bool = True) -> bool:
+    """Every field of a finding that holds a person's words, in place, each kept in `was`. Whether any was masked now.
+    `keep_decoded`: false when the scan found a key in the text the line's base64 decodes to (`in_base64`), so what a base64 hit
+    decoded goes too."""
     changed = False
 
     def gone(word):
@@ -87,7 +102,8 @@ def _mask_fields(f: dict, was: set) -> bool:
         was.add(word)
         return SECRET_MASK
 
-    fixed = NOT_TEXT.get(f.get("check"), ())
+    from_base64 = keep_decoded and f.get("decoded") == "base64"
+    fixed = NOT_TEXT.get(f.get("check"), ()) + (DECODED if from_base64 else ())
     for k in TEXT_FIELDS:
         if k not in fixed and isinstance(f.get(k), str) and f[k] != SECRET_MASK:
             f[k] = gone(f[k])
@@ -103,7 +119,7 @@ def _mask_fields(f: dict, was: set) -> bool:
     for k in CODE_POINTS:
         if isinstance(f.get(k), list):
             f[k] = sorted(set(f[k]))
-    for m in f.get("matches") or []:
+    for m in [] if from_base64 else f.get("matches") or []:  # the words of a base64 hit are words of its decoded text
         if m.get("text") != SECRET_MASK:
             m["text"] = gone(m.get("text"))
     return changed
@@ -164,8 +180,10 @@ def mask_secret_lines(findings: list[dict], was: dict | None = None) -> None:
     fired, and that holds a person's words, is replaced by SECRET_MASK, matched words included, and a list of code points keeps
     each one once, sorted, so it names the kinds and spells nothing. The location stays. `was`, when given: {file: the words
     masked}, for `mask_copies`."""
-    lines = _flagged(findings)
+    lines = flagged_lines(findings)
     files = {file for file, _ in lines}
+    in_base64 = {(f["file"], f["line"]) for f in findings
+                 if f.get("check") == "secret.found" and f.get("in_base64") and "skipped" not in f}
     for f in findings:
         if f.get("check") == "secret.found":
             continue
@@ -174,7 +192,7 @@ def mask_secret_lines(findings: list[dict], was: dict | None = None) -> None:
         hit = f.get("file") in files if lines_of is None else any((f.get("file"), n) in lines for n in lines_of)
         changed = _mask_places(f, lines, files, gone)
         if hit:
-            changed = _mask_fields(f, gone) or changed
+            changed = _mask_fields(f, gone, keep_decoded=(f.get("file"), f.get("line")) not in in_base64) or changed
         elif f.get("event_line") and (f.get("file"), f["event_line"]) in lines and not _is_plain(f.get("event")):
             changed = _replace(f, "event", gone) or changed
         # a parser's finding is masked for what it held; a finding that quotes the line is masked for where it is, as it was
@@ -219,7 +237,7 @@ def mask_copies(node, was: dict, file=None) -> bool:
 
 def mask_edges(graph: dict | None, secrets: list[dict]) -> None:
     """`graph.json`: an edge keeps the text that named its target, as (`from`, `line`), in place."""
-    lines = _flagged(secrets)
+    lines = flagged_lines(secrets)
     for e in (graph or {}).get("edges") or []:
         if (e.get("from"), e.get("line")) in lines and isinstance(e.get("text"), str):
             e["text"] = SECRET_MASK
@@ -234,7 +252,7 @@ def mask_reports(reports: dict, *side) -> None:
     {step's name: its report}, any of them absent or None. `side`: reports of the capability step's kept apart (`capability.json`),
     which hold the same findings with every citation."""
     secrets = secrets_of(reports.get(PHRASES))
-    if not _flagged(secrets):
+    if not flagged_lines(secrets):
         return
     was: dict = {}
     mask_secret_lines(secrets + list((reports.get(INVENTORY) or {}).get("findings") or []), was)
@@ -263,21 +281,33 @@ def left_out_note(count: int) -> str:
     return f"{count} lines the secret scan flagged were left out of what the model read, so they were not examined."
 
 
-def _key_body(lines: list[str], start: int) -> range:
-    """The lines after a flagged first line of a private key that hold the rest of it, by number: the scan flags only the first.
-    Through the line with `KEY_END`, or with none, through the next blank line (a PuTTY file has no such line)."""
+def is_private_key(kinds) -> bool:
+    """Whether a `secret.found` row's kinds name a private key (`PRIVATE_KEY`)."""
+    return any(PRIVATE_KEY.search(str(k)) for k in kinds or [])
+
+
+def key_end(lines: list[str], start: int) -> int | None:
+    """The last line of a private key whose first line, `start`, the scan flagged, or None when the key ends on that line: the scan
+    flags only the first. Through the line with `KEY_END`, or with none, through the line before the next blank line (a PuTTY file
+    has no such line)."""
     if KEY_END in lines[start - 1]:
-        return range(0)
+        return None
     last = next((n for n in range(start + 1, len(lines) + 1) if KEY_END in lines[n - 1]), None)
     if last is None:
         last = next((n - 1 for n in range(start + 1, len(lines) + 1) if not lines[n - 1].strip()), len(lines))
-    return range(start + 1, last + 1)
+    return last if last > start else None
+
+
+def _key_body(lines: list[str], start: int) -> range:
+    """The lines after a flagged first line of a private key that hold the rest of it, by number (`key_end`)."""
+    last = key_end(lines, start)
+    return range(start + 1, last + 1) if last else range(0)
 
 
 class ToSend:
     """What of a file a model read may send, from the `secret.found` rows of `02.4-phrases`. More is held back than a page masks: a page
-    can show a line marked as base64 that reads as text (`mask_secret_lines`), and that mark looks at the line as a whole, so a key
-    beside such text gets it too. Sending cannot be taken back, so every flagged line stays here, marked or not; so does a file with a
+    can show a line marked as base64 that reads as text (`mask_secret_lines`), and that mark asks only the values the scanner flagged,
+    so a key it did not flag can stand beside such text. Sending cannot be taken back, so every flagged line stays here, marked or not; so does a file with a
     skip row, since no row can say what is in it. The scan also writes no row for a lock file (`secret_scan.scannable`), and no read
     takes one: a read takes prose by its extension, and no lock file's name has one."""
 
@@ -301,8 +331,10 @@ class ToSend:
             n = f.get("line")
             if isinstance(n, int) and 0 < n <= len(lines):
                 out.add(n)
-                if any(PRIVATE_KEY.search(str(k)) for k in f.get("kinds") or []):
+                if is_private_key(f.get("kinds")):  # the scan's `key_end`, and the same rule over these lines for a row saved before it
                     out.update(_key_body(lines, n))
+                    if isinstance(f.get("key_end"), int):
+                        out.update(range(n + 1, min(f["key_end"], len(lines)) + 1))
         return out
 
     def lines(self, rel, lines) -> list[str] | None:

@@ -282,7 +282,8 @@ scanned; plus a count of findings, with the part 2 counts. Every part 2 item is 
 (position and repetition and the secret scan since 2026-10-04), so none is named as not built.
 
 `--out <dir>`: also writes `<dir>/hits.json`: `undone_by_next_line` (line hits the next line
-of their paragraph cancelled, `scan.undone_by_next_line`, added 2026-10-20), `findings` (as stdout),
+of their paragraph cancelled, `scan.undone_by_next_line`, added 2026-10-20), `tool_text` (added 2026-11-03: `{file: lines}` for
+each file of MCP server code whose descriptions were read as text a model reads, `tooltext` below), `findings` (as stdout),
 `counts` (`per_check`: part 1 findings per phrase check, every check listed,
 zeros included; `per_pattern`: part 1 findings per pattern id, every id listed,
 zeros included; `part2`: `rubric` (`rows`, `with_confirmation`,
@@ -1021,11 +1022,23 @@ and `BUILD_GLOBS` say who reads a file, and do not decide what the scan reads.
   row, however many lines of the file hold the same value: the hits are the library's `scan_file`, which gives one for each line.
   Its `SecretsCollection` keeps one of a value in a file, and its GitHub rule captures only the prefix, so there every GitHub
   token of a file is one value.
+- Text decoded from base64: on each line, the readable text its base64 runs decode to (`foldtext.base64_texts`, the text a
+  phrase hit keeps as `decoded_text`) goes through both passes as well, detect-secrets and `KEY_SHAPES`. A hit stands at the line of
+  its base64, its kind ends in `IN_BASE64` (` (in text decoded from base64)`), and the row has `in_base64: true`, which the mask reads
+  (2026-11-03). Such a hit is never readable base64 itself, so its line gets no `BASE64_TEXT`. A file whose decoded text the library
+  did not read is a skip, as the file would be.
+- `key_end` on a row whose kinds name a private key (`secretmask.is_private_key`): the last line of the key, since the scan flags only
+  its first and the lines below it are the key (`secretmask.key_end`: through the next line holding `-----END`, or with none through
+  the line before the next blank line). Absent when the key ends on its first line. The mask and a model read cover every line from
+  `line` to `key_end` (`stages/_shared/specs/shared.SPEC.md`, secretmask); `line` and the count of rows stay what they were, and no page
+  shows the range.
 - No scanner available: one skip finding (`file` null) naming what to install; the limits (`data/limits.md`) list it.
 - A file detect-secrets did not scan: one skip finding for that file (`_could_not`, `the secret scan could not scan this file`),
   never the error's text. Those are a file whose bytes `readtext.decode` cannot read or that cannot be opened, a file it raised on,
-  and a file it never asked for the text of: its filters leave some out by name before reading them (`.svg`, `.css`, `.map`, and
-  the rest of `IGNORED_FILE_EXTENSIONS`; a path holding `swagger`), and a later version may read some other way. The check for this
+  and a file it never asked for the text of: its lock-file filter leaves some out by name before reading them (`composer.lock`,
+  `Podfile.lock`, and other lock names `LOCK_FILES` does not hold), and a later version may read some other way. Its filters that left
+  out `.svg`, `.css`, `.map`, the rest of `IGNORED_FILE_EXTENSIONS`, and a path holding `swagger` are off (`NAME_FILTERS`, owner,
+  2026-11-03): every file the scan is given is text, so those are read. The check for this
   is that the library asked for the text, so no silent zero stands behind `looked_at`. The file counts as explained, the shapes
   below still run on it, and `details.html` and `full.md` say the scan could not scan it beside what the scan found
   (`stages/06-report/specs/report.SPEC.md`, History).
@@ -1078,8 +1091,9 @@ see the same lines. The name `open` is taken back after each call, and `detect-s
 - A key in a lock file: left out by name (`LOCK_FILES`), so it is not flagged and not masked. The pages name the file.
 - A key the scanner has no rule for: a shape no detector knows, a key spelled only in hidden characters, and `password = value` with no
   quotes in a `.md` with prose in it (`test_what_the_scan_does_not_flag_is_what_the_docs_say`). It has no row, so nothing masks it and a model read sends it.
-- A key of no known shape beside readable base64: `BASE64_TEXT` looks at the line as a whole, so with a phrase hit on the line `full.md` and
-  `data/02.4-phrases.json` keep the key. A line with a kind outside `ENTROPY` is not marked. A model read leaves the line out.
+- A key on a line with readable base64 that the scanner does not flag itself: `BASE64_TEXT` asks only the values it flagged, so a key
+  of a shape no rule knows, out of quotes where the entropy rules do not look, keeps the mark, and with a phrase hit on the line `full.md`
+  and `data/02.4-phrases.json` keep it. A model read leaves the line out.
 
 ### Done when
 
@@ -1097,8 +1111,7 @@ see the same lines. The name `open` is taken back after each call, and `detect-s
    `test_a_key_shape_is_found_in_a_file_that_is_not_utf8`).
 9. A flagged line has the number and the text every step gives it (`test_a_flagged_line_has_the_number_and_the_text_every_step_gives_it`).
 10. These are a skip in our words, explained and not looked at: bytes that do not decode
-    (`test_bytes_that_do_not_decode_are_a_skip_in_our_words`), a file left out by its name
-    (`test_a_file_the_library_leaves_out_by_its_name_is_a_skip`), and a library that stops asking for the text
+    (`test_bytes_that_do_not_decode_are_a_skip_in_our_words`), and a library that stops asking for the text
     (`test_a_library_that_stops_asking_for_our_text_gives_skips_and_no_zero`). The library's `open` is its own again after a scan
     (`test_the_library_gets_its_own_open_back`).
 11. The key-shape pass numbers a line as every other step does, with a form feed, U+2028, or a lone CR before it
@@ -1123,6 +1136,28 @@ see the same lines. The name `open` is taken back after each call, and `detect-s
     (`test_every_check_has_a_line_and_the_counts_add_up`).
 16. A gitleaks on the machine is not run, with `.gitleaks.toml` and `.gitleaksignore` in the repository, and the scan runs no program
     (`test_a_gitleaks_on_the_machine_is_not_run`). The stamp's fingerprint does not ask for it (`test_the_fingerprint_does_not_ask_for_gitleaks`).
+17. A private key's first line carries `key_end`, its last line, through `-----END` or, with none, the line before the next blank line;
+    a key on one line and another kind carry none, and no line of the body appears
+    (`test_a_private_keys_first_line_carries_the_last_line_of_the_key`,
+    `test_a_private_key_with_no_end_line_runs_to_the_line_before_the_next_blank_one`, `test_a_key_on_one_line_and_another_kind_carry_no_key_end`).
+
+18. A key beside readable base64 is not marked and its line is masked, and readable base64 alone, once or twice, still is
+    (`test_a_key_beside_readable_base64_is_not_marked_and_the_text_alone_still_is`); a value reads as text only when the whole of it is
+    readable base64 (`test_a_value_reads_as_text_only_when_the_whole_of_it_is_readable_base64`); fixture rows
+    `base64-text-alone-is-marked`, `secret-beside-base64-text`, and `secret-beside-base64-text-not-marked` (`beside-base64.md`). On a whole
+    run, neither key is in a report or a step output (`06-report/tests/test_run.py`,
+    `test_a_key_beside_readable_base64_is_in_no_report_and_no_step_output`).
+
+19. A key that readable base64 spells is found at its line, by both passes and by the key shapes alone with no scanner, its line is
+    not marked, and readable base64 with no key still is (`test_a_key_that_readable_base64_spells_is_found_at_its_line_and_never_shown`,
+    `test_with_no_scanner_the_key_shapes_still_read_the_decoded_text`); fixture rows `secret-inside-base64-text`,
+    `secret-inside-base64-text-not-marked`, and `secret-inside-base64-text-never-shown`. On a whole run the key is in no report and no
+    step output (`06-report/tests/test_run.py`, `test_a_key_that_readable_base64_spells_is_in_no_report_and_no_step_output`).
+
+20. A `.svg`, `.css`, `.map`, or swagger file is scanned and looked at, and its key is found
+    (`test_a_file_the_library_would_leave_out_by_its_name_is_scanned`; fixture rows `secret-in-css`, `secret-in-svg`); an embedded
+    image, a font as a data address, and a source map's mappings give no flag (`test_an_embedded_image_or_a_source_map_gives_no_flag`);
+    the library's lock-file filter stays on (`test_the_library_lock_filter_stays_on`).
 
 ### Likely not a secret (2026-10-09)
 
@@ -1144,10 +1179,12 @@ kept with `likely_not_secret: <reason>` (benign hits are recorded, never dropped
   summary): it ends in `...` or `…`, is in angle brackets (`<your-key>`), starts with `your`, is
   only `x`, `*`, or `.` (three or more), starts with `abc123`, or is `changeme`, `placeholder`,
   `dummy`, `example`, or `redacted` (any case): "a placeholder, not a value".
-- entropy kinds only, and a base64 run on the line decodes to readable text
-  (`foldtext.base64_texts`): "base64 that decodes to readable text, not a key" (2026-10-25,
+- entropy kinds only, a base64 run on the line decodes to readable text
+  (`foldtext.base64_texts`), and every value detect-secrets flagged on the line is itself such a run (`reads_as_text`; only the
+  answer is kept, never the value): "base64 that decodes to readable text, not a key" (2026-10-25,
   review C42: an instruction hidden in base64 was filed as a committed secret; `02.4-phrases` matches
-  the decoded text itself).
+  the decoded text itself). Before 2026-11-02 the rule asked only the line, so a hex key, or base64 of random bytes, beside an
+  instruction hidden in base64 got the mark, and its line was shown.
 
 A comment after the code (from `#`, `//`, `/*`, `<!--`, `-- `, or `' `, `COMMENT_TAIL`) comes off the line before any of these rules
 reads it: its spaces would read as prose, and a hash key, an address, or base64 in it as the line's own (2026-11-01). A line that is
@@ -1185,6 +1222,22 @@ The report counts these apart and lists them with the reason in the full report 
 - 2026-11-01 (owner): gitleaks is not run. It ran in place of detect-secrets when installed, a repository's own `.gitleaks.toml` and
   `.gitleaksignore` steer it by its README, and no run here or in CI ever reached a real one. `_gitleaks` is gone, and `SKIPPED` says to install
   detect-secrets. Default runs on a machine with no gitleaks do not move. "What it does not reach" now lists what the scan misses.
+- 2026-11-02: `key_end` on a private key's first line. The scan flags only that line, so a finding of another step that quoted a later
+  line of the key was not masked: on a made-up skill with hidden characters on two lines of a key's body, `full.md` and
+  `data/02.2-reader.json` repeated both lines. No row is added or removed, and `line` stays. `terms.code` moves with this file.
+- 2026-11-02: `BASE64_TEXT` asks every value the scanner flagged on the line (`reads_as_text`), not the line alone. A hex key, or base64 of
+  random bytes, beside an instruction hidden in base64 was marked as no key: on a made-up skill both keys reached `full.md`,
+  `data/02.4-phrases.json`, and `data/hits.json`, and the brief said Walkdown found none of the concerns it looks for. Such a line now counts
+  among the lines that may hold a secret, and its quotes are masked; the decoded instruction stays (`secretmask.DECODED`, owner, 2026-11-03).
+  `terms.code` moves with this file.
+- 2026-11-03: the name filters are off (`NAME_FILTERS`, owner). detect-secrets left `.svg`, `.css`, `.map`, the rest of
+  `IGNORED_FILE_EXTENSIONS`, and a path holding `swagger` out before reading a byte, and the scan wrote a "could not scan" skip. Measured
+  first on three public skill repositories (`anthropics/skills`, `obra/superpowers`, `wshobson/agents`): one such text file in all (an `.svg`),
+  no line flagged; on made-up files, an embedded image, a font data address, and a source map's mappings flag nothing. `terms.code` moves
+  with this file.
+- 2026-11-03: the text decoded from base64 is scanned (`IN_BASE64`, `in_base64`). A key that readable base64 spells was flagged nowhere:
+  the decoded text a phrase hit keeps showed it in `full.md`, `review.html`, `data/02.4-phrases.json`, and `data/hits.json` (on 0.4.0 too).
+  `terms.code` moves with this file.
 
 ## terms
 
@@ -1385,6 +1438,74 @@ changes the version on the next run.
   did, and neither was in the hash, so a change to either read as no change to the matching code. The
   value changes once with this version.
 
+## tooltext
+
+Added 2026-11-03 (SkillSpector TP1 and TP3, `Library/SOURCES.md` S20). Text a model reads inside MCP server code.
+
+A file read by tools (`audience` `tool`) is code, and a phrase hit in it counts as not read by a model. An MCP server's code is
+the exception: a client sends the description of every tool, prompt, resource, and parameter it declares to the model as it
+stands, so an instruction hidden there is an instruction to the model.
+
+### Inputs
+
+`tool_text_lines(rel, text)`: a file's path and decoded text.
+
+### Outputs
+
+A set of line numbers, empty for any file that is not MCP code or does not parse:
+
+- **Which files.** `is_mcp_code`: a `.py` file that imports `mcp` or `fastmcp`; a `.js`, `.mjs`, `.cjs`, `.ts`, `.mts`, or `.cts`
+  file that names `@modelcontextprotocol/sdk` or imports `fastmcp`. Go and other languages are not read this way: `audience`
+  already reads a `.go` file as text a model reads.
+- **Python** (`ast`): the docstring of a function decorated `@<x>.tool`, `@<x>.prompt`, or `@<x>.resource` (called or not); every
+  string in the value of a `description=` or `title=` keyword of any call (`Field(description=...)`, `Tool(description=...)`, a
+  decorator's own), a call around it included (`t("KEY", "default")`); every string in the value of a dict key `"description"` or
+  `"title"` (an input schema). A multi-line string gives every line it spans.
+- **JavaScript and TypeScript** (a tokenizer that knows strings, template literals, comments, and brackets): every string in the
+  value of a `description` or `title` key or assignment, up to the `,` or `;` that ends it or the bracket that closes around it;
+  the strings of a method call `.describe(...)` (zod), `.WithDescription(...)`, `.Description(...)`, or `.WithTitleAnnotation(...)`;
+  and the second argument of `.tool(...)`, `.prompt(...)`, or `.resource(...)` when it is one string literal. A plain call
+  `describe(...)` is a test suite, not a description. A string in a comment is never one.
+
+`run.tool_text_scan(rel, text, rows, aud, found)`: for a file read as code only, the lines `tool_text_lines` gives are scanned
+again (`scan.scan_text`, every other line blank so numbers stay) with audience `model`. Each such hit carries `tool_text: true`
+and takes the place of the hit of the same check on that line made as code, so nothing is counted twice; a row that applies
+only to code (`E.runtime-install`, `C.script-instruction`) keeps its hit as code. The file's findings stay in line order. It
+returns them and how many lines were read this way (`hits.json`'s `tool_text`).
+
+### Measured (2026-11-03)
+
+On code that is not test data: `modelcontextprotocol/servers` 4 files, 33 lines; `punkpeye/fastmcp` 5 files, 20 lines;
+`modelcontextprotocol/python-sdk` 239 files, 420 lines, 5 phrase hits on them (`J.confirm-first` on "Send a text message" and the
+like). Sampled lines were descriptions; the one other kind seen is a `Field(description=...)` in the SDK's own library code. Every
+tool and parameter description of the git, fetch, and time servers was found, and no helper docstring.
+
+### Must never
+
+- Read a file of another audience this way, or a file that imports no MCP library.
+- Count a hit twice, or drop a hit made as code that no hit as model text replaces.
+- Keep any text: it gives line numbers.
+
+### What it does not reach
+
+Static text a prompt or tool returns (a prompt's message body, `TextContent(text=...)`), which a model also reads; descriptions
+built at run time from strings elsewhere; a server in a language other than Python, JavaScript, and TypeScript, read as code.
+Hidden characters in a description are found by `02.2-reader` and counted by the file's audience, as before.
+
+### Done when (tests in `tests/test_tooltext.py`)
+
+1. Python declarations give their description lines and nothing else
+   (`test_python_declarations_give_their_description_lines_and_nothing_else`); JavaScript and TypeScript the same, never a string in
+   a comment (`test_javascript_declarations_give_their_description_lines_and_not_comments`); a test suite's `describe` is not a
+   description (`test_a_test_suite_describe_is_not_a_description`); a file with no MCP import or that does not parse gives none
+   (`test_a_file_that_imports_no_mcp_library_or_does_not_parse_gives_no_lines`).
+2. A hit in a description is the model's, once, and a hit in code stays code; rows only for code keep their hits
+   (`test_a_hit_in_a_description_is_read_by_the_model_once_and_a_hit_in_code_stays_code`); only a file read as code gets the second
+   read (`test_only_a_file_read_as_code_gets_the_second_read`).
+3. Fixture `class15-mcp-tool-text.py`: a tool's docstring and a parameter's description are model text (`mcp-tool-docstring-read-by-model`,
+   `mcp-parameter-description-read-by-model`), and a helper's docstring stays code (`mcp-helper-docstring-stays-code`,
+   `mcp-helper-docstring-still-found`).
+
 ## vocab
 
 Loads `Library/vocab.yaml`, the one data file holding every `02.4-phrases` part 2 word list
@@ -1447,6 +1568,11 @@ or (with `rows`) a `phrase.J.prohibited` row has no tier.
 - 2026-09-29: the pattern engine and the 14 phrase checks (part 1) and the harness rubric, the endpoint census, and the term table (part 2) built, with their word lists in `Library/vocab.yaml`.
 - 2026-10-04: position and repetition (`position.py`) and the committed-secret scan (`secret_scan.py`: gitleaks when installed, detect-secrets otherwise; values never shown) built.
 - 2026-10-17: the settings that restrict tools (`restrictions.py`, review C32) added.
+- 2026-11-03: from SkillSpector's rules (S20): MCP descriptions read as text a model reads (`tooltext.py`); rows `L.never-refuse`,
+  `L.no-disclaimer` (AR1, AR2), `E.decode-exec` (SC3), `E.tls-off` (TM3), and `E.registry-config` (SC10), 130 rows in all. Each row
+  measured first on nine repositories (three skill collections, four MCP servers, SkillSpector, Cloudflare's skill) and narrowed
+  where it caught ordinary prose or code (its note says how). Fixtures `class05-anti-refusal.md`, `class07-decode-exec.md`,
+  `class17-tls-registry.md`, `class15-mcp-tool-text.py`. `terms.code` and `terms.rows` move.
 - 2026-10-29: restructure step 6 (keep-or-cut, Q8): the conditional table (`cond.branch`, section 3) is
   cut. It reached `full.md` only, and nothing that stays read it. Its sentence splitter, which the term
   table uses, moved into `terms.py`; its word lists left `Library/vocab.yaml`. The fixture rows for it
