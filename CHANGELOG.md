@@ -6,6 +6,10 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- **Base rates measured again** (`Library/baserates.json`), on the same four audited repositories at the same pins, so only
+  the patterns changed. The six patterns added since 0.4.0 hit none of them, so "rare: in 0 of 4" is now a measurement where
+  it was the reading of a missing row. One pattern moves: `H.report-only` from uncommon to rare (the lines it hit in one
+  repository no longer match since it was narrowed). Five other counts move by a few lines.
 - **Every report says what Walkdown examined, in three colours.** Walkdown will not read every kind of file, so the
   summary, `details.html`, `full.md`, and the brief now sort the files by type: white for what the checks read (text,
   and PDFs, Word documents, and images the reader drew text out of), yellow for archives (looked inside for programs
