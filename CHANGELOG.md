@@ -21,7 +21,8 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
   reads (`tool_text` on the finding). The same goes for what a server's prompts return and the text of its tools' replies (error
   messages included), which the model also reads. Measured on the official servers, the Python SDK, fastmcp, and GitHub's Go server;
   a client's arguments to a server are left out. Its review card and `details.html` say why: "This line is code, but an MCP server
-  sends these words to the AI: ... So the AI reads them." `full.md` says `(model, sent to the AI by an MCP server)`.
+  sends these words to the AI: ... So the AI reads them." `full.md` says `(model, sent to the AI by an MCP server)`. A server
+  written in another language (Rust, Java, C#, and others) is read as code only, and every run's limits now say so.
 - **What Walkdown says about a line is its own line on the review card.** What hidden characters spell and what base64 decodes to
   were put in front of the place's note, so a card read "How often this pattern turns up elsewhere: Decoded from base64: ...". They
   are a line of their own now, before the note, and `details.html` shows them for every place.

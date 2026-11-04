@@ -1458,7 +1458,8 @@ A set of line numbers, empty for any file that is not MCP code or does not parse
   file that names `@modelcontextprotocol/sdk` or imports `fastmcp`; a `.go` file that imports the official Go SDK
   (`github.com/modelcontextprotocol/go-sdk/mcp`) or mcp-go (`github.com/mark3labs/mcp-go/mcp` or `/server`). A server in Rust, Java,
   or another language is not read this way: the inventory lists such a file as a script, so `audience` reads it as code, and its
-  descriptions count as code. (Corrected 2026-11-03: this line said a `.go` file was read as model text, from a check that called
+  descriptions count as code. Every run says so among the limits that stand for every run (`mcp-languages`, 2026-11-04: the
+  owner's call to name the languages read rather than add more). (Corrected 2026-11-03: this line said a `.go` file was read as model text, from a check that called
   `audience` without the inventory's script list. On `github/github-mcp-server` every Go file outside its tests is code.)
 - **Python** (`ast`): the docstring of a function decorated `@<x>.tool`, `@<x>.prompt`, or `@<x>.resource` (called or not); every
   string in the value of a `description=` or `title=` keyword of any call (`Field(description=...)`, `Tool(description=...)`, a

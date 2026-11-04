@@ -131,7 +131,7 @@ A `Facts`. `NotARun` (a message) for a folder with no `data/`, or a record that 
 
 ## gather
 
-Every gap and limit of a run, from its facts, in the order section 7 lists them: the steps (in the order intake, the coded steps, the chosen model reads, then this step's own stamp: a stop, a gap, or a stamp that is not a pass), the model reads, the steps not started, the skips and messages the steps name and the files not read, the files not scanned and the test data set aside, then the limits that stand for every run (`static`, `model-reads`, `version-drift`, `english-only`, `phrases-zero`; the report words them).
+Every gap and limit of a run, from its facts, in the order section 7 lists them: the steps (in the order intake, the coded steps, the chosen model reads, then this step's own stamp: a stop, a gap, or a stamp that is not a pass), the model reads, the steps not started, the skips and messages the steps name and the files not read, the files not scanned and the test data set aside, then the limits that stand for every run (`static`, `model-reads`, `version-drift`, `english-only`, `mcp-languages` (2026-11-04: an MCP server's text is read as model text in Python, JavaScript, TypeScript, and Go only), `phrases-zero`; the report words them).
 
 ### Inputs
 

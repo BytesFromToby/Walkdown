@@ -457,7 +457,7 @@ section 7 lists them.
 | `qa.limit` | `unread` | file `02.2-reader` could not read, once | `reason`; `file` |
 | `qa.limit` | `unscanned` | file `02.3-graph` did not scan for references | `reason`; `file` |
 | `qa.limit` | `testdata` | run, when test data was set aside (`cap.testdata`) | `inventory_set_aside`; `phrases_set_aside` |
-| `qa.limit` | `standing` | limit that stands for every run, five of them | `id`: `static`, `model-reads`, `version-drift`, `english-only`, `phrases-zero` |
+| `qa.limit` | `standing` | limit that stands for every run, six of them | `id`: `static`, `model-reads`, `version-drift`, `english-only`, `mcp-languages` (2026-11-04), `phrases-zero` |
 | `qa.checked` | `checked` | coverage line of a step whose fixture check measured its "none", in which some check found nothing: what that check looked at, so a "found none" has a number behind it (M9 slice C). It is no limit and no gap. A step gets none when its stamp is not a pass or INCOMPLETE with some rows measured (`no fixture set`, Pinpoint, a read whose rows were all skipped, `FAIL`, `ERROR`, a run made without validation). Not said of a check that has a skip finding of its own, of a line that does not add up (that is a gap), of a line whose items were all explained by skips, or of the pin and the other lines of the whole run (`run`) | `checks`: the line's checks that found nothing, `step_check` the first; `unit`; `of`; `looked_at`; `explained` |
 
 A run is held when it has a gap. A kind of gap a later check adds is a new `kind` with its own fields and this table's first

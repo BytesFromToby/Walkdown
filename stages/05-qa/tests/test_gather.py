@@ -201,7 +201,7 @@ def test_the_counted_passage_skips_of_a_model_read_are_left_out_of_the_skips(fac
 def test_the_standing_limits_are_in_every_run_and_last(facts):
     items = gather.gather(facts())
     standing = [i for i in items if i["kind"] == "standing"]
-    assert [i["id"] for i in standing] == list(gather.STANDING) and items[-5:] == standing
+    assert [i["id"] for i in standing] == list(gather.STANDING) and items[-len(gather.STANDING):] == standing
 
 
 def test_the_items_come_in_the_order_section_seven_lists_them(facts):
@@ -218,8 +218,7 @@ def test_the_items_come_in_the_order_section_seven_lists_them(facts):
               not_started=[{"stage": "04-pinpoint", "why": "sweep-no-answer"}])
     order = [i["kind"] for i in gather.gather(f)]
     assert order == ["fixture-incomplete", "model-no-answer", "not-started", "skip", "note", "unread", "unscanned"] + [
-        "checked"] * 6 + [
-        "standing", "standing", "standing", "standing", "standing"]
+        "checked"] * 6 + ["standing"] * len(gather.STANDING)
 
 
 # ---------------------------------------------------------------- the shape of a finding

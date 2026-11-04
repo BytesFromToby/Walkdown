@@ -1362,7 +1362,7 @@ Status: built.
   each kind, and a kind it does not know is worded `The step "<plain>" (<check>): expected <expected>; found <found>.`):
   stages that failed or are not validated, skip findings, stage notes naming a limit, unread and unscanned files, then
   `STANDING_LIMITS` (a table by the id the check gives each: `static`, `model-reads`, `version-drift`, `english-only`,
-  `phrases-zero`). Every line, nothing folded. The checks that found nothing (`qa.checked`) are no limits and are not in this
+  `mcp-languages` (2026-11-04), `phrases-zero`). Every line, nothing folded. The checks that found nothing (`qa.checked`) are no limits and are not in this
   file, which is what it was before slice C; `full.md` says them under their own heading at the end of section 7 (below). A step is named by its plain name in quotes
   (`step(stage)`: `step "What the text asks for"`), never by its id: `The step "<name>" did not run to
   completion; ...`, `The step "<name>" validation <result>: ...`, and a note is prefixed `(step "<name>")`.

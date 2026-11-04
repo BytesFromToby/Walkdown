@@ -259,7 +259,8 @@ repository, Walkdown's search terms, or Walkdown's matching code.
 
 Last on the page: a step that did not work, the optional model reads when they did not run, or
 that every step ran and passed its own checks. Then every limit of this run, folded: checks
-skipped (usually an optional tool not installed), and the limits of every run (static only, English only, patterns can miss).
+skipped (usually an optional tool not installed), and the limits of every run (static only, English only, MCP servers read in Python, JavaScript, TypeScript, and Go only,
+patterns can miss).
 The files no check read are one line there, "Files the checks did not read: ... (What Walkdown examined, at the top)": the
 yellow and red rows at the top of the page name them, so this list does not count them again (since 2026-11-04).
 After that, in a fold of its own, "Checks that found nothing (N)": what the checks that found nothing looked at, a line for each step,
