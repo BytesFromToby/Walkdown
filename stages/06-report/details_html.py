@@ -20,6 +20,7 @@ import render as R
 import stagelist
 import library  # `render` has put stages/_shared on the path, as it did for `stagelist`
 import secretmask
+import coverage
 
 PLAIN_STAGE = dict(stagelist.STEP_WORDS)  # the words a reader meets for each step, from stages.json
 # Plain names for pattern families (`02.4-phrases`), used as the headline of an item.
@@ -492,15 +493,10 @@ def file_concerns(r) -> list[tuple[str, str, list[str]]]:
     """What in the files is worth a look, shown above the collapsed stats: (reason id, plain
     line, files). The reason id is part of each file's mark key (marks.file_key)."""
     census = R.fnd(r, "02.1-inventory", "struct.census")
-    files = R.fnd(r, "02.1-inventory", "inv.file")
     by = collections.defaultdict(list)
     for c in census:
         by[c.get("flag")].append(c["file"])
     out = []
-    unknown = [f["file"] for f in files if (f.get("type") in (None, "", "application/octet-stream"))
-               and not R.is_test_data(f["file"])]
-    if unknown:
-        out.append(("unknown-type", "Unknown file type", unknown))
     if by["ext-magic-mismatch"]:
         out.append(("ext-magic-mismatch", "Contents are a different type than the file name says",
                     by["ext-magic-mismatch"]))
@@ -512,7 +508,8 @@ def file_concerns(r) -> list[tuple[str, str, list[str]]]:
         out.append(("archive-executable", "Archives or documents that hold a program, compiled Python, or Office macros",
                     by["archive-executable"]))
     if by["archive"]:
-        out.append(("archive", "Archives (their contents were not read)", by["archive"]))
+        # looked inside for programs (zip, tar, 7z, RAR, zstd); the text inside is not read (2026-11-04: the tiers)
+        out.append(("archive", "Archives (looked inside for programs; the text inside was not read)", by["archive"]))
     if by["symlink"]:
         out.append(("symlink", "Links to another file or folder (symlinks)", by["symlink"]))
     padded = list(dict.fromkeys(f for f in by["padding"] if R.audience(f) in ("model", "subagent")))
@@ -588,7 +585,8 @@ def render_page(meta, r, stamps, notes, runs_ok, changes=None, marks=None) -> st
             f'<a href="summary.html">back to the summary</a></p>{license_line(r)}'
             f'<p class="what">{G.what_it_is(r)} Everything behind the summary, question by question; long lists '
             "are folded, tap to open them.</p></header>"
-            f'<nav class="toc">{toc}</nav>' + "".join(G.section(q) for q in qs)
+            + coverage.section_html(r, files=True)
+            + f'<nav class="toc">{toc}</nav>' + "".join(G.section(q) for q in qs)
             + G.changes_section(changes)
             + G.not_checked(r, notes, qaview.of(meta), meta.get("stop"))
             + '<footer><p>Mark each place as you go: <a href="review.html">go through each place</a> \u00b7 '

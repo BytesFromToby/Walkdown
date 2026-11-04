@@ -45,6 +45,20 @@ repository is safe or unsafe, never tells you to use it or not, and gives no sco
 name; and what it is in one sentence, such as "A plugin for Claude Code: 9 skills (step-by-step
 instructions the AI follows for a task) and 7 helpers (assistants the AI can hand work to)."
 
+**What Walkdown examined** (since 2026-11-04), in three colours, by file type (its extension):
+
+- **White, Examined:** the checks read the file's text. It decodes as text, or the reader drew text out of it (a PDF,
+  a Word document, an image read by OCR).
+- **Yellow, Archives, looked inside for programs only:** archives and zip-based documents (zip, tar, 7z, RAR, zstd,
+  a spreadsheet). Walkdown looked inside for programs, compiled Python, and Office macros; the text inside was not
+  read.
+- **Red, No tests are run on these file types:** everything else, such as a `.wasm`, a `.pkl`, a font, a compiled
+  program, an image when OCR was not run, or a file that could not be read: "Walkdown does not analyze files with
+  these extensions. Use with caution." The line says how many of them the AI loads.
+
+Red marks what Walkdown cannot see, not a risk in the repository. Walkdown will never read every kind of file; this
+says which ones it did not. `details.html` names the yellow and red files, and `full.md` lists every one with why.
+
 **Eight questions**, always in this order. Each has a **label** and a **one-line answer**; tap it
 for a few plain bullets.
 
@@ -142,7 +156,9 @@ A bar under the header jumps to each question. Long lists are folded; tap to ope
 
 ### Header
 
-The name, when it was checked, the version, how many files, and a link back to the summary. Under
+The name, when it was checked, the version, how many files, and a link back to the summary. Under the header, the
+summary's **What Walkdown examined**, with the yellow and red files named: the ones the AI loads first, then the
+rest, up to 50 a colour, and a count of those in test or fixture folders. Under
 those, one line on the license: the license each top-level license file matches ("License: MIT
 (LICENSE)."), or that the file is not a license Walkdown recognizes and how it begins. With no
 license file it gives what a top-level `license` field says (`package.json`, a plugin manifest),
@@ -158,9 +174,10 @@ section 1.
 2. **Memory**: the summary's table, the room for the list of skills, and how big each skill and
    helper gets, as bars.
 3. **Package**: every file by group, with its size; then **Files worth a look**, when there is
-   something: a file of unknown type, contents of a different type than the name says, programs in compiled
+   something: contents of a different type than the name says, programs in compiled
    form and compiled Python (which Walkdown cannot read, and which can run without their source), archives
-   or documents that hold a program or Office macros, archives (their contents are not read), symlinks, files
+   or documents that hold a program or Office macros, archives (looked inside for programs; the text inside is
+   not read), symlinks, files
    the AI reads where blank lines or spaces push text out of view, and files the AI reads that are longer
    than a reviewer's viewer shows (2,000 lines or 50 KB).
 4. **Other computers**: the places by file, the programs it expects and whether it says to install

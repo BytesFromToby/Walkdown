@@ -404,7 +404,7 @@ def test_a_stop_after_intake_is_named_stopped_and_going_on_renames_it(tiny_repo,
     brief = (d / "brief.md").read_text(encoding="utf-8")
     assert 'Stopped after "Getting the copy", as asked (--until); the steps after it did not run.' in brief
     assert "The folder is read as it is when the run goes on." in brief
-    assert "Files examined: none yet." in brief and "What it can do: not measured" in brief
+    assert "Files: none yet." in brief and "What it can do: not measured" in brief
     capsys.readouterr()
     assert go_on(d) == 0
     out = capsys.readouterr().out.strip().splitlines()[-1]

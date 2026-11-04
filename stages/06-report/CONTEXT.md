@@ -59,5 +59,5 @@ outputs, so a design change needs no new audit.
 ## Spec
 
 `specs/report.SPEC.md`: "The reports" first (the report set and who each file is for), then one section per
-script (`run`, `brief`, `details_html`, `drift`, `glance`, `marks`, `qaview`, `render`, `review_html` with `plain.py`,
+script (`run`, `brief`, `coverage`, `details_html`, `drift`, `glance`, `marks`, `qaview`, `render`, `review_html` with `plain.py`,
 `summary_html`).

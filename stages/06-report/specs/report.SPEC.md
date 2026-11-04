@@ -342,8 +342,9 @@ saves it as `brief.md` and returns the path.
 
 ### Outputs
 
-The text the front door has always printed, in `summary.html`'s terms (owner, 2026-10-21): files examined and the
-pin; one line each on triggering, cost (two), needs, hosts, tools, and current and clean, counts only; "What it can
+The text the front door has always printed, in `summary.html`'s terms (owner, 2026-10-21): how many files and the
+pin (`Files: <n>. Pinned: ...`; `Files examined:` until 2026-11-04); what Walkdown examined, as counts
+(`coverage.brief_line`, since 2026-11-04); one line each on triggering, cost (two), needs, hosts, tools, and current and clean, counts only; "What it can
 do:" with the three trifecta legs as checkboxes, what they mean together, and the install grants; the summary's
 headline, then one line per concern kind with its place count and the wording-only line; the model reads, marked
 experimental; **the token line** (M1 slice A) in a paragraph of its own after them, whenever a model read ran:
@@ -399,7 +400,7 @@ relays as printed. A read whose value fails has no option in the command, and on
 for "Needs a human read" could not be used, so the command to go on leaves it out.`). A line above the command names
 those reads (`Chosen and waiting: "Needs a human read" (jev); "The line behind each flag" (claude-cli).`). When the stop is before `02.5-capability`, "What it can
 do:" has no boxes to show and says `What it can do: not measured, the run stopped after "<plain>", as asked.`; when it is
-before `02.1-inventory`, the first line says `Files examined: none yet. Pinned: nothing yet.` and, with no fixture check
+before `02.1-inventory`, the first line says `Files: none yet. Pinned: nothing yet.` and, with no fixture check
 to report, `Fixture checks: none yet, the run stopped before the steps they check.` (the run was validated, for intake).
 A stop after the last coded step changes none of this except the stop lines.
 
@@ -457,6 +458,63 @@ A stop after the last coded step changes none of this except the stop lines.
   step the stop left out out of the failures.
 - 2026-10-30: M9 slice A: a model read that did not work no longer makes the headline say "cannot say" (restructure
   M14 b); the count line and the not-started line.
+
+## coverage
+
+Status: built 2026-11-04 (owner: "We will never get every file type. ... a white list (ones we examine), a yellow list
+(the archive), and if not on those they are tagged as red").
+
+What Walkdown examined, file by file, in three tiers, by file type (the extension, lowercased). It is bookkeeping from
+what the steps recorded, not a judgment of the files, and it holds no run: a red file is a standing limit, not a gap.
+
+### Inputs
+
+`02.1-inventory`'s `inv.file` rows and its `archive` census flags; `02.2-reader`'s `read.unread` rows (the reader
+writes one for every file it does not read); the builder's `cap.ship` groups (which files the AI loads).
+
+### Outputs
+
+- `rows(r)`: per file but symlinks (never followed; "Files worth a look" lists them), its `tier`:
+  - `examined` (white): it decodes as text, or the reader ran and did not list it as unread (it drew the text out of a
+    PDF, a Word document, or an image by OCR);
+  - `archive` (yellow): otherwise, the census flagged it `archive` (looked inside for programs, compiled Python, and
+    Office macros; the text inside was not read);
+  - `not` (red): anything else, with `why` (the reader's reason, "could not be read", or "not text, and the reader step
+    did not run").
+  Each row also says whether the AI loads it (`cap.ship` group `entry`, `project`, `on-demand`, or `maybe`) and whether
+  it is in a test or fixture folder.
+- `by_tier(r)`: per tier, its types, most files first, each with its files, count, and how many the AI loads and how
+  many are in test folders.
+- `section_html(r, files=False)`: "What Walkdown examined", three rows: white "Examined", yellow "Archives, looked
+  inside for programs only", red "No tests are run on these file types" with "Walkdown does not analyze files with these
+  extensions. Use with caution." (the owner's wording) and how many of them the AI loads. A tier with no files is left out. `summary.html` shows it between
+  the header and "At a glance"; `details.html` (`files=True`) between the header and the bar of questions, naming
+  the yellow and red files, the ones the AI loads first, up to 50 a tier, with a count of those in test folders.
+- `full_lines(r)`: `full.md` section 1, after "Script languages": the three tiers with their types, then every yellow
+  and red file with whether the AI loads it, whether it is in a test folder, and why.
+- `brief_line(r)`: the brief's second line, counts only: `Examined: 4; archives looked inside for programs only: 1;
+  no tests are run on 5 (4 file types; the AI loads 1 of them).` The first line now says `Files: <n>`, not
+  `Files examined: <n>`.
+
+### Must never
+
+- Put a file the checks did not read in the white tier: without the reader, a PDF or a document is not white.
+- Name a file or a type in the brief (it holds no text from the repository).
+- Say the repository is safe or unsafe: red is what Walkdown cannot see.
+
+### Done when (tests in `tests/test_coverage.py`, and one each in `test_summary_html.py` and `test_details_html.py`)
+
+1. Text and what the reader read are white, archives yellow, the rest red, symlinks left out
+   (`test_each_file_is_examined_an_archive_or_not_and_symlinks_are_left_out`).
+2. Without the reader a PDF is red and a document yellow (`test_without_the_reader_a_pdf_or_document_was_not_examined`).
+3. Types group by extension with what the AI loads and test folders counted
+   (`test_types_group_by_extension_with_what_the_ai_loads_and_test_folders_counted`).
+4. The pages show the tiers, and details names the files (`test_the_pages_show_three_tiers_and_details_names_the_files`,
+   `test_what_walkdown_examined_comes_before_the_glance`, `test_what_walkdown_examined_comes_first_and_names_the_red_files`).
+5. `full.md` names every file and the brief gives counts only
+   (`test_full_md_names_every_file_and_the_brief_gives_counts_only`).
+6. "Unknown file type" is gone from "Files worth a look", and the archive row says what was checked
+   (`test_the_unknown_file_type_row_is_gone_and_the_archive_row_says_what_was_checked`).
 
 ## details_html
 
@@ -1118,7 +1176,7 @@ move and drops away when the line itself changes:
 | A place | the name of its stage, headline, file, and the flagged text with white space collapsed (the quote; for a place with no quote, the location) |
 | A repeated sentence | the name of its stage, headline, and the sentence |
 | An outside link | the whole address |
-| A Worth a look file | the reason (`unknown-type`, `ext-magic-mismatch`, `archive`, `symlink`, `reader-window`) and the file path |
+| A Worth a look file | the reason (`ext-magic-mismatch`, `archive`, `symlink`, `reader-window`, and since 2026-11-03 `executable`, `bytecode`, `archive-executable`, `padding`; `unknown-type` until 2026-11-04, when the red tier of `coverage` took its files) and the file path |
 | A trifecta place | the box, the file, and the text of the cited line (from `02.4-phrases`'s quote at that line, else the line number) |
 | A hidden place | the file, how it hides (`carrier`), and the hidden text (else the line number) |
 

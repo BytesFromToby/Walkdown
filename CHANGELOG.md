@@ -6,6 +6,13 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 
 ## Unreleased
 
+- **Every report says what Walkdown examined, in three colours.** Walkdown will not read every kind of file, so the
+  summary, `details.html`, `full.md`, and the brief now sort the files by type: white for what the checks read (text,
+  and PDFs, Word documents, and images the reader drew text out of), yellow for archives (looked inside for programs
+  only), and red, "No tests are run on these file types", for everything else, with how many of them the AI loads.
+  `details.html` names the yellow and red files, and `full.md` every one with why. "Unknown file type" is gone from
+  "Files worth a look" (its files are red), and the archive row there says what was checked. The brief's first line
+  says `Files: <n>`, and its second how many were examined.
 - **Descriptions in an MCP server's code are read as text the model reads.** A client sends each tool's, prompt's, resource's,
   and parameter's description to the model as it stands, but Walkdown read an MCP server's Python, JavaScript, or Go as code only, so
   an instruction hidden in a tool's docstring or a parameter's description counted as "not in text a model reads". In a file
