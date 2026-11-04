@@ -486,8 +486,8 @@ writes one for every file it does not read); the builder's `cap.ship` groups (wh
 - `by_tier(r)`: per tier, its types, most files first, each with its files, count, and how many the AI loads and how
   many are in test folders.
 - `section_html(r, files=False)`: "What Walkdown examined", three rows: white "Examined", yellow "Archives, looked
-  inside for programs only", red "No tests are run on these file types" with "Walkdown did not read these files; open
-  them yourself." and how many of them the AI loads. A tier with no files is left out. `summary.html` shows it between
+  inside for programs only", red "No tests are run on these file types" with "Walkdown does not analyze files with these
+  extensions. Use with caution." (the owner's wording) and how many of them the AI loads. A tier with no files is left out. `summary.html` shows it between
   the header and "At a glance"; `details.html` (`files=True`) between the header and the bar of questions, naming
   the yellow and red files, the ones the AI loads first, up to 50 a tier, with a count of those in test folders.
 - `full_lines(r)`: `full.md` section 1, after "Script languages": the three tiers with their types, then every yellow

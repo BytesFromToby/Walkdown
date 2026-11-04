@@ -53,8 +53,8 @@ instructions the AI follows for a task) and 7 helpers (assistants the AI can han
   a spreadsheet). Walkdown looked inside for programs, compiled Python, and Office macros; the text inside was not
   read.
 - **Red, No tests are run on these file types:** everything else, such as a `.wasm`, a `.pkl`, a font, a compiled
-  program, an image when OCR was not run, or a file that could not be read. Walkdown did not read these; open them
-  yourself. The line says how many of them the AI loads.
+  program, an image when OCR was not run, or a file that could not be read: "Walkdown does not analyze files with
+  these extensions. Use with caution." The line says how many of them the AI loads.
 
 Red marks what Walkdown cannot see, not a risk in the repository. Walkdown will never read every kind of file; this
 says which ones it did not. `details.html` names the yellow and red files, and `full.md` lists every one with why.

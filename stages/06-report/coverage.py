@@ -21,7 +21,7 @@ TIERS = ("examined", "archive", "not")
 LABEL = {"examined": "Examined",
          "archive": "Archives, looked inside for programs only",
          "not": "No tests are run on these file types"}
-NOT_NOTE = "Walkdown did not read these files; open them yourself."
+NOT_NOTE = "Walkdown does not analyze files with these extensions. Use with caution."  # the owner's words, 2026-11-04
 ARCHIVE_NOTE = "Walkdown looked inside for programs, compiled Python, and Office macros; the text inside was not read."
 LOADS = {"entry", "project", "on-demand", "maybe"}  # render.SHIP_BANDS "Loads into the AI"
 
