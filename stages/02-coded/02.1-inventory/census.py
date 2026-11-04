@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import codecs
 import io
+import tarfile
 import zipfile
 from dataclasses import dataclass
 
@@ -70,15 +71,49 @@ INSIDE_EXTS = {"exe", "dll", "so", "dylib", "msi", "scr", "com", "sys", "ocx", "
 INSIDE_NAMES = {"vbaproject.bin"}
 INSIDE_MEMBERS = 5000  # members looked at, at most
 INSIDE_HEAD = 64  # bytes read of each
+# A tar archive is read as a stream, compressed or not (2026-11-03); unpacking stops past this many bytes of it, so a small
+# archive that unpacks to gigabytes costs no more than this.
+INSIDE_TAR_BYTES = 64 * 1024 * 1024
+TAR_MAGIC = (b"\x1f\x8b", b"BZh", b"\xfd7zXZ\x00")  # gzip, bzip2, xz: maybe a tar inside
 
 
 def is_bytecode(rel: str) -> bool:
     return ext_of(rel) in BYTECODE_EXTS or "/__pycache__/" in f"/{rel}"
 
 
+def _program(name: str, head: bytes | None) -> bool:
+    """Whether a member is a program by name, Python bytecode, or Office macros, or a program by its first bytes."""
+    base = name.rsplit("/", 1)[-1].lower()
+    if ext_of(base) in INSIDE_EXTS or base in INSIDE_NAMES or is_bytecode(name):
+        return True
+    return head is not None and builtin_magic(head) in EXECUTABLES
+
+
+def _tar_programs(data: bytes) -> list[str]:
+    """`programs_inside` for a tar archive, plain or compressed with gzip, bzip2, or xz, read as a stream: member names and
+    first bytes, at most `INSIDE_MEMBERS` members and `INSIDE_TAR_BYTES` unpacked; a stream that is no tar gives none."""
+    out = []
+    try:
+        with tarfile.open(fileobj=io.BytesIO(data), mode="r|*") as tf:
+            for k, member in enumerate(tf):
+                if k >= INSIDE_MEMBERS or member.offset_data > INSIDE_TAR_BYTES:
+                    break
+                if member.isfile():
+                    f = tf.extractfile(member)
+                    if _program(member.name, f.read(INSIDE_HEAD) if f else None):
+                        out.append(member.name)
+                if member.offset_data + member.size > INSIDE_TAR_BYTES:  # the next header lies past the budget: stop here
+                    break
+    except Exception:  # not a tar, or broken past some point: what was read stands, and the archive flag says the rest
+        pass
+    return out
+
+
 def programs_inside(data: bytes) -> list[str]:
-    """The names of a zip container's members that are programs, Python bytecode, or Office macros, in member order. Nothing
-    is extracted; a container that does not open gives none."""
+    """The names of a zip container's or a tar archive's members that are programs, Python bytecode, or Office macros, in
+    member order. Nothing is extracted; a container that does not open gives none."""
+    if data[:2] in (b"\x1f\x8b",) or data.startswith(TAR_MAGIC) or data[257:262] == b"ustar":
+        return _tar_programs(data)
     if not data.startswith(b"PK\x03\x04"):
         return []
     try:
@@ -86,15 +121,14 @@ def programs_inside(data: bytes) -> list[str]:
         out = []
         for info in z.infolist()[:INSIDE_MEMBERS]:
             name = info.filename
-            base = name.rsplit("/", 1)[-1].lower()
-            if info.is_dir() or not base:
+            if info.is_dir() or not name.rsplit("/", 1)[-1]:
                 continue
-            if ext_of(base) in INSIDE_EXTS or base in INSIDE_NAMES or is_bytecode(name):
+            if _program(name, None):
                 out.append(name)
                 continue
             with z.open(info) as member:
                 head = member.read(INSIDE_HEAD)
-            if builtin_magic(head) in EXECUTABLES:
+            if _program(name, head):
                 out.append(name)
         return out
     except Exception:  # a broken or encrypted container: the archive flag already says its contents were not read
