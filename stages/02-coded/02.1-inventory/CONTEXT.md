@@ -19,8 +19,8 @@ It walks the folder, pins it, and records one row per file and one per structura
    over the sorted files; file and byte totals.
 2. `inv.file` (`census.py`, `entrypoints.py`): extension, bytes, lines, exec bit, encoding, BOM, detected
    type, entry-point kind.
-3. `struct.census` (`census.py`): the flags `reader-window`, `long-line`, `ext-magic-mismatch`, `bom`,
-   `archive`, `symlink`.
+3. `struct.census` (`census.py`; `archive_index.py` reads a 7z's or RAR's headers): the flags `reader-window`, `long-line`,
+   `ext-magic-mismatch`, `bom`, `archive`, `archive-executable`, `executable`, `bytecode`, `padding`, `symlink`.
 4. `struct.description` and `struct.agent-tools` (`frontmatter.py`): descriptions verbatim, granted tools.
 5. `struct.hooks`, `struct.manifests`, `struct.mcp` (`configs.py`): hook rows, platform manifests, MCP servers.
 6. `inv.license` (`licenses.py`): license files and declared license fields, matched to fixed wording.

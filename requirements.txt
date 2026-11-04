@@ -15,3 +15,6 @@ confusable_homoglyphs==3.3.1
 
 # Committed-secret scan (02.4-phrases)
 detect-secrets==1.5.0
+
+# zstd archives (02.1-inventory)
+zstandard==0.25.0

@@ -62,6 +62,7 @@ Required (`requirements.txt`):
 | confusable_homoglyphs | MIT | finding look-alike characters |
 | pytest | MIT | the test suite |
 | detect-secrets | Apache-2.0 | finding committed secrets |
+| zstandard | BSD-3-Clause | reading zstd archives |
 
 Optional, used when installed:
 

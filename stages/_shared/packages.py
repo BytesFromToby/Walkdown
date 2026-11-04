@@ -8,7 +8,7 @@ and any other module's name came from the repository or a message.
 
 # The import names of requirements.txt's packages, less pytest (no stage imports it): what every stage needs to run.
 CORE_MODULES = ("yaml", "charset_normalizer", "pdfminer", "pypdf", "pypdfium2", "bs4", "lxml",
-                "PIL", "regex", "confusable_homoglyphs", "detect_secrets")
+                "PIL", "regex", "confusable_homoglyphs", "detect_secrets", "zstandard")
 # A stage imports these when they are there and does without them when they are not: the file-type detectors of the
 # inventory, the OCR and HTML-render tools of the reader, and the SDK of the sweep (requirements-soft.txt).
 OPTIONAL_MODULES = ("filetype", "magic", "playwright", "pytesseract", "typesafe_sdk")
