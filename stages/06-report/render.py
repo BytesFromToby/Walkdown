@@ -1688,6 +1688,7 @@ BINARY_NOTE = "limit: files that do not decode as text"
 # before restructure step 8b word it "scanned from stage 2's extracted text".
 EXTRACTED_NOTE = re.compile(r"scanned from (?:stage 2's extracted text|the text extracted by)")
 PER_FILE_NOTE = re.compile(r"^not scanned: (.+?): (.+)$")  # one file's skip line
+NOT_TEXT = "not text ("  # `readtext`'s reason for a file that does not decode: a yellow or red file (`coverage`)
 # `stage 5 limit` is how a run made before restructure step 8b worded the two limits that now begin
 # `standing limit` (Library/capability.yaml).
 STANDING_NOTE = re.compile(r"^(v1 limit|standing limit|stage 5 limit|graph incomplete by construction"
@@ -1766,6 +1767,8 @@ def glance(reports, notes, qa, stop=None) -> tuple[list[str], list[str]]:
                     skipped.append("Phrase patterns in PDF, DOCX, and image files")
                 continue
             m = PER_FILE_NOTE.match(line)
+            if m and m.group(2).startswith(NOT_TEXT):  # the tiers at the top name these files (2026-11-04)
+                continue
             if m:  # one item per stage, not one per file (2026-10-09: 67 on one repository)
                 if is_test_data(m.group(1)):
                     in_tests += 1
@@ -1784,9 +1787,14 @@ def glance(reports, notes, qa, stop=None) -> tuple[list[str], list[str]]:
         if "skipped" in f and "tesseract" not in str(f["skipped"])
         and not str(f["skipped"]).startswith("html not drawn (playwright"))
     skipped += [f"{n(c, 'file')}: {why}" for why, c in other.items()]
-    unread = fnd(reports, "02.2-reader", "read.unread")
-    if unread:
-        skipped.append(f"{n(len(unread), 'file')} could not be read")
+    # the files no check read are the yellow and red tiers at the top of the page (`coverage`, 2026-11-04): one line
+    # points there, where "N files could not be read" and the phrase step's "not text" files once counted them twice
+    import coverage  # it imports this module
+    c = coverage.counts(coverage.by_tier(reports))
+    if c["archive"] or c["not"]:
+        parts = ([f"{n(c['archive'], 'archive')} looked inside for programs only"] if c["archive"] else []) + (
+            [f"{n(c['not'], 'file')} no tests are run on"] if c["not"] else [])
+        skipped.append(f"Files the checks did not read: {' and '.join(parts)} (What Walkdown examined, at the top)")
     unscanned = fnd(reports, "02.3-graph", "graph.unscanned")
     if unscanned:
         skipped.append(f"{n(len(unscanned), 'file')} not scanned for references")

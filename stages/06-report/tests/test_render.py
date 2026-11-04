@@ -597,18 +597,35 @@ def test_the_secret_line_says_how_many_lock_files_the_scan_left_out():
 
 def test_per_file_skips_are_one_item_per_stage():
     """2026-10-09: one summary listed 67 unscanned files one by one."""
-    notes = {"02.4-phrases": ["not scanned: a.png: not text (image/png)",
-                            "not scanned: b.png: not text (image/png)",
-                            "not scanned: c.gz: not text (application/gzip)",
-                            "not scanned: tests/d.png: not text (image/png)"]}
+    notes = {"02.4-phrases": ["not scanned: a.md: symlink (never followed)",
+                            "not scanned: b.md: symlink (never followed)",
+                            "not scanned: c.txt: undecodable text",
+                            "not scanned: tests/d.md: symlink (never followed)",
+                            "not scanned: e.png: not text (image/png)"]}  # the tiers at the top name e.png
     skipped, idle = R.glance({}, notes, Q({}, notes, {}, set()))
     rows = [x for x in skipped if "not scanned" in x]
-    assert rows == ["What the text asks for: 3 files not scanned (2 not text (image/png), "
-                    "1 not text (application/gzip)), plus 1 in test data"]
-    lone = {"02.4-phrases": ["not scanned: tests/d.png: not text (image/png)"]}
+    assert rows == ["What the text asks for: 3 files not scanned (2 symlink (never followed), "
+                    "1 undecodable text), plus 1 in test data"]
+    lone = {"02.4-phrases": ["not scanned: tests/d.md: symlink (never followed)"]}
     skipped, idle = R.glance({}, lone, Q({}, lone, {}, set()))
     assert not [x for x in skipped if "not scanned" in x]
     assert "What the text asks for: 1 file not scanned, all in test data" in idle
+
+
+def test_files_no_check_read_are_one_line_pointing_at_the_tiers():
+    """2026-11-04: "N files could not be read" and the phrase step's "not text" files counted the yellow and red tiers
+    again; one line points at them."""
+    r = {"02.1-inventory": {"findings": [
+            {"check": "inv.file", "file": "a.zip", "ext": "zip", "type": "application/zip"},
+            {"check": "inv.file", "file": "m.pkl", "ext": "pkl", "type": "application/octet-stream"},
+            {"check": "inv.file", "file": "w.wasm", "ext": "wasm", "type": "application/wasm"},
+            {"check": "struct.census", "file": "a.zip", "flag": "archive"}]},
+         "02.2-reader": {"findings": [{"check": "read.unread", "file": f, "reason": "x"} for f in ("a.zip", "m.pkl", "w.wasm")]}}
+    notes = {"02.4-phrases": ["not scanned: m.pkl: not text (application/octet-stream)"]}
+    skipped, _ = R.glance(r, notes, Q(r, notes, {}, set(r)))
+    assert ("Files the checks did not read: 1 archive looked inside for programs only and 2 files no tests are run on "
+            "(What Walkdown examined, at the top)") in skipped
+    assert not [x for x in skipped if "could not be read" in x or "not scanned" in x]
 
 
 def test_inherited_tools_are_capability_only_in_the_full_report():
