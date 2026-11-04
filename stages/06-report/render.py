@@ -1884,6 +1884,8 @@ def _f1(r, _, stop=None):
     langs = "; ".join(f"{k}: {', '.join(v)}" for k, v in sorted((pin.get("script_languages") or {}).items()))
     L = [f"Pin: {pin.get('hash_kind')} {pin.get('hash')}, {n(pin.get('files', 0), 'file')}, "
          f"{pin.get('bytes') or 0:,} bytes.", "", f"Formats: {ext}.", "", f"Script languages: {langs or 'none'}.", ""]
+    import coverage  # it imports this module
+    L += coverage.full_lines(r)
     ep = [f for f in fnd(r, "02.1-inventory", "inv.file") if f.get("entry_point")]
     L += _list("Entry points", ep, lambda f: f"{f['file']} ({f['entry_point']})")
     L += _list("Structural census", fnd(r, "02.1-inventory", "struct.census"),

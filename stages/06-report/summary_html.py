@@ -18,6 +18,7 @@ import qaview
 import render as R
 import stagelist
 import common_lines
+import coverage
 
 # Every rule-found place falls in exactly one row, taken by the first that fits; the rest is
 # wording only (owner, 2026-10-20). (key, row name, details.html section the "more" link opens)
@@ -369,7 +370,8 @@ def render_page(meta, r, stamps, notes, runs_ok, marks=None, changes=None) -> st
     body = (f'<header><h1>{esc(meta["repo"])}</h1><p class="meta">{esc(G.meta_line(meta, r))}</p>'
             f'<p class="what">{G.what_it_is(r)}</p><p class="how">Walkdown reads the files without running '
             "anything. It points things out; you decide what matters. Tap a line for more.</p></header>"
-            '<h2>At a glance</h2><ul class="rows">' + "".join(G.card(q) for q in qs) + "</ul>"
+            + coverage.section_html(r)
+            + '<h2>At a glance</h2><ul class="rows">' + "".join(G.card(q) for q in qs) + "</ul>"
             + stop_note(meta.get("stop"))
             + model_note(qaview.of(meta))
             + warning(not_working(qaview.of(meta)), only_model_reads(qaview.of(meta)), unchecked_sentence(qaview.of(meta)))

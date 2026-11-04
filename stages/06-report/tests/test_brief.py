@@ -418,7 +418,7 @@ def test_a_stop_after_intake_has_nothing_examined_yet(tmp_path):
     d = tmp_path / "RepoResults" / "demo" / "2026-10-30_stopped"
     (d / "data").mkdir(parents=True)
     b = brief_of(d, {}, stop={"after": "01-intake", "prepared": None})
-    assert "Files examined: none yet. Pinned: nothing yet.\n" in b
+    assert "Files: none yet. Pinned: nothing yet.\n" in b
     assert 'What it can do: not measured, the run stopped after "Getting the copy", as asked.' in b
     assert ('This run stopped after the step "Getting the copy", as asked, so Walkdown cannot say whether this '
             "repository has the security concerns it looks for.") in b

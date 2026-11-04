@@ -874,7 +874,7 @@ CSS = """
 :root {
   --bg: #f6f5f1; --card: #ffffff; --ink: #1f2328; --muted: #5d6470; --line: #e3e1da;
   --none-bg: #e8f1ea; --none-ink: #2f6b3c; --look-bg: #fbeed6; --look-ink: #8a5a00;
-  --fact-bg: #e7eef8; --fact-ink: #2c5282;
+  --fact-bg: #e7eef8; --fact-ink: #2c5282; --red-bg: #fbe3de; --red-ink: #a3361f;
   --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;   /* validated, light, on #ffffff */
   --meter: #2a78d6; --track: #cde2fb; --over: #2a78d6; --grid: #e1e0d9;
   --on-s1: #ffffff; --on-light: #1f2328;
@@ -883,7 +883,7 @@ CSS = """
   :root:where(:not([data-theme="light"])) {
     --bg: #17191c; --card: #212429; --ink: #e8e6e1; --muted: #a3a8b0; --line: #343840;
     --none-bg: #1f3325; --none-ink: #8fd19e; --look-bg: #3a2e14; --look-ink: #f2c46d;
-    --fact-bg: #1e2a3a; --fact-ink: #9cbcf0;
+    --fact-bg: #1e2a3a; --fact-ink: #9cbcf0; --red-bg: #3d1d17; --red-ink: #f2a08c;
     --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;   /* validated, dark, on #212429 */
     --meter: #3987e5; --track: #184f95; --grid: #2c2c2a;
     --on-s1: #ffffff; --on-light: #111316;
@@ -892,7 +892,7 @@ CSS = """
 :root[data-theme="dark"] {
   --bg: #17191c; --card: #212429; --ink: #e8e6e1; --muted: #a3a8b0; --line: #343840;
   --none-bg: #1f3325; --none-ink: #8fd19e; --look-bg: #3a2e14; --look-ink: #f2c46d;
-  --fact-bg: #1e2a3a; --fact-ink: #9cbcf0;
+  --fact-bg: #1e2a3a; --fact-ink: #9cbcf0; --red-bg: #3d1d17; --red-ink: #f2a08c;
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
   --meter: #3987e5; --track: #184f95; --grid: #2c2c2a;
   --on-s1: #ffffff; --on-light: #111316;
@@ -1021,6 +1021,15 @@ nav.toc a { color: var(--fact-ink); }
 .since { margin: 10px 0 0; font-size: 0.92rem; }
 .warnline { background: var(--look-bg); color: var(--ink); border-radius: 12px; padding: 12px 16px; margin-top: 14px; font-size: 0.95rem; }
 .warnline a { color: var(--fact-ink); }
+/* What Walkdown examined (2026-11-04): white, yellow, red */
+.tiers { margin-bottom: 26px; }
+.tier { border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; border: 1px solid var(--line); }
+.t-examined { background: var(--card); }
+.t-archive { background: var(--look-bg); }
+.t-archive b { color: var(--look-ink); }
+.t-not { background: var(--red-bg); border-color: var(--red-ink); }
+.t-not b { color: var(--red-ink); }
+.tier-files { margin: 8px 0 0; padding-left: 20px; font-size: 0.9rem; overflow-wrap: anywhere; }
 """
 
 SCRIPT = """<div id="tip" role="tooltip"></div>

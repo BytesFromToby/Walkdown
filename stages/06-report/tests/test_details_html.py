@@ -596,7 +596,7 @@ def test_files_worth_a_look_and_the_trifecta_credit():
     r = add(_tr.costed(reports()), "02.1-inventory", {"check": "struct.census", "file": "a.zip", "line": None, "flag": "archive"},
             {"check": "struct.census", "file": "link", "line": None, "flag": "symlink"})
     t = text(page(r), "package")
-    assert "Files worth a look" in t and "Archives (their contents were not read) (1)" in t and "a.zip" in t
+    assert "Files worth a look" in t and "Archives (looked inside for programs; the text inside was not read) (1)" in t and "a.zip" in t
     assert "Links to another file or folder (symlinks) (1)" in t
     assert "Files worth a look" not in text(page(_tr.costed(reports())), "package")
     assert "the lethal trifecta, Simon Willison's name for three things" in text(page(reports(hooks=1)), "careful")
@@ -776,3 +776,13 @@ def test_the_four_rows_from_skillspector_are_places_and_decoding_code_runs_code(
     assert places[23]["title"] == "Matches the wording of decoding hidden code and running it"
     assert S.action_group(places[23]) == "runs" and S.action_group(places[20]) == "out"
     assert S.action_group(places[21]) == "words"
+
+
+def test_what_walkdown_examined_comes_first_and_names_the_red_files():
+    r = add(reports(), "02.1-inventory", {"check": "inv.file", "file": "assets/model.pkl", "line": None, "ext": "pkl",
+                                         "type": "application/octet-stream"})
+    r.setdefault("02.2-reader", {"findings": []})
+    r = add(r, "02.2-reader", {"check": "read.unread", "file": "assets/model.pkl", "line": None, "reason": "binary blob"})
+    h = page(r)
+    assert h.index("What Walkdown examined") < h.index('<nav class="toc">')
+    assert "<code>assets/model.pkl</code>" in h

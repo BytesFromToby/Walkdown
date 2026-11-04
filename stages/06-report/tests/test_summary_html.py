@@ -738,3 +738,15 @@ def test_steps_whose_check_could_not_be_made_are_said_once_apart_from_the_steps_
     s2 = qa(results={"02.4-phrases": "NOT BUILT"})
     assert S.unchecked_sentence(s2) == "What the text asks for has no fixtures to be checked against"
     assert S.unchecked_sentence(qa()) is None
+
+
+def test_what_walkdown_examined_comes_before_the_glance():
+    """Owner, 2026-11-04: white, yellow, red, above everything else; a file type no test reads is red."""
+    r = bare()
+    r["02.1-inventory"]["findings"].append({"check": "inv.file", "file": "assets/model.pkl", "line": None, "ext": "pkl",
+                                           "type": "application/octet-stream"})
+    r.setdefault("02.2-reader", {"findings": []})["findings"].append(
+        {"check": "read.unread", "file": "assets/model.pkl", "line": None, "reason": "binary blob (does not decode as text)"})
+    h = page(r)
+    assert "What Walkdown examined" in h and h.index("What Walkdown examined") < h.index("At a glance")
+    assert '<li class="tier t-not"><b>No tests are run on these file types</b>: .pkl 1' in h

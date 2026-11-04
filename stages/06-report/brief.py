@@ -13,6 +13,7 @@ import re
 from pathlib import Path
 
 import common_lines
+import coverage
 import details_html
 import layout
 import qaview
@@ -152,10 +153,12 @@ def build(meta: dict, reports: dict, stamps: dict, changes: dict | None, run_dir
     cost += [cleans] if cleans else []
     trig = summary_html.brief_trigger_line(reports)  # slice 4: first, as on the page
     cost = ([trig] if trig else []) + cost
-    examined = ("Files examined: none yet. Pinned: nothing yet." if INVENTORY in left else
-                f"Files examined: {pin.get('files', '?')}. Pinned: {pin.get('hash_kind', '?')} "
+    # "Files", not "Files examined" (2026-11-04): the next line says which of them were examined
+    examined = ("Files: none yet. Pinned: nothing yet." if INVENTORY in left else
+                f"Files: {pin.get('files', '?')}. Pinned: {pin.get('hash_kind', '?')} "
                 f"{str(pin.get('hash', '?'))[:12]}.")
-    L = [f"Walkdown brief: {meta['repo']}", examined, *cost, ""]
+    tiers = None if INVENTORY in left else coverage.brief_line(reports)  # 2026-11-04: white, yellow, red, as counts
+    L = [f"Walkdown brief: {meta['repo']}", examined, *([tiers] if tiers else []), *cost, ""]
     if "02.5-capability" in left:  # no boxes to tick when the run stopped before the step that ticks them
         L.append(f'What it can do: not measured, the run stopped after "{R.stop_plain(stop)}", as asked.')
     else:
