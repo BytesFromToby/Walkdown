@@ -1476,6 +1476,15 @@ A set of line numbers, empty for any file that is not MCP code or does not parse
   struct tag that describes a schema field (`jsonschema:"..."`, `jsonschema_description:"..."`, `GO_SCHEMA_TAG`). A `Title:` set
   from a variable has no string, so no line.
 
+- **What a prompt or a reply sends** (2026-11-03), in a server's code only (`is_server_code`: a Python import of `mcp.server` or
+  `fastmcp`, or of `FastMCP`, `Server`, or `MCPServer` from `mcp`; a JavaScript or TypeScript import of the SDK's `/server` paths or
+  of `fastmcp`; a Go import `GO_MCP` names): every string in the body of a function decorated `@<x>.prompt` (what it returns, and
+  the strings it builds that from); the value of a `text` key, keyword, or field (`REPLY_KEYS`: `TextContent(text=...)`,
+  `{type: "text", text: ...}`, Go's `Text:`), never an assignment `text = ...`, which is a variable; and the strings of a reply
+  builder (`REPLY_CALLS`: mcp-go's `NewTextContent`, and the `NewToolResultText`, `NewToolResultError`, `NewToolResultErrorf`, and
+  `NewToolResultErrorFromErr` that mcp-go and github-mcp-server use). A client's code sends a server arguments no model reads
+  (`call_tool("echo", {"text": "hi"})`), and a client and its server can share imports, so this is asked of the server's import.
+
 `run.tool_text_scan(rel, text, rows, aud, found)`: for a file read as code only, the lines `tool_text_lines` gives are scanned
 again (`scan.scan_text`, every other line blank so numbers stay) with audience `model`. Each such hit carries `tool_text: true`
 and takes the place of the hit of the same check on that line made as code, so nothing is counted twice; a row that applies
@@ -1490,7 +1499,11 @@ like). Sampled lines were descriptions; the one other kind seen is a `Field(desc
 tool and parameter description of the git, fetch, and time servers was found, and no helper docstring. Go, on
 `github/github-mcp-server` (the official Go SDK): 67 files, 1,449 lines, 19 phrase hits on them, all in tool and parameter
 descriptions; every one of the 997 lines a plain search finds (`Description:` or `Title:` with a string, or a `jsonschema` tag) is
-among them.
+among them. Prompt and reply text (2026-11-03), old reader against new on code that is not test data: `github/github-mcp-server`
+1,449 to 2,059 lines (its tool error replies, a workflow prompt's messages), with 3 phrase hits on the new lines, all in a prompt's
+or a reply's text; `modelcontextprotocol/python-sdk` 601 to 700 (prompt functions' bodies, `TextContent(text=...)`), no hit;
+`punkpeye/fastmcp` 20 to 22 (two tool error replies); `modelcontextprotocol/servers` unchanged. The first measurement caught a
+client's `call_tool` arguments and a TypeScript `let text = ...`; both are left out (above).
 
 ### Must never
 
@@ -1500,8 +1513,8 @@ among them.
 
 ### What it does not reach
 
-Static text a prompt or tool returns (a prompt's message body, `TextContent(text=...)`), which a model also reads; descriptions
-built at run time from strings elsewhere; a server in a language other than Python, JavaScript, TypeScript, and Go, read as code.
+Text built at run time from strings elsewhere (a reply assembled in a helper the tool calls, a prompt read from a file); a reply's
+text in a file with no server import; a server in a language other than Python, JavaScript, TypeScript, and Go, read as code.
 Hidden characters in a description are found by `02.2-reader` and counted by the file's audience, as before.
 
 ### Done when (tests in `tests/test_tooltext.py`)
@@ -1522,6 +1535,11 @@ Hidden characters in a description are found by `02.2-reader` and counted by the
    (`test_a_go_raw_string_has_no_escapes`). Fixture `class15-mcp-tool-text.go`: a tool's `Description` and a schema field's
    `jsonschema` tag are model text (`mcp-go-tool-description-read-by-model`, `mcp-go-schema-tag-read-by-model`), and a string in a
    function body stays code (`mcp-go-plain-string-stays-code`, `mcp-go-plain-string-still-found`).
+5. What a prompt returns and the text a reply sends are read, and a string a tool keeps in its code is not
+   (`test_what_a_prompt_returns_and_a_reply_sends_is_read_and_other_strings_are_not`); a client file reads no reply text, and the same
+   file with a server import does (`test_a_client_file_reads_descriptions_and_never_the_text_it_sends_a_server`); `let text = ...` is a
+   variable (`test_a_variable_named_text_is_not_a_reply`); Go's reply builders are read (`test_go_reply_builders_are_read`). Fixture
+   rows `mcp-prompt-return-read-by-model`, `mcp-reply-text-read-by-model`, and `mcp-go-reply-read-by-model` miss on the reader before.
 
 ## vocab
 

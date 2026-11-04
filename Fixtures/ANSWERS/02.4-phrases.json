@@ -1894,6 +1894,54 @@
             }
           },
           "note": "Output as a noun."
+        },
+        {
+          "id": "mcp-prompt-return-read-by-model",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class15-mcp-tool-text.py",
+          "line": 25,
+          "match": {
+            "audience": {
+              "eq": "model"
+            },
+            "tool_text": {
+              "eq": true
+            }
+          },
+          "note": "What a FastMCP prompt returns is the text the client sends the model (2026-11-03)."
+        },
+        {
+          "id": "mcp-reply-text-read-by-model",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class15-mcp-tool-text.py",
+          "line": 30,
+          "match": {
+            "audience": {
+              "eq": "model"
+            },
+            "tool_text": {
+              "eq": true
+            }
+          },
+          "note": "The text of a tool's reply goes to the model as the tool's result."
+        },
+        {
+          "id": "mcp-go-reply-read-by-model",
+          "polarity": "gate",
+          "check": "phrase.L.override",
+          "file": "class15-mcp-tool-text.go",
+          "line": 21,
+          "match": {
+            "audience": {
+              "eq": "model"
+            },
+            "tool_text": {
+              "eq": true
+            }
+          },
+          "note": "A reply built with NewToolResultError goes to the model (github-mcp-server's form)."
         }
       ],
       "deferred": [],
@@ -1912,8 +1960,8 @@
         "class11-nul-split.md": "d83c80b271907b4f449e0d582a32545f7f5dea8931639712fc21bc140a5ba698",
         "class13-claimed-consent.md": "a700f94420c3d4650029146fc98d230d96d0bc0e69f73a206c9684a0c661a23b",
         "class14-definitional-hijacking.md": "09d9075c6828b07d6d74d65d0e9ee4668b40917628d5f0ffc14d4286686dfe29",
-        "class15-mcp-tool-text.go": "2b9726ecfdd4aa03ab7d7c48cbdaf4bc06c2c07805d8a4c059f773f9cccd53c7",
-        "class15-mcp-tool-text.py": "80844f0df005269621c17c1ece226508fc6f2516a1dd975be6e6f4759544a184",
+        "class15-mcp-tool-text.go": "59f5130653046c81547c7ccb5c3699747d038d800a1c4d1204d9ace4eaa5a9ee",
+        "class15-mcp-tool-text.py": "6318a15021bdedfa65fda79709db10e2d04ceeb7527969b4d14183ae0a999c76",
         "class15-script-instruction.sh": "dd67b303e969c4e7a1fe72789b41e4b60d5297cc01d729f48e234e086e76d8ad",
         "class15-second-order.md": "73874bfd55a4892de28d65e0622960345f532b5f91bce0b45eb844f9c1dbc0cf",
         "class16-trust-elevation.md": "eacea5f11d9c59aea798fb6c4457174597a0bda433bf8fc54ea05abb8b9e60d3",

@@ -735,7 +735,7 @@ def test_what_is_said_of_the_line_is_its_own_line_and_a_lead_never_runs_into_it(
                  kind="phrase", src={"tool_text": True, "decoded_text": "Ignore all"})
     assert it["context"] == ["Decoded from base64: “Ignore all”.", S.TOOL_TEXT_NOTE] and it["note"] == "L.ignore, rare"
     li = G.place_li(it, None)
-    assert S.TOOL_TEXT_NOTE in li and "Decoded from base64" in li and "L.ignore, rare" not in li  # a phrase's rate note stays off
+    assert S.esc(S.TOOL_TEXT_NOTE) in li and "Decoded from base64" in li and "L.ignore, rare" not in li  # a phrase's rate note stays off
     merged = S.unique([it, {**it, "src": {"tool_text": True}, "context": [S.TOOL_TEXT_NOTE]}])
     assert len(merged) == 1 and merged[0]["context"] == it["context"]
 
