@@ -6,6 +6,8 @@ Inert: each "program" is a file header padded with zero bytes; nothing in these 
   __pycache__/helper.cpython-312.pyc      (Python 3.12 bytecode header, then zeros: bytecode by its name)
   macros.docx                             (a zip document holding Office macros, an .exe, and an ELF member named .dat)
   plain.docx                              (a zip document with no program in it: the negative)
+  bundle.tar.gz                           (a gzip tar holding an ELF program and Python bytecode)
+  plain.tar.gz                            (a gzip tar holding text only: the negative)
 Regenerate: python make_program_binaries.py"""
 import os
 import zipfile
@@ -36,3 +38,31 @@ with zipfile.ZipFile(os.path.join(R18, "macros.docx"), "w") as z:
 with zipfile.ZipFile(os.path.join(R18, "plain.docx"), "w") as z:
     member(z, "[Content_Types].xml", "<Types/>")
     member(z, "word/document.xml", "<w:document>WALKDOWN FIXTURE :: a document with no program in it (NEGATIVE)</w:document>")
+
+
+# Tar archives (2026-11-03): a gzip-compressed tar holding a program and bytecode, and one holding only text (the negative).
+# Fixed member times and a gzip header with mtime 0, so the bytes are the same each run.
+import gzip  # noqa: E402
+import io  # noqa: E402
+import tarfile  # noqa: E402
+
+
+def targz(path, members):
+    raw = io.BytesIO()
+    with tarfile.open(fileobj=raw, mode="w", format=tarfile.USTAR_FORMAT) as t:
+        for name, data in members:
+            info = tarfile.TarInfo(name)
+            info.size, info.mtime, info.mode = len(data), 0, 0o644
+            t.addfile(info, io.BytesIO(data))
+    with open(path, "wb") as out, gzip.GzipFile(fileobj=out, mode="wb", mtime=0, filename="") as gz:
+        gz.write(raw.getvalue())
+
+
+targz(os.path.join(R18, "bundle.tar.gz"), [
+    ("bundle/README.md", b"WALKDOWN FIXTURE :: a tar holding programs (POSITIVE)\n"),
+    ("bundle/bin/helper", b"\x7fELF\x02\x01\x01" + b"\x00" * 57),
+    ("bundle/lib/__pycache__/util.cpython-312.pyc", b"\xcb\x0d\x0d\x0a" + b"\x00" * 28),
+])
+targz(os.path.join(R18, "plain.tar.gz"), [
+    ("docs/README.md", b"WALKDOWN FIXTURE :: a tar holding text only (NEGATIVE)\n"),
+])

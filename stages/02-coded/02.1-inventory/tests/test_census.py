@@ -4,6 +4,7 @@ import tarfile
 import zipfile
 
 import census
+import pytest
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR" + b"\x00" * 20
 
@@ -183,3 +184,33 @@ def test_a_zip_container_names_the_programs_inside_it_and_a_plain_one_names_none
         z.writestr("word/document.xml", "<x/>")
     assert "archive-executable" not in flags("plain.docx", plain.getvalue())
     assert census.programs_inside(b"PK\x03\x04 broken") == []  # a container that does not open gives none
+
+
+def _tar(mode, members):
+    import tarfile
+    b = io.BytesIO()
+    with tarfile.open(fileobj=b, mode=mode) as t:
+        for name, data in members:
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            t.addfile(info, io.BytesIO(data))
+    return b.getvalue()
+
+
+@pytest.mark.parametrize("mode", ["w", "w:gz", "w:bz2", "w:xz"])
+def test_a_tar_names_the_programs_inside_it_plain_or_compressed(mode):
+    """2026-11-03: a tar was listed as unread; it is read as a stream, as a zip is read, by names and first bytes."""
+    data = _tar(mode, [("p/README.md", b"# hi\n"), ("p/bin/tool", b"\x7fELF\x02\x01\x01" + b"\x00" * 60),
+                       ("p/__pycache__/a.cpython-312.pyc", b"x"), ("p/setup.exe", b"MZ")])
+    [row] = [f for f in census.census_flags("p.tar", census.file_facts("p.tar", data, False)) if f["flag"] == "archive-executable"]
+    assert row["members"] == ["p/bin/tool", "p/__pycache__/a.cpython-312.pyc", "p/setup.exe"]
+    assert census.programs_inside(_tar(mode, [("a.txt", b"hello")])) == []
+
+
+def test_a_tar_stops_at_its_budget_and_a_gzip_that_is_no_tar_gives_none(monkeypatch):
+    """A small archive that unpacks to gigabytes costs no more than the budget: what lies past it is not read."""
+    monkeypatch.setattr(census, "INSIDE_TAR_BYTES", 10_000)
+    data = _tar("w:gz", [("first.exe", b"MZ"), ("big.bin", b"\x00" * 50_000), ("after.exe", b"MZ")])
+    assert census.programs_inside(data) == ["first.exe"]
+    import gzip
+    assert census.programs_inside(gzip.compress(b"\x7fELF" + b"\x00" * 100)) == []

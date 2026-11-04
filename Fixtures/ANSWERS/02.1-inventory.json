@@ -328,12 +328,40 @@
             }
           },
           "note": "A document with no program inside."
+        },
+        {
+          "id": "inv-18-tar-executable",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "bundle.tar.gz",
+          "match": {
+            "flag": {
+              "eq": "archive-executable"
+            },
+            "count": {
+              "eq": 2
+            }
+          },
+          "note": "A gzip tar holding an ELF program and Python bytecode, read as a stream (2026-11-03; tools/fixture-generators/make_program_binaries.py)."
+        },
+        {
+          "id": "inv-18-tar-executable-neg",
+          "polarity": "negative",
+          "check": "struct.census",
+          "file": "plain.tar.gz",
+          "match": {
+            "flag": {
+              "eq": "archive-executable"
+            }
+          },
+          "note": "A tar holding text only."
         }
       ],
       "deferred": [],
       "fixtures": {
         "__pycache__/helper.cpython-312.pyc": "c5b6db3ec2006a618cb3067851fb2f03c4e3db83333945529d91a5ed1df228e3",
         "bom.md": "773fc72c47207f54eb189d59165a89499d7472f967513bd8c6df7e8f08e78f52",
+        "bundle.tar.gz": "119d6f21e168e074b6c280e80de7cc15b02f5025ddf41f1924ed0848b1068271",
         "codefence-benign.md": "78a8e8245fe3a7242edaf12ce12f349830c363c90d921e67252dee428a63f874",
         "ext-magic-mismatch.md": "09574dbc1d811ff0720c184e54c89aca66afeeebe14313c110c0d5bdb3888555",
         "longline.md": "3a8cc2ea48664f1871f5b589eb0f76e8528ad3a504846686d0b00b4e5523ef08",
@@ -343,6 +371,7 @@
         "padding-table.md": "ea2cc7c992585db5b975bd3e3f6b7ff07f2a94e74a49339c6dc25661bfbd4e2e",
         "padding-vertical.md": "ed14300b0428d3500f7636d517ba49abbdf10b83849275c4e82cb56edcb3d478",
         "plain.docx": "52d41fd4551e3b989319b748b8133ee2a216d21e72f8e6584a78e23d65394ec3",
+        "plain.tar.gz": "738d4cd2d755e0f729424772a96adc33affba6b9cf40b531f2077e86a74103db",
         "sample.zip": "5d514f480e8ad1e7c1672c132400336722a85b5430ff3b0376ffdbbd5e9c487e",
         "tool.bin": "cc02399266375679234544306b7514fa672706e46a4bebe8ed9e5443fd658a43"
       }

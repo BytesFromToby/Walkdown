@@ -146,7 +146,7 @@ text-versus-text is detector noise and never a finding.
 | `padding` | text that follows 20 or more blank lines (`kind` `vertical`), or follows 80 or more blank characters inside a line (`kind` `horizontal`); blank is Unicode white space or the blank braille cell; indentation at a line's start and a run that ends at `\|` (a table's column padding) are not runs (`padding_runs`; added 2026-11-03, SkillSpector P9, S20) | where the text resumes | the run; `kind` and `length` fields too |
 | `executable` | `magic` is a program in compiled form (`EXECUTABLES`: ELF, Windows PE, Mach-O, and the names other backends give them), whatever the file is called (added 2026-11-03, SkillSpector SC9) | null | detected type; `detected` too |
 | `bytecode` | a `.pyc` or `.pyo` file, or a file under a `__pycache__` folder: Python runs it without its source (added 2026-11-03, SkillSpector SC8) | null | fixed words |
-| `archive-executable` | a zip container (an archive, or an Office or OpenDocument file, a jar, a wheel) holding members that are programs by name (`INSIDE_EXTS`), Python bytecode, Office macros (`vbaProject.bin`), or programs by their first 64 bytes (`programs_inside`: names and first bytes only, nothing extracted, at most 5,000 members; a container that does not open gives none; added 2026-11-03, SkillSpector SC9) | null | how many and the first five names; `members` (up to 50) and `count` too |
+| `archive-executable` | a zip container (an archive, or an Office or OpenDocument file, a jar, a wheel), or a tar archive, plain or compressed with gzip, bzip2, or xz (added the same day: read as a stream, stopping past 64 MB unpacked, `INSIDE_TAR_BYTES`, so what lies past that is not read), holding members that are programs by name (`INSIDE_EXTS`), Python bytecode, Office macros (`vbaProject.bin`), or programs by their first 64 bytes (`programs_inside`: names and first bytes only, nothing extracted, at most 5,000 members; a container that does not open gives none; added 2026-11-03, SkillSpector SC9) | null | how many and the first five names; `members` (up to 50) and `count` too |
 
 `symlink_facts(rel, target)` returns the `inv.file` facts for a symlink
 (`type` `inode/symlink`, `bytes` = UTF-8 length of the target, no encoding, no
@@ -185,6 +185,10 @@ finding with the target as `detail`.
     `test_a_zip_container_names_the_programs_inside_it_and_a_plain_one_names_none`). Fixtures `tool.bin`,
     `__pycache__/helper.cpython-312.pyc`, `macros.docx`, and `plain.docx` in `class18-reader-limit`
     (`tools/fixture-generators/make_program_binaries.py`). On the nine repositories, none of the three flags fired.
+14. A tar, plain or compressed with gzip, bzip2, or xz, names the programs and bytecode inside it, and one holding text names none
+    (`test_a_tar_names_the_programs_inside_it_plain_or_compressed`); a tar stops at its budget, and a gzip that is no tar gives none
+    (`test_a_tar_stops_at_its_budget_and_a_gzip_that_is_no_tar_gives_none`; a 1 MB gzip that unpacks to 1 GB took 0.01 s). Fixtures
+    `bundle.tar.gz` and `plain.tar.gz`. The one tar in the nine repositories (`anthropics/skills`, 49 TypeScript files) holds none.
 
 ## configs
 
