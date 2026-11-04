@@ -1046,7 +1046,7 @@ interpreter it was started with can import every core one before it runs anythin
 
 - `CORE_MODULES`: the import names of `requirements.txt`'s packages, less pytest (no stage imports it): `yaml`,
   `charset_normalizer`, `pdfminer`, `pypdf`, `pypdfium2`, `bs4`, `lxml`, `PIL`, `regex`, `confusable_homoglyphs`,
-  `detect_secrets`. `walkdown.py` imports it.
+  `detect_secrets`, `zstandard` (2026-11-04: the inventory reads zstd archives). `walkdown.py` imports it.
 - `OPTIONAL_MODULES`: what a stage imports when it is there and does without when it is not: `filetype`, `magic`, `playwright`,
   `pytesseract`, `typesafe_sdk`. `OWN_MODULES` is the two together.
 

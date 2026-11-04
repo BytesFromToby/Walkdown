@@ -7,6 +7,13 @@ import tarfile
 import zipfile
 from dataclasses import dataclass
 
+import archive_index
+
+try:  # zstd archives (2026-11-04, requirements.txt); the front door stops a run without it, so this is for a test's sake
+    import zstandard as _zstd
+except ImportError:
+    _zstd = None
+
 READER_LINES = 2000
 READER_BYTES = 50_000
 LONG_LINE = 500
@@ -71,10 +78,11 @@ INSIDE_EXTS = {"exe", "dll", "so", "dylib", "msi", "scr", "com", "sys", "ocx", "
 INSIDE_NAMES = {"vbaproject.bin"}
 INSIDE_MEMBERS = 5000  # members looked at, at most
 INSIDE_HEAD = 64  # bytes read of each
-# A tar archive is read as a stream, compressed or not (2026-11-03); unpacking stops past this many bytes of it, so a small
-# archive that unpacks to gigabytes costs no more than this.
-INSIDE_TAR_BYTES = 64 * 1024 * 1024
+# A tar archive is read as a stream, compressed or not (2026-11-03), and a 7z archive's members are unpacked in order
+# (2026-11-04); unpacking stops past this many bytes, so a small archive that unpacks to gigabytes costs no more than this.
+INSIDE_UNPACK_BYTES = 64 * 1024 * 1024
 TAR_MAGIC = (b"\x1f\x8b", b"BZh", b"\xfd7zXZ\x00")  # gzip, bzip2, xz: maybe a tar inside
+ZSTD_MAGIC = b"\x28\xb5\x2f\xfd"  # zstd (2026-11-04): maybe a tar inside
 
 
 def is_bytecode(rel: str) -> bool:
@@ -90,19 +98,26 @@ def _program(name: str, head: bytes | None) -> bool:
 
 
 def _tar_programs(data: bytes) -> list[str]:
-    """`programs_inside` for a tar archive, plain or compressed with gzip, bzip2, or xz, read as a stream: member names and
-    first bytes, at most `INSIDE_MEMBERS` members and `INSIDE_TAR_BYTES` unpacked; a stream that is no tar gives none."""
+    """`programs_inside` for a tar archive, plain or compressed with gzip, bzip2, xz, or zstd, read as a stream: member names
+    and first bytes, at most `INSIDE_MEMBERS` members and `INSIDE_UNPACK_BYTES` unpacked; a stream that is no tar gives none."""
     out = []
     try:
-        with tarfile.open(fileobj=io.BytesIO(data), mode="r|*") as tf:
+        if data.startswith(ZSTD_MAGIC):
+            if _zstd is None:
+                return []
+            # read as a stream, as the tar's bytes are wanted, so what lies past the budget is never unpacked
+            stream, mode = _zstd.ZstdDecompressor().stream_reader(io.BytesIO(data), read_across_frames=True), "r|"
+        else:
+            stream, mode = io.BytesIO(data), "r|*"
+        with tarfile.open(fileobj=stream, mode=mode) as tf:
             for k, member in enumerate(tf):
-                if k >= INSIDE_MEMBERS or member.offset_data > INSIDE_TAR_BYTES:
+                if k >= INSIDE_MEMBERS or member.offset_data > INSIDE_UNPACK_BYTES:
                     break
                 if member.isfile():
                     f = tf.extractfile(member)
                     if _program(member.name, f.read(INSIDE_HEAD) if f else None):
                         out.append(member.name)
-                if member.offset_data + member.size > INSIDE_TAR_BYTES:  # the next header lies past the budget: stop here
+                if member.offset_data + member.size > INSIDE_UNPACK_BYTES:  # the next header lies past the budget: stop here
                     break
     except Exception:  # not a tar, or broken past some point: what was read stands, and the archive flag says the rest
         pass
@@ -110,10 +125,16 @@ def _tar_programs(data: bytes) -> list[str]:
 
 
 def programs_inside(data: bytes) -> list[str]:
-    """The names of a zip container's or a tar archive's members that are programs, Python bytecode, or Office macros, in
-    member order. Nothing is extracted; a container that does not open gives none."""
-    if data[:2] in (b"\x1f\x8b",) or data.startswith(TAR_MAGIC) or data[257:262] == b"ustar":
+    """The names of the members of a zip container, a tar archive, or a 7z or RAR archive that are programs, Python bytecode,
+    or Office macros, in member order. Nothing is extracted; a container that does not open gives none."""
+    if data.startswith(TAR_MAGIC) or data.startswith(ZSTD_MAGIC) or data[257:262] == b"ustar":
         return _tar_programs(data)
+    if data.startswith((archive_index.SEVEN_Z, archive_index.RAR4, archive_index.RAR5)):
+        try:
+            found = archive_index.members(data, INSIDE_UNPACK_BYTES, INSIDE_MEMBERS, INSIDE_HEAD)
+        except Exception:  # archive_index gives what it read; this is for what it did not foresee
+            return []
+        return [name for name, head in found if _program(name, head)]
     if not data.startswith(b"PK\x03\x04"):
         return []
     try:

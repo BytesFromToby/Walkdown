@@ -355,13 +355,97 @@
             }
           },
           "note": "A tar holding text only."
+        },
+        {
+          "id": "inv-18-zstd-executable",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "bundle.tar.zst",
+          "match": {
+            "flag": {
+              "eq": "archive-executable"
+            },
+            "count": {
+              "eq": 2
+            }
+          },
+          "note": "A zstd tar holding an ELF program and Python bytecode, read as a stream (2026-11-04)."
+        },
+        {
+          "id": "inv-18-zstd-executable-neg",
+          "polarity": "negative",
+          "check": "struct.census",
+          "file": "plain.tar.zst",
+          "match": {
+            "flag": {
+              "eq": "archive-executable"
+            }
+          },
+          "note": "A zstd tar holding text only."
+        },
+        {
+          "id": "inv-18-7z-executable",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "bundle.7z",
+          "match": {
+            "flag": {
+              "eq": "archive-executable"
+            },
+            "count": {
+              "eq": 3
+            }
+          },
+          "note": "A 7z holding Python bytecode, an ELF program named .dat in an LZMA2 and BCJ folder, and an .exe, read from its headers and unpacked to each member's first bytes (2026-11-04)."
+        },
+        {
+          "id": "inv-18-7z-executable-neg",
+          "polarity": "negative",
+          "check": "struct.census",
+          "file": "plain.7z",
+          "match": {
+            "flag": {
+              "eq": "archive-executable"
+            }
+          },
+          "note": "A 7z holding text only."
+        },
+        {
+          "id": "inv-18-rar-executable",
+          "polarity": "gate",
+          "check": "struct.census",
+          "file": "bundle.rar",
+          "match": {
+            "flag": {
+              "eq": "archive-executable"
+            },
+            "count": {
+              "eq": 2
+            }
+          },
+          "note": "A RAR 5 holding an ELF program and Python bytecode, stored, read from its headers (2026-11-04)."
+        },
+        {
+          "id": "inv-18-rar-executable-neg",
+          "polarity": "negative",
+          "check": "struct.census",
+          "file": "plain.rar",
+          "match": {
+            "flag": {
+              "eq": "archive-executable"
+            }
+          },
+          "note": "A RAR holding text only."
         }
       ],
       "deferred": [],
       "fixtures": {
         "__pycache__/helper.cpython-312.pyc": "c5b6db3ec2006a618cb3067851fb2f03c4e3db83333945529d91a5ed1df228e3",
         "bom.md": "773fc72c47207f54eb189d59165a89499d7472f967513bd8c6df7e8f08e78f52",
+        "bundle.7z": "f61ad4d5228c11a59e63f84dfe9fe01df8d399330ca279de8277d30106598ae9",
+        "bundle.rar": "e19f1af8ae0a9efd0e3eda16c7c7853e68ee6556bf43c036fd6a07f941c57598",
         "bundle.tar.gz": "119d6f21e168e074b6c280e80de7cc15b02f5025ddf41f1924ed0848b1068271",
+        "bundle.tar.zst": "dd6d67e21bc6cac7372c9d3ce5fc73c144a1c5e7b5d5a2e2c3c05799fa1c04ae",
         "codefence-benign.md": "78a8e8245fe3a7242edaf12ce12f349830c363c90d921e67252dee428a63f874",
         "ext-magic-mismatch.md": "09574dbc1d811ff0720c184e54c89aca66afeeebe14313c110c0d5bdb3888555",
         "longline.md": "3a8cc2ea48664f1871f5b589eb0f76e8528ad3a504846686d0b00b4e5523ef08",
@@ -370,8 +454,11 @@
         "padding-horizontal.md": "63f2097d81a7df68de4641fb6d3dfbc60079da01523d25bf999a86476ef3b81d",
         "padding-table.md": "ea2cc7c992585db5b975bd3e3f6b7ff07f2a94e74a49339c6dc25661bfbd4e2e",
         "padding-vertical.md": "ed14300b0428d3500f7636d517ba49abbdf10b83849275c4e82cb56edcb3d478",
+        "plain.7z": "3830c39b36fe0cfe5c4a00e55ee8f200cbf9c289f7a153ca3226c74cd7d39503",
         "plain.docx": "52d41fd4551e3b989319b748b8133ee2a216d21e72f8e6584a78e23d65394ec3",
+        "plain.rar": "ede3e8da2e7d8f344ab6a3c8b7ad7a36635438fdbb1b5ce427a44f5ded784530",
         "plain.tar.gz": "738d4cd2d755e0f729424772a96adc33affba6b9cf40b531f2077e86a74103db",
+        "plain.tar.zst": "e85c86d1632302370b2b5ab7fec6e163534d6ca002f38ab84de43a94909d3193",
         "sample.zip": "5d514f480e8ad1e7c1672c132400336722a85b5430ff3b0376ffdbbd5e9c487e",
         "tool.bin": "cc02399266375679234544306b7514fa672706e46a4bebe8ed9e5443fd658a43"
       }

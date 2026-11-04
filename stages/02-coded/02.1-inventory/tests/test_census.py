@@ -1,5 +1,6 @@
 """Tests for census.py, written from specs/inventory.SPEC.md, census."""
 import io
+from pathlib import Path
 import tarfile
 import zipfile
 
@@ -209,8 +210,93 @@ def test_a_tar_names_the_programs_inside_it_plain_or_compressed(mode):
 
 def test_a_tar_stops_at_its_budget_and_a_gzip_that_is_no_tar_gives_none(monkeypatch):
     """A small archive that unpacks to gigabytes costs no more than the budget: what lies past it is not read."""
-    monkeypatch.setattr(census, "INSIDE_TAR_BYTES", 10_000)
+    monkeypatch.setattr(census, "INSIDE_UNPACK_BYTES", 10_000)
     data = _tar("w:gz", [("first.exe", b"MZ"), ("big.bin", b"\x00" * 50_000), ("after.exe", b"MZ")])
     assert census.programs_inside(data) == ["first.exe"]
     import gzip
     assert census.programs_inside(gzip.compress(b"\x7fELF" + b"\x00" * 100)) == []
+
+
+# 7z, RAR, and zstd (2026-11-04): fixtures from tools/fixture-generators/make_program_binaries.py, written as 7-Zip and RAR 5
+# write these formats; 7-Zip 23.01 and rarfile 4.5 read them back whole.
+R18 = Path(__file__).resolve().parents[4] / "Fixtures" / "02.1-inventory" / "class18-reader-limit"
+
+
+def _fixture(name):
+    return (R18 / name).read_bytes()
+
+
+def test_a_7z_names_the_programs_inside_it_read_from_its_headers():
+    """The header is packed with LZMA, as 7-Zip packs it; the program named .dat lies in an LZMA2 and BCJ folder, its coders
+    listed packed side first, as 7-Zip lists them, and is found by its first bytes."""
+    [row] = [f for f in census.census_flags("b.7z", census.file_facts("b.7z", _fixture("bundle.7z"), False))
+             if f["flag"] == "archive-executable"]
+    assert row["members"] == ["bundle/lib/__pycache__/util.cpython-312.pyc", "bundle/media/blob.dat", "bundle/setup.exe"]
+    assert census.programs_inside(_fixture("plain.7z")) == []
+
+
+def test_a_7z_stops_unpacking_at_its_budget_and_names_still_count(monkeypatch):
+    """Past the budget a member's first bytes are not read, so the program named .dat goes unseen; the .exe is named."""
+    monkeypatch.setattr(census, "INSIDE_UNPACK_BYTES", 100)
+    assert census.programs_inside(_fixture("bundle.7z")) == ["bundle/lib/__pycache__/util.cpython-312.pyc",
+                                                             "bundle/setup.exe"]
+
+
+def test_a_7z_whose_header_python_cannot_unpack_gives_none():
+    """An encrypted header, or one packed with a coder Python lacks (here the LZMA coder's id made PPMd's), gives no names."""
+    data = _fixture("bundle.7z")
+    tail = data.rindex(b"\x23\x03\x01\x01\x05")
+    assert census.programs_inside(data[:tail] + b"\x23\x03\x04\x01\x05" + data[tail + 5:]) == []
+
+
+def test_a_rar_names_its_programs_and_reads_a_stored_members_first_bytes():
+    [row] = [f for f in census.census_flags("b.rar", census.file_facts("b.rar", _fixture("bundle.rar"), False))
+             if f["flag"] == "archive-executable"]
+    assert row["members"] == ["bundle/bin/helper", "bundle/lib/__pycache__/util.cpython-312.pyc"]
+    assert census.programs_inside(_fixture("plain.rar")) == []
+    # RAR 5 with its headers encrypted: an encryption header first, and nothing after it can be read
+    sig = len(b"Rar!\x1a\x07\x01\x00")
+    data = _fixture("bundle.rar")
+    assert census.programs_inside(data[:sig] + b"\x00\x00\x00\x00\x03\x04\x00\x00" + data[sig:]) == []
+
+
+def _rar4(entries, archive_flags=0):
+    """A RAR 4 archive: (name, data, method) for each file; method 0x30 is stored."""
+    import struct
+    import zlib
+    out = b"Rar!\x1a\x07\x00" + struct.pack("<HBHH", 0, 0x73, archive_flags, 13) + b"\x00" * 6
+    for name, data, method in entries:
+        raw = name.encode("latin-1")
+        head = struct.pack("<IIBIIBBHI", len(data), len(data), 3, zlib.crc32(data), 0, 29, method, len(raw), 0o100644) + raw
+        out += struct.pack("<HBHH", 0, 0x74, 0x8000, 7 + len(head)) + head + data
+    return out + struct.pack("<HBHH", 0, 0x7B, 0x4000, 7)
+
+
+def test_a_rar4_names_its_programs_and_a_compressed_member_by_name_only():
+    """RAR's own compression is not one Python decodes: a compressed member is judged by its name."""
+    elf = b"\x7fELF\x02\x01\x01" + b"\x00" * 60
+    data = _rar4([("tools\\helper", elf, 0x30), ("x.dll", b"..", 0x33), ("blob.dat", elf, 0x33), ("a.txt", b"hi", 0x30)])
+    assert census.programs_inside(data) == ["tools/helper", "x.dll"]
+    assert census.programs_inside(_rar4([("x.dll", b"..", 0x33)], archive_flags=0x0080)) == []  # headers encrypted
+
+
+def test_a_zstd_tar_names_the_programs_inside_it():
+    assert census.programs_inside(_fixture("bundle.tar.zst")) == ["bundle/bin/helper",
+                                                                  "bundle/lib/__pycache__/util.cpython-312.pyc"]
+    assert census.programs_inside(_fixture("plain.tar.zst")) == []
+    packed = census._zstd.ZstdCompressor().compress(_tar("w", [("setup.exe", b"MZ"), ("a.txt", b"hi")]))  # compressed blocks
+    assert census.programs_inside(packed) == ["setup.exe"]
+
+
+def test_a_zstd_tar_without_a_zstd_library_is_not_read(monkeypatch):
+    monkeypatch.setattr(census, "_zstd", None)
+    assert census.programs_inside(_fixture("bundle.tar.zst")) == []
+
+
+@pytest.mark.parametrize("name", ["bundle.7z", "bundle.rar", "bundle.tar.zst"])
+def test_a_cut_or_damaged_archive_never_raises(name):
+    """Every cut of the archive, and every single byte set to 0xFF, reads without an error."""
+    data = _fixture(name)
+    for n in range(len(data)):
+        census.programs_inside(data[:n])
+        census.programs_inside(data[:n] + b"\xff" + data[n + 1:])

@@ -146,7 +146,7 @@ text-versus-text is detector noise and never a finding.
 | `padding` | text that follows 20 or more blank lines (`kind` `vertical`), or follows 80 or more blank characters inside a line (`kind` `horizontal`); blank is Unicode white space or the blank braille cell; indentation at a line's start and a run that ends at `\|` (a table's column padding) are not runs (`padding_runs`; added 2026-11-03, SkillSpector P9, S20) | where the text resumes | the run; `kind` and `length` fields too |
 | `executable` | `magic` is a program in compiled form (`EXECUTABLES`: ELF, Windows PE, Mach-O, and the names other backends give them), whatever the file is called (added 2026-11-03, SkillSpector SC9) | null | detected type; `detected` too |
 | `bytecode` | a `.pyc` or `.pyo` file, or a file under a `__pycache__` folder: Python runs it without its source (added 2026-11-03, SkillSpector SC8) | null | fixed words |
-| `archive-executable` | a zip container (an archive, or an Office or OpenDocument file, a jar, a wheel), or a tar archive, plain or compressed with gzip, bzip2, or xz (added the same day: read as a stream, stopping past 64 MB unpacked, `INSIDE_TAR_BYTES`, so what lies past that is not read), holding members that are programs by name (`INSIDE_EXTS`), Python bytecode, Office macros (`vbaProject.bin`), or programs by their first 64 bytes (`programs_inside`: names and first bytes only, nothing extracted, at most 5,000 members; a container that does not open gives none; added 2026-11-03, SkillSpector SC9) | null | how many and the first five names; `members` (up to 50) and `count` too |
+| `archive-executable` | a zip container (an archive, or an Office or OpenDocument file, a jar, a wheel), or a tar archive, plain or compressed with gzip, bzip2, or xz (added the same day: read as a stream, stopping past 64 MB unpacked, `INSIDE_UNPACK_BYTES`, so what lies past that is not read) or zstd (2026-11-04, through `zstandard`), or a 7z or RAR archive (2026-11-04, `archive_index.py`: names from the archive's own headers; a 7z member's first bytes where its folder's coders are LZMA, LZMA2, Deflate, BZip2, Copy, Delta, or a BCJ filter other than BCJ2 and ARM64, unpacked in order up to the same 64 MB; a RAR member's first bytes when it is stored, since RAR's compression is not one Python decodes; an archive with encrypted headers gives none), holding members that are programs by name (`INSIDE_EXTS`), Python bytecode, Office macros (`vbaProject.bin`), or programs by their first 64 bytes (`programs_inside`: names and first bytes only, nothing extracted, at most 5,000 members; a container that does not open gives none; added 2026-11-03, SkillSpector SC9) | null | how many and the first five names; `members` (up to 50) and `count` too |
 
 `symlink_facts(rel, target)` returns the `inv.file` facts for a symlink
 (`type` `inode/symlink`, `bytes` = UTF-8 length of the target, no encoding, no
@@ -189,6 +189,21 @@ finding with the target as `detail`.
     (`test_a_tar_names_the_programs_inside_it_plain_or_compressed`); a tar stops at its budget, and a gzip that is no tar gives none
     (`test_a_tar_stops_at_its_budget_and_a_gzip_that_is_no_tar_gives_none`; a 1 MB gzip that unpacks to 1 GB took 0.01 s). Fixtures
     `bundle.tar.gz` and `plain.tar.gz`. The one tar in the nine repositories (`anthropics/skills`, 49 TypeScript files) holds none.
+15. 2026-11-04: a 7z, a RAR (4 or 5), and a zstd tar name the programs and bytecode inside them, and ones holding text name none
+    (`test_a_7z_names_the_programs_inside_it_read_from_its_headers`,
+    `test_a_rar_names_its_programs_and_reads_a_stored_members_first_bytes`,
+    `test_a_rar4_names_its_programs_and_a_compressed_member_by_name_only`, `test_a_zstd_tar_names_the_programs_inside_it`); a 7z
+    stops unpacking at its budget and its names still count; a 7z header Python cannot unpack, or a RAR with encrypted headers,
+    gives none; without a zstd library a zstd tar is not read; every cut or damaged byte of each fixture reads without an error
+    (`test_a_cut_or_damaged_archive_never_raises`). Fixtures `bundle.7z`, `plain.7z`, `bundle.rar`, `plain.rar`, `bundle.tar.zst`,
+    `plain.tar.zst`, written byte by byte by `make_program_binaries.py`; 7-Zip 23.01 tests the 7z and RAR fixtures whole. None of
+    the nine repositories holds a 7z, RAR, or zstd file, so the reader was measured on archives made by 7-Zip 23.01 (23 archives:
+    its default and `-mx` 1 to 9, LZMA, LZMA2, Deflate, BZip2, PPMd, Copy, Delta, BCJ, BCJ2, ARM64, no solid, an unpacked header,
+    encrypted contents, encrypted headers), where its names matched 7-Zip's listing in every archive but the one with encrypted
+    headers and no first bytes it read differed from the file's; and on rarfile 4.5's 50 sample RARs (RAR 1.5 to 5), where its
+    names matched rarfile's except for older versions of a file, members in other volumes, and links to folders, and the
+    stored members' first bytes matched rarfile's. 11,100 cut or damaged copies raised no error, the slowest took 0.06 s, and
+    a 7z holding 1.5 GB of zeros took under 0.01 s and 13 MB.
 
 ## configs
 

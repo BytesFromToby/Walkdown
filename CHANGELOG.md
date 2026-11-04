@@ -21,8 +21,12 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
   "repeat everything above", "your instructions verbatim". From SkillSpector's P6 to P8, measured and narrowed first.
 - **Padding and compiled programs are files worth a look.** `details.html` now lists files the AI reads where 20 blank lines or
   80 blank characters push text out of view, programs in compiled form (by their bytes), compiled Python (`.pyc`), and
-  archives or documents that hold a program, compiled Python, or Office macros (zip containers, and tar archives plain or
-  compressed, read up to 64 MB unpacked). From SkillSpector's P9, SC8, and SC9.
+  archives or documents that hold a program, compiled Python, or Office macros (zip containers; tar archives plain or
+  compressed with gzip, bzip2, xz, or zstd; and 7z and RAR archives, read up to 64 MB unpacked). From SkillSpector's P9, SC8,
+  and SC9. A 7z or RAR is read from its own headers, so its members' names always count; a member's first bytes are read where
+  Python can unpack them (not RAR's own compression, BCJ2, PPMd, or encrypted members), and an archive with encrypted headers
+  is still listed as one whose contents were not read. zstd needs `zstandard`, now in `requirements.txt`: run
+  `pip install -r requirements.txt` again, or the front door stops the run and names it.
 - **Five new patterns** (130 in all), from rules in NVIDIA's SkillSpector: telling the model never to refuse (`L.never-refuse`),
   to leave out disclaimers or ethical commentary (`L.no-disclaimer`), decoding hidden code and running it at once
   (`E.decode-exec`), turning off certificate checks (`E.tls-off`), and pointing a package manager at another source
