@@ -252,6 +252,11 @@ STANDING_LIMITS = {
     "english-only": "English-language scope: the phrase layer is blind to non-English text (the "
     f"{step('02.2-reader')} lists non-Latin runs, and prose passages in another language in "
     "Latin script; a short line can slip past that check).",
+    # owner, 2026-11-04: no more languages; the ones read are said instead
+    "mcp-languages": "MCP servers in Python, JavaScript, TypeScript, and Go only: the text such a server sends the AI (its "
+    "tools' and prompts' descriptions, what a prompt returns, a tool's reply) is read as text the AI reads. A server written "
+    "in another language, such as Rust, Java, or C#, is read as code only, so an instruction in its descriptions counts as "
+    "code.",
     "phrases-zero": f"The {step('02.4-phrases')} matches patterns; a payload phrased outside every pattern "
     "reads as no hit. A zero here is not safety.",
 }

@@ -39,7 +39,7 @@ CODED, AI_STAGES = stagelist.CODED, stagelist.AI_STAGES
 NO_FIXTURES_BY_DESIGN = (AI_STAGES[-1],)
 READER, GRAPH, CAPABILITY = "02.2-reader", "02.3-graph", "02.5-capability"
 # the limits that stand for every run, by the id the report words them under (`render.STANDING_LIMITS`)
-STANDING = ("static", "model-reads", "version-drift", "english-only", "phrases-zero")
+STANDING = ("static", "model-reads", "version-drift", "english-only", "mcp-languages", "phrases-zero")
 
 NOT_STARTED_FOUND = {"sweep-no-answer": "not started: the step before it got no answer for any passage"}
 MISSING_FOUND = {"failed": "no output: the step failed", "not-started": "no output: the step did not start",
