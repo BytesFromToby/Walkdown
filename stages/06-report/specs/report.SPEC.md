@@ -555,7 +555,10 @@ are marked.
    when they did not run (the line "The optional model reads (a second opinion from an AI) were not
    run." only when neither AI stage, `03-sweep` or `04-pinpoint`, has a report in the run), or that
    every step ran and passed; then every limit of the run, folded (`render.limits`, which names INCOMPLETE stamps
-   and skipped checks). A run that stopped as asked (O3) says 'Every step that ran passed its own checks.', then lines of their own, apart
+   and skipped checks). The files no check read are one item, "Files the checks did not read: <n> archives looked inside
+   for programs only and <n> files no tests are run on (What Walkdown examined, at the top)" (`render.glance`, from
+   `coverage`; since 2026-11-04 it replaces "<n> files could not be read" and the phrase step's "not text" files, which
+   counted the yellow and red tiers again; `test_files_no_check_read_are_one_line_pointing_at_the_tiers`). A run that stopped as asked (O3) says 'Every step that ran passed its own checks.', then lines of their own, apart
    from the checks skipped for a missing tool: `render.stopped_steps_line` ('The run stopped after "<plain>", as
    asked. Not run: <plain names>.'), and for a held-back read `render.stop_input_line` ('The run stopped after
    "<plain>", as asked; what "<AI plain>" would send is in data/<file>; nothing was sent.'). The held-back read is

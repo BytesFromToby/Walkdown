@@ -88,8 +88,8 @@ them uses a model.
 ### 3.2 `02.1-inventory`: What ships
 
 - **Reads:** the input folder.
-- **Scripts (8, 1,428 lines):** `walk.py` (list and pin the files), `census.py` (per-file facts and
-  structural flags), `entrypoints.py` (what kind of entry each file is), `frontmatter.py`
+- **Scripts (9, 2,141 lines):** `walk.py` (list and pin the files), `census.py` (per-file facts and
+  structural flags), `archive_index.py` (the members of a 7z or RAR archive, from its own headers), `entrypoints.py` (what kind of entry each file is), `frontmatter.py`
   (descriptions and tool grants), `configs.py` (hook configs, platform manifests, MCP servers),
   `spans.py` (the lines a parsed value came from), `licenses.py`, `run.py`.
 - **Writes:** `data/02.1-inventory.json`. Checks: `inv.file`, `inv.pin`, `inv.license`,
@@ -99,7 +99,7 @@ them uses a model.
 ### 3.3 `02.2-reader`: What the model actually reads
 
 - **Reads:** the input folder.
-- **Scripts (14, 2,855 lines):** `files.py` (list, classify, decode), one reader per format
+- **Scripts (14, 2,886 lines):** `files.py` (list, classify, decode), one reader per format
   (`read_md.py`, `read_html.py`, `read_pdf.py`, `read_docx.py`, `read_svg.py`, `read_image.py`),
   drawn readings (`render_html.py` with Playwright, `render_pdf.py`), `colors.py`, `fold.py` (folded
   copy; reads `Library/invisible.yaml`), `language.py`, `script_runs.py`, `run.py`.
@@ -123,11 +123,12 @@ them uses a model.
 ### 3.5 `02.4-phrases`: What the text asks for
 
 - **Reads:** the input folder, `data/02.1-inventory.json`, and the reader's `data/normalized/` text.
-- **Scripts (13, 2,234 lines):**
+- **Scripts (14, 2,559 lines):**
   - the phrase layer: `patterns.py`, `scan.py`, `foldtext.py` (the fold), `negation.py`,
     `position.py`;
   - the tables: `rubric.py`, `endpoints.py`, `terms.py` + `vocab.py`, `restrictions.py`;
   - secrets: `secret_scan.py` (detect-secrets, and key shapes of its own);
+  - MCP code: `tooltext.py` (the lines an MCP server sends the model: descriptions, a prompt's text, a tool's reply);
   - and `termset.py` (the version of the search terms and of the matching code, which includes the
     shared modules the step imports and the invisible-character list), `run.py`.
 - **Data:** `Library/patterns.yaml` (the pattern table, each row with its plain words),
@@ -151,7 +152,7 @@ them uses a model.
 ### 3.7 `02.6-builder`: Builder checks
 
 - **Reads:** the input folder, and `02.1` to `02.5` from the run's `data/` (`earlier.py`).
-- **Scripts (9, 2,041 lines):** `needs.py`, `hosts.py`, `trigger.py`, `asks.py`, `clean.py`, `fit.py`,
+- **Scripts (9, 2,052 lines):** `needs.py`, `hosts.py`, `trigger.py`, `asks.py`, `clean.py`, `fit.py`,
   `cost.py` (what ships and what it costs in tokens), `earlier.py`, `run.py`.
 - **Data:** `Library/tools.yaml`, `hosts.yaml`, `trigger.yaml`, `asks.yaml`, `clean.yaml`, `fit.yaml`,
   `loading.yaml`.
@@ -181,7 +182,7 @@ them uses a model.
 - **Runs only with:** `--pinpoint claude-cli` (with `:model` if you name one), or `--reads` when the `claude` command is found, and only after a sweep.
 - **Reads:** the input folder, `data/02.1-inventory.json`, `data/02.4-phrases.json` (the lines the secret scan flagged, which are
   not sent), `data/03-sweep.json`.
-- **Scripts (2, 446 lines):** `pinpoint.py` (targets, question, check, and the Reader: this step's side of a text model),
+- **Scripts (2, 447 lines):** `pinpoint.py` (targets, question, check, and the Reader: this step's side of a text model),
   `run.py`. The backend is `_shared/back_claude.py` (the Claude Code CLI with no tools, no settings, no project files; a call
   that gets no answer is tried once more); the sweep uses it too.
 - **Writes:** `data/04-pinpoint.input.jsonl`, `data/04-pinpoint.answers.jsonl`, `data/04-pinpoint.calls.jsonl`
@@ -211,7 +212,7 @@ them uses a model.
 
 ### 3.11 `_shared`: code several steps use (not a step)
 
-- **Scripts (31, 3,928 lines),** one spec with a section for each: `runner.py`, `pipeline.py`,
+- **Scripts (31, 4,323 lines),** one spec with a section for each: `runner.py`, `pipeline.py`,
   `record.py`, `layout.py`, `calllog.py` (the second try of a model call that got no answer, and the call log),
   `textmodel.py` (the calls every model backend makes alike, and the contract of a model that takes text),
   `back_claude.py` (the Claude Code CLI as such a model), `jevkey.py` (Jev's key, and whether Jev is available: what `--reads` asks),
@@ -249,10 +250,10 @@ them uses a model.
 | Step | Fixture files | Answer rows |
 |---|---|---|
 | 01-intake | 2 | 3 |
-| 02.1-inventory | 29 | 33 |
+| 02.1-inventory | 44 | 48 |
 | 02.2-reader | 15 | 79 |
 | 02.3-graph | 17 | 18 |
-| 02.4-phrases | 40 | 230 |
+| 02.4-phrases | 56 | 293 |
 | 02.5-capability | 46 | 73 |
 | 02.6-builder | 62 | 122 |
 | 03-sweep | 4 | 34 (recall only; measured only with a backend) |
@@ -276,16 +277,17 @@ The report step reads a run folder and writes every report. It runs no step and 
 
 | Module | Lines | Writes |
 |---|---|---|
-| `render.py` | 2,215 | `LOG.md`, `full.md`, `data/limits.md`; shared counting helpers for every page |
-| `glance.py` | 1,145 | the eight questions as data, read by both pages |
-| `summary_html.py` | 376 | `summary.html`; the concern rows |
-| `details_html.py` | 541 | `details.html`; the place list every page shares |
+| `render.py` | 2,238 | `LOG.md`, `full.md`, `data/limits.md`; shared counting helpers for every page |
+| `glance.py` | 1,171 | the eight questions as data, read by both pages |
+| `summary_html.py` | 381 | `summary.html`; the concern rows |
+| `details_html.py` | 599 | `details.html`; the place list every page shares |
 | `qaview.py` | 67 | reads `data/05-qa.json`: the gaps and limits section 7 and the lists of steps that did not work are drawn from |
-| `review_html.py` + `plain.py` | 953 + 33 | `review.html`, one card per place to mark (the plain words come from `Library/patterns.yaml`) |
-| `marks.py` | 168 | reads `marks.json` (saved by the reader; carried from an earlier run) |
-| `drift.py` | 583 | `changes.md`, against the previous run of the same repository |
-| `brief.py` | 222 | `brief.md`, the brief the front door prints |
-| `run.py` | 195 | runs the above on a run folder (it will not draw a held run) |
+| `review_html.py` + `plain.py` | 958 + 33 | `review.html`, one card per place to mark (the plain words come from `Library/patterns.yaml`) |
+| `marks.py` | 178 | reads `marks.json` (saved by the reader; carried from an earlier run) |
+| `drift.py` | 594 | `changes.md`, against the previous run of the same repository |
+| `brief.py` | 225 | `brief.md`, the brief the front door prints |
+| `coverage.py` | 179 | what Walkdown examined, in white, yellow, and red, for every page and the brief |
+| `run.py` | 199 | runs the above on a run folder (it will not draw a held run) |
 
 ## 7. The run folder
 
@@ -329,24 +331,25 @@ gaps and the two ways on (`walkdown.py continue <run folder>`, or fix the cause 
 | Part | Scripts | Lines | Spec sections | Test files | Test lines |
 |---|---|---|---|---|---|
 | 01-intake | 2 | 228 | 7 | 2 | 346 |
-| 02.1-inventory | 7 | 1,315 | 8 | 8 | 894 |
-| 02.2-reader | 14 | 2,855 | 14 | 15 | 1,573 |
-| 02.3-graph | 8 | 1,274 | 8 | 9 | 891 |
-| 02.4-phrases | 13 | 2,234 | 15 | 15 | 2,251 |
+| 02.1-inventory | 9 | 2,141 | 9 | 9 | 1,217 |
+| 02.2-reader | 14 | 2,886 | 14 | 15 | 1,641 |
+| 02.3-graph | 8 | 1,274 | 8 | 9 | 1,091 |
+| 02.4-phrases | 14 | 2,559 | 16 | 16 | 2,945 |
 | 02.5-capability | 10 | 1,032 | 12 | 11 | 1,303 |
-| 02.6-builder | 9 | 2,041 | 11 | 9 | 1,206 |
-| 03-sweep | 5 | 614 | 12 | 7 | 1,616 |
-| 04-pinpoint | 2 | 430 | 11 | 3 | 832 |
+| 02.6-builder | 9 | 2,052 | 11 | 9 | 1,245 |
+| 03-sweep | 5 | 625 | 13 | 8 | 1,939 |
+| 04-pinpoint | 2 | 447 | 11 | 3 | 970 |
 | 05-qa | 4 | 574 | 5 | 4 | 982 |
-| 06-report | 11 | 6,537 | 11 | 14 | 5,933 |
-| `_shared` | 31 | 3,928 | 31 | 33 | 7,372 |
+| 06-report | 12 | 6,822 | 12 | 16 | 6,637 |
+| `_shared` | 31 | 4,323 | 31 | 33 | 8,112 |
 | `walkdown.py` | 1 | 123 | | | |
 | `tools/` (the grader, `compare_runs.py`, `baserates.py`) | 3 | 1,374 | | 3 | |
 
 Each step has one spec; its sections are the old per-script specs. The `Library/` holds 13 data files
-(about 2,200 lines) and four documents.
+(about 2,300 lines) and four documents.
 
-How it is counted (measured on the committed files of this version, 2026-11-01, after `--until` and `continue` and
+How it is counted (measured again on every row on 2026-11-04, after the work since 0.4.0: the MCP tool text, the new patterns,
+padding and compiled programs, the archive formats, and what Walkdown examined; before that, 2026-11-01, after `--until` and `continue` and
 the retry of a model call that got no answer (M9 slice A), the check of the run (M9 slice B and its two fix rounds), the coverage lines (M9 slice C), and
 the model named in the option with its token totals (M1 slice A and its three fix rounds: the sweep, the pinpoint, the report, `_shared`, and the grader changed), and
 `--reads` (the loaded-model build: `_shared` gained `jevkey.py`, the sweep's `back_jev.py` lost the key's reading, and `walkdown.py` gained a line), and
