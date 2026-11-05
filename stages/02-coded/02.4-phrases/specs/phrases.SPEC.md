@@ -1232,7 +1232,7 @@ The report counts these apart and lists them with the reason in the full report 
   `terms.code` moves with this file.
 - 2026-11-03: the name filters are off (`NAME_FILTERS`, owner). detect-secrets left `.svg`, `.css`, `.map`, the rest of
   `IGNORED_FILE_EXTENSIONS`, and a path holding `swagger` out before reading a byte, and the scan wrote a "could not scan" skip. Measured
-  first on three public skill repositories (`anthropics/skills`, `obra/superpowers`, `wshobson/agents`): one such text file in all (an `.svg`),
+  first on three public skill repositories: one such text file in all (an `.svg`),
   no line flagged; on made-up files, an embedded image, a font data address, and a source map's mappings flag nothing. `terms.code` moves
   with this file.
 - 2026-11-03: the text decoded from base64 is scanned (`IN_BASE64`, `in_base64`). A key that readable base64 spells was flagged nowhere:

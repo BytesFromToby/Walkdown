@@ -188,7 +188,7 @@ finding with the target as `detail`.
 14. A tar, plain or compressed with gzip, bzip2, or xz, names the programs and bytecode inside it, and one holding text names none
     (`test_a_tar_names_the_programs_inside_it_plain_or_compressed`); a tar stops at its budget, and a gzip that is no tar gives none
     (`test_a_tar_stops_at_its_budget_and_a_gzip_that_is_no_tar_gives_none`; a 1 MB gzip that unpacks to 1 GB took 0.01 s). Fixtures
-    `bundle.tar.gz` and `plain.tar.gz`. The one tar in the nine repositories (`anthropics/skills`, 49 TypeScript files) holds none.
+    `bundle.tar.gz` and `plain.tar.gz`. The one tar in the nine repositories (49 TypeScript files) holds none.
 15. 2026-11-04: a 7z, a RAR (4 or 5), and a zstd tar name the programs and bytecode inside them, and ones holding text name none
     (`test_a_7z_names_the_programs_inside_it_read_from_its_headers`,
     `test_a_rar_names_its_programs_and_reads_a_stored_members_first_bytes`,
