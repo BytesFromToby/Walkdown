@@ -376,7 +376,14 @@ Each with `file`, `line` (the key's line when there is one), and `kind_of` (the 
 - **`trig.rule`** `rule`, `host` (`agent-skills`: the spec, other hosts, uploads; `claude-api`:
   claude.ai uploads and the Skills API; `claude`: Claude Code). Skills: `name-missing`,
   `name-long`, `name-chars`, `name-folder` (a `SKILL.md` only), `name-reserved`, `name-xml`,
-  `description-missing`, `description-empty`, `description-long`, `description-xml`. Skills and
+  `description-missing`, `description-empty`, `description-long`, `description-xml`,
+  `field-outside` (`key`, on its line: a top-level key outside the spec's six fields, `skill_keys` in
+  `hosts.yaml`), `compatibility-long` (`chars`: over `compatibility_max`, 500), `key-twice` (`key`, its path such as
+  `metadata.author`, and `first`, the line it was first set on; on the line it is set again: a key set twice in the same
+  mapping, at any depth, `set_twice`, R17). A name's characters
+  are the spec's reference validator's (`name_ok`): lowercase letters of any language, digits, and
+  hyphens, none at either end and never two together. A skill's rules (`skill_rules`) also read settings below blank
+  lines (`not-first-line`, which Claude Code does not read; the entry stays `unread`), when they parse (R15). Skills and
   commands: `listing-cut` (`chars`, `lost`). Subagents: `agent-name`, `name-duplicate` (`other`).
 - **`trig.guidance`** `kind`, published guidance and never a host rule, on entries that load:
   `no-when` (no `when_to_use` and no "when" pattern), `first-person`, `second-person`.
@@ -407,10 +414,21 @@ The step emits these after `host.*`.
 1. Fixture `trigger-repo` (grader 02.6, rows `trig-*`): every kind above on its file, and no finding
    on a skill that follows every rule, an MCP tool, a permission rule, or unrelated descriptions.
 2. `tests/test_trigger.py`: modes, the agents that are documentation, near names, values and
-   booleans, the overlap listings and common words, the listing row.
+   booleans, the overlap listings and common words, the listing row, the spec's six fields, `compatibility`, and
+   names in other languages.
 
 ### History
 
+- 2026-11-05 (owner, R17: "duplicates only", of the YAML the spec's reference validator refuses and PyYAML takes): `key-twice`, a key
+  set twice in a skill's header (PyYAML keeps the last value); inline lists, anchors, and tags are not called out.
+  Fixture `twice`; rows `trig-key-twice`, `trig-key-once`; the listing row counts 13 skills.
+- 2026-11-05 (owner, R15: "read past the blank lines for the standard's checks"): `skill_rules` holds a skill's rules and
+  runs on settings below blank lines too. Fixture `late-version`, row `trig-late-field-outside`.
+- 2026-11-05 (owner, R13: "Let's adopt the agentskills.io specs"): two rules of the Agent Skills spec, from the spec and
+  its reference validator (`skills-ref`, read 2026-11-05): `field-outside`, a key outside the six fields, and
+  `compatibility-long`. `name-chars` reads a name as the validator does (letters of any language; the pattern
+  `^[a-z0-9]+(-[a-z0-9]+)*$` in `trigger.yaml` is gone). Fixture `compat-long`; rows `trig-field-outside`,
+  `trig-field-outside-typo`, `trig-field-inside`, `trig-compat-long`; the listing row counts 12 skills.
 - 2026-10-26: built (slice 4). Measured on the audited repositories and the owner's skills before
   keeping the overlap measure: compared across all entries it paired each of one plugin's agents with the
   skill of the same name and the agents with each other through their shared boilerplate (14

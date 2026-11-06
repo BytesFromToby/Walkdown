@@ -13,8 +13,8 @@ or compared (see "Runs made before 0.4.0" below).
 
 ```
 RepoResults/<name>/<date>_<hash7>/          one run, e.g. RepoResults/my-skill/2026-10-29_ab12cde
-  summary.html        one page: eight questions at a glance, each with a label and a one-line answer
-  details.html        the same eight questions with everything behind them, every place folded
+  summary.html        one page: four questions at a glance, each with a label and a one-line answer, then Misalignment
+  details.html        the same four questions and Misalignment with everything behind them, every place folded
   review.html         each place to check, one at a time, to mark Concerned, Not concerned, or Not sure
   marks.json          your marks, once you save them here (Walkdown never writes it)
   full.md             every finding, by section, with file and line

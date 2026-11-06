@@ -5,8 +5,8 @@ A run produces these reports, at the top of its run folder
 
 | File | For | What it holds |
 |---|---|---|
-| `summary.html` | anyone, no computer skills needed | one page, eight questions at a glance, each with a short label and a one-line answer; tap a line for more |
-| `details.html` | improving or investigating it | the same eight questions with everything behind them: tables, charts, and every place in folded lists; then what Walkdown didn't check |
+| `summary.html` | anyone, no computer skills needed | one page, four questions at a glance, each with a short label and a one-line answer, then Misalignment; tap a line for more |
+| `details.html` | improving or investigating it | the same four questions and Misalignment with everything behind them: tables, charts, and every place in folded lists; then what Walkdown didn't check |
 | `review.html` | walking through the places | one card per place, with the lines around it, for you to mark |
 | `full.md` | checking a point | every finding, by section, with file and line |
 
@@ -41,9 +41,16 @@ pages. The marks you saved on the earlier run still carry over to the new one.
 One page, written for someone with no computer skills (since 2026-10-27). It never says the
 repository is safe or unsafe, never tells you to use it or not, and gives no score.
 
-**The header.** The name; when it was checked, the version, how many files, and the license by
-name; and what it is in one sentence, such as "A plugin for Claude Code: 9 skills (step-by-step
-instructions the AI follows for a task) and 7 helpers (assistants the AI can hand work to)."
+**The header.** The title ("A Walkdown of demo"); when it was checked, the version, how many files, and the
+license by name; who made the report ("This report on demo was made by Walkdown, which checks AI skill and agent
+repositories for security and how well they are built."); and what it is in one sentence, starting with its name, such as "Demo is
+a plugin for Claude Code: 9 skills (step-by-step instructions the AI follows for a task) and 7 helpers (assistants the
+AI can hand work to)."
+
+**What it can do**: three boxes side by side, ticked or crossed: read your files; take in content from outside, such
+as web pages or files you didn't write; send your data somewhere. Under them, what the three together risk: "A tool
+that does all three could be tricked into sending your data away." How many of the three this one does, and what
+installing it allows, are under "What it can do" at the top of `details.html`.
 
 **What Walkdown examined** (since 2026-11-04), in three colours, by file type (its extension):
 
@@ -59,8 +66,12 @@ instructions the AI follows for a task) and 7 helpers (assistants the AI can han
 Red marks what Walkdown cannot see, not a risk in the repository. Walkdown will never read every kind of file; this
 says which ones it did not. `details.html` names the yellow and red files, and `full.md` lists every one with why.
 
-**Eight questions**, always in this order. Each has a **label** and a **one-line answer**; tap it
+**Four questions**, always in this order. Each has a **label** and a **one-line answer**; tap it
 for a few plain bullets.
+
+**Details →** buttons take you to `details.html`: one ends each line that has a part of its own there, and one at the
+bottom of each question opens its section. The page opens at that part, with the rest closed, and its **← Summary**
+button brings you back to the line you left.
 
 | Label | Means |
 |---|---|
@@ -70,47 +81,40 @@ for a few plain bullets.
 | **Nothing to look at** (green) | the question's checks ran and found nothing |
 | **Not measured** (grey) | a step did not run, or the run was stopped before it (`--until`) |
 
-1. **Will its skills switch on when they should?** Whether each skill, command, and helper will
-   be picked up as written: settings at the top the AI can't read, names and descriptions that
-   break a rule, settings that look like a typo, tool names the AI doesn't know, descriptions that
-   overlap or are cut short, and published guidance (say when to use it; describe what it does
-   instead of writing "I" or "you"). Every rule is dated, with its source, in
-   `Library/trigger.yaml`.
-2. **How much of the AI's memory does it use?** The one place the page counts **tokens** (pieces
-   of text, about ¾ of a word each). The table shows what is always there once installed, its
-   biggest skill or helper with everything it reads, any extra for someone working inside the
-   repository's own folder, and the files nothing uses. Each row gives its share of a local AI
-   (`--context`, default 32,000 tokens; "Your AI" when you set another) and of Claude (200,000).
-   Then the room the AI keeps for its list of skills. Tokens are estimated from file sizes, about
-   4 bytes of English per token. When an earlier run of the same repository exists, a line says
-   what changed since then.
-3. **What comes in the package?** Every file in one of four groups, as one bar: the files that do
-   the work (skills, helpers, the files they read, scripts they run, settings the host reads),
-   notes for people, tests and build tools, and files nothing refers to. Then how much smaller it
-   would be without the last two groups. That is a fact; whether to leave them out is yours.
-4. **Will it work on someone else's computer?** Programs it expects but never says to install, add-ons
-   its scripts use but never list, and places that tie it to the computer it was built on: personal
-   paths, scripts saved with Windows line endings, commands for one system only, backslashes in
-   paths, scripts not marked as runnable, `python` where many computers have only `python3`, and
-   file names that match only when capital letters are ignored.
-5. **Will it work with AI tools other than Claude?** Which of seven AI tools (Claude Code, Codex,
-   Gemini CLI, Cursor, GitHub Copilot, Windsurf, and others that read `AGENTS.md`) find its files
-   where they sit, copies kept for two tools that say different things, and features only one tool
-   understands. Run with `--hosts claude,codex` (any of `claude`, `codex`, `gemini`, `cursor`,
-   `copilot`, `windsurf`, `agents-md`) and the label counts what the tools you named are missing.
-   Which tools to support is yours. What each tool reads is a dated list in
-   `Library/hosts.yaml`.
-6. **Does it ask only for the tools it needs?** Each skill's, command's, and helper's own words,
+1. **Size and Shape** (a working name). Two parts, the package first:
+   - **What comes in the package.** Every file in one of four groups, as one bar with its legend in two columns: the files that do
+     the work (skills, helpers, the files they read, scripts they run, settings the host reads),
+     notes for people, tests and build tools, and files not linked or referred to. Then how much smaller it
+     would be without the last two groups. That is a fact; whether to leave them out is yours.
+   - **How much of the AI's memory it uses.** The one place the page counts **tokens** (pieces
+     of text, about ¾ of a word each). The table shows what is always there once installed, its
+     biggest skill or helper with everything it reads, any extra for someone working inside the
+     repository's own folder, and the files nothing uses. Each row gives its share of a local AI
+     (`--context`, default 32,000 tokens; "Your AI" when you set another) and of Claude (200,000).
+     Then the room the AI keeps for its list of skills. Tokens are estimated from file sizes, about
+     4 bytes of English per token. When an earlier run of the same repository exists, a line says
+     what changed since then.
+2. **Is this transferable to other machines?** Two parts:
+   - **Operating systems.** Three boxes first, Linux, Windows, and Mac: blue when nothing found trips
+     that system, a yellow outline and a count when something does. Then programs it expects but never says to install, add-ons
+     its scripts use but never list, and places that tie it to the computer it was built on: personal
+     paths, scripts saved with Windows line endings, commands for one system only, backslashes in
+     paths, scripts not marked as runnable, `python` where many computers have only `python3`, and
+     file names that match only when capital letters are ignored.
+   - **Other AI tools.** A box per tool first, blue when it finds files here. Which of seven AI tools (Claude Code, Codex,
+     Gemini CLI, Cursor, GitHub Copilot, Windsurf, and others that read `AGENTS.md`) find its files
+     where they sit, copies kept for two tools that say different things, and features only one tool
+     understands. Run with `--hosts claude,codex` (any of `claude`, `codex`, `gemini`, `cursor`,
+     `copilot`, `windsurf`, `agents-md`) and the label counts what the tools you named are missing.
+     Which tools to support is yours. What each tool reads is a dated list in
+     `Library/hosts.yaml`.
+3. **Does it ask only for the tools it needs?** Each skill's, command's, and helper's own words,
    over the files it reads, against the tools it is allowed: tools allowed and never used, work it
    asks for that no allowed tool can do, helpers with no tools list (they get every tool), read-only
    claims a tool beside them contradicts, steps that repeat "until it works" with no stated limit,
    and hooks that run on every message or action. The cue lists are in `Library/asks.yaml`
    and `Library/fit.yaml`.
-7. **Is it finished and up to date?** "To do" marks and placeholders in what ships, claims tied to
-   a date ("before August 2025, use the old API" becomes wrong), AI model versions fixed in place
-   (a fact: a name like "sonnet" follows the newest version), and older tool names. The summary
-   shows no line of the repository's here; `details.html` quotes each one.
-8. **Anything to be careful about?** The places in six fixed security kinds, always in this order:
+4. **Anything to be careful about?** The places in six fixed security kinds, always in this order:
    1. **Hidden text that reads like an instruction**: text the AI receives and a person does not
       see, which also matches the wording of an instruction. The summary quotes what it says, up
       to 80 characters: the only text from the repository on this page.
@@ -118,26 +122,50 @@ for a few plain bullets.
       spell words no pattern matched. The summary names the place; `details.html` and the place's
       card on `review.html` say what they spell.
    3. **Runs code**: hooks, commands run when the skill loads, commands you are asked to run.
-   4. **Looks like a committed secret**: a password, key, or token saved in the files (test data
-      and lines that only look like one are left out).
-   5. **Reads secrets, calls out, or shares**: credentials, network calls, data sent elsewhere.
+   4. **Passwords, keys, and secrets**: a password, key, or token saved in the files (test data
+      and lines that only look like one are left out), and wording that gathers secrets or asks for a
+      password or key.
+   5. **Reads secrets, calls out, or shares**: network calls, data sent elsewhere, instructions
+      fetched from elsewhere.
    6. **Lasting changes or permissions**: settings, profiles, permissions, actions that are hard to
       undo, and read-only claims a tools list contradicts.
 
-   A place counts once, as `review.html` counts it, even when it falls in two kinds. Each kind
-   gives its count and its first place. Then how many more places are only wording that shapes
+   A place counts once, as `review.html` counts it, even when it falls in two kinds. On the summary,
+   each line is one kind of place with a colored dot, red, yellow, or blue, and the lines run red first.
+   The first red lines sit under **Passwords, keys, and secrets**: a saved password, key, or token,
+   wording that gathers secrets, and wording that asks for one, ending "Values are not shown in these
+   reports." Each line gives its count and its first place. Then how many more places are only wording that shapes
    how the AI decides, and how many places you have marked so far, with a link to the review page.
-   "More" shows **what it can do**: three boxes, ticked or crossed (read your files; take in
-   content from outside; send your data somewhere), what all three together risk, and what
-   installing it allows (runs commands by itself, adds its own text before you type, and so on).
-   Model reads are never counted here.
+   What it can do is at the top of the page (above). Model reads are never counted here.
+
+   **Finished and up to date**, a heading at the end of this card with its own label: "To do" marks and placeholders in what ships, claims tied to
+   a date ("before August 2025, use the old API" becomes wrong), AI model versions fixed in place
+   (a fact: a name like "sonnet" follows the newest version), and older tool names. The summary
+   shows no line of the repository's here; `details.html` quotes each one.
+
+**Misalignment**, the last card: "Things that are not standard but are not security flaws.", with the number of
+issues, and nothing to open; its **Details →** opens the section on `details.html`, which holds the rest: where its
+skills differ from the
+[Agent Skills standard](https://agentskills.io/specification), the open format for skills that many AI tools read
+(developed by Anthropic and released as an open standard). Only skills are looked at; the standard does not cover
+commands or helpers. A skill's header is the block between the two `---` lines at the top of its `SKILL.md`, written in
+YAML (lines such as `name: my-skill`). Under **Skill Formatting**, a fold for each way a skill differs, opening with
+a sentence and then every place: no header at the top; a header not in the expected format (YAML); a setting set more than once in a
+header (YAML allows each once); a name that isn't lowercase letters, digits, and single
+hyphens, is over 64 characters, or isn't the skill's folder's name; a missing, empty, or over-long description; a
+`compatibility` note over 500 characters; and settings the standard doesn't define (it defines six: `name`,
+`description`, `license`, `compatibility`, `metadata`, `allowed-tools`), such as `version` or Claude Code's own
+`model`. Blank lines before the header and a hidden byte-order mark are not called out; a header below blank lines is
+still checked. Under **Descriptions too
+alike**, the pairs of skills that describe themselves so alike that the AI may pick the wrong one (Walkdown's own
+measure). The rules are dated, with their source, in `Library/trigger.yaml` and `Library/hosts.yaml`.
 
 When a model read got an answer for some passages and none for others, one line under the cards gives how many
 ("Needs a human read: 5 of 12 passages got no answer, after one retry."). When a step did not work in this run
 (it did not run, it did not pass its fixture check, or a model read got no answer for any passage), a
 line at the bottom names it. A step that did not work can miss places, so the page may show fewer
 than there are; a model read adds no place to this page, so that is left out when the model read is the only
-step that did not work. When Walkdown found nothing, question 8 says so too: "Not every step worked, so it
+step that did not work. When Walkdown found nothing, question 7 says so too: "Not every step worked, so it
 may have missed some." Steps that ran and whose fixture check could not be made are said in a sentence of their
 own ('8 steps could not be checked against their fixtures, so a "none" from them is not measured.'), which does not say a
 step failed. When a step did not run at all, it never says "found none". A run you
@@ -151,12 +179,15 @@ leaves the judgment to you, and finding nothing does not mean a repository is sa
 
 ## details.html
 
-The same eight questions, each opening with the same label and answer, then everything behind it.
-A bar under the header jumps to each question. Long lists are folded; tap to open them.
+The same four questions, each opening with the same label and answer, then everything behind it, then Misalignment.
+Every question, and every part inside it, is folded and closed when you open the page; tap one to open it. A bar
+under the header jumps to each question. A part you reach from a Details button on the summary opens by itself, and
+every open fold has a **← Summary** button back to the summary.
 
 ### Header
 
-The name, when it was checked, the version, how many files, and a link back to the summary. Under the header, the
+The title ("A Walkdown of demo, in detail"), when it was checked, the version, how many files, and a **← Summary**
+button. Under the header, the
 summary's **What Walkdown examined**, with the yellow and red files named: the ones the AI loads first, then the
 rest, up to 50 a colour, and a count of those in test or fixture folders. Under
 those, one line on the license: the license each top-level license file matches ("License: MIT
@@ -169,28 +200,29 @@ section 1.
 
 ### Behind each question
 
-1. **Switching on**: every skill, command, and helper in a table (how it switches on), and every
-   place by kind with why.
-2. **Memory**: the summary's table, the room for the list of skills, and how big each skill and
-   helper gets, as bars.
-3. **Package**: every file by group, with its size; then **Files worth a look**, when there is
+1. **Size and Shape**: the package part, every file by group, with its size; then **Files worth a look**, when there is
    something: contents of a different type than the name says, programs in compiled
    form and compiled Python (which Walkdown cannot read, and which can run without their source), archives
    or documents that hold a program or Office macros, archives (looked inside for programs; the text inside is
    not read), symlinks, files
    the AI reads where blank lines or spaces push text out of view, and files the AI reads that are longer
-   than a reviewer's viewer shows (2,000 lines or 50 KB).
-4. **Other computers**: the places by file, the programs it expects and whether it says to install
-   each, and every place by kind.
-5. **Other AI tools**: every tool with the files here it reads, the skills to install, every copy
-   kept for two tools, and every one-tool feature by kind.
-6. **Tools**: every place by kind, and each helper with its tools.
-7. **Finished**: every place by kind, with its line quoted.
-8. **Careful**: below.
+   than a reviewer's viewer shows (2,000 lines or 50 KB). Then the memory part: the summary's table, the room for the
+   list of skills, and how big each skill and helper gets, as bars.
+2. **Other machines**: the other-systems part, the places by file, the programs it expects and whether it says to
+   install each, and every place by kind; then the other-AI-tools part, every tool with the files here it reads, the
+   skills to install, every copy kept for two tools, and every one-tool feature by kind.
+3. **Tools**: every place by kind, and each helper with its tools.
+4. **Careful**: below; then **Finished and up to date**, every place by kind, with its line quoted.
+
+After the four questions, **Misalignment**: the standard and its six settings, then a fold for each Skill Formatting
+line with every place, and one for the skills too alike.
 
 ### Careful, in full
 
-**Why it can do these.** The three boxes are what Simon Willison calls the
+**What it can do** is at the top of `details.html`, as on the summary: the three boxes, ticked or crossed; how many of
+the three this one does and what installing it allows (runs commands by itself, adds its own text before you type, and so
+on); and, under "Why it can do these", why each box is ticked. The details page follows the summary's order throughout. The
+three boxes are what Simon Willison calls the
 [lethal trifecta](https://simonw.substack.com/p/the-lethal-trifecta-for-ai-agents):
 
 | Box | Ticked when the repository... |
@@ -233,8 +265,9 @@ them in front of a model. They are all in `full.md`.
 docs name the site. Walkdown gathers them and **opens none of them**, so nothing here says whether
 a link works or what it serves.
 
-**Passwords and keys.** Lines that look like a password, key, or token saved in the files, and how
-many in test data were set aside. The value is never shown: open the file to check it. When no
+**Passwords, keys, and secrets.** Lines that look like a password, key, or token saved in the files, and how
+many in test data were set aside; then the wording that gathers secrets or asks for a password or key. Values are not
+shown in these reports: open the file to check one. When no
 scanner ran, it says it was not checked. A file the scanner could not scan is named here as well,
 and it may hold one. So is a lock file, which the scan leaves out because the hashes in one look like keys. A model read does not send a line flagged here, so it did not read what else stands on that line: "What
 Walkdown didn't check" says how many lines, and names a file a read did not send because the scanner could not scan it.

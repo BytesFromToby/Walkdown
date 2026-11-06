@@ -114,7 +114,7 @@ STOP_INPUT_LINE = ('The run stopped after "{plain}", as asked; what "{ai}" would
 
 def stop_not_measured(stop) -> str | None:
     """The "Not measured" line of a section whose step the run's stop left out (the builder checks feed the
-    sections of full.md that need it), or None when the stop left the builder step in. Cards 1 to 7 of the
+    sections of full.md that need it), or None when the stop left the builder step in. The question cards of the
     pages say the same."""
     return STOP_NOT_MEASURED.format(plain=stop_plain(stop)) if BUILDER in stopped_left(stop) else None
 
@@ -805,30 +805,9 @@ def ready_lines(r, targets=(), stop=None) -> list[str]:
     return L
 
 
-# ---------------------------------------------------------------- will it trigger (slice 4)
+# ---------------------------------------------------------------- will it trigger (slice 4), and Misalignment (R13)
 
 BYTES_PER_TOKEN = library.load_yaml("loading.yaml")["bytes_per_token"]
-FRONT_TEXT = {"yaml-error": "the YAML does not parse", "not-first-line": "--- is not on the first line",
-              "missing": "no frontmatter (Claude Code uses the first line as its description; the Agent "
-                         "Skills spec requires a name and a description)",
-              "bom": "a byte-order mark comes before ---; the docs do not say whether it is read"}
-RULE_TEXT = {
-    "name-missing": "no name (Claude Code uses the folder's; the Agent Skills spec requires one)",
-    "name-long": "a name over 64 characters (Agent Skills spec)",
-    "name-chars": "a name with characters other than lowercase letters, digits, and single hyphens (Agent Skills spec)",
-    "name-folder": "a name that is not its folder's (Agent Skills spec)",
-    "name-reserved": "\"anthropic\" or \"claude\" in the name (claude.ai uploads and the Skills API refuse it)",
-    "name-xml": "an XML tag in the name (claude.ai uploads and the Skills API refuse it)",
-    "description-missing": "no description (Claude Code uses the first line; the Agent Skills spec requires one)",
-    "description-empty": "an empty description (Agent Skills spec)",
-    "description-long": "a description over 1,024 characters (Agent Skills spec)",
-    "description-xml": "an XML tag in the description (claude.ai uploads and the Skills API refuse it)",
-    "listing-cut": "cut in Claude Code's listing",
-    "agent-name": "a subagent name Claude Code skips (it starts with -, holds :, or is over 256 characters)",
-    "name-duplicate": "a subagent name used twice (names are unique across the agents)",
-}
-GUIDANCE_TEXT = {"no-when": "does not say when to use it", "first-person": "written in the first person",
-                 "second-person": "written in the second person"}
 # The kinds of trigger finding and their words: Library/trigger.yaml (`trigger_kinds`).
 TRIG_KINDS = tuple((k["kind"], k["name"], k["why"]) for k in TRIGGER_TABLE["trigger_kinds"])
 
@@ -849,112 +828,85 @@ def trigger_of(r) -> dict:
             "listing": lst[0] if lst else None, "kinds": kinds}
 
 
-def trig_parts(kind, f) -> tuple[str, str]:
-    """One place: (where, what), in words."""
-    if kind == "not-read":
-        return where(f), FRONT_TEXT[f["kind"]] + (f" ({f['error']})" if f.get("error") else "")
-    if kind == "skipped":
-        return f["file"], f["why"]
-    if kind == "rules":
-        return where(f), RULE_TEXT[f["rule"]] + (f" ({f['other']})" if f.get("other") else "")
-    if kind == "keys":
-        return where(f), f["key"] + (f" (Claude Code knows {f['near']})" if f.get("near") else "")
-    if kind == "values":
-        return where(f), f"{f['field']}: {f['value']}"
-    if kind == "tools":
-        if f["kind"] == "older":
-            return where(f), (f"{f['tool']} (an older name; the current one is {f['now']}, and the docs do not "
-                              "say whether the old one still works)")
-        return where(f), f["tool"] + (f" (the tool is {f['near']})" if f.get("near") else "")
-    if kind == "overlap":
-        return f"{f['file']} and {f['other']}", f"{n(f['count'], 'word')} shared ({', '.join(f['shared'])})"
-    if kind == "cut":
-        return where(f), f"{f['chars']:,} characters; the last {f['lost']:,} never reach the AI"
-    return where(f), GUIDANCE_TEXT[f["kind"]]
+# Misalignment (R13, owner 2026-11-05: "Let's adopt the agentskills.io specs. Forget anthropic specific ones. Blank lines we
+# can ignore and not call out."): where a SKILL.md differs from the Agent Skills spec (Library/SOURCES.md, S01), and the
+# skills that describe themselves alike. It took the place of question 1 ("Will its skills switch on when they should?"):
+# Claude Code's and claude.ai's rules, commands, and agents are on neither page, and a byte-order mark is not called out.
+SPEC_LINK = "https://agentskills.io/specification"
+SPEC_FIELDS = tuple(HOST_TABLE["skill_keys"])
+NAME_RULES = ("name-missing", "name-long", "name-chars", "name-folder")
+DESC_RULES = ("description-missing", "description-empty", "description-long")
+# Skill Formatting's groups, in the order both pages and full.md list them.
+FORMAT_GROUPS = (("bare", "No header"), ("yaml", "Headers not in YAML, the expected format"),
+                 ("twice", "Settings set more than once"), ("name", "Names"),
+                 ("description", "Descriptions"), ("compatibility", "Compatibility notes over 500 characters"),
+                 ("fields", "Settings the standard doesn't define"))
+MIS_RULE = {"name-missing": "no name", "name-long": "a name of {chars} characters; 64 at most",
+            "name-chars": "a name with characters other than lowercase letters, digits, and single hyphens",
+            "name-folder": "a name other than its folder's ({folder})", "description-missing": "no description",
+            "description-empty": "an empty description", "description-long": "a description of {chars:,} characters; 1,024 at most",
+            "compatibility-long": "{chars:,} characters; 500 at most"}
 
 
-def trig_place(kind, f) -> str:
-    return ": ".join(trig_parts(kind, f))
+def misalign_of(r) -> dict:
+    """{measured, skills, groups {group: places}, alike}: the skills' places that differ from the Agent Skills spec, by
+    Skill Formatting group, and the pairs of skills whose descriptions overlap (`trig.overlap`, Walkdown's own measure),
+    from `02.6-builder`'s trig.* findings. A SKILL.md with no header is one place: its missing name and
+    description are that same place, as the spec's reference validator says it once."""
+    t = lambda c: fnd(r, BUILDER, c)  # noqa: E731
+    skills = {e["file"] for e in t("trig.entry") if e["kind"] == "skill"}
+    front = [f for f in t("trig.frontmatter") if f.get("kind_of") == "skill"]
+    bare = {f["file"] for f in front if f["kind"] == "missing"}
+    rules = [f for f in t("trig.rule") if f.get("host") == "agent-skills"
+             and not (f["file"] in bare and f["rule"] in ("name-missing", "description-missing"))]
+    pick = {"bare": [f for f in front if f["kind"] == "missing"], "yaml": [f for f in front if f["kind"] == "yaml-error"],
+            "twice": [f for f in rules if f["rule"] == "key-twice"],
+            "name": [f for f in rules if f["rule"] in NAME_RULES], "description": [f for f in rules if f["rule"] in DESC_RULES],
+            "compatibility": [f for f in rules if f["rule"] == "compatibility-long"],
+            "fields": [f for f in rules if f["rule"] == "field-outside"]}
+    order = lambda f: (f.get("file") or "", f.get("line") or 0)  # noqa: E731
+    return {"measured": BUILDER in r and bool(t("trig.listing")), "skills": len(skills),
+            "groups": {g: sorted(pick[g], key=order) for g, _ in FORMAT_GROUPS},
+            "alike": sorted((f for f in t("trig.overlap") if f["file"] in skills and f["other"] in skills), key=order)}
 
 
-def entries_line(tr) -> str:
-    """How the entries trigger, by kind."""
-    ents = tr["entries"]
-    if not ents:
-        return "No skill, agent, or command here."
-    out = []
-    sk = [e for e in ents if e["kind"] != "agent"]
-    if sk:
-        nsk = sum(1 for e in sk if e["kind"] == "skill")
-        head = " and ".join(x for x in (n(nsk, "skill") if nsk else "", n(len(sk) - nsk, "command") if len(sk) > nsk else "") if x)
-        c = collections.Counter(e["mode"] for e in sk)
-        auto = c["auto"] + c["paths"]
-        bits = [f"{auto} Claude chooses by {'its' if auto == 1 else 'their'} description"
-                + (f" ({c['paths']} only on matching files)" if c["paths"] else "")] if auto else []
-        bits += [f"{c['typed']} only when typed"] if c["typed"] else []
-        bits += [f"{c['unread']} whose frontmatter is not read"] if c["unread"] else []
-        hidden = sum(1 for e in sk if not e.get("menu", True))
-        bits += [f"{hidden} hidden from the / menu"] if hidden else []
-        out.append(f"{head}: {', '.join(bits)}.")
-    ag = [e for e in ents if e["kind"] == "agent"]
-    if ag:
-        off = sum(1 for e in ag if e["mode"] == "skipped")
-        bits = ([f"{len(ag) - off} Claude Code loads"] if len(ag) > off else []) + ([f"{off} it does not"] if off else [])
-        out.append(f"{n(len(ag), 'agent')}: {', '.join(bits)}.")
-    return " ".join(out)
+def misalign_place(group, f) -> tuple[str, str]:
+    """One place: (where, what), in the spec's words."""
+    if group == "bare":
+        return where(f), "no header (the spec requires one, with a name and a description)"
+    if group == "yaml":
+        return where(f), "the header is not valid YAML" + (f" ({f['error']})" if f.get("error") else "")
+    if group == "fields":
+        return where(f), f["key"]
+    if group == "twice":
+        return where(f), f"{f['key']}, first set on line {f['first']}"
+    return where(f), MIS_RULE[f["rule"]].format(**f)
 
 
-def listing_lines(tr, ctx: int) -> list[str]:
-    """The descriptions Claude chooses by, against Claude Code's listing and the agent warning."""
-    lst = tr["listing"]
-    if not lst:
-        return []
-    share = TRIGGER_TABLE["listing_share"]
-    out = []
-    if lst["skills"]:
-        tok = round(lst["listing_chars"] / BYTES_PER_TOKEN)
-        s = (f"Skill descriptions here take about {tok:,} tokens ({lst['listing_chars']:,} characters). Claude "
-             f"Code's listing of every installed skill holds about {share:.0%} of the context: about "
-             f"{round(ctx * share):,} tokens at {ctx:,}, {round(CLAUDE_CONTEXT * share):,} at {CLAUDE_CONTEXT:,}.")
-        if tok > ctx * share:
-            s += (f" At {ctx:,} these alone do not fit, and Claude Code drops the descriptions of the skills "
-                  "used least.")
-        out.append(s)
-    if lst["agents"]:
-        tok = round(lst["agent_chars"] / BYTES_PER_TOKEN)
-        warn = TRIGGER_TABLE["agent_warning_tokens"]
-        out.append(f"Agent descriptions take about {tok:,} tokens"
-                   + (f", over the {warn:,} at which Claude Code warns at startup." if tok > warn else "."))
-    return out
+def alike_text(f) -> str:
+    return f"{n(f['count'], 'word')} shared ({', '.join(f['shared'])})"
 
 
-def brief_trigger_counts(tr) -> dict:
-    """{host, guidance, overlap}: places that break a host rule, guidance rows, overlapping pairs."""
-    k = {kind: len(p) for kind, _, _, p in tr["kinds"]}
-    host = sum(k.get(x, 0) for x in ("not-read", "skipped", "rules", "keys", "values", "tools", "cut"))
-    return {"host": host, "guidance": k.get("guidance", 0), "overlap": k.get("overlap", 0)}
-
-
-def trigger_lines(r, ctx: int, stop=None) -> list[str]:
-    """full.md section 4: will it trigger; every entry and finding."""
-    tr = trigger_of(r)
-    L = ["### Will it trigger", ""]
-    if not tr["measured"]:
-        return L + [stop_not_measured(stop) or f"Not measured: this run has no trigger findings (the {step(BUILDER)} "
+def misalign_lines(r, stop=None) -> list[str]:
+    """full.md: Misalignment, every place (R13)."""
+    m = misalign_of(r)
+    L = ["### Misalignment", ""]
+    if not m["measured"]:
+        return L + [stop_not_measured(stop) or f"Not measured: this run has no skill findings (the {step(BUILDER)} "
                     "did not run, or the run was made before they were counted).", ""]
-    L += ["What each host does with a skill's, agent's, or command's frontmatter is in "
-          "`Library/trigger.yaml` (dated, with sources).", "", entries_line(tr), ""]
-    L += listing_lines(tr, ctx) + [""] if tr["listing"] and (tr["listing"]["skills"] or tr["listing"]["agents"]) else []
-    L += [f"- {code(e['file'])} ({e['kind']}): {e['mode']}" + (f", {e['why']}" if e.get("why") else "")
-          + (f"; description {e['description_chars']:,} characters" if e["description_chars"] else "")
-          for e in tr["entries"]]
-    if tr["entries"]:
-        L.append("")
-    for kind, name, why, places in tr["kinds"]:
-        L += [f"{name} ({len(places)}): {why}.", ""] + [f"- {trig_place(kind, f)}" for f in places] + [""]
-    if tr["entries"] and not tr["kinds"]:
-        L += ["Every entry has frontmatter its host reads and follows the rules.", ""]
-    return L
+    L += [f"Where its skills differ from the Agent Skills spec ({SPEC_LINK}). A skill's header is the block between the "
+          "two `---` lines at the top of its SKILL.md, written in YAML: lines such as `name: my-skill`. Its six fields: "
+          f"{', '.join(SPEC_FIELDS)}. Blank lines before the header and a byte-order mark are not counted; a header below "
+          "blank lines is checked.", "", "#### Skill Formatting", ""]
+    found = [(g, title, m["groups"][g]) for g, title in FORMAT_GROUPS if m["groups"][g]]
+    for g, title, places in found:
+        L += [f"{title} ({len(places)}):", ""] + [f"- {': '.join(misalign_place(g, f))}" for f in places] + [""]
+    if not found:
+        L += ["No skills here." if not m["skills"] else "Every skill's header follows the spec.", ""]
+    _, name, why = next(x for x in TRIG_KINDS if x[0] == "overlap")
+    L += ["#### Descriptions too alike", "", f"{name}: {why}.", ""]
+    L += [f"- {f['file']} and {f['other']}: {alike_text(f)}" for f in m["alike"]] or ["None."]
+    return L + [""]
 
 
 # ---------------------------------------------------------------- do the tools fit the job (slice 5)
@@ -1873,7 +1825,7 @@ def full(meta, reports, stamps, notes, runs_ok, capability_full=None) -> str:
         if stage == "02.5-capability":  # slice 5, 2026-10-26
             L += fit_lines(reports, stop)
         if stage == "02.4-phrases":  # slices 4 and 3, 2026-10-26
-            L += trigger_lines(reports, meta.get("context") or DEFAULT_CONTEXT, stop)
+            L += misalign_lines(reports, stop)  # R13, 2026-11-05: took the place of "Will it trigger"
             L += ready_lines(reports, meta.get("hosts") or [], stop)
             L += clean_lines(reports, stop)  # slice 6, 2026-10-27
     recs = recommendations(reports)

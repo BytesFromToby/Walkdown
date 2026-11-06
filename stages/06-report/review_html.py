@@ -680,7 +680,7 @@ PAGE = """<!doctype html>
   --c-concerned: #f08a70; --c-not-concerned: #7cc98d; --c-not-sure: #b9a8e0; color-scheme: dark; }}
 * {{ box-sizing: border-box; }}
 body {{ margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.55 var(--body); }}
-.wrap {{ max-width: 58rem; margin: 0 auto; padding-inline: 16px; padding-block: 2rem 4rem; display: grid; gap: 1.4rem; }}
+.wrap {{ max-width: 1400px; margin: 0 auto; padding-inline: 24px; padding-block: 2rem 4rem; display: grid; gap: 1.4rem; }}
 header.card, .place, .done, .bar-wrap {{ background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }}
 header.card {{ padding: 1.5rem 1.6rem 1.2rem; }}
 .eyebrow {{ font: 600 .78rem/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }}

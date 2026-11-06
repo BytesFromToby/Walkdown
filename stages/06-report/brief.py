@@ -151,8 +151,8 @@ def build(meta: dict, reports: dict, stamps: dict, changes: dict | None, run_dir
     cost += [fits] if fits else []
     cleans = summary_html.brief_clean_line(reports)  # slice 6
     cost += [cleans] if cleans else []
-    trig = summary_html.brief_trigger_line(reports)  # slice 4: first, as on the page
-    cost = ([trig] if trig else []) + cost
+    mis = summary_html.brief_misalign_line(reports)  # R13: last, as on the page
+    cost += [mis] if mis else []
     # "Files", not "Files examined" (2026-11-04): the next line says which of them were examined
     examined = ("Files: none yet. Pinned: nothing yet." if INVENTORY in left else
                 f"Files: {pin.get('files', '?')}. Pinned: {pin.get('hash_kind', '?')} "

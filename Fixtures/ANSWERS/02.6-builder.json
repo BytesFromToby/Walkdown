@@ -445,15 +445,17 @@
       "root": "trigger-repo",
       "deferred": [],
       "fixtures": {
-        ".claude/agents/notes.md": "e156341bc77c21359af4453adaf52fd572e85e5bb126166e4452b6103c92d050",
         ".claude/agents/README.md": "8b916e2154da1f94e1dca63c83df1357a5da0073b57a67196de11923e861c047",
+        ".claude/agents/notes.md": "e156341bc77c21359af4453adaf52fd572e85e5bb126166e4452b6103c92d050",
         ".claude/agents/reviewer.md": "8a8a52291a6b8c4414b1bea107204a6b047db3d3dd7f66376444d0aeefa35ba8",
         ".claude/commands/deploy.md": "fbf6709ea50f6a8f14b8a2f1e8d8bea41a2791d310dae540778b15626b38b173",
         ".claude/skills/Bad_Name/SKILL.md": "bb626f7471c06630f5ae0d9f1f8fd2dcc4dfce36d082641c4227e0564dba4717",
         ".claude/skills/broken/SKILL.md": "9beeca0fef3a445525556b9933ae6ec8a0c7996a89d3e5e336453673cdef9232",
         ".claude/skills/check-pr/SKILL.md": "ab0e7245ae8bccb5ad8d67965f604630310ce714059f75e37b708bce4983fc8b",
         ".claude/skills/claude-helper/SKILL.md": "a9255dd6e3bc6cd9e7df0fdb15c1102d24b27cd1cc2108d7ee11dc117dbec5d7",
+        ".claude/skills/compat-long/SKILL.md": "618ee0275f12280bcbdd978a5d6db9691d4e397a8d7dd0e7e7d5e9f4875470de",
         ".claude/skills/helper/SKILL.md": "b1c30912e01dd82f106de4e84b12481adc536075a6e2defce7cd2e87e558bf0b",
+        ".claude/skills/late-version/SKILL.md": "69d2e7b8de1267e19b402afd8e7ed10689690d4f091558b69c11c7c363775806",
         ".claude/skills/late/SKILL.md": "d29a20ac3d4497559f5e42af22e5f3de82a7090a5e53bb74101ebe7249e33ccf",
         ".claude/skills/long-desc/SKILL.md": "b18d1932748bd047c6e3506868614645973fee99883265ce681b53d5bf75ef16",
         ".claude/skills/long-listing/SKILL.md": "67b2e9037745bda587458b51e41e0c60a3c2dd54e638d2fe8b5a7bc6ff42536d",
@@ -461,6 +463,7 @@
         ".claude/skills/mismatch/SKILL.md": "c3f2526bbd169f7a90e4fa414982759747d0f623173d3e5a733b86e23221cddf",
         ".claude/skills/review-pr/SKILL.md": "c152508107e7a56f4b4eca33d34a8717e5e57c29848e45f399a8079f220fb6e4",
         ".claude/skills/tidy-notes/SKILL.md": "f14f092b124c41c4b609aee2566375b75110fe57b7888f913395092427f98329",
+        ".claude/skills/twice/SKILL.md": "15cac63d3d0d3e2cd90f919856f828b6da2c181be30666bb3e8a1829ea5d724b",
         ".claude/skills/typo/SKILL.md": "2380b967456505286fdf04a163917309309a42d067557f70fb50735f2c86c14c"
       },
       "note": "Slice 4 (2026-10-26): how each entry triggers, frontmatter not read, rules, guidance, keys, values, tools, overlaps, the listing.",
@@ -617,6 +620,114 @@
             }
           },
           "note": "slice 4 (owner, 2026-10-26): will it trigger: description plus when_to_use over 1,536 characters in Claude Code's listing."
+        },
+        {
+          "id": "trig-field-outside",
+          "polarity": "gate",
+          "check": "trig.rule",
+          "file": ".claude/skills/manual/SKILL.md",
+          "match": {
+            "rule": {
+              "eq": "field-outside"
+            },
+            "key": {
+              "eq": "disable-model-invocation"
+            }
+          },
+          "note": "R13 (owner, 2026-11-05: \"Let's adopt the agentskills.io specs\"): a Claude Code setting is a key outside the spec's six fields."
+        },
+        {
+          "id": "trig-field-outside-typo",
+          "polarity": "gate",
+          "check": "trig.rule",
+          "file": ".claude/skills/typo/SKILL.md",
+          "match": {
+            "rule": {
+              "eq": "field-outside"
+            },
+            "key": {
+              "eq": "allowed_tools"
+            }
+          },
+          "line": 4,
+          "note": "R13 (owner, 2026-11-05: \"Let's adopt the agentskills.io specs\"): a misspelt field is outside the six too."
+        },
+        {
+          "id": "trig-field-inside",
+          "polarity": "negative",
+          "check": "trig.rule",
+          "file": ".claude/skills/typo/SKILL.md",
+          "match": {
+            "rule": {
+              "eq": "field-outside"
+            },
+            "key": {
+              "eq": "allowed-tools"
+            }
+          },
+          "note": "R13 (owner, 2026-11-05: \"Let's adopt the agentskills.io specs\"): allowed-tools is one of the six (experimental in the spec)."
+        },
+        {
+          "id": "trig-compat-long",
+          "polarity": "gate",
+          "check": "trig.rule",
+          "file": ".claude/skills/compat-long/SKILL.md",
+          "match": {
+            "rule": {
+              "eq": "compatibility-long"
+            },
+            "chars": {
+              "eq": 539
+            }
+          },
+          "note": "R13 (owner, 2026-11-05: \"Let's adopt the agentskills.io specs\"): compatibility over the spec's 500 characters."
+        },
+        {
+          "id": "trig-late-field-outside",
+          "polarity": "gate",
+          "check": "trig.rule",
+          "file": ".claude/skills/late-version/SKILL.md",
+          "match": {
+            "rule": {
+              "eq": "field-outside"
+            },
+            "key": {
+              "eq": "version"
+            }
+          },
+          "line": 6,
+          "note": "R15 (owner, 2026-11-05: \"read past the blank lines for the standard's checks\"): settings after blank lines are checked against the spec, though Claude Code does not read them."
+        },
+        {
+          "id": "trig-key-twice",
+          "polarity": "gate",
+          "check": "trig.rule",
+          "file": ".claude/skills/twice/SKILL.md",
+          "match": {
+            "rule": {
+              "eq": "key-twice"
+            },
+            "key": {
+              "eq": "license"
+            },
+            "first": {
+              "eq": 4
+            }
+          },
+          "line": 5,
+          "note": "R17 (owner, 2026-11-05: \"duplicates only\"): YAML allows each key once; PyYAML keeps the last value."
+        },
+        {
+          "id": "trig-key-once",
+          "polarity": "negative",
+          "check": "trig.rule",
+          "file": ".claude/skills/compat-long/SKILL.md",
+          "match": {
+            "rule": {
+              "eq": "key-twice"
+            }
+          },
+          "note": "R17 (owner, 2026-11-05: \"duplicates only\"): YAML allows each key once; PyYAML keeps the last value. A header with each key once has none."
         },
         {
           "id": "trig-person",
@@ -822,13 +933,13 @@
           "check": "trig.listing",
           "match": {
             "skills": {
-              "eq": 11
+              "eq": 13
             },
             "agents": {
               "eq": 1
             }
           },
-          "note": "slice 4 (owner, 2026-10-26): will it trigger: the descriptions Claude chooses by: 10 auto skills plus the command; one agent."
+          "note": "slice 4 (owner, 2026-10-26): will it trigger: the descriptions Claude chooses by, the command among them; one agent. 13 since R17 (fixture `twice`)."
         }
       ]
     },

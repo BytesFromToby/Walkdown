@@ -463,17 +463,18 @@ def test_brief_ready_line(tmp_path):
     assert SENTINEL not in b
 
 
-def test_brief_trigger_line(tmp_path):
-    """Slice 4 (2026-10-26): one line on triggering, counts only, before the cost lines."""
+def test_brief_misalign_line(tmp_path):
+    """R13 (2026-11-05; it took the place of slice 4's "Will it trigger"): one line on Misalignment, counts only, last of
+    the count lines as the section is last on the page, and before what it can do. The skill's name is not its folder's,
+    and its third setting is not one the standard defines: two places."""
     trigger = builder_module("trigger")
     d = _run_dir(tmp_path)
     texts = {f".claude/skills/{SENTINEL}/SKILL.md": f"---\nname: x\ndescription: {SENTINEL}\n{SENTINEL}: 1\n---\n"}
     _edit(d, "02.6-builder", lambda doc: doc["findings"].extend(
         trigger.findings(texts, [{"check": "inv.file", "file": f, "entry_point": "skill"} for f in texts])))
     b = brief_of(d)
-    line = ("Will it trigger: 1 skill; 2 places that break a host rule, 1 from guidance; "
-            "0 pairs of descriptions that overlap.")
-    assert line in b and SENTINEL not in b
+    line = "Misalignment: 1 skill; 2 places that differ from the Agent Skills standard; 0 pairs of skills described alike."
+    assert line in b and SENTINEL not in b and "Will it trigger" not in b
     assert b.index(line) < b.index("What it can do:")
 
 

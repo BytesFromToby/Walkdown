@@ -53,12 +53,16 @@ older_tools:
   MultiEdit: Edit
   TaskOutput: Read     # removed in v2.1.277
 
-# Agent Skills spec: name 1-64, lowercase letters, digits, single hyphens, none at either end,
-# the folder's name. claude.ai uploads and the Skills API: no reserved words, no XML tags.
+# Agent Skills spec: name 1-64, lowercase letters (of any language, as its reference validator
+# takes them), digits, single hyphens, none at either end, the folder's name. claude.ai uploads and
+# the Skills API: no reserved words, no XML tags.
 name:
   max: 64
-  pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
   reserved: [anthropic, claude]
+# The most characters of `compatibility` in the Agent Skills spec (S01, checked 2026-11-05). Its six
+# fields, the only ones its reference validator takes in a SKILL.md, are `skill_keys` in hosts.yaml
+# (owner 2026-11-05, R13: a key outside them is a rule broken).
+compatibility_max: 500
 agent_name_max: 256
 description_max: 1024
 listing_chars: 1536          # description plus when_to_use, per entry, in Claude Code's listing
@@ -123,7 +127,7 @@ trigger_kinds:
     why: 'tool names are exact strings'
   - kind: overlap
     name: 'Descriptions that overlap'
-    why: 'Claude may choose the wrong one (Walkdown''s own measure, not a host''s: at least half the words of the shorter description, and at least 4)'
+    why: 'the AI may choose the wrong one (Walkdown''s own measure, not a host''s: at least half the words of the shorter description, and at least 4)'
   - kind: cut
     name: 'Descriptions cut in Claude Code''s listing'
     why: 'past 1,536 characters the rest never reaches the AI'

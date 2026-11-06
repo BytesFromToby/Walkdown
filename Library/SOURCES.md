@@ -30,13 +30,19 @@ holds because of the page.
 
 ### S01 Agent Skills specification
 - Link: https://agentskills.io/specification
-- Last checked: 2026-10-26 (`trigger.yaml`, `loading.yaml`)
+- Last checked: 2026-11-05 (`trigger.yaml`, `hosts.yaml`); 2026-10-26 (`loading.yaml`)
 - Taken: the frontmatter keys of the open skill format; the rule for a skill's name (1 to 64
   characters, lowercase letters, digits, single hyphens, matching its folder); that only name and
   description load at startup, the whole SKILL.md loads when the skill is used, and other files load
-  when needed; the size guidance.
-- Cited in: `trigger.yaml` (`sources.spec`), `loading.yaml` (fact 1), `hosts.yaml` (a comment on
-  `skill_keys`, "the frontmatter keys of the Agent Skills format").
+  when needed; the size guidance. On 2026-11-05, from the spec and its reference validator
+  (`skills-ref`, https://github.com/agentskills/agentskills, read and not run; "for demonstration
+  purposes only"): a SKILL.md takes only the six fields; `compatibility` holds at most 500 characters;
+  a name's lowercase letters may be of any language, never two hyphens together; the validator reads the
+  frontmatter with strictyaml, which refuses a key set twice (YAML itself allows each key of a mapping once,
+  https://yaml.org/spec/1.2.2/; PyYAML keeps the last). The format was
+  developed by Anthropic and released as an open standard (https://agentskills.io).
+- Cited in: `trigger.yaml` (`sources.spec`, `compatibility_max`), `loading.yaml` (fact 1), `hosts.yaml`
+  (a comment on `skill_keys`, "the frontmatter keys of the Agent Skills format"), `trigger.py` (`set_twice`).
 
 ### S02 Agent skill best practices (Anthropic)
 - Link: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices

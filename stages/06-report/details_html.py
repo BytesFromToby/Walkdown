@@ -1,6 +1,6 @@
 """The details page (details.html), and the places every page shares. Spec: specs/report.SPEC.md, details_html.
 
-Report v3 (owner, 2026-10-27): the page is the eight questions of glance.py as sections, with
+Report v3 (owner, 2026-10-27): the page is the four questions of glance.py as sections, with
 everything behind each answer. This module also holds what the other pages and the brief share:
 the places to check (`first_items`, which review.html walks and marks.py keys), the plain names
 of stages, hidden-text kinds, risky-wording groups, and who reads a file, the trifecta's places
@@ -575,25 +575,29 @@ def action_group(it) -> str:
 
 
 def render_page(meta, r, stamps, notes, runs_ok, changes=None, marks=None) -> str:
-    """Report v3 (owner, 2026-10-27): the eight questions as sections with everything behind
+    """Report v3 (owner, 2026-10-27): the four questions as sections with everything behind
     them (glance.py), what changed since the earlier run, and what this run did not check.
     Marking is on review.html only (owner, 2026-10-27)."""
     import glance as G  # glance imports this module
+    import summary_html as S  # the title (R6); summary_html imports this module
     qs = G.questions(meta, r, stamps, runs_ok, marks)
-    toc = "".join(f'<a href="#{q.id}">{esc(TOC[q.id])}</a>' for q in qs) + '<a href="#limits">Not checked</a>'
-    body = (f'<header><h1>{esc(meta["repo"])} in detail</h1><p class="meta">{esc(G.meta_line(meta, r))} \u00b7 '
-            f'<a href="summary.html">back to the summary</a></p>{license_line(r)}'
-            f'<p class="what">{G.what_it_is(r)} Everything behind the summary, question by question; long lists '
-            "are folded, tap to open them.</p></header>"
-            + coverage.section_html(r, files=True)
+    toc = ("".join(f'<a href="#{q.id}">{esc(TOC[q.id])}</a>' for q in qs) + '<a href="#misalign">Misalignment</a>'
+           + '<a href="#limits">Not checked</a>')
+    tiers = coverage.section_html(r, files=True).replace("<h2>What Walkdown examined</h2>", "", 1)
+    body = (f'<header>{G.back("")}<h1>{esc(S.title(meta["repo"]))}, in detail</h1><p class="meta">{esc(G.meta_line(meta, r))}</p>'
+            f'{license_line(r)}<p class="what">{G.what_it_is(r, meta["repo"])} {esc(LEDE)}</p></header>'
+            + G.can_detail(r)  # in the summary's order (R11): what it can do, what was examined, then the questions
+            + (G.fold_section("examined", "<h2>What Walkdown examined</h2>", "", tiers, "examined") if tiers else "")
             + f'<nav class="toc">{toc}</nav>' + "".join(G.section(q) for q in qs)
+            + G.misalign_detail(r, meta.get("stop"))  # after the questions, as on the summary (R13)
             + G.changes_section(changes)
             + G.not_checked(r, notes, qaview.of(meta), meta.get("stop"))
             + '<footer><p>Mark each place as you go: <a href="review.html">go through each place</a> \u00b7 '
             'every finding with its file and line: <a href="full.md">full.md</a></p>'
             f"<p>{esc(R.NOT_WHAT)}</p></footer>")
-    return G.page(f"{meta['repo']} in detail", meta, r, body)
+    return G.page(f"{S.title(meta['repo'])}, in detail", meta, r, body)
 
 
-TOC = {"switch": "Switching on", "memory": "Memory", "package": "Package", "elsewhere": "Other computers",
-       "hosts": "Other AI tools", "tools": "Tools", "clean": "Finished", "careful": "Careful"}
+# Under what it is (R1, 2026-11-05: every part folds, closed but the one a link opens).
+LEDE = "Everything behind the summary, question by question. Every part is folded; tap one to open it."
+TOC = {"size": "Size and Shape", "transfer": "Other machines", "tools": "Tools", "careful": "Careful"}  # Finished: under Careful (R23)

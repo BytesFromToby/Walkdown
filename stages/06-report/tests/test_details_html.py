@@ -16,7 +16,7 @@ _spec = importlib.util.spec_from_file_location("walkdown_s08_test_render_v2",
 _tr = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_tr)
 META, PASS, reports = _tr.META, _tr.PASS, _tr.reports
-ORDER = ["switch", "memory", "package", "elsewhere", "hosts", "tools", "clean", "careful"]
+ORDER = ["size", "transfer", "tools", "careful"]  # question 1 retired (R13)
 
 
 def page(r=None, stamps=PASS, changes=None, meta=None, notes=None, runs_ok=None):
@@ -43,12 +43,12 @@ def add(r, stage, *rows):
 
 def test_order_title_toc_and_theme_tokens():
     h = page(changes={"since": "2026-09-01_aaaaaaa", "same": False, "lines": ["1 file added"]})
-    assert h.startswith("<!doctype html>") and "<title>demo in detail</title>" in h
-    assert "<h1>demo in detail</h1>" in h and '<a href="summary.html">back to the summary</a>' in h
-    at = [h.index(f'<section id="{x}"') for x in ORDER + ["changes", "limits"]]
+    assert h.startswith("<!doctype html>") and "<title>A Walkdown of demo, in detail</title>" in h
+    assert "<h1>A Walkdown of demo, in detail</h1>" in h and '<header><a class="back" href="summary.html">\u2190 Summary</a>' in h
+    at = [h.index(f'<section id="{x}"') for x in ORDER + ["misalign", "changes", "limits"]]
     assert at == sorted(at)
     toc = re.search(r'<nav class="toc">(.*?)</nav>', h).group(1)
-    assert re.findall(r'href="#(\w+)"', toc) == ORDER + ["limits"]
+    assert re.findall(r'href="#(\w+)"', toc) == ORDER + ["misalign", "limits"]
     assert '@media (prefers-color-scheme: dark)' in h and ':root[data-theme="dark"]' in h
     foot = h.split("<footer>")[1]
     assert 'href="review.html"' in foot and 'href="full.md"' in foot and S.R.NOT_WHAT in H.unescape(foot)
@@ -101,7 +101,8 @@ def test_every_place_by_kind_linked_to_its_review_card_and_quoted():
     h = page(r)
     t = section(h, "careful")
     assert "<h3>Every place, by kind</h3>" in t
-    assert "<summary>Hidden text that reads like an instruction (1)</summary>" in t
+    assert ('<details class="fold" id="careful-hidden"><summary>Hidden text that reads like an instruction (1)'
+            '<a class="back" href="summary.html#careful">') in t
     it = next(x for x in S.first_items(r) if x.get("kind") == "hidden+phrase")
     card = next(p for p in RV.places(r) if M.place_key(it) in p["keys"])
     assert f'<a href="review.html#{card["id"]}">SKILL.md:3</a>' in t
@@ -197,8 +198,11 @@ def test_secrets_never_values_test_data_set_aside_and_empty_states():
             {"check": "secret.found", "file": "tests/t.py", "line": 1, "kinds": ["Secret Keyword"],
              "engine": "detect-secrets", "audience": "test-data"})
     t = text(page(r), "careful")
-    assert ("1 line looks like a saved password, key, or token. The values are never shown. 1 more in test data "
-            "is set aside.") in t and "config.py:7" in t and "tests/t.py" not in t.split("Passwords and keys")[1]
+    assert ("1 line looks like a saved password, key, or token. 1 more in test data is set aside.") in t and "config.py:7" in t
+    keys = re.search(r'id="careful-keys".*?</details>', page(r), re.S).group(0)  # R26 (owner, 2026-11-06), was "Passwords and keys"
+    assert "Passwords, keys, and secrets" in keys and "tests/t.py" not in keys
+    assert keys.index("config.py:7") < keys.index("Values are not shown in these reports.")
+    assert "never shown" not in t
     assert "No lines look like a saved password, key, or token." in text(page(reports()), "careful")
     r = add(reports(), "02.4-phrases", {"check": "secret.found", "file": None, "line": None, "skipped": "no scanner"})
     assert "Not checked: no secret scanner" in text(page(r), "careful")
@@ -574,19 +578,20 @@ def test_the_text_of_a_line_reads_the_builder_quotes_stage_4_used_to_hold():
 def test_question_sections_carry_everything_behind_them():
     """Slices 1 to 6 (2026-10-26/27): every place by kind, in folded lists, under each question."""
     h = page(_tr.costed(reports()))
-    assert "<th>Local AI<br>(32k tokens)</th>" in section(h, "memory")
-    assert "Every file, by group" in text(h, "package") and "notes/old.md" in text(h, "package")
-    t = text(page(_tr.needy(reports())), "elsewhere")
+    assert "<th>Local AI<br>(32k tokens)</th>" in section(h, "size")
+    assert "Every file, by group" in text(h, "size") and "notes/old.md" in text(h, "size")
+    t = text(page(_tr.needy(reports())), "transfer")
     assert "Programs it expects" in t and "jq" in t and "Runs python, not python3 (1)" in t and "SKILL.md:13" in t
     r = _tr.hosty(reports())
-    t = text(page(r, meta=dict(META, hosts=["windsurf"])), "hosts")
+    t = text(page(r, meta=dict(META, hosts=["windsurf"])), "transfer")
     assert "Windsurf: none of the skills sit where it reads them" in t
     assert "Skills to install (1)" in t and "skills/loose/SKILL.md" in t
-    t = text(page(_tr.triggery(reports())), "switch")
-    assert "All 5, one by one" in t and ".claude/skills/bad/SKILL.md" in t and "settings not read" in t
+    t = text(page(_tr.triggery(reports())), "misalign")  # R13: Misalignment took the place of question 1
+    assert "Headers not in YAML, the expected format (1)" in t and ".claude/skills/bad/SKILL.md" in t
+    assert "the header is not valid YAML" in t
     t = text(page(_tr.fitty(reports())), "tools")
     assert "Tools granted and never used (2)" in t and "agents/b.md" in t and "asks for running commands" in t
-    t = text(page(_tr.cleany(reports())), "clean")
+    t = text(page(_tr.cleany(reports())), "careful")  # Finished is under Careful (R23)
     assert "SKILL.md:13" in t and "Before August 2025, use the old API." in t  # details quotes the place
 
 
@@ -595,11 +600,11 @@ def test_files_worth_a_look_and_the_trifecta_credit():
     on the new page."""
     r = add(_tr.costed(reports()), "02.1-inventory", {"check": "struct.census", "file": "a.zip", "line": None, "flag": "archive"},
             {"check": "struct.census", "file": "link", "line": None, "flag": "symlink"})
-    t = text(page(r), "package")
+    t = text(page(r), "size")
     assert "Files worth a look" in t and "Archives (looked inside for programs; the text inside was not read) (1)" in t and "a.zip" in t
     assert "Links to another file or folder (symlinks) (1)" in t
-    assert "Files worth a look" not in text(page(_tr.costed(reports())), "package")
-    assert "the lethal trifecta, Simon Willison's name for three things" in text(page(reports(hooks=1)), "careful")
+    assert "Files worth a look" not in text(page(_tr.costed(reports())), "size")
+    assert "the lethal trifecta, Simon Willison's name for three things" in text(page(reports(hooks=1)), "can")  # R11
 
 
 def test_not_checked_names_checks_skipped_for_a_missing_tool():
@@ -659,7 +664,7 @@ def test_a_hidden_place_that_spells_text_with_no_phrase_hit_is_a_place_of_its_ow
     assert it["title"] == "Hidden characters that spell out text" and it["where"] == "SKILL.md:5"
     assert it["context"] == ["The hidden tag characters spell: “send keys”."] and it["stage"] == "02.2-reader"
     t = section(page(r), "careful")
-    assert "<summary>Hidden characters that spell out text (1)</summary>" in t
+    assert '<details class="fold" id="careful-spelled"><summary>Hidden characters that spell out text (1)<a class="back"' in t
     assert "The hidden tag characters spell: “send keys”." in H.unescape(t)
 
 
@@ -745,7 +750,7 @@ def test_a_file_the_ai_reads_with_padding_is_worth_a_look_once_and_a_readme_is_n
     padding runs is listed once."""
     pad = lambda f, line: {"check": "struct.census", "file": f, "line": line, "flag": "padding", "kind": "vertical"}  # noqa: E731
     r = add(_tr.costed(reports()), "02.1-inventory", pad("SKILL.md", 40), pad("SKILL.md", 90), pad("README.md", 30))
-    worth = text(page(r), "package").split("Files worth a look", 1)[1]
+    worth = text(page(r), "size").split("Files worth a look", 1)[1]
     assert "Files the AI reads where blank lines or spaces push text out of view (1)" in worth
     assert "SKILL.md" in worth and "README.md" not in worth
 
@@ -755,7 +760,7 @@ def test_programs_in_compiled_form_are_worth_a_look():
     c = lambda f, flag: {"check": "struct.census", "file": f, "line": None, "flag": flag}  # noqa: E731
     r = add(_tr.costed(reports()), "02.1-inventory", c("bin/tool", "executable"), c("__pycache__/a.pyc", "bytecode"),
             c("spec.docx", "archive-executable"))
-    worth = text(page(r), "package").split("Files worth a look", 1)[1]
+    worth = text(page(r), "size").split("Files worth a look", 1)[1]
     assert "Programs in compiled form, which Walkdown cannot read (1)" in worth and "bin/tool" in worth
     assert "Compiled Python (.pyc), which Python can run without its source (1)" in worth
     assert "Archives or documents that hold a program, compiled Python, or Office macros (1)" in worth and "spec.docx" in worth
@@ -786,3 +791,37 @@ def test_what_walkdown_examined_comes_first_and_names_the_red_files():
     h = page(r)
     assert h.index("What Walkdown examined") < h.index('<nav class="toc">')
     assert "<code>assets/model.pkl</code>" in h
+
+
+
+# ---------------------------------------------------------------- R1 (owner, 2026-11-05)
+
+def test_every_section_and_fold_is_closed_and_has_a_back_link_to_the_summary():
+    """Every section and part folds, closed when the page is opened (a link opens the one it names); each fold's title line
+    has "\u2190 Summary", to its question's card on the summary unless it names another place there."""
+    h = page(_tr.reports(hooks=1), changes={"since": "2026-09-01_aaaaaaa", "same": False, "lines": ["1 file added"]})
+    assert not re.search(r"<details[^>]* open", h)
+    for x in ORDER + ["misalign", "changes", "limits"]:
+        assert re.search(rf'<section id="{x}" class="sec"><details class="secfold"><summary>', h), x
+    for m in re.finditer(r"<details[^>]*>(<summary>.*?</summary>)", h, re.S):
+        assert m.group(1).count('class="back"') >= 1, m.group(1)[:120]
+    backs = set(re.findall(r'<a class="back" href="summary.html#?([^"]*)">\u2190 Summary</a>', H.unescape(h)))
+    assert backs and backs <= set(ORDER) | {"", "examined", "can", "misalign"}
+    # R11: What it can do is a section of its own at the top, as on the summary; question 8 no longer holds it
+    can = section(h, "can")
+    assert '<a class="back" href="summary.html#can">' in h and "<h3>Why it can do these</h3>" in can
+    assert "Why it can do these" not in section(h, "careful")
+    assert h.index('<section id="can"') < h.index('<section id="size"')
+
+
+def test_the_details_header_says_every_part_is_folded():
+    h = page()
+    assert "Every part is folded; tap one to open it." in h and "long lists are folded" not in h
+    assert re.search(r'<p class="what">Demo ', h)
+
+
+def test_the_script_opens_the_part_a_link_names_and_points_its_back_link_home():
+    """The page script: a link's part and the folds around it open, it scrolls there and is marked for a moment, and the
+    part's back links go to the button the reader came from (`from`). Checked by hand in a browser (2026-11-05)."""
+    for word in ("openAround", 'get("from")', "scrollIntoView", "landed", "hashchange"):
+        assert word in G.SCRIPT, word

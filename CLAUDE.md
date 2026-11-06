@@ -36,7 +36,7 @@ stages/          each stage: CONTEXT.md (contract), scripts, specs/ (one spec), 
   05-qa/         the check of the run, before the report: what is missing, what was not examined; a gap holds the run
   06-report/     the pages, full.md, changes, the limits, and the brief
 Library/         tables, lists, and their sources: data only, never code (README.md is the index)
-tools/           the grader, compare_runs.py, baserates.py, fixture generators, model evaluation
+tools/           the grader, compare_runs.py, baserates.py, specimen.py, fixture generators, model evaluation
 Fixtures/        fixtures by stage; ANSWERS/ is grader-only and never read in a blind build
 docs/, .claude/skills/   the public docs, and the walkdown skill
 pre-planning/, cases/    the private design corpus and history; case reports held back

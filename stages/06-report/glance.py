@@ -1,16 +1,18 @@
-"""The eight questions both pages answer, as data. Spec: specs/report.SPEC.md, glance.
+"""The four questions both pages answer, as data. Spec: specs/report.SPEC.md, glance.
 
 Report v3 (owner, 2026-10-27: "glance and know"): for someone with no computer skills, the same
-eight questions on summary.html and details.html, each with a chip (a short label), a one-line
+four questions on summary.html and details.html, each with a chip (a short label), a one-line
 answer, plain bullets, and on details.html everything behind it. Every sentence is a template
 filled from findings the stages already made; nothing here detects or judges. Token figures live
-in question 2 only. HTML here escapes all repository text.
+in Size and Shape's memory part only. HTML here escapes all repository text.
 """
 from __future__ import annotations
 
 import collections
 import html
+import itertools
 import posixpath
+import re
 from dataclasses import dataclass, field
 
 import details_html as D
@@ -38,6 +40,7 @@ class Q:
     bullets: list = field(default_factory=list)  # HTML, escaped; both pages
     more: str = ""              # HTML shown under the bullets on both pages (tables, charts)
     detail: str = ""            # HTML on details.html only
+    details_body: str = ""      # HTML for details.html in place of bullets, more, and detail (Size and Shape, R21)
 
 
 # ---------------------------------------------------------------- small builders
@@ -87,9 +90,36 @@ def in_folder(files) -> str:
         f" (all in {code(t[0] + '/')})" if t else "")
 
 
-def fold(summary_html, inner, open_=False) -> str:
-    return (f'<details class="fold"{" open" if open_ else ""}><summary>{summary_html}</summary>'
-            f'<div class="fold-body">{inner}</div></details>')
+# The two pages linked part to part (owner, 2026-11-05, R1): a "Details →" on the summary opens details.html at the part, and
+# every fold there has a "← Summary" back. `go(target)` marks a line for a button: summary.html draws it, details.html drops it.
+# A fold's back link names "@" until `section` gives it the question's id; "" is the top of the summary.
+GO_MARK = re.compile(r"<!--go:([a-z0-9-]+)-->")
+GO_WORD, BACK_WORD = "Details →", "← Summary"  # owner, 2026-11-05: B, "simple, and the arrows"
+
+
+def go(target) -> str:
+    return f"<!--go:{target}-->"
+
+
+def slug(*parts) -> str:
+    """An id from words: lower case, anything but letters and digits a hyphen."""
+    return re.sub(r"[^a-z0-9]+", "-", "-".join(str(p) for p in parts).lower()).strip("-")
+
+
+def back(home="@") -> str:
+    return f'<a class="back" href="summary.html{"#" + home if home else ""}">{BACK_WORD}</a>'
+
+
+def fold(summary_html, inner, open_=False, fid=None, home="@", cls="fold") -> str:
+    """A fold on details.html, closed (owner, 2026-11-05: every fold closed but the one linked to). Its back link is on its
+    own title line, shown while it is open, so a fold inside another never shows two side by side."""
+    return (f'<details class="{cls}"' + (f' id="{fid}"' if fid else "") + (" open" if open_ else "")
+            + f'><summary>{summary_html}{back(home)}</summary><div class="fold-body">{inner}</div></details>')
+
+
+def part(pid, title, inner, home="@") -> str:
+    """A part of a question on details.html, folded under its heading."""
+    return fold(f"<h3>{esc(title)}</h3>", inner, fid=pid, home=home, cls="fold part")
 
 
 def places(rows, text=None) -> str:
@@ -161,11 +191,18 @@ def entries(r) -> list[dict]:
     return R.fnd(r, R.BUILDER, "trig.entry")
 
 
-def what_it_is(r) -> str:
-    """The one sentence under the name: what the repository holds. Nothing when the inventory did
-    not run."""
+def subject(name) -> str:
+    """The repository's name to start a sentence, its first letter a capital (owner, 2026-11-05, R2)."""
+    name = str(name or "")
+    return name[:1].upper() + name[1:] if name else "It"
+
+
+def what_it_is(r, name=None) -> str:
+    """The one sentence under the name: what the repository holds, starting with its name (owner, 2026-11-05, R2:
+    "<Name> is a plugin for Claude Code: ..."; "<Name> holds ..."). Nothing when the inventory did not run."""
     if "02.1-inventory" not in r:
         return ""
+    who = esc(subject(name))
     ents = entries(r)
     sk = sum(1 for e in ents if e["kind"] == "skill")
     cm = sum(1 for e in ents if e["kind"] == "command")
@@ -180,95 +217,114 @@ def what_it_is(r) -> str:
     plugin = any(f["file"].endswith(".claude-plugin/plugin.json") or f["file"] == ".claude-plugin/plugin.json"
                  for f in R.fnd(r, "02.1-inventory", "inv.file"))
     if not parts:
-        return "It holds no skills, commands, or helpers. Walkdown read its instruction files."
-    lead = "A plugin for Claude Code: " if plugin else "It holds "
+        return f"{who} holds no skills, commands, or helpers. Walkdown read its instruction files."
+    lead = f"{who} is a plugin for Claude Code: " if plugin else f"{who} holds "
     return lead + names(parts) + "."
 
 
-# ---------------------------------------------------------------- 1 switching on
+# ---------------------------------------------------------------- Misalignment (R13)
 
-TRIG_LOOK = ("not-read", "skipped", "rules", "values", "tools", "overlap", "cut")
-GUIDANCE_PLAIN = {"no-when": "doesn't say when to use it, so the AI has less to go on when deciding whether to pick it",
-                  "first-person": "is written as \u201cI\u201d instead of describing what it does",
-                  "second-person": "is written as \u201cyou\u201d instead of describing what it does"}
+# R13 (owner, 2026-11-05: "Let's adopt the agentskills.io specs. Forget anthropic specific ones."; "New section called 'Skill
+# Formatting' under a new section called 'Misalignment'. Temp name while we build it."): after the questions on both pages.
+# It took the place of question 1, "Will its skills switch on when they should?", and of "Nitty gritty" (R9), whose only
+# catch, a setting no tool knows, is one of the settings the standard doesn't define.
+MIS_LEDE = ("Where its skills differ from the Agent Skills standard, the open format for skills that many AI tools read "
+            "(agentskills.io).")
+ALIKE_NONE = "No two skills describe themselves alike."
 
 
-def q_switch(r, ctx) -> Q:
-    title = "Will its skills switch on when they should?"
-    tr = R.trigger_of(r)
-    if not tr["measured"]:
-        return unmeasured("switch", title)
-    ents = tr["entries"]
-    if not ents:
-        return Q("switch", title, "None here", "fact", "No skills, commands, or helpers here.")
-    kinds = {k: p for k, _, _, p in tr["kinds"]}
-    keys_near = [f for f in kinds.get("keys", []) if f.get("near")]
-    keys_far = [f for f in kinds.get("keys", []) if not f.get("near")]
-    look = sum(len(kinds.get(k, [])) for k in TRIG_LOOK) + len(keys_near)
-    lst = tr["listing"] or {}
-    over = round((lst.get("listing_chars") or 0) / R.BYTES_PER_TOKEN) > ctx * SHARE
-    notes = sum(1 for x in (kinds.get("guidance"), keys_far, over) if x)
-    chip, tone = chip_for(look, notes)
-    sk = [e for e in ents if e["kind"] != "agent"]
-    ag = [e for e in ents if e["kind"] == "agent"]
-    broken = [e for e in ents if e["mode"] in ("unread", "skipped")]
-    typed = [e for e in ents if e["mode"] == "typed"]
-    whole = names([x for x in (n(len(sk), "skill") if sk else "", n(len(ag), "helper") if ag else "") if x])
-    if broken:
-        answer = f"{len(broken)} of the {whole} won't switch on as written: the AI can't read their settings, or skips them."
-    elif typed:
-        answer = (f"Yes. {len(ents) - len(typed)} of the {whole} switch on by themselves; {len(typed)} only when "
-                  "you ask for them by name.")
+def misalign_unmeasured(stop=None) -> str:
+    return (f'Not measured: the run stopped after the step "{R.stop_plain(stop)}", as asked.' if R.stopped_left(stop)
+            else "Not measured: this run was made before this check, or a step did not run.")
+
+
+def format_line(m, g) -> str:
+    """Skill Formatting's sentence for one group, HTML: at the head of its fold on details.html (R24; on the summary, a line
+    each with its Details button, R13 to R23)."""
+    pl = m["groups"][g]
+    c = len({f["file"] for f in pl})
+    if g == "bare":
+        return (f"{n(c, 'skill')} {'has' if c == 1 else 'have'} no header at the top. The standard requires one, with a name "
+                "and a description.")
+    if g == "yaml":
+        return (f"{n(c, 'skill')} {'has a header' if c == 1 else 'have headers'} not in the expected format (YAML), so a tool "
+                f"that follows the standard can't read {'it' if c == 1 else 'them'}.")
+    if g == "twice":  # R17 (owner, 2026-11-05: "duplicates only")
+        k, keys = len(pl), collections.Counter(f["key"] for f in pl).most_common()
+        return (f"{n(k, 'setting')} {'is' if k == 1 else 'are'} set more than once in {'its' if k == 1 else 'their'} header: "
+                + ", ".join(code(x) + (f" ({m_})" if m_ > 1 else "") for x, m_ in keys[:4])
+                + (", and others" if len(keys) > 4 else "") + ". YAML allows each setting once, and some tools quietly keep "
+                "just the last value.")
+    if g == "name":
+        return (f"{n(c, 'skill name')} {"doesn't" if c == 1 else "don't"} follow the standard: lowercase letters, digits, and "
+                "single hyphens, at most 64 characters, and the same as the skill's folder.")
+    if g == "description":
+        return (f"{n(c, 'skill description')} {"doesn't" if c == 1 else "don't"} follow the standard: every skill has one, of at "
+                "most 1,024 characters.")
+    if g == "compatibility":
+        return f"{n(len(pl), 'compatibility note')} {'is' if len(pl) == 1 else 'are'} over the standard's 500 characters."
+    keys = collections.Counter(f["key"] for f in pl).most_common()
+    return (f"{n(len(pl), 'setting')} the standard doesn't define: "
+            + ", ".join(code(x) + (f" ({m_})" if m_ > 1 else "") for x, m_ in keys[:4]) + (", and others" if len(keys) > 4 else "")
+            + ".")
+
+
+def format_none(m) -> str:
+    return "No skills here; the standard covers skills only." if not m["skills"] else "Every skill's header follows the standard."
+
+
+def alike_line(m) -> str:
+    c = len(m["alike"])
+    return f"{n(c, 'pair')} of skills with descriptions so alike that the AI may pick the wrong one."
+
+
+MIS_SUB = "Things that are not standard but are not security flaws."
+
+
+def misalign_card(r, stop=None) -> Q:
+    """summary.html, the last card (R24, owner 2026-11-06: "For misalignment. Should be another section like Is this transferable to other machines? but no expand. the subtitle says 'Things that are not standard but are not security flaws. (# of issues)'"): no label and nothing to open; its Details button opens the
+    section on details.html, which holds every line and place. Issues: the places that differ from the standard and the
+    pairs of skills described alike."""
+    m = R.misalign_of(r)
+    if not m["measured"]:
+        said = misalign_unmeasured(stop)
+    elif not m["skills"]:
+        said = f"{MIS_SUB} (No skills here; the standard covers skills only.)"
     else:
-        answer = (f"Yes. All {whole} are set up to switch on by themselves." if len(ents) > 1
-                  else f"Yes. Its one {'helper' if ag else 'skill'} is set up to switch on by itself.")
-    b = []
-    if kinds.get("not-read"):
-        b.append(f"{n(len(kinds['not-read']), 'file')} can't be read: the settings at the top are broken or not at the very "
-                 "top, so the AI can't tell when to use them.")
-    if kinds.get("skipped"):
-        b.append(f"{n(len(kinds['skipped']), 'helper')} {'is' if len(kinds['skipped']) == 1 else 'are'} skipped: no name, "
-                 "no description, or a name the AI refuses.")
-    if kinds.get("rules"):
-        b.append(f"{n(len(kinds['rules']), 'name or description', 'names or descriptions')} break a rule other AI tools or "
-                 "claude.ai apply, so they may refuse the skill.")
-    if keys_near:
-        b.append(f"{n(len(keys_near), 'setting')} look{'s' if len(keys_near) == 1 else ''} like a typo, so the AI ignores "
-                 + ("it" if len(keys_near) == 1 else "them") + ": "
-                 + ", ".join(f"{code(f['key'])} (the AI knows {code(f['near'])})" for f in keys_near[:3]) + ".")
-    if kinds.get("values"):
-        b.append(f"{n(len(kinds['values']), 'setting')} {'has' if len(kinds['values']) == 1 else 'have'} a value the AI doesn't accept.")
-    if kinds.get("tools"):
-        b.append(f"{n(len(kinds['tools']), 'tool name')} the AI doesn't know, or an older name.")
-    if kinds.get("overlap"):
-        b.append(f"{n(len(kinds['overlap']), 'pair')} of skills describe themselves so alike that the AI may pick the wrong one.")
-    if kinds.get("cut"):
-        b.append(f"{n(len(kinds['cut']), 'description')} {'is' if len(kinds['cut']) == 1 else 'are'} too long; the end gets cut off.")
-    for f in kinds.get("guidance", []):
-        b.append(f"{code(short_name(f['file']))} "
-                 f"{esc(GUIDANCE_PLAIN.get(f['kind'], f['kind']))}.")
-    if over:
-        b.append(f"On {esc(ctx_name(ctx, short=True))}, the list of skills is too long to show in full, so the ones used "
-                 "least lose their descriptions. The numbers are under \u201cHow much of the AI's memory\u201d.")
-    if keys_far:
-        ks = sorted({f["key"] for f in keys_far})
-        b.append((f"Each of {n(len(keys_far), 'skill')} has a {code(ks[0])} line the AI ignores" if len(ks) == 1
-                  else f"{n(len(keys_far), 'setting')} the AI ignores ({', '.join(code(k) for k in ks[:4])})")
-                 + ". It does no harm; it just does nothing.")
-    rows = []
-    for e in sorted(ents, key=lambda e: (e["kind"] == "agent", e["name"] or e["file"])):
-        why = e.get("why") or ""
-        on = "\u2713 by itself" if e["mode"] == "auto" else {"paths": "\u2713 on matching files", "typed": "when you type its name",
-                                                            "unread": "\u2717 settings not read", "skipped": "\u2717 skipped"}[e["mode"]]
-        rows.append(f"<tr><td><b>{esc(e['name'] or e['file'])}</b><small class=\"where\">{esc(e['file'])}</small></td>"
-                    f"<td>{'helper' if e['kind'] == 'agent' else e['kind']}</td><td>{esc(on)}"
-                    + (f"<small class=\"where\">{esc(why)}</small>" if why else "") + "</td></tr>")
-    detail = fold(f"All {len(ents)}, one by one", table("<th>Name</th><th>Type</th><th>Switches on</th>", rows))
-    for k, name, why, pl in tr["kinds"]:
-        detail += fold(f"{esc(name)} ({len(pl)})",
-                       f'<p class="where">{esc(why)}.</p><ul class="places">'
-                       + "".join(f"<li>{code(R.trig_parts(k, f)[0])} {esc(R.trig_parts(k, f)[1])}</li>" for f in pl) + "</ul>")
-    return Q("switch", title, chip, tone, esc(answer) if "<" not in answer else answer, b, detail=detail)
+        said = f"{MIS_SUB} ({n(sum(len(v) for v in m['groups'].values()) + len(m['alike']), 'issue')})"
+    return Q("misalign", "Misalignment", "", "fact", esc(said), detail=misalign_detail(r, stop))
+
+
+def misalign_detail(r, stop=None) -> str:
+    """details.html, after the questions: Misalignment, folded. Closed, the counts; inside, the standard and its six fields,
+    then a fold for each Skill Formatting group, its sentence and then every place, and one for the skills too alike."""
+    m = R.misalign_of(r)
+    if not m["measured"]:
+        said = misalign_unmeasured(stop)
+        return fold_section("misalign", "<h2>Misalignment</h2>", f'<span class="a">{esc(said)}</span>',
+                            f'<p class="where">{esc(said)}</p>', "misalign")
+    g = m["groups"]
+    total = sum(len(v) for v in g.values())
+    answer = (f"Skill Formatting: {n(total, 'place')} to look at." if total else f"Skill Formatting: {format_none(m)}")
+    if m["skills"] > 1:
+        answer += f" Descriptions too alike: {n(len(m['alike']), 'pair')}."
+    inside = (f'<p class="where">{esc(MIS_LEDE)} A skill\'s header is the block between the two {code("---")} lines at the '
+              f"top of its SKILL.md, written in YAML: lines such as {code('name: my-skill')}. The standard: "
+              f'<a href="{R.SPEC_LINK}">{R.SPEC_LINK}</a>. Its six settings: ' + ", ".join(code(k) for k in R.SPEC_FIELDS)
+              + ". Blank lines before the header and a byte-order mark are not called out; a header below blank lines is "
+              "still checked.</p><h3>Skill Formatting</h3>")
+    folds = "".join(fold(f"{esc(title)} ({len(g[k])})", f'<p class="lead">{format_line(m, k)}</p><ul class="places">' + "".join(
+        f"<li>{code(R.misalign_place(k, f)[0])} " + (code(f["key"]) if k == "fields" else esc(R.misalign_place(k, f)[1])) + "</li>"
+        for f in g[k]) + "</ul>", fid="misalign-" + k, home="misalign") for k, title in R.FORMAT_GROUPS if g[k])
+    inside += folds or f"<p>{esc(format_none(m))}</p>"
+    if m["skills"] > 1:
+        _, name, why = next(x for x in R.TRIG_KINDS if x[0] == "overlap")
+        inside += "<h3>Descriptions too alike</h3>" + (fold(
+            f"{n(len(m['alike']), 'pair')}", f'<p class="lead">{esc(alike_line(m))}</p><p class="where">{esc(name)}: {esc(why)}.</p>'
+            '<ul class="places">'
+            + "".join(f"<li>{code(f['file'])} and {code(f['other'])}: {esc(R.alike_text(f))}</li>" for f in m["alike"]) + "</ul>",
+            fid="misalign-alike", home="misalign") if m["alike"] else f"<p>{esc(ALIKE_NONE)}</p>")
+    return fold_section("misalign", "<h2>Misalignment</h2>", f'<span class="a">{esc(answer)}</span>', inside, "misalign")
 
 
 # ---------------------------------------------------------------- 2 memory
@@ -340,11 +396,11 @@ def q_memory(r, ctx) -> Q:
     if ctx == CLAUDE:
         answer = f"On Claude, {what} takes {share}."
     explain = ('<div class="explain">The AI holds text in pieces called <b>tokens</b> (about \u00be of a word each). '
-               + (f"A <b>local AI</b> running on your own computer typically holds about {ctx:,} tokens at once; "
+               + (f"A <b>local AI</b> estimate of {ctx:,} tokens represents a typical high-end computer; "  # R19
                   if ctx == LOCAL else "" if ctx == CLAUDE
                   else f"<b>Your AI</b> holds about {ctx:,} tokens at once (set with --context); ")
                + ("<b>Claude</b> holds about 200,000 tokens at once." if ctx == CLAUDE else "<b>Claude</b> holds about 200,000.")
-               + " These are estimates from file sizes.</div>")
+               + " Token counts are estimates.</div>")  # R20 (owner, 2026-11-06)
     more = explain + memory_table(r, ctx)
     lst = (R.trigger_of(r).get("listing") or {})
     if lst.get("skills"):
@@ -352,7 +408,7 @@ def q_memory(r, ctx) -> Q:
         room = [(f"{ctx_name(ctx)}: about {round(ctx * SHARE):,} tokens of room", tok, ctx * SHARE)]
         if ctx != CLAUDE:
             room.append((f"Claude: about {round(CLAUDE * SHARE):,} tokens of room", tok, CLAUDE * SHARE))
-        more += ("<h3>Room for the list of skills</h3><p class=\"where\">The AI keeps a short list of every skill you have "
+        more += ('<h3 id="memory-room">Room for the list of skills' + go("memory-room") + "</h3><p class=\"where\">The AI keeps a short list of every skill you have "
                  f"installed, with a set amount of room. This repository's descriptions alone take about {tok:,} tokens.</p>"
                  '<div class="room">')
         for label, need, have in room:
@@ -369,11 +425,12 @@ def q_memory(r, ctx) -> Q:
     detail = ""
     if len(maxes) > 1:
         kw = lambda x: {"agent": "helper"}.get(x.get("kind"), x.get("kind") or "")  # noqa: E731
-        detail = ("<h3>How big each skill and helper gets</h3><p class=\"where\">Tokens each one uses at its fullest: its "
+        detail = part("memory-sizes", "How big each skill and helper gets", "<p class=\"where\">Tokens each one uses at its fullest: its "
                   "own instructions plus every file it reads. Only the one in use is loaded.</p>"
                   + hbars([(f"{short_name(x['file'])} ({kw(x)})", x["tokens"],
                             f"{x['file']}: {x['tokens']:,} tokens, {x['tokens'] * 100 / ctx:.0f}% of {ctx_name(ctx, short=True)}")
                            for x in maxes]))
+    more = more.replace("</table></div>", "</table></div>" + f'<p class="go-row">{go("memory-sizes" if detail else "size")}</p>', 1)
     return Q("memory", title, ("under 1%" if p < 1 else f"up to {R.pct(top, ctx)}") if p <= 100 else "more than fits", "fact", esc(answer),
              more=more, detail=detail)
 
@@ -383,7 +440,7 @@ def q_memory(r, ctx) -> Q:
 PACK = (("work", "c1", "do the work: the skills, the helpers, and the files they read"),
         ("people", "c2", "notes for people: the license, readme, and other documents"),
         ("build", "c3", "tests and tools for building it"),
-        ("unused", "c4", "nothing refers to them"))
+        ("unused", "c4", "files not linked or referred to"))  # owner, 2026-11-05 (R14), was "nothing refers to them"
 WORK = ("entry", "project", "on-demand", "maybe", "run", "config")
 
 
@@ -403,32 +460,81 @@ def q_package(r) -> Q:
                  + "." if extra else "Nothing else comes along."))
     segs = "".join(f'<div class="seg {c}" style="flex:{len(group[g])}" data-tip="{n(len(group[g]), "file")}: {esc(lab)}">{len(group[g])}</div>'
                    for g, c, lab in PACK if group[g])
-    legend = "".join(f'<li><span class="sw {c}"></span><span class="n">{len(group[g])}</span><span>{esc(lab)}</span></li>'
+    legend = "".join(f'<li><span class="sw {c}"></span><span class="n">{len(group[g])}</span><span>{esc(lab)}</span>{go("package-" + g)}</li>'
                      for g, c, lab in PACK if group[g])
     lo = R.left_out(r)
-    saving = (f'<p class="where">None of the last groups is used when it runs. Leaving the tests and the files nothing '
-              f'refers to out of what you share would make it {esc(R.kb(lo["bytes"]))} smaller.</p>'
+    saving = (f'<p class="where">None of the last groups is used when it runs. Leaving the tests and the files not linked '
+              f'or referred to out of what you share would make it {esc(R.kb(lo["bytes"]))} smaller.</p>'
               if lo["unused"] or lo["build"] else "")
     more = (f'<div class="stack" role="img" aria-label="{total} files by how they are used">{segs}</div>'
             f'<ul class="legend">{legend}</ul>' + (saving if extra else ""))
-    detail = "<h3>Every file, by group</h3>" + "".join(
+    detail = part("package-files", "Every file, by group", "".join(
         fold(f'<span class="sw {c}"></span> {len(group[g])} {esc(lab)}',
              '<ul class="files">' + "".join(f"<li>{code(x['file'])} <span class=\"where\">{esc(R.kb(x['bytes']))}</span></li>"
-                                            for x in sorted(group[g], key=lambda x: x["file"])) + "</ul>")
-        for g, c, lab in PACK if group[g])
+                                            for x in sorted(group[g], key=lambda x: x["file"])) + "</ul>", fid="package-" + g)
+        for g, c, lab in PACK if group[g]))
     worth = D.file_concerns(r)  # unknown or mismatched types, archives, symlinks, long files
     if worth:
-        detail += "<h3>Files worth a look</h3>" + "".join(
-            fold(f"{esc(t)} ({len(fs)})", '<ul class="files">' + "".join(f"<li>{code(f)}</li>" for f in fs) + "</ul>")
-            for _, t, fs in worth)
+        detail += part("package-worth", "Files worth a look", "".join(
+            fold(f"{esc(t)} ({len(fs)})", '<ul class="files">' + "".join(f"<li>{code(f)}</li>" for f in fs) + "</ul>",
+                 fid=slug("package-worth", rid))
+            for rid, t, fs in worth))
     chip = (n(extra, "extra file"), "fact") if extra else ("Nothing extra", "none")
     return Q("package", title, chip[0], chip[1], answer, more=more, detail=detail)
+
+
+# ---------------------------------------------------------------- 1 size and shape
+
+PACK_HEAD, MEMORY_HEAD = "What comes in the package", "How much of the AI's memory it uses"
+
+
+def joined(qid, title, parts) -> Q:
+    """One question made of parts, each a Q under its heading (`h3.piece`): its More (boxes, bars, tables) first, then its
+    lines; on details.html each part's detail follows it (R21, R22). The chips joined by " \u00b7 ", the answers on lines of
+    their own; "look" when a part has something to look at, else "fact" when one is a measure. Not measured when no part
+    is; a part not measured says so in the answer and has no heading."""
+    measured = [(q, head) for q, head in parts if q.tone != "unmeasured"]
+    if not measured:
+        return unmeasured(qid, title)
+    tones = [q.tone for q, _ in measured]
+    piece = lambda q, h: f'<h3 class="piece">{esc(h)}</h3>' + q.more + bullets_html(q.bullets)  # noqa: E731
+    return Q(qid, title, " \u00b7 ".join(q.chip for q, _ in measured),
+             "look" if "look" in tones else "fact" if "fact" in tones else tones[0],
+             "<br>".join(q.answer for q, _ in parts),
+             more="".join(piece(q, h) for q, h in measured), detail="".join(q.detail for q, _ in measured),
+             details_body="".join(piece(q, h) + q.detail for q, h in measured))
+
+
+def q_size(r, ctx) -> Q:
+    """Size and Shape (R21, owner 2026-11-06: "combine the How much of the AI's memory does it use? and What comes in the package? into one section ... Let's call it Size and Shape for now"; "the what comes in the package comes first. the 4 notes on what the bar is should be 2 columns"):
+    the package part, then the memory part, each under its heading; on details.html each part's detail follows it."""
+    return joined("size", "Size and Shape", ((q_package(r), PACK_HEAD), (q_memory(r, ctx), MEMORY_HEAD)))
 
 
 # ---------------------------------------------------------------- 4 another computer
 
 # One sentence per kind of place, as a template (Library/tools.yaml, `port_kinds`).
 PORT_PLAIN = {k["check"]: k["plain"] for k in R.TOOLS_TABLE["port_kinds"]}
+# The systems each kind trips (Library/tools.yaml: `systems`; `port.os` by its program's `os`, `os_systems`), R22.
+PORT_SYSTEMS = {k["check"]: tuple(k.get("systems") or ()) for k in R.TOOLS_TABLE["port_kinds"]}
+OS_SYSTEMS = {k: tuple(v) for k, v in R.TOOLS_TABLE["os_systems"].items()}
+SYSTEMS = (("linux", "Linux"), ("windows", "Windows"), ("mac", "Mac"))
+
+
+def system_tiles(nd) -> str:
+    """Three boxes, Linux, Windows, and Mac (owner, 2026-11-06, R22): blue when no kind found trips that system; a yellow
+    outline and the count of kinds that do. Personal paths and programs it never says to install trip any other computer,
+    whatever its system, so they are in the lines under the boxes and in no box."""
+    hits = {s: 0 for s, _ in SYSTEMS}
+    for check, _, _, pl in nd["port"]:
+        trips = ({s for f in pl for s in OS_SYSTEMS.get(f.get("os"), ())} if check == "port.os"
+                 else set(PORT_SYSTEMS.get(check, ())))
+        for s in trips:
+            hits[s] += 1
+    return '<div class="hosts systems">' + "".join(
+        f'<div class="host{"" if hits[s] else " has"}"><b>{"\u2717" if hits[s] else "\u2713"} {esc(name)}</b>'
+        f'<span class="st">{esc(n(hits[s], "thing") + " to look at" if hits[s] else "nothing found against it")}</span></div>'
+        for s, name in SYSTEMS) + "</div>"
 
 
 def _fill(tpl, k) -> str:
@@ -449,13 +555,13 @@ def q_elsewhere(r) -> Q:
     count = (1 if nd["undeclared"] else 0) + len(nd["port"])
     b = []
     for check, _, _, pl in nd["port"]:
-        b.append(_fill(PORT_PLAIN[check], len(pl)) + in_folder([f.get("file") or "" for f in pl]))
+        b.append(_fill(PORT_PLAIN[check], len(pl)) + in_folder([f.get("file") or "" for f in pl]) + go(slug("elsewhere", check)))
     undeclared = [c["command"] for c in nd["commands"] if not c.get("declared")]
     pk = [p["package"] for p in nd["packages"] if not p.get("declared")]
     if undeclared:
         said = [c["command"] for c in nd["commands"] if c.get("declared")]
         b.append(f"It expects these programs to be installed but never says so: <b>{esc(', '.join(undeclared))}</b>."
-                 + (f" It says to install {esc(names(said))}." if said else ""))
+                 + (f" It says to install {esc(names(said))}." if said else "") + go("elsewhere-programs"))
     if pk:
         b.append(f"Its scripts use add-ons it never lists: <b>{esc(', '.join(pk[:8]))}</b>"
                  + (f" and {len(pk) - 8} more" if len(pk) > 8 else "") + ".")
@@ -475,13 +581,13 @@ def q_elsewhere(r) -> Q:
         big = max(nd["port"], key=lambda x: len(x[3]))
         chart = by_file_chart(big[3], "place")
         if chart:
-            detail += f"<h3>Where: {esc(big[1].lower())}</h3>" + chart
+            detail += part("elsewhere-where", f"Where: {big[1].lower()}", chart)
         for check, name, why, pl in nd["port"]:
-            detail += fold(f"{esc(name)} ({len(pl)})", f'<p class="where">{esc(why)}.</p>' + places(pl))
+            detail += fold(f"{esc(name)} ({len(pl)})", f'<p class="where">{esc(why)}.</p>' + places(pl), fid=slug("elsewhere", check))
     if rows:
-        detail += "<h3>Programs it expects</h3>" + table(
-            '<th>Program</th><th class="num">Places</th><th>Does it say to install it?</th>', rows)
-    return Q("elsewhere", title, chip, tone, esc(answer), b, detail=detail)
+        detail += part("elsewhere-programs", "Programs it expects", table(
+            '<th>Program</th><th class="num">Places</th><th>Does it say to install it?</th>', rows))
+    return Q("elsewhere", title, chip, tone, esc(answer), b, more=system_tiles(nd), detail=detail)
 
 
 # ---------------------------------------------------------------- 5 other AI tools
@@ -520,25 +626,36 @@ def q_hosts(r, targets=()) -> Q:
                  "None of those files are here.")
     if rd["loose"]:
         b.append(f"{n(len(rd['loose']), 'skill')} sit{'s' if len(rd['loose']) == 1 else ''} where no tool looks; a tool "
-                 "reads them once they are installed.")
+                 "reads them once they are installed." + go("hosts-loose"))
     for d in rd["differ"]:
         b.append(f"{code(d['file'])} and {code(d['other'])} say different things, so tools that read one see "
                  "different instructions from tools that read the other.")
     for kind, _, _, pl in rd["features"]:
-        b.append(f"In {n(len(pl), 'place')} it uses {esc(FEATURE_PLAIN.get(kind, kind))}.")
+        b.append(f"In {n(len(pl), 'place')} it uses {esc(FEATURE_PLAIN.get(kind, kind))}." + go(slug("hosts", kind)))
     tiles = "".join(
         f'<div class="host{" has" if R.has_files(c) else ""}"><b>{"\u2713" if R.has_files(c) else "\u2717"} '
         f'{esc("Others" if c["host"] == "agents-md" else c["name"])}</b><span class="st">'
         + esc((n(c["skills"], "skill") if c["skills"] else "its instructions") if R.has_files(c)
               else ("tools that read AGENTS.md" if c["host"] == "agents-md" else "none of its files"))
         + "</span></div>" for c in cov)
-    detail = "".join(fold(f"{esc(name)} ({len(pl)})", f'<p class="where">{esc(why)}.</p>'
-                          + places(pl, lambda f: code(f.get("what") or "")))
-                     for _, name, why, pl in rd["features"])
+    detail = ""  # in the order of the summary's lines (R11): the skills to install, then each one-tool feature
     if rd["loose"]:
         detail += fold(f"Skills to install ({len(rd['loose'])})", '<ul class="files">'
-                       + "".join(f"<li>{code(s)}</li>" for s in rd["loose"]) + "</ul>")
+                       + "".join(f"<li>{code(s)}</li>" for s in rd["loose"]) + "</ul>", fid="hosts-loose")
+    detail += "".join(fold(f"{esc(name)} ({len(pl)})", f'<p class="where">{esc(why)}.</p>'
+                           + places(pl, lambda f: code(f.get("what") or "")), fid=slug("hosts", kind))
+                      for kind, name, why, pl in rd["features"])
     return Q("hosts", title, chip[0], chip[1], esc(answer), b, more=f'<div class="hosts">{tiles}</div>', detail=detail)
+
+
+SYSTEMS_HEAD, TOOLS_HEAD = "Operating systems", "Other AI tools"
+
+
+def q_transfer(r, targets=()) -> Q:
+    """Is this transferable to other machines? (R22, owner 2026-11-06: "let's combine the will it work under other machines. Is it transferable to other machines? Yeah, that's good wording"; three boxes "for Linux, Windows, and Mac"; "When it's not highlighted, have a yellow outline and keep the blue for good ones"; "put the boxes, the judgment boxes under the title instead of after the list of things"): other operating systems, then other AI tools, each under its
+    heading with its boxes first and then its lines."""
+    return joined("transfer", "Is this transferable to other machines?",
+                  ((q_elsewhere(r), SYSTEMS_HEAD), (q_hosts(r, targets), TOOLS_HEAD)))
 
 
 # ---------------------------------------------------------------- 6 tools
@@ -559,7 +676,7 @@ def q_tools(r) -> Q:
     kinds = {k: p for k, _, _, p in ft["kinds"]}
     look = sum(len(kinds.get(k, [])) for k in ("unused", "missing", "readonly", "loops", "hooks"))
     c = ft["checked"]
-    b = [esc(_fill(FIT_PLAIN[k], len(p))) for k, _, _, p in ft["kinds"]]
+    b = [esc(_fill(FIT_PLAIN[k], len(p))) + go(slug("tools", k)) for k, _, _, p in ft["kinds"]]
     if not kinds.get("loops"):
         b.append("No step repeats \u201cuntil it works\u201d without a limit.")
     if not ft["hooks"]:
@@ -583,18 +700,22 @@ def q_tools(r) -> Q:
             tools = {g.split("(")[0] for g in e["grants"]}
             rows.append(f"<tr><td><b>{esc(e['name'])}</b><small class=\"where\">{esc(', '.join(e['grants']))}</small></td>"
                         + "".join(f'<td class="c">{"\u2713" if tools & s else "\u00b7"}</td>' for _, _, s in FAMILY_COLS) + "</tr>")
-        more = ("<h3>What each helper may do</h3><p class=\"where\">\u2713 = allowed. Skills don't limit their tools; they "
+        more = ('<h3 id="tools-helpers">What each helper may do' + go("tools-helpers") + "</h3><p class=\"where\">\u2713 = allowed. Skills don't limit their tools; they "
                 "use whatever the AI already has.</p>" + table(head, rows, "tbl grid"))
     detail = "".join(fold(f"{esc(name)} ({len(pl)})", f'<p class="where">{esc(why)}.</p><ul class="places">'
-                          + "".join(f"<li>{code(R.fit_parts(k, f)[0])} {esc(R.fit_parts(k, f)[1])}</li>" for f in pl) + "</ul>")
+                          + "".join(f"<li>{code(R.fit_parts(k, f)[0])} {esc(R.fit_parts(k, f)[1])}</li>" for f in pl) + "</ul>",
+                          fid=slug("tools", k))
                      for k, name, why, pl in ft["kinds"])
     if ft["hooks"]:
         detail += fold(f"Every hook ({len(ft['hooks'])})", '<ul class="places">'
-                       + "".join(f"<li>{code(R.where(h))} {esc(R.hook_text(h))}</li>" for h in ft["hooks"]) + "</ul>")
+                       + "".join(f"<li>{code(R.where(h))} {esc(R.hook_text(h))}</li>" for h in ft["hooks"]) + "</ul>", fid="tools-hooks")
     return Q("tools", title, chip, tone, esc(answer), b, more=more, detail=detail)
 
 
 # ---------------------------------------------------------------- 7 finished
+
+CLEAN_ORDER = ("unfinished", "dated", "older", "models")  # details.html's folds in the order of the summary's lines (R11)
+
 
 def q_clean(r) -> Q:
     title = "Is it finished and up to date?"
@@ -617,20 +738,23 @@ def q_clean(r) -> Q:
     for w in ("todo", "placeholder", "draft"):
         mine = [f for f in un if f["kind"] == w]
         if mine:
-            b.append(f"{n(len(mine), *words[w])}: " + ", ".join(where(f) for f in mine[:4]) + (" and more" if len(mine) > 4 else ""))
+            b.append(f"{n(len(mine), *words[w])}: " + ", ".join(where(f) for f in mine[:4]) + (" and more" if len(mine) > 4 else "")
+                     + go("clean-unfinished"))
     if dated:
         b.append(f"{n(len(dated), 'claim tied to a date', 'claims tied to a date')} (published guidance: text tied to a "
-                 "date becomes wrong): " + ", ".join(where(f) for f in dated[:3]) + (" and more" if len(dated) > 3 else ""))
+                 "date becomes wrong): " + ", ".join(where(f) for f in dated[:3]) + (" and more" if len(dated) > 3 else "")
+                 + go("clean-dated"))
     if older:
         b.append(f"{n(len(older), 'tool name')} not in Claude Code's current list: "
-                 + ", ".join(f"{code(f['tool'])} (now {code(f['now'])})" for f in older[:3]) + ".")
+                 + ", ".join(f"{code(f['tool'])} (now {code(f['now'])})" for f in older[:3]) + "." + go("clean-older"))
     b.append(f"It names {n(len(cl['models']), 'AI model version')} fixed in place: "
              + ", ".join(code(m) for m in cl["models"][:6]) + (f" and {len(cl['models']) - 6} more" if len(cl["models"]) > 6 else "")
-             + ". A name like \u201csonnet\u201d follows the newest version; a full name stays on one."
+             + ". A name like \u201csonnet\u201d follows the newest version; a full name stays on one." + go("clean-models")
              if models else "No AI model names fixed in place.")
     detail = "".join(fold(f"{esc(name)} ({R.clean_count(k, pl, cl['models'])})", f'<p class="where">{esc(why)}.</p><ul class="places">'
                           + "".join(f"<li>{code(R.clean_parts(k, f, True)[0])} {esc(R.clean_parts(k, f, True)[1])}</li>" for f in pl)
-                          + "</ul>") for k, name, why, pl in cl["kinds"])
+                          + "</ul>", fid=slug("clean", k))
+                     for k, name, why, pl in sorted(cl["kinds"], key=lambda x: CLEAN_ORDER.index(x[0])))
     chip, tone = (n(notes, "note"), "notes") if notes else ("Nothing to look at", "none")
     return Q("clean", title, chip, tone, answer if "<" in answer else esc(answer), b, detail=detail)
 
@@ -645,10 +769,10 @@ ALLOW_PLAIN = {"hooks": "runs commands by itself", "context": "adds its own text
                "mcp": "connects to outside services", "agents": "has helpers with their own tools"}
 ROW_PLAIN = {"hidden": "text hidden from people that the AI still reads, and it reads like an instruction",
              "spelled": "text hidden from people that the AI still reads, spelled out in invisible characters",
-             "runs": "steps that run code", "secret": "what looks like a saved password or key",
+             "runs": "steps that run code", "secret": "a saved password, key, or token, or wording that gathers or asks for one",
              "out": "steps that read secrets, call out, or share", "lasting": "changes or permissions that last"}
 # The same rows, short enough to list several in one sentence.
-ROW_SHORT = {"hidden": "hidden instructions", "spelled": "hidden characters that spell out text", "runs": "steps that run code", "secret": "what looks like a saved key",
+ROW_SHORT = {"hidden": "hidden instructions", "spelled": "hidden characters that spell out text", "runs": "steps that run code", "secret": "passwords, keys, and secrets",
              "out": "steps that send data out", "lasting": "lasting changes"}
 
 
@@ -706,33 +830,65 @@ def q_careful(r, qa, marks=None, stop=None) -> Q:
         answer += caveat
         chip, tone = f"{total} to look at", "look"
     b = []
-    for row in rs:
-        first = row["places"][0]
+    ls = S.lines(r, pl, marks)  # a line per kind, red, then yellow, then blue (R26)
+
+    def say(x):
+        first = x["places"][0]
         src = first.get("src") or {}
         quote = (first.get("quote") or "").replace("<!--", " ").replace("-->", " ").strip()
-        say = f"<b>{esc(row['name'])}</b> ({len(row['places'])}): {esc(first.get('where') or R.where(src))}"
-        if row["key"] == "hidden" and quote:  # the one repository text the summary quotes (owner, 2026-10-27)
-            say += f" says \u201c{esc(quote[:80])}{'\u2026' if len(quote) > 80 else ''}\u201d"
-        b.append(say)
+        s = f"{dot(x['color'])}<b>{esc(x['label'])}</b> ({len(x['places'])}): {esc(first.get('where') or R.where(src))}"
+        if x["key"] == "hidden" and quote:  # the one repository text the summary quotes (owner, 2026-10-27)
+            s += f" says \u201c{esc(quote[:80])}{'\u2026' if len(quote) > 80 else ''}\u201d"
+        return s + go("careful-keys" if x["key"] in S.SECRET_LINES else "careful-" + x["row"])
+
+    pw = [x for x in ls if x["key"] in S.SECRET_LINES]
+    if pw:  # "Password and key should be a red section" (owner, 2026-11-06); the scan's limits stay on details (2026-11-01)
+        b.append(f'{dot("red")}<b>{esc(SECRETS_HEAD)}</b><ul class="bul">' + "".join(f"<li>{say(x)}</li>" for x in pw)
+                 + f"<li>{esc(VALUES_NOTE)}</li></ul>")
+    b += [say(x) for x in sorted((x for x in ls if x["key"] not in S.SECRET_LINES), key=lambda x: COLORS.index(x["color"]))]
     if wording:
-        b.append(f"{n(wording, 'more place' if rs else 'place')} {'is' if wording == 1 else 'are'} only wording that shapes how the AI makes "
-                 f"decisions. {'It is' if wording == 1 else 'They are'} in the details.")
+        b.append(dot("blue") + f"{n(wording, 'more place' if ls else 'place')} {'is' if wording == 1 else 'are'} only wording that shapes how the AI makes "
+                 f"decisions. {'It is' if wording == 1 else 'They are'} in the details." + go("careful-wording"))
     line = marked_line(r, marks)
     if line:
-        b.append(line)
+        b.append(dot("blue") + line)
+    # What it can do is a section of its own at the top of the summary since 2026-11-05 (R4, `can_section`); the rest of
+    # what was under the boxes is on details.html, under "Why it can do these".
+    return Q("careful", title, chip, tone, esc(answer), b, detail=careful_detail(r, pl))
+
+
+ALL_THREE = "A tool that does all three could be tricked into sending your data away."  # the one sentence the summary keeps (R4)
+
+
+def can_boxes(r) -> str:
+    """The three boxes, ticked or crossed, side by side (R4, owner 2026-11-05: "3 boxes across instead of a list"). Nothing
+    when `02.5-capability` did not run: no boxes to tick when the step that ticks them did not run."""
+    if "02.5-capability" not in r:
+        return ""
     legs = {x["leg"]: x["present"] for x in R.fnd(r, "02.5-capability", "cap.leg")}
-    allows = D._allows(r)
-    if "02.5-capability" not in r:  # no boxes to tick when the step that ticks them did not run
-        return Q("careful", title, chip, tone, esc(answer), b, detail=careful_detail(r, pl))
-    more = '<p class="sub"><b>What it can do</b></p><ul class="can">' + "".join(
-        f'<li><span class="mark {"yes" if legs.get(k) else "no"}">{"\u2713" if legs.get(k) else "\u2717"}</span>'
-        f"<span>{esc(LEG_PLAIN[k])}</span></li>" for k in R.LEG_NAMES) + "</ul>"
+    return '<ul class="can">' + "".join(
+        f'<li class="{"yes" if legs.get(k) else "no"}"><span class="mark {"yes" if legs.get(k) else "no"}">'
+        f'{"\u2713" if legs.get(k) else "\u2717"}</span><span>{esc(LEG_PLAIN[k])}</span></li>' for k in R.LEG_NAMES) + "</ul>"
+
+
+def can_rest(r) -> str:
+    """What the summary said under the boxes before R4, after its first sentence: how many of the three this one does, and
+    what else installing it allows. details.html says it under "Why it can do these"."""
+    legs = {x["leg"]: x["present"] for x in R.fnd(r, "02.5-capability", "cap.leg")}
     have = sum(1 for k in R.LEG_NAMES if legs.get(k))
-    also = [ALLOW_PLAIN[k] for k, v in allows.items() if v[2] and k in ALLOW_PLAIN]
-    more += (f'<p class="where">A tool that does all three could be tricked into sending your data away. This one does '
-             + ("all three." if have == 3 else f'{["none", "one", "two"][have]} of the three.')
-             + (f" It also {esc(names(also))}." if also else "") + "</p>")
-    return Q("careful", title, chip, tone, esc(answer), b, more=more, detail=careful_detail(r, pl))
+    also = [ALLOW_PLAIN[k] for k, v in D._allows(r).items() if v[2] and k in ALLOW_PLAIN]
+    return ("This one does " + ("all three." if have == 3 else f'{["none", "one", "two"][have]} of the three.')
+            + (f" It also {esc(names(also))}." if also else ""))
+
+
+def can_section(r) -> str:
+    """summary.html, under what it is (R4): What it can do, the three boxes across, the one sentence, and a Details button
+    to "Why it can do these". Nothing when the boxes are not measured."""
+    boxes = can_boxes(r)
+    if not boxes:
+        return ""
+    return (f'<div class="head-row" id="can"><h2>What it can do</h2>{go("can")}</div>{boxes}'
+            f'<p class="where can-note">{esc(ALL_THREE)}</p>')
 
 
 def place_li(it, pid) -> str:
@@ -747,125 +903,174 @@ def place_li(it, pid) -> str:
     return f"<li>{at} {esc(it['title'])}.{said}{note}</li>"
 
 
-def careful_detail(r, pl) -> str:
-    out = []
-    legs = D._leg_ev(r)
+def can_detail(r) -> str:
+    """details.html, in the summary's place, under what it is (R11, owner 2026-11-05: "the detail should match the order of
+    the summary"): What it can do as a section of its own. Closed, it shows the summary's one sentence; inside, the three
+    boxes, how many of the three this one does and what installing it allows, the credit, and why each box is ticked.
+    Nothing when `02.5-capability` did not run."""
+    boxes = can_boxes(r)
+    if not boxes:
+        return ""
     reasons = []
     for k in R.LEG_NAMES:
-        ev, total = legs[k]
+        ev, total = D._leg_ev(r)[k]
         if total:
             why = collections.Counter(D._ev_words(e.get("why") or "") for e in ev)
             reasons.append(f"<li><b>{esc(LEG_PLAIN[k])}</b>: {n(total, 'place')} ("
                            + esc("; ".join(f"{v} {w}" for w, v in why.most_common(3))) + ")</li>")
-    if "02.5-capability" in r:  # the credit stays with the three boxes (as on the page before v3)
-        out.append("<h3>Why it can do these</h3>"
-                   f"<p class=\"where\">The three together are the lethal trifecta, {esc(D.TRIFECTA_LEDE)}</p>"
-                   + ("<ul class=\"bul\">" + "".join(reasons) + "</ul>" if reasons else ""))
+    inside = (boxes + f'<p class="where">{can_rest(r)}</p>'  # the credit stays with the three boxes (as on the page before v3)
+              + f"<h3>Why it can do these</h3><p class=\"where\">The three together are the lethal trifecta, {esc(D.TRIFECTA_LEDE)}</p>"
+              + ("<ul class=\"bul\">" + "".join(reasons) + "</ul>" if reasons else ""))
+    return fold_section("can", "<h2>What it can do</h2>", f'<span class="a">{esc(ALL_THREE)}</span>', inside, "can")
+
+
+COLORS = ("red", "yellow", "blue")
+SECRETS_HEAD = "Passwords, keys, and secrets"  # was "Passwords and keys" (owner, 2026-11-06, R26)
+VALUES_NOTE = "Values are not shown in these reports."  # a secret finding keeps its file, line, and kind, never the value
+
+
+def dot(color) -> str:
+    """A line's color on the careful card (R26): red, yellow, or blue."""
+    return f'<span class="dot {color}" role="img" aria-label="{color}"></span>'
+
+
+def secret_scan(r) -> dict:
+    """The secret scan's lines and limits: {sec, aside, unscanned, left_out, none} (`none`: no scanner ran)."""
+    found = R.fnd(r, "02.4-phrases", "secret.found")
+    sec = [x for x in found if "skipped" not in x and not R.is_test_data(x.get("file")) and x.get("audience") != "test-data"]
+    none = any("skipped" in x and not x.get("file") for x in found)
+    return {"sec": sec, "aside": sum(1 for x in found if "skipped" not in x) - len(sec), "none": none,
+            "unscanned": [x for x in found if "skipped" in x and x.get("file")],  # one file each: the rest of the scan stands
+            "left_out": [] if none else (r.get("02.4-phrases") or {}).get("secret_left_out") or []}
+
+
+def careful_detail(r, pl) -> str:
+    out = []
     rs = S.rows(r, pl)
-    if rs:
-        card_of, _ = S._place_marks(r, None)
-        out.append("<h3>Every place, by kind</h3>" + "".join(
+    card_of, _ = S._place_marks(r, None)
+    folds = [x for x in rs if x["key"] != "secret"]  # the passwords part holds that row (R26, R27)
+    if folds:
+        out.append(part("careful-places", "Every place, by kind", "".join(
             fold(f"{esc(x['name'])} ({len(x['places'])})", '<ul class="places">' + "".join(
-                place_li(it, card_of.get(M.place_key(it))) for it in x["places"]) + "</ul>") for x in rs))
+                place_li(it, card_of.get(M.place_key(it))) for it in x["places"]) + "</ul>", fid="careful-" + x["key"])
+            for x in folds)))
     div = D._divergences(r)
-    out.append("<h3>Text hidden from people</h3>")
+    hid = []  # the part "Text hidden from people"
     if div:
         kinds = collections.Counter(d.get("carrier") for d in div)
-        out.append(f"<p>{n(len(div), 'place')} hold text that people don't see when the file is shown, but the AI reads: "
+        hid.append(f"<p>{n(len(div), 'place')} hold text that people don't see when the file is shown, but the AI reads: "
                    + esc(", ".join(f"{v} {D.carrier_plain(k)}" for k, v in kinds.most_common())) + ".</p>")
-        out.append(by_file_chart(div, "hidden place"))
+        hid.append(by_file_chart(div, "hidden place"))
         secret = D.secret_lines(r)
 
         def hidden_words(d) -> str:
             note = "" if (d.get("file"), d.get("line")) in secret else D.spelled_note(d.get("text"))
             return esc(D.carrier_plain(d.get("carrier"))) + (f" <i>{esc(note)}</i>" if note else "")
 
-        out.append(fold(f"Every hidden place ({len(div)})", places(div, hidden_words)))
+        hid.append(fold(f"Every hidden place ({len(div)})", places(div, hidden_words), fid="careful-hidden-all"))
     folded = [f for f in R.fnd(r, "02.2-reader", "read.fold") if D.fold_meaning(f)]  # typography left out
     if folded:
-        out.append(f"<p>{n(len(folded), 'line')} read{'s' if len(folded) == 1 else ''} differently once invisible "
+        hid.append(f"<p>{n(len(folded), 'line')} read{'s' if len(folded) == 1 else ''} differently once invisible "
                    f"characters or look-alike letters are swapped for plain ones: {esc(D.fold_kinds(folded))}.</p>"
-                   + fold(f"Every such line ({len(folded)})", places(folded)))
+                   + fold(f"Every such line ({len(folded)})", places(folded), fid="careful-folded"))
     script = [x for x in R.fnd(r, "02.2-reader", "read.script") if "skipped" not in x]
     lang = [x for x in R.fnd(r, "02.2-reader", "read.language") if "skipped" not in x]
     if script or lang:
-        out.append("<p>" + " ".join(x for x in (
+        hid.append("<p>" + " ".join(x for x in (
             f"{n(len(script), 'stretch', 'stretches')} of text in another alphabet." if script else "",
             f"{n(len(lang), 'passage')} in a language other than English." if lang else "") if x)
             + " Walkdown reads English only, so it could not check what they ask for; read them yourself.</p>"
             + places(script + lang))
     if not (div or folded or script or lang or any(x["key"] == "hidden" for x in rs)):
-        out.append("<p>Nothing hidden from people.</p>")
+        hid.append("<p>Nothing hidden from people.</p>")
+    out.append(part("careful-hidden-text", "Text hidden from people", "".join(hid)))
     hits = R.phrase_hits(r)
+    words = []  # the part "Wording that shapes how the AI decides"
     if hits:
         aud = {}
         for h in hits:
             aud.setdefault((h["file"], h.get("line")), h.get("audience"))
         who = collections.Counter(D.READ_BY.get(a, "the AI") for a in aud.values())
         by = collections.Counter(h["check"] for h in hits)
-        out.append("<h3>Wording that shapes how the AI decides</h3>"
-                   f"<p>{n(len(aud), 'line')} match{'es' if len(aud) == 1 else ''} the wording of a risky request. Being "
+        words.append(f"<p>{n(len(aud), 'line')} match{'es' if len(aud) == 1 else ''} the wording of a risky request. Being "
                    "listed doesn't mean something is wrong; each is a place to read. Who reads them: "
                    + esc(", ".join(f"{k} ({v})" for k, v in who.most_common())) + ".</p>")
-        out.append(hbars([(D.GROUP_PLAIN[g][:1].upper() + D.GROUP_PLAIN[g][1:], sum(by[c] for c in cs),
+        words.append(hbars([(D.GROUP_PLAIN[g][:1].upper() + D.GROUP_PLAIN[g][1:], sum(by[c] for c in cs),
                            n(sum(by[c] for c in cs), "line")) for g, cs in R.SUBGROUPS.items()]))
     rest = [it for it in pl if S.concern(it) is None]
     if rest:
         groups = collections.OrderedDict()
         for it in rest:
             groups.setdefault(it["title"], []).append(it)
-        out.append("<p class=\"sub\"><b>Worth reading first</b></p><ul class=\"bul\">" + "".join(
+        words.append("<p class=\"sub\"><b>Worth reading first</b></p><ul class=\"bul\">" + "".join(
             f"<li><b>{esc(t)}</b> ({len(v)}): " + ", ".join(f'<span class="where">{esc(it["where"])}</span>' for it in v[:4])
             + (" and more" if len(v) > 4 else "")
             + (f" <i>{esc((v[0].get('quote') or '').strip()[:100])}</i>" if v[0].get("quote") else "") + "</li>"
             for t, v in groups.items()) + "</ul>")
+    if words:
+        out.append(part("careful-wording", "Wording that shapes how the AI decides", "".join(words)))
     links = D.link_rows(r)
     if links:
         lk = collections.defaultdict(list)
         for x in links:
             lk[x["host"]].append(x)
-        out.append("<h3>Web addresses</h3>"
+        out.append(part("careful-links", "Web addresses",
                    f'<p class="where">{n(len(links), "link")} to {n(len(lk), "site")}. Walkdown gathered them and opened none.</p>'
                    + table('<th>Site</th><th class="num">Links</th><th>Read by</th><th>Named in its docs</th>',
                            [f"<tr><td>{esc(h)}</td><td class=\"num\">{len(v)}</td><td>{esc(', '.join(sorted({x['who'] for x in v})))}</td>"
                             f"<td>{'yes' if v[0].get('documented') else 'no'}</td></tr>"
-                            for h, v in sorted(lk.items(), key=lambda kv: (-len(kv[1]), kv[0]))]))
-    found = R.fnd(r, "02.4-phrases", "secret.found")
-    sec = [x for x in found if "skipped" not in x and not R.is_test_data(x.get("file")) and x.get("audience") != "test-data"]
-    aside = sum(1 for x in found if "skipped" not in x) - len(sec)
+                            for h, v in sorted(lk.items(), key=lambda kv: (-len(kv[1]), kv[0]))])))
+    scan = secret_scan(r)
+    sec, aside, unscanned, left_out = scan["sec"], scan["aside"], scan["unscanned"], scan["left_out"]
     aside_s = f" {n(aside, 'more')} in test data {'is' if aside == 1 else 'are'} set aside." if aside else ""
-    unscanned = [x for x in found if "skipped" in x and x.get("file")]  # one file each: the rest of the scan stands
-    left_out = (r.get("02.4-phrases") or {}).get("secret_left_out") or []  # a run saved before the list has none
-    if any("skipped" in x and not x.get("file") for x in found):
+    if scan["none"]:
         body = "<p>Not checked: no secret scanner was available for this run.</p>"
-        left_out = []
     elif sec:
-        body = (f"<p>{n(len(sec), 'line')} look{'s' if len(sec) == 1 else ''} like a saved password, key, or token. The values are "
-                f"never shown.{aside_s}</p>" + places(sec))
+        body = f"<p>{n(len(sec), 'line')} look{'s' if len(sec) == 1 else ''} like a saved password, key, or token.{aside_s}</p>" + places(sec)
     else:
         body = f"<p>No lines look like a saved password, key, or token.{aside_s}</p>"
+    for x in (x for x in S.lines(r, pl) if x["key"] in ("creds", "enter-secret")):  # moved here (owner, 2026-11-06, R26)
+        body += (f"<p><b>{esc(x['label'])}</b> ({len(x['places'])}):</p><ul class=\"places\">"
+                 + "".join(place_li(it, card_of.get(M.place_key(it))) for it in x["places"]) + "</ul>")
     if unscanned:
         body += (f"<p>The secret scan could not scan {n(len(unscanned), 'file')}, so {'it' if len(unscanned) == 1 else 'they'} "
                  f"may hold one:</p>" + places(unscanned))
     if left_out:
         body += (f"<p>The secret scan left out {n(len(left_out), 'lock file')}, since the hashes in a lock file look like keys, so "
                  f"{'it' if len(left_out) == 1 else 'they'} may hold one:</p>" + places([{"file": rel, "line": None} for rel in left_out]))
-    out.append("<h3>Passwords and keys</h3>" + body)
+    out.append(part("careful-keys", SECRETS_HEAD, body + f'<p class="where">{esc(VALUES_NOTE)}</p>'))
     return "".join(out)
 
 
-# ---------------------------------------------------------------- all eight
+# ---------------------------------------------------------------- all seven
 
 def questions(meta, r, stamps, runs_ok, marks=None) -> list[Q]:
     ctx = meta.get("context") or R.DEFAULT_CONTEXT
     stop = meta.get("stop")
-    qs = [q_switch(r, ctx), q_memory(r, ctx), q_package(r), q_elsewhere(r), q_hosts(r, meta.get("hosts") or []),
-          q_tools(r), q_clean(r), q_careful(r, qaview.of(meta), marks, stop)]
+    qs = [q_size(r, ctx), q_transfer(r, meta.get("hosts") or []),  # R21: memory and package; R22: other systems and AI tools
+          q_tools(r), q_clean(r), q_careful(r, qaview.of(meta), marks, stop)]  # question 1 retired (R13)
     if R.stopped_left(stop):  # a card no step measured says why, when the run was asked to stop (O3)
         for q in qs:
             if q.tone == "unmeasured" and q.id != "careful":
                 q.answer = esc(f'Not measured: the run stopped after the step "{R.stop_plain(stop)}", as asked.')
-    return qs
+    return finished_under_careful(qs)
+
+
+FINISHED_HEAD = "Finished and up to date"
+
+
+def finished_under_careful(qs) -> list[Q]:
+    """R23 (owner 2026-11-06: "I think is it finished and up to date can be moved under anything to be careful about. It should get its own header under there. So it's distinct, but it doesn't need its own full tab."; "Finished and up to date under careful, go ahead"):
+    the clean question's answer, label, lines, and folds go under their own heading at the end of the careful card and
+    section; the careful card keeps its own label and answer. Every other question as it was."""
+    clean = next(q for q in qs if q.id == "clean")
+    careful = next(q for q in qs if q.id == "careful")
+    piece = (f'<h3 class="piece" id="finished">{esc(FINISHED_HEAD)}</h3><p class="finished-a">{clean.answer} '
+             f'<span class="chip {clean.tone}">{esc(clean.chip)}</span></p>' + bullets_html(clean.bullets) + clean.more)
+    careful.details_body = bullets_html(careful.bullets) + careful.more + careful.detail + piece + clean.detail
+    careful.more += piece
+    careful.detail += clean.detail
+    return [q for q in qs if q.id != "clean"]
 
 
 # ---------------------------------------------------------------- the page shell (both pages)
@@ -900,11 +1105,11 @@ CSS = """
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink);
        font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-main { max-width: 780px; margin: 0 auto; padding: 28px 16px 48px; }
+main { max-width: 1400px; margin: 0 auto; padding: 28px 24px 48px; }  /* a 1920-pixel monitor (owner, 2026-11-06, R18) */
 header h1 { font-size: 2rem; margin: 0 0 4px; letter-spacing: -0.01em; }
 .meta { color: var(--muted); font-size: 0.9rem; margin: 0 0 14px; }
-.what { margin: 0 0 6px; }
-.how { color: var(--muted); font-size: 0.95rem; margin: 0 0 26px; }
+.how { margin: 0 0 6px; }
+.what { margin: 0 0 26px; }
 h2 { font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 10px; }
 h3 { font-size: 0.98rem; margin: 18px 0 8px; }
 .rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
@@ -960,7 +1165,12 @@ table.mem td.rowname { min-width: 10em; }
 .seg:first-child { border-radius: 4px 0 0 4px; } .seg:last-child { border-radius: 0 4px 4px 0; }
 .seg.c1 { background: var(--s1); color: var(--on-s1); } .seg.c2 { background: var(--s2); color: var(--on-light); }
 .seg.c3 { background: var(--s3); color: var(--on-light); } .seg.c4 { background: var(--s4); color: var(--on-light); }
-.legend { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; }
+.legend { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px 28px;
+          grid-template-columns: repeat(2, minmax(0, 1fr)); }  /* two columns (owner, 2026-11-06, R21) */
+@media (max-width: 560px) { .legend { grid-template-columns: 1fr; } }
+h3.piece { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
+           margin: 22px 0 6px; padding-top: 14px; border-top: 1px solid var(--line); }
+.body > h3.piece:first-child, .sec-body > h3.piece:first-child { border-top: 0; padding-top: 0; margin-top: 12px; }
 .legend li { display: flex; gap: 8px; align-items: baseline; margin: 0; }
 .sw { width: 12px; height: 12px; border-radius: 3px; flex: none; transform: translateY(1px); }
 .sw.c1 { background: var(--s1); } .sw.c2 { background: var(--s2); } .sw.c3 { background: var(--s3); } .sw.c4 { background: var(--s4); }
@@ -968,17 +1178,46 @@ table.mem td.rowname { min-width: 10em; }
 
 /* hosts */
 .hosts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
-.host { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 0.9rem; }
+.host { border: 1px solid var(--look-ink); border-radius: 8px; padding: 8px 10px; font-size: 0.9rem; }  /* yellow (R22) */
 .host b { display: block; }
 .host .st { color: var(--muted); font-size: 0.82rem; }
 .host.has { border-color: var(--s1); }
 .host.has .st { color: var(--ink); }
 
-/* what it can do */
-.can { list-style: none; padding: 0; margin: 12px 0 8px; display: grid; gap: 6px; }
-.can li { display: flex; gap: 10px; align-items: baseline; }
-.mark { font-weight: 700; width: 1.4em; text-align: center; }
+/* what it can do: three boxes across (R4), one under another on a phone */
+.can { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.can li { display: flex; gap: 8px; align-items: flex-start; background: var(--card); border: 1px solid var(--line);
+          border-radius: 12px; padding: 12px 14px; font-size: 0.95rem; }
+.can li.yes { border-color: var(--look-ink); }
+@media (max-width: 560px) { .can { grid-template-columns: 1fr; } }
+.can-note { margin: 0 0 26px; }
+.fold-body .can { margin-top: 10px; }
+.mark { font-weight: 700; width: 1.4em; text-align: center; flex: none; }
 .yes { color: var(--look-ink); } .no { color: var(--none-ink); }
+
+/* the two pages linked (R1): Details on the summary, Summary on details */
+a.go, a.back { font-size: 0.8rem; font-weight: 600; padding: 2px 10px; border: 1px solid var(--line); border-radius: 999px;
+               color: var(--fact-ink); background: var(--card); text-decoration: none; white-space: nowrap; }
+a.go:hover, a.back:hover, a.go:focus-visible, a.back:focus-visible { border-color: var(--fact-ink); }
+a.go { margin-left: 8px; display: inline-block; }
+a.back { float: right; margin: 0 0 0 12px; }
+details:not([open]) > summary > a.back { display: none; }
+details.secfold[open] > summary { display: flex; flex-direction: column; }
+details.secfold[open] > summary > a.back { float: none; align-self: flex-end; margin: 8px 0 0; }
+header > a.back { margin-top: 10px; }
+.go-row { text-align: right; margin: 12px 0 0; }
+.card-head .go-row { grid-column: 1 / -1; display: block; margin: 4px 0 0; }
+.head-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0 0 10px; }
+.lead { margin: 10px 0 6px; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; }  /* R26 */
+.dot.red { background: var(--red-ink); } .dot.yellow { background: var(--look-ink); } .dot.blue { background: var(--s1); }
+.bul .bul { margin: 6px 0 2px; }
+.bul li:has(> .dot:first-child) { list-style: none; }  /* the dot takes the bullet's place (R26) */
+.head-row h2 { margin: 0; }
+h3 a.go { font-weight: 600; }
+[id] { scroll-margin-top: 14px; }
+.landed { animation: landed 2.4s ease-out; border-radius: 8px; }
+@keyframes landed { 0%, 35% { outline: 3px solid var(--s1); outline-offset: 3px; } 100% { outline: 3px solid transparent; outline-offset: 3px; } }
 
 /* tooltip */
 [data-tip] { cursor: default; }
@@ -988,8 +1227,15 @@ table.mem td.rowname { min-width: 10em; }
 footer { margin-top: 28px; color: var(--muted); font-size: 0.9rem; }
 footer a { color: var(--fact-ink); }
 
-.sec { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 0 0 14px; }
+.sec { margin: 0 0 14px; }
+details.secfold > summary { display: block; padding: 16px; }
+details.secfold > summary .a { display: block; margin: 6px 0 4px; font-size: 1.02rem; }
+.sec-body { padding: 0 16px 16px; border-top: 1px solid var(--line); }
+details.part { margin-top: 12px; }
+details.part > summary { color: var(--ink); }
+details.part > summary h3 { display: inline; margin: 0; }
 .sec-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+details.secfold > summary .more { display: block; margin-top: 2px; }
 .sec h2 { font-size: 1.2rem; text-transform: none; letter-spacing: 0; color: var(--ink); margin: 0; }
 .sec .a { margin: 6px 0 4px; font-size: 1.02rem; }
 .bul { margin: 10px 0 0; padding-left: 20px; } .bul li { margin: 5px 0; }
@@ -1034,6 +1280,24 @@ nav.toc a { color: var(--fact-ink); }
 
 SCRIPT = """<div id="tip" role="tooltip"></div>
 <script>
+(function () {
+  function openAround(el) {
+    for (var p = el; p; p = p.parentElement) { if (p.tagName === "DETAILS") p.open = true; }
+    var own = el.querySelector(":scope > details"); if (own) own.open = true;
+  }
+  function land(first) {
+    var id = decodeURIComponent(location.hash.slice(1)), el = id && document.getElementById(id);
+    if (!el) return;
+    openAround(el);
+    var from = first && new URLSearchParams(location.search).get("from");
+    if (from) el.querySelectorAll("a.back").forEach(function (a) { a.setAttribute("href", "summary.html#" + from); });
+    var spot = el.classList.contains("go") ? (el.closest("li, h3, .go-row, .head-row") || el) : el;
+    spot.scrollIntoView({block: "start"});
+    spot.classList.remove("landed"); void spot.offsetWidth; spot.classList.add("landed");
+  }
+  window.addEventListener("hashchange", function () { land(false); });
+  land(true);
+})();
 (function () {
   var tip = document.getElementById("tip");
   function show(ev) {
@@ -1097,26 +1361,59 @@ def page(title, meta, r, body) -> str:
             f"{SCRIPT}\n</body>\n</html>\n")
 
 
-def card(q: Q) -> str:
-    """A question on summary.html: the head always shown; bullets and tables behind "More"."""
-    inner = bullets_html(q.bullets) + q.more
-    head = (f'<span class="q">{esc(q.question)}</span><span class="chip {q.tone}">{esc(q.chip)}</span>'
-            f'<span class="a">{q.answer}</span>')
-    if not inner:
-        return f'<li id="{q.id}"><div class="card"><div class="card-head">{head}</div></div></li>'
+def go_button(target, gid) -> str:
+    """summary.html: the button to a part of details.html. `from` names the button, so the part's back link returns to it."""
+    return f'<a class="go" id="{gid}" href="details.html?from={gid}#{target}">{GO_WORD}</a>'
+
+
+def ids_in(html_text) -> set:
+    return set(re.findall(r' id="([a-z0-9-]+)"', html_text))
+
+
+def draw_goes(html_text, qid, known=None, k=None) -> str:
+    """The marks as buttons, `go-<qid>-<n>` each; a mark whose part details.html does not have (`known`) is left out."""
+    k = k or itertools.count(1)
+    return GO_MARK.sub(lambda m: go_button(m.group(1), f"go-{qid}-{next(k)}")
+                       if known is None or m.group(1) in known else "", html_text)
+
+
+def drop_goes(html_text) -> str:
+    """details.html: the marks gone, and a line that held only a mark with them."""
+    return GO_MARK.sub("", re.sub(r'<p class="go-row"><!--go:[a-z0-9-]+--></p>', "", html_text))
+
+
+def card(q: Q, known=None) -> str:
+    """A question on summary.html: the head always shown; bullets and tables behind "More". A Details button on each line
+    with a part of its own on details.html, and one at the bottom for the question (R1); `known`: the ids details.html has."""
+    k = itertools.count(1)
+    inner = draw_goes(bullets_html(q.bullets) + q.more, q.id, known, k)
+    head = (f'<span class="q">{esc(q.question)}</span>'
+            + (f'<span class="chip {q.tone}">{esc(q.chip)}</span>' if q.chip else "")  # Misalignment has none (R24)
+            + f'<span class="a">{q.answer}</span>')
+    if not inner:  # nothing more on this page: no "More", and the Details button on the card's face when details.html has more
+        face = f'<span class="go-row">{go_button(q.id, "go-" + q.id)}</span>' if q.detail else ""
+        return f'<li id="{q.id}"><div class="card"><div class="card-head">{head}{face}</div></div></li>'
+    inner += f'<p class="go-row">{go_button(q.id, "go-" + q.id)}</p>'
     return (f'<li id="{q.id}"><details class="card"><summary>{head}<span class="more">More \u203a</span></summary>'
             f'<div class="body">{inner}</div></details></li>')
 
 
 def section(q: Q) -> str:
-    """A question on details.html: everything, the long lists folded."""
-    return (f'<section id="{q.id}" class="sec"><div class="sec-head"><h2>{esc(q.question)}</h2>'
-            f'<span class="chip {q.tone}">{esc(q.chip)}</span></div><p class="a">{q.answer}</p>'
-            f"{bullets_html(q.bullets)}{q.more}{q.detail}</section>")
+    """A question on details.html, folded like a card (R1): the head shows the question, chip, and answer; inside, a back
+    link to the summary, then everything, every part folded."""
+    inside = drop_goes(q.details_body or f"{bullets_html(q.bullets)}{q.more}{q.detail}").replace('href="summary.html#@"', f'href="summary.html#{q.id}"')
+    return fold_section(q.id, f'<h2>{esc(q.question)}</h2><span class="chip {q.tone}">{esc(q.chip)}</span>',
+                        f'<span class="a">{q.answer}</span>', inside, q.id)
+
+
+def fold_section(sid, head, answer, inside, home) -> str:
+    """A section of details.html, folded: `<section>` keeps its id; the fold inside opens on a link to it."""
+    return (f'<section id="{sid}" class="sec"><details class="secfold"><summary><span class="sec-head">{head}</span>{answer}'
+            f'<span class="more">More \u203a</span>{back(home)}</summary><div class="sec-body">{inside}</div></details></section>')
 
 
 def since_line(changes) -> str:
-    """Under question 2: the cost since the earlier run of the same repository (slice 6)."""
+    """Under Size and Shape's memory part: the cost since the earlier run of the same repository (slice 6)."""
     line = (changes or {}).get("cost_line")
     if not line or not line.startswith("cost: "):
         return ""
@@ -1154,11 +1451,11 @@ def not_checked(r, notes, qa, stop=None) -> str:
     title = "Every limit of this run" if len(lim) == len(every) else "Every other limit of this run"
     none = R.checked_steps(qa)  # M9 slice C: no limits, so a fold of their own after the limits, a line for each step
     found_none = (fold(f"{R.CHECKED_HEADING} ({sum(n for _, n in none)})", '<ul class="places">'
-                       + "".join(f"<li>{esc(x)}</li>" for x, _ in none) + "</ul>") if none else "")
-    return ('<section id="limits" class="sec"><div class="sec-head"><h2>What Walkdown didn\'t check</h2></div>'
-            + "".join(f'<div class="a">{x}</div>' if "<ul" in x else f'<p class="a">{x}</p>' for x in lines)
-            + fold(f"{title} ({len(lim)})", '<ul class="places">'
-                   + "".join(f"<li>{esc(x)}</li>" for x in lim) + "</ul>") + found_none + "</section>")
+                       + "".join(f"<li>{esc(x)}</li>" for x, _ in none) + "</ul>", fid="limits-none", home="") if none else "")
+    inside = ("".join(f'<div class="a">{x}</div>' if "<ul" in x else f'<p class="a">{x}</p>' for x in lines[1:])
+              + fold(f"{title} ({len(lim)})", '<ul class="places">'
+                     + "".join(f"<li>{esc(x)}</li>" for x in lim) + "</ul>", fid="limits-all", home="") + found_none)
+    return fold_section("limits", "<h2>What Walkdown didn't check</h2>", f'<span class="a">{lines[0]}</span>', inside, "")
 
 
 def changes_section(changes) -> str:
@@ -1166,6 +1463,6 @@ def changes_section(changes) -> str:
     if not changes or (changes.get("same") and not changes.get("differs")):
         return ""
     lines = "".join(f"<li>{esc(x[:1].upper() + x[1:])}</li>" for x in changes.get("lines", []))
-    return (f'<section id="changes" class="sec"><div class="sec-head"><h2>What changed since run {esc(changes["since"])}</h2>'
-            f'</div><ul class="bul">{lines}</ul><p class="where">Every change, file by file: '
-            '<a href="changes.md">changes.md</a>.</p></section>')
+    return fold_section("changes", f'<h2>What changed since run {esc(changes["since"])}</h2>', "",
+                        f'<ul class="bul">{lines}</ul><p class="where">Every change, file by file: '
+                        '<a href="changes.md">changes.md</a>.</p>', "")

@@ -390,7 +390,7 @@ def test_full_md_says_a_stop_left_a_section_out_and_a_run_that_did_not_stop_keep
     said = 'Not measured: the run stopped after the step "What loads what", as asked.'
     r = STOPPED_REPORTS
     f = full(dict(META, stop=STOP), r, PASS, {}, RAN3)
-    assert f.count(said) == 5  # needs, will it trigger, ready for any AI, current and clean, do the tools fit
+    assert f.count(said) == 5  # needs, misalignment, ready for any AI, current and clean, do the tools fit
     assert f.count('Not run: the run stopped after "What loads what", as asked. See 7.') == 2  # sections 4 and 5
     assert "Not run. See 7." not in f and "did not run" not in f
     for old in ("Not measured: the step", "Not measured: this run has no"):
@@ -398,7 +398,7 @@ def test_full_md_says_a_stop_left_a_section_out_and_a_run_that_did_not_stop_keep
     # the same data without a stop reads as it did before
     plain = full(META, r, PASS, {}, RAN3)
     assert 'Not measured: the step "Builder checks" did not run.' in plain
-    assert ('Not measured: this run has no trigger findings (the step "Builder checks" did not run, or the run was '
+    assert ('Not measured: this run has no skill findings (the step "Builder checks" did not run, or the run was '
             "made before they were counted).") in plain
     assert ('Not measured: this run has no host findings (the step "Builder checks" did not run, or the run was '
             "made before they were counted).") in plain
@@ -935,28 +935,27 @@ def triggery(r):
     return r
 
 
-def test_trigger_helpers():
-    """Slice 4: the entries line, the listing, each place in words, and full.md's section."""
-    tr = R.trigger_of(triggery(reports()))
-    assert tr["measured"] and R.entries_line(tr) == (
-        "4 skills: 2 Claude chooses by their description, 1 only when typed, 1 whose frontmatter is not read. "
-        "1 agent: 1 Claude Code loads.")
-    assert [k for k, *_ in tr["kinds"]] == ["not-read", "keys", "tools", "guidance"]
-    lines = R.listing_lines(tr, 8000)
-    assert lines[0].startswith("Skill descriptions here take about ") and "about 80 tokens at 8,000, 2,000 at 200,000." in lines[0]
-    assert lines[1].startswith("Agent descriptions take about ")
-    places = {k: [R.trig_place(k, f) for f in p] for k, _, _, p in tr["kinds"]}
-    assert places["keys"] == [".claude/skills/odd/SKILL.md:4: allowed_tools (Claude Code knows allowed-tools)"]
-    assert places["tools"][0].startswith(".claude/agents/rev.md:4: Task (an older name; the current one is Agent")
-    assert {R.trig_parts("guidance", f) for f in tr["kinds"][3][3]} == {
-        (".claude/skills/odd/SKILL.md:3", "written in the first person"),
-        (".claude/skills/odd/SKILL.md:3", "does not say when to use it")}
-    assert R.brief_trigger_counts(tr) == {"host": 3, "guidance": 2, "overlap": 0}
-    L = "\n".join(R.trigger_lines(triggery(reports()), 8000))
-    assert "Frontmatter its host does not read (1)" in L and "- `.claude/skills/hand/SKILL.md` (skill): typed" in L
-    assert "Not measured" in "\n".join(R.trigger_lines(reports(), 8000))
-    full = R.full(dict(META, hosts=[]), triggery(reports()), PASS, {}, set(R.NAMED))
-    assert full.index("### Will it trigger") < full.index("### Ready for any AI")
+def test_misalignment_helpers_and_full_md():
+    """R13 (owner, 2026-11-05): Misalignment in full.md, where "Will it trigger" was: the skills' places that differ from the
+    Agent Skills spec by Skill Formatting group, and the skills too alike. Commands, agents, and Claude Code's own rules are
+    left out; question 2 still reads the listing from `trigger_of`."""
+    r = triggery(reports())
+    m = R.misalign_of(r)
+    assert m["measured"] and m["skills"] == 4 and not m["alike"]
+    assert {g: len(p) for g, p in m["groups"].items() if p} == {"yaml": 1, "fields": 2}
+    assert [": ".join(R.misalign_place("fields", f)) for f in m["groups"]["fields"]] == [
+        ".claude/skills/hand/SKILL.md:4: disable-model-invocation", ".claude/skills/odd/SKILL.md:4: allowed_tools"]
+    assert R.misalign_place("yaml", m["groups"]["yaml"][0])[1].startswith("the header is not valid YAML (")
+    assert R.trigger_of(r)["listing"]["skills"] == 2  # the two Claude chooses by description; question 2 reads it
+    L = "\n".join(R.misalign_lines(r))
+    assert "### Misalignment" in L and "#### Skill Formatting" in L and "Settings the standard doesn't define (2):" in L
+    assert "https://agentskills.io/specification" in L and "#### Descriptions too alike" in L and "None." in L
+    assert "A skill's header is the block between the two `---` lines at the top of its SKILL.md, written in YAML" in L
+    for gone in ("Claude Code knows", "rev.md", "first person", "typed"):
+        assert gone not in L, gone
+    assert "Not measured" in "\n".join(R.misalign_lines(reports()))
+    full = R.full(dict(META, hosts=[]), r, PASS, {}, set(R.NAMED))
+    assert full.index("### Misalignment") < full.index("### Ready for any AI") and "### Will it trigger" not in full
 
 
 def fitty(r):

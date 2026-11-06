@@ -554,3 +554,9 @@ def test_what_is_said_of_a_line_is_its_own_line_on_the_card_before_the_lead():
     h = page(reports(extra_hits=[hit]))
     assert html.escape(summary_html.TOOL_TEXT_NOTE) in h  # as the page writes it: an apostrophe is &#x27;
     assert "turns up elsewhere: Decoded" not in h and "turns up elsewhere: This line is code" not in h
+
+
+def test_the_review_page_is_as_wide_as_the_report():
+    """R18 (owner, 2026-11-06): the review page is up to 1400 pixels wide, as the summary and details pages are."""
+    h = page()
+    assert ".wrap { max-width: 1400px;" in h and "58rem" not in h

@@ -242,7 +242,7 @@ def test_sending_data_out_reaches_the_summary(tmp_path):
     s = html.unescape((d / "summary.html").read_text(encoding="utf-8"))
     assert "found none" not in s
     assert "2 places have steps that read secrets, call out, or share." in s and "2 to look at" in s  # report v3
-    assert "Reads secrets, calls out, or shares" in s
+    assert "Wording that sends data out</b> (2)" in s  # the summary's line by kind since R26 (was the group's name)
     n = html.unescape((next((res / "notes").iterdir()) / "summary.html").read_text(encoding="utf-8"))
     assert "Walkdown found none of the security concerns it looks for." in n
 

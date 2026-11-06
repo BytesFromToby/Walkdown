@@ -327,7 +327,7 @@ sending your data away.
 the model before you type); an instruction in a script such a hook runs; elevated grants; agents
 whose tools are wider than their job.
 
-**In the report.** The three boxes in one row on `summary.html`. "The lethal trifecta" at the top of `details.html`, each box opening to its places, with what installing it allows beside the box it belongs to and the rest under "General risks"; section 5 of `full.md` for grants,
+**In the report.** The three boxes side by side at the top of `summary.html` ("What it can do"). On `details.html`, "What it can do" at the top, in the same place: the boxes, how many of the three it does, what installing it allows, and how many places tick each box and why; section 5 of `full.md` for grants,
 bytes at load, and pairs; every leg's and grant's evidence in `full.md`.
 
 ---
@@ -348,7 +348,7 @@ files and the earlier steps' findings. Each is a fact with a location, from a da
 | `host.drift` | two hosts' instruction files in one folder (`CLAUDE.md` and `AGENTS.md`, say): the same text, one pointing to the other, or different, with the lines only in each. Claude Code reads only `CLAUDE.md` when both exist, so a different `AGENTS.md` is what the other hosts see | `Library/hosts.yaml` |
 | `host.feature` | in a `SKILL.md` or `AGENTS.md`, something only one host understands: a frontmatter key Claude Code knows outside the Agent Skills set (claude.ai and the Skills API refuse the skill), Claude Code's words (`$ARGUMENTS`, `${CLAUDE_PLUGIN_ROOT}`) and tool names, an `@path` import in `AGENTS.md`; and each hook file, which runs on one host only | `Library/hosts.yaml` |
 | `trig.entry` | each skill, command, and subagent, and how it triggers: Claude chooses it by its description, only on matching files, only when typed, or it is not loaded (frontmatter not read, or a subagent with no name or no description) | `Library/trigger.yaml` |
-| `trig.frontmatter`, `trig.rule` | frontmatter its host does not read (YAML that does not parse, `---` not on the first line), and the name and description rules of the Agent Skills spec, claude.ai uploads, and Claude Code, each place saying whose rule it is | `Library/trigger.yaml` |
+| `trig.frontmatter`, `trig.rule` | frontmatter its host does not read (YAML that does not parse, `---` not on the first line), and the name and description rules of the Agent Skills spec, claude.ai uploads, and Claude Code, each place saying whose rule it is; in a `SKILL.md`, a key outside the spec's six fields, a `compatibility` over 500 characters, and a key set twice | `Library/trigger.yaml`, `Library/hosts.yaml` (`skill_keys`) |
 | `trig.key`, `trig.value`, `trig.tool` | a frontmatter key, value, or tool name no host takes, with the known one it is closest to (`allowed_tools` is `allowed-tools`) | `Library/trigger.yaml` |
 | `trig.overlap`, `trig.guidance`, `trig.listing` | descriptions in one listing that share most of their words (Walkdown's own measure); published guidance a description does not follow (no "when", first or second person); and the descriptions' size against Claude Code's listing, about 1% of the context | `Library/trigger.yaml` |
 | `ask.tools`, `ask.named`, `fit.loop` | in text the AI reads: the lines asking for each kind of work (running commands, writing files, fetching pages, searching the web, starting subagents), not counting a verb a negation governs, a verb used as a noun, or a quoted example; tools named outright; and loops ("repeat until the tests pass") with no number of tries, give-up, or time on the line or the next | `Library/asks.yaml` |
@@ -357,10 +357,11 @@ files and the earlier steps' findings. Each is a fact with a location, from a da
 | `cap.ship` | every file's group: loaded into the AI (a skill, agent, or command; project instructions such as CLAUDE.md and their `@` imports; files a loaded file names; files reached only by a wildcard or folder read), used another way (scripts it runs, configs), or not used at run time (for people, build material, written for the AI but never pointed to); size and estimated tokens | `Library/loading.yaml` |
 | `cap.context` | the context it takes, in tiers: every session (descriptions, hook text), every session in this folder (project instructions), and per skill: when it runs, with everything it names, with its wildcard loads; tokens estimated from size (about 4 bytes per token) | `Library/loading.yaml` |
 
-**In the report.** The eight questions of `summary.html` and `details.html` answer from these
-checks (questions 1 to 7) and from the security checks (question 8). The checks are listed in
+**In the report.** The four questions of `summary.html` and `details.html` answer from these
+checks (questions 1 to 3, and "Finished and up to date" under question 4) and from the security checks (question 4); Misalignment, after them, answers from the
+`trig.frontmatter`, `trig.rule`, and `trig.overlap` rows of a `SKILL.md`, against the Agent Skills standard only. The checks are listed in
 `full.md` under "What ships" (what it needs, what ties it to one machine), "What the text asks for"
-(will it trigger, ready for any AI, current and clean), and "What this touches" (what it costs and
+(Misalignment, ready for any AI, current and clean), and "What this touches" (what it costs and
 what ships, do the tools fit the job). A step of this kind that did not work is named on the pages
 and in the brief as "Builder checks".
 

@@ -64,7 +64,8 @@ hosts:
 copies: [CLAUDE.md, AGENTS.md, GEMINI.md, .github/copilot-instructions.md, .cursorrules, .windsurfrules, .clinerules]
 
 # The frontmatter keys of the Agent Skills format (S01); outside Claude Code (claude.ai, the Skills API)
-# a skill with any other key is refused.
+# a skill with any other key is refused, and the spec's reference validator refuses it too (S01,
+# checked 2026-11-05). `trigger.py` reads it for `field-outside` (R13).
 skill_keys: [name, description, license, compatibility, metadata, allowed-tools]
 
 # Claude Code's own words and tool names: other hosts see them as written.

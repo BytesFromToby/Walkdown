@@ -1,6 +1,6 @@
 """The one page (summary.html), and the counts the brief shares. Spec: specs/report.SPEC.md, summary_html.
 
-Report v3 (owner, 2026-10-27: "glance and know"): the eight questions of glance.py as cards for
+Report v3 (owner, 2026-10-27: "glance and know"): the four questions of glance.py as cards for
 someone with no computer skills, a step that did not work at the bottom, and the one caveat. This
 module also holds the security concern kinds in their fixed order (`CONCERNS`, `rows`), the
 headline rules, the failed-step rules, and the brief's lines (`brief_*`), which walkdown.py
@@ -26,17 +26,67 @@ CONCERNS = (
     ("hidden", "Hidden text that reads like an instruction", "hidden"),
     ("spelled", "Hidden characters that spell out text", "hidden"),
     ("runs", "Runs code", "risky"),
-    ("secret", "Looks like a committed secret", "secrets"),
+    ("secret", "Passwords, keys, and secrets", "secrets"),  # R27 (owner 2026-11-06: "rename the group so the counts match"), was "Looks like a committed secret"
     ("out", "Reads secrets, calls out, or shares", "risky"),
     ("lasting", "Lasting changes or permissions", "risky"),
 )
 WORDING = "{n} {be} wording only: instructions that change how the AI reads, decides, or answers."
+# The careful card's lines on the summary (R26, owner 2026-11-06: "Each line should have a color code. And we'll order them by color."; "Password and key should be a red section"; "color list is fin"; "Yes build on that plan."; the color list in
+# pre-planning/REPORT-CHANGES-2026-11-05.md): a line per kind, red, then yellow, then blue, the first three under
+# "Passwords, keys, and secrets". A place a concern row holds that no kind here names takes its row's color: steps that
+# run code and lasting changes yellow, reading secrets, calling out, or sharing red. The answer and the brief still count
+# by CONCERNS.
+LINES = (
+    ("secret", "red", "Looks like a saved password, key, or token"),
+    ("creds", "red", "Wording that gathers secrets or credentials"),
+    ("enter-secret", "red", "Wording that asks for a password or key"),
+    ("hidden", "red", "Hidden text that reads like an instruction"),
+    ("spelled", "red", "Hidden characters that spell out text"),
+    ("decode-exec", "red", "Decodes hidden code and runs it"),
+    ("send", "red", "Wording that sends data out"),
+    ("redirect", "red", "Names a variable that redirects network traffic"),
+    ("out-other", "red", "Other wording that reads secrets, calls out, or shares"),
+    ("hook", "yellow", "A hook that runs commands by itself"),
+    ("context-hook", "yellow", "A hook that adds text to the AI's memory before you type"),
+    ("human", "yellow", "Tells a person to run something risky"),
+    ("fetch", "yellow", "Fetches instructions from elsewhere"),
+    ("prompt-leak", "yellow", "Asks the AI to reveal its own instructions"),
+    ("persist", "yellow", "Writes to a shell profile or git hooks"),
+    ("git-keys", "yellow", "Names a git setting that persists"),
+    ("memory", "yellow", "Names a memory or local-settings file"),
+    ("irreversible", "yellow", "An irreversible action with no confirmation step"),
+    ("redefined", "yellow", "A confirmation step that is redefined"),
+    ("read-only", "yellow", "Says read-only, but its tools can write"),
+    ("runs-other", "yellow", "Other steps that run code"),
+    ("lasting-other", "yellow", "Other lasting changes or permissions"),
+    ("cloud", "blue", "Cursor's cloud setup runs commands on Cursor's machine, not yours"),
+)
+SECRET_LINES = ("secret", "creds", "enter-secret")  # "Passwords, keys, and secrets", first and red
+KIND_LINE = {"secret": "secret", "hidden+phrase": "hidden", "hidden+spelled": "spelled", "hook+phrase": "context-hook",
+             "rubric.prohibited": "irreversible", "rubric.redefined": "redefined", "limit.contradicted": "read-only"}
+PATTERN_LINE = (("creds.", "creds"), ("J.enter-secret", "enter-secret"), ("E.decode-exec", "decode-exec"),
+                ("K.prompt-leak", "prompt-leak"), ("K.", "send"), ("E.redirect-var", "redirect"), ("G.", "human"),
+                ("RL.", "fetch"), ("E.persist", "persist"), ("E.git-keys", "git-keys"), ("E.memory", "memory"))
 # Under the three boxes (owner, 2026-10-20): the trifecta's point, as details.html words it.
 TOGETHER = D.TRIFECTA_LEDE.split(". ", 1)[1]
 # The page's one qualifier, in plain words for someone who is not technical (owner, 2026-10-20).
 # details.html and full.md keep render.NOT_WHAT.
 FOOTER = ("Walkdown reads a repository's files without running anything. It points out what it "
           "finds and leaves the judgment to you. Finding nothing does not mean a repository is safe.")
+# Under the title (owner, 2026-11-05, R3), in place of "Walkdown reads the files without running anything. It points things
+# out; you decide what matters. Tap a line for more." The footer still says the first two.
+MADE_BY = ("This report on {name} was made by Walkdown, which checks AI skill and agent repositories for security and how "
+           "well they are built.")  # "and agent": owner, 2026-11-05 (R7)
+# The page's title (owner, 2026-11-05, R6; it was the name alone); details.html adds ", in detail".
+TITLE = "A Walkdown of {name}"
+
+
+def made_by(name) -> str:
+    return MADE_BY.format(name=name)
+
+
+def title(name) -> str:
+    return TITLE.format(name=name)
 
 
 def esc(s) -> str:
@@ -53,6 +103,9 @@ def concern(it) -> str | None:
     if group == "runs":
         return "runs"
     if it.get("kind") == "secret":
+        return "secret"
+    pats = (it.get("src") or {}).get("patterns") or []
+    if any(p.startswith("creds.") or p == "J.enter-secret" for p in pats):  # wording about secrets joins them (R27)
         return "secret"
     return group if group in ("out", "lasting") else None
 
@@ -95,6 +148,41 @@ def rows(r, places, marks=None) -> list[dict]:
         ex = rest[0] if rest else None
         out.append({"key": key, "name": name, "section": section, "places": mine, "ids": seen,
                     "not_concerned": len(nc), "example": ex, "example_id": pid(ex) if ex else None})
+    return out
+
+
+def line_of(it) -> str | None:
+    """The careful line a place falls in (R26), or None for wording only: by its kind, else by the phrase pattern behind
+    it, else its concern row's "other" line."""
+    row = concern(it)
+    if row is None:
+        return None
+    kind = it.get("kind")
+    if kind == "hook":
+        return "cloud" if (it.get("src") or {}).get("format") == "cursor-environment" else "hook"
+    if kind in KIND_LINE:
+        return KIND_LINE[kind]
+    pats = (it.get("src") or {}).get("patterns") or []
+    for prefix, key in PATTERN_LINE:
+        if any(p.startswith(prefix) for p in pats):
+            return key
+    return f"{row}-other"
+
+
+def lines(r, places, marks=None) -> list[dict]:
+    """The careful card's lines with places, in LINES order (R26): {key, color, label, row, places, ids}. A place counts
+    once in a line, by its review card, as in `rows`."""
+    card_of, _ = _place_marks(r, marks)
+    out = []
+    for key, color, label in LINES:
+        mine, seen = [], set()
+        for it in sorted((it for it in places if line_of(it) == key), key=_where):
+            c = card_of.get(M.place_key(it)) or ("item", id(it))
+            if c not in seen:
+                seen.add(c)
+                mine.append(it)
+        if mine:
+            out.append({"key": key, "color": color, "label": label, "row": concern(mine[0]), "places": mine, "ids": seen})
     return out
 
 
@@ -277,19 +365,16 @@ def model_note(qa) -> str:
     return f'<p class="since" id="modelread">{esc(" ".join(lines))}</p>' if lines else ""
 
 
-def brief_trigger_line(r) -> str | None:
-    """The brief's line (slice 4): counts only."""
-    tr = R.trigger_of(r)
-    if not tr["measured"]:
+def brief_misalign_line(r) -> str | None:
+    """The brief's line (R13, 2026-11-05; it took the place of "Will it trigger"): counts only, as the page has them."""
+    m = R.misalign_of(r)
+    if not m["measured"]:
         return None
-    ents = tr["entries"]
-    if not ents:
-        return "Will it trigger: no skill, agent, or command here."
-    k = collections.Counter(e["kind"] for e in ents)
-    c = R.brief_trigger_counts(tr)
-    have = ", ".join(R.n(k[x], x) for x in ("skill", "command", "agent") if k[x])
-    return (f"Will it trigger: {have}; {R.n(c['host'], 'place')} that {'breaks' if c['host'] == 1 else 'break'} "
-            f"a host rule, {c['guidance']} from guidance; {R.n(c['overlap'], 'pair')} of descriptions that overlap.")
+    if not m["skills"]:
+        return "Misalignment: no skills here."
+    places = sum(len(v) for v in m["groups"].values())
+    return (f"Misalignment: {R.n(m['skills'], 'skill')}; {R.n(places, 'place')} that {'differs' if places == 1 else 'differ'} "
+            f"from the Agent Skills standard; {R.n(len(m['alike']), 'pair')} of skills described alike.")
 
 
 def brief_ready_line(r, targets=()) -> str | None:
@@ -359,23 +444,29 @@ def brief_cost_lines(r, ctx: int) -> list[str]:
 
 
 def render_page(meta, r, stamps, notes, runs_ok, marks=None, changes=None) -> str:
-    """Report v3 (owner, 2026-10-27: "glance and know"): the eight questions as cards
+    """Report v3 (owner, 2026-10-27: "glance and know"): the four questions as cards, then Misalignment as one more card (R24)
     (glance.py), a step that did not work at the bottom, and the one caveat. `marks` are the
-    run's marks; `changes` is run.changes_for (its cost line goes under question 2)."""
+    run's marks; `changes` is run.changes_for (its cost line goes under Size and Shape's memory part, last)."""
     import glance as G  # glance imports this module
     qs = G.questions(meta, r, stamps, runs_ok, marks)
     for q in qs:
-        if q.id == "memory":
+        if q.id == "size":
             q.more += G.since_line(changes)
-    body = (f'<header><h1>{esc(meta["repo"])}</h1><p class="meta">{esc(G.meta_line(meta, r))}</p>'
-            f'<p class="what">{G.what_it_is(r)}</p><p class="how">Walkdown reads the files without running '
-            "anything. It points things out; you decide what matters. Tap a line for more.</p></header>"
-            + coverage.section_html(r)
-            + '<h2>At a glance</h2><ul class="rows">' + "".join(G.card(q) for q in qs) + "</ul>"
+    # the parts details.html has, so a Details button never points at one it lacks (R1)
+    known = ({q.id for q in qs} | G.ids_in("".join(q.more + q.detail for q in qs)) | {"examined", "can"}
+             | G.ids_in(G.misalign_detail(r, meta.get("stop"))))
+    examined = coverage.section_html(r).replace(
+        "<h2>What Walkdown examined</h2>", f'<div class="head-row" id="examined"><h2>What Walkdown examined</h2>{G.go("examined")}</div>', 1)
+    body = (f'<header><h1>{esc(title(meta["repo"]))}</h1><p class="meta">{esc(G.meta_line(meta, r))}</p>'
+            f'<p class="how">{esc(made_by(meta["repo"]))}</p><p class="what">{G.what_it_is(r, meta["repo"])}</p></header>'
+            + G.draw_goes(G.can_section(r), "can", known)
+            + G.draw_goes(examined, "examined", known)
+            + '<h2>At a glance</h2><ul class="rows">' + "".join(G.card(q, known) for q in qs)
+            + G.card(G.misalign_card(r, meta.get("stop")), known) + "</ul>"  # the last card, nothing to open (R24)
             + stop_note(meta.get("stop"))
             + model_note(qaview.of(meta))
             + warning(not_working(qaview.of(meta)), only_model_reads(qaview.of(meta)), unchecked_sentence(qaview.of(meta)))
             + '<footer><p>Everything behind this page: <a href="details.html">details</a> \u00b7 '
             '<a href="review.html">go through each place and mark it</a> \u00b7 every finding with its file '
             f'and line: <a href="full.md">full.md</a></p><p>{esc(FOOTER)}</p></footer>')
-    return G.page(f"{meta['repo']} at a glance", meta, r, body)
+    return G.page(title(meta["repo"]), meta, r, body)

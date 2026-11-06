@@ -49,11 +49,12 @@ One command runs every step and writes a run folder:
 
 ```
 RepoResults/<name>/<date>_<hash7>/
-  summary.html    one page, eight questions at a glance: will its skills switch on, how much of
-                  the AI's memory it uses, what comes in the package, will it work on someone
-                  else's computer and with other AI tools, does it ask only for the tools it
-                  needs, is it finished, anything to be careful about
-  details.html    the same eight questions with everything behind them, every place folded
+  summary.html    one page, four questions at a glance: its size and shape (what comes in the
+                  package, how much of the AI's memory it uses), is it transferable to other
+                  machines (operating systems, other AI tools), does it ask only for the tools
+                  it needs, anything to be careful about (finished and up to date is part of
+                  it); then where its skills differ from the Agent Skills standard (Misalignment)
+  details.html    the same four questions and Misalignment with everything behind them, every place folded
   review.html     one card per place to check, one at a time, for you to mark
   full.md         every finding, with file and line
   brief.md        the short summary the command prints, with no text from the repository
@@ -379,7 +380,7 @@ stages/           the pipeline, one folder per step, each with CONTEXT.md (its c
   stages.json     the step list: each step's name, folder, and plain name
 Library/          the tables, lists, and sources the steps look things up in (data only; README.md is the index)
 tools/            the factory's tools: grader/ (runs a step on its fixtures and scores it),
-                  compare_runs.py, baserates.py, fixture-generators/, model-eval/
+                  compare_runs.py, baserates.py, specimen.py, fixture-generators/, model-eval/
 Fixtures/         fixture repositories per step; ANSWERS/ is read only by the grader
 pre-planning/     the design: charter, method, threat classes, reporting standard
 docs/             reading the report, how it works, what a run leaves, the structure map

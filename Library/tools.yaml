@@ -132,32 +132,47 @@ not_personal: [runner, node, vscode, user, username, you, yourname, your-name, y
 # is the count, {s} an "s" unless the count is 1, and {was}, {them}, {v}, {v2}, {is} take the
 # singular or plural form of the word the sentence needs. (A `noun` field, read by nothing, was dropped
 # 2026-10-29: restructure notes M15 c.)
+# `systems`: the systems a kind trips, from its own `why`, for the three boxes under "Operating systems" on the
+# report (owner, 2026-11-06, R22). `port.os` takes them from its program's `os` through `os_systems`.
+os_systems:
+  linux: [windows, mac]
+  macos: [windows, linux]
+  unix: [windows]
+  windows: [mac, linux]
+
 port_kinds:
   - check: port.path
     name: 'Personal paths'
     why: 'another machine has another user'
     plain: '{n} place{s} name a folder on the builder''s own computer (like C:\Users\name); nobody else has it.'
+    systems: []  # any other computer, whatever its system
   - check: port.crlf
     name: 'Shell scripts with Windows line endings'
     why: 'bash fails on them'
     plain: '{n} shell script{s} {was} saved with Windows line endings; Mac and Linux can''t run {them}.'
+    systems: [mac, linux]
   - check: port.os
     name: 'Scripts or commands for one system only'
     why: 'the other systems do not have them'
     plain: '{n} script{s} or command{s} only work on one kind of computer (Windows, or Mac and Linux).'
+    systems: []  # by its program's `os`, below
   - check: port.backslash
     name: 'References written with backslashes'
     why: 'macOS and Linux read the backslash as part of the name'
     plain: '{n} file path{s} use{v} backslashes; Mac and Linux read them as part of the name.'
+    systems: [mac, linux]
   - check: port.exec
     name: 'Scripts run directly without the executable bit'
     why: 'macOS and Linux refuse to run them'
     plain: '{n} script{s} {is} run directly but not marked as runnable; Mac and Linux refuse {them}.'
+    systems: [mac, linux]
   - check: port.python
     name: 'Runs python, not python3'
     why: 'macOS and many Linux systems have only python3'
     plain: 'It tells the AI to run <code>python</code> in {n} place{s}. Many Macs and Linux computers only have <code>python3</code>, so those steps may fail there.'
+    systems: [mac, linux]
   - check: graph.case
     name: 'References that match only when case is ignored'
     why: 'Windows and macOS ignore case; Linux does not'
     plain: '{n} file name{s} only match{v2} if capital letters are ignored; that works on Windows and Mac, not Linux.'
+    systems: [linux]

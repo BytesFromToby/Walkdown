@@ -58,7 +58,7 @@ def test_rules_keys_values_tools():
         "agents/r2.md": fm("name: r", "description: Reviews other things when asked."),
     })
     rules = {f["rule"] for f in by(fs, "trig.rule", file="s/Long_name/SKILL.md")}
-    assert rules == {"name-chars", "description-long", "description-xml"}
+    assert rules == {"name-chars", "description-long", "description-xml", "field-outside"}
     assert by(fs, "trig.rule", file="agents/r2.md", rule="name-duplicate", other="agents/r.md")
     keys = {(f["key"], f["near"]) for f in by(fs, "trig.key")}
     assert keys == {("allowedTools", "allowed-tools"), ("maxturns", "maxTurns")}
@@ -69,6 +69,59 @@ def test_rules_keys_values_tools():
     tools = {(f["tool"], f["kind"], f.get("near") or f.get("now")) for f in by(fs, "trig.tool")}
     assert tools == {("read", "unknown", "Read"), ("Websearch", "unknown", "WebSearch"),
                      ("Task", "older", "Agent"), ("MultiEdit", "older", "Edit")}
+
+
+def test_the_agent_skills_spec_fields_and_names():
+    """R13 (owner, 2026-11-05: "Let's adopt the agentskills.io specs"): in a SKILL.md, a key outside the spec's six fields
+    is a rule broken, one row a key with its line; `compatibility` holds at most 500 characters; a name takes lowercase
+    letters of any language, digits, and single hyphens, as the spec's reference validator reads it. Commands and agents
+    are not skills, so the six fields are not theirs."""
+    fs = run({
+        "s/a/SKILL.md": fm("name: a", "description: Does a. Use when a.", "license: MIT", "compatibility: Needs git",
+                           "metadata:", "  version: '1'", "allowed-tools: Read"),
+        "s/b/SKILL.md": fm("name: b", "description: Does b. Use when b.", "version: 2", "model: opus",
+                           "compatibility: " + "x" * 501),
+        "s/notizen-über/SKILL.md": fm("name: notizen-über", "description: Sorts notes. Use when asked."),
+        "s/two--dash/SKILL.md": fm("name: two--dash", "description: Does two. Use when asked."),
+        "commands/go.md": fm("description: Goes. Use when asked.", "argument-hint: [where]"),
+        "agents/r.md": fm("name: r", "description: Reviews r when asked.", "tools: Read"),
+    })
+    assert not by(fs, "trig.rule", file="s/a/SKILL.md")
+    out = {(f["key"], f["line"]) for f in by(fs, "trig.rule", file="s/b/SKILL.md", rule="field-outside")}
+    assert out == {("version", 4), ("model", 5)}
+    [c] = by(fs, "trig.rule", file="s/b/SKILL.md", rule="compatibility-long")
+    assert (c["chars"], c["line"], c["host"]) == (501, 6, "agent-skills")
+    assert not by(fs, "trig.rule", file="s/notizen-über/SKILL.md")
+    assert by(fs, "trig.rule", file="s/two--dash/SKILL.md", rule="name-chars")
+    assert not by(fs, "trig.rule", rule="field-outside", file="commands/go.md")
+    assert not by(fs, "trig.rule", rule="field-outside", file="agents/r.md")
+    assert trigger.name_ok("pdf-processing") and trigger.name_ok("données")
+    # R15 (owner, 2026-11-05: "read past the blank lines for the standard's checks"): Claude Code does not read settings
+    # after blank lines, so the entry is unread; the spec's checks read them, each on its line
+    late = run({"s/late/SKILL.md": "\n\n" + fm("name: other", "description: Does late. Use when asked.", "version: 2")})
+    assert by(late, "trig.frontmatter", kind="not-first-line") and by(late, "trig.entry")[0]["mode"] == "unread"
+    assert {(f["rule"], f["line"]) for f in by(late, "trig.rule")} == {("name-folder", 4), ("field-outside", 6)}
+    assert not by(run({"s/x/SKILL.md": "\n---\nname: x\ndescription: Dates: when.\n---\n"}), "trig.rule")  # YAML that does not parse
+    assert not any(trigger.name_ok(x) for x in ("PDF", "-pdf", "pdf-", "pdf--x", "pdf_x", ""))
+
+
+def test_a_setting_set_twice_in_a_skill_header():
+    """R17 (owner, 2026-11-05: "duplicates only"): of the YAML the spec's reference validator refuses and PyYAML takes, only
+    a key set twice is called out (PyYAML keeps the last value), at any depth, on the line it is set again; inline lists,
+    anchors, and tags are not. Commands and agents are left out, as for the spec's other rules."""
+    fs = run({
+        "s/two/SKILL.md": fm("name: two", "description: Does two. Use when asked.", "license: MIT", "metadata:",
+                             "  author: a", "  author: b", "license: Apache-2.0"),
+        "s/flow/SKILL.md": fm("name: flow", "description: Does flow. Use when asked.", "allowed-tools: [Read, Grep]",
+                              "metadata: &m {author: a}"),
+        "commands/go.md": fm("description: Goes. Use when asked.", "model: opus", "model: haiku"),
+    })
+    got = {(f["key"], f["line"], f["first"], f["host"]) for f in by(fs, "trig.rule", rule="key-twice")}
+    assert got == {("metadata.author", 7, 6, "agent-skills"), ("license", 8, 4, "agent-skills")}
+    assert not by(fs, "trig.rule", file="s/flow/SKILL.md")
+    late = run({"s/late/SKILL.md": "\n" + fm("name: late", "description: Does late. Use when asked.", "name: late")})
+    assert {(f["rule"], f["line"], f["first"]) for f in by(late, "trig.rule")} == {("key-twice", 5, 3)}
+    assert trigger.set_twice("a: 1\nb:\n  - c: 1\n    c: 2\n") == [(3, "b.c", 2)]
 
 
 def test_listing_cut_and_guidance():

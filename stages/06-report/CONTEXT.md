@@ -40,7 +40,7 @@ step, the grader, or a model; read `LOG.md` back.
 
 In the run folder:
 
-- `summary.html` (one page, eight questions at a glance, for deciding whether to use the repository),
+- `summary.html` (one page, four questions at a glance and Misalignment, for deciding whether to use the repository),
   `details.html` (the same questions with everything behind them, for improving it), `review.html` (the
   places one at a time, where the reader marks Concerned, Not concerned, or Not sure), `full.md` (every
   finding, cited, in stage order), `brief.md` (the brief `walkdown.py` prints), `LOG.md`, and `changes.md`

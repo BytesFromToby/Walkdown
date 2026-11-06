@@ -97,9 +97,7 @@ sees.
   are declared with `options.add_report_options`, the same function the report stage declares them with; the run's
   record keeps them.
 - Prints the **brief file** to stdout, exactly as the report stage saved it. It is in `summary.html`'s terms (owner, 2026-10-21): files examined;
-  then one line on triggering (slice 4, `summary_html.brief_trigger_line`): "Will it trigger: <n>
-  skills, <c> commands, <a> agents; <h> places that break a host rule, <g> from guidance; <o> pairs
-  of descriptions that overlap."; then two lines on cost, counts only (`summary_html.brief_cost_lines`, slice 1): "Every session:
+  then two lines on cost, counts only (`summary_html.brief_cost_lines`, slice 1): "Every session:
   <X> tokens. Largest skill at its fullest: <Y> tokens (<Z> of <C>)." (with "Every session in
   this folder: <P> tokens." when there are project files) and "Not used at run time: <n> files
   (<t> tokens).", the expected context from the run's record; then one line on what it needs
@@ -243,3 +241,4 @@ sees.
 - 2026-11-01: the loaded-model build: `--reads [model]`, resolved in the check into `--sweep` and `--pinpoint`; `continue` takes it too; the usage text in the file's docstring says so. The front door still only routes (`options.Parser` is the parser, and `options.check` does the resolving).
 - 2026-11-01: the loaded-model build, fix round: the usage text in the file's docstring says what `--reads` runs (Sweep on Jev when Jev is available, else on the Claude model named; Pinpoint on the Claude model named; tools off), and a backend typed as the model is the sixth refusal.
 - 2026-11-01: the loaded-model build, before merge: the docstring names TypeSafe. The default run's watch is said to cover the front door's process (a step is a child process). The test of the words holds the claim in every place a reader meets it and pins no sentence; it had pinned the help and the docstring to not naming TypeSafe. The skill runs `--reads` only on a yes, after telling the user where the text goes (the owner, 2026-11-01).
+- 2026-11-05 (owner, R13): the brief's "Will it trigger" line is gone with question 1; its Misalignment line is the report stage's (`summary_html.brief_misalign_line`, in the report spec).

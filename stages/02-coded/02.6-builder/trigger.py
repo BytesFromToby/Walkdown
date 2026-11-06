@@ -10,6 +10,7 @@ from __future__ import annotations
 import difflib
 import re
 import sys
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -26,7 +27,7 @@ T = library.load_yaml("trigger.yaml")
 KEYS = {"skill": T["keys"]["skill"], "command": T["keys"]["skill"], "agent": T["keys"]["agent"]}
 TOOLS = set(T["tools"])
 OLDER = T["older_tools"]
-NAME_RX = re.compile(T["name"]["pattern"])
+FIELDS = set(library.load_yaml("hosts.yaml")["skill_keys"])  # the Agent Skills spec's six (owner, 2026-11-05, R13)
 MODEL_ID = re.compile(T["model_id"])
 XML = re.compile(r"<[A-Za-z/][^>]*>")
 WHEN = [re.compile(p, re.I) for p in T["when_patterns"]]
@@ -43,6 +44,7 @@ KEY_LINE = re.compile(r"^([A-Za-z_][\w.-]*)\s*:")
 RULE_HOST = {"name-missing": "agent-skills", "name-long": "agent-skills", "name-chars": "agent-skills",
              "name-folder": "agent-skills", "description-missing": "agent-skills",
              "description-empty": "agent-skills", "description-long": "agent-skills",
+             "field-outside": "agent-skills", "compatibility-long": "agent-skills", "key-twice": "agent-skills",
              "name-reserved": "claude-api", "name-xml": "claude-api", "description-xml": "claude-api",
              "listing-cut": "claude", "agent-name": "claude", "name-duplicate": "claude"}
 
@@ -54,10 +56,42 @@ class Front:
     data: dict | None   # None when the YAML does not parse
     error: str | None
     keys: list          # (line, key), top level
+    twice: list = ()    # (line, key path, line first set): a key set again in the same mapping, at any depth (R17)
 
 
 def _lines(text: str | None) -> list[str]:
     return [x[:-1] if x.endswith("\r") else x for x in (text or "").split("\n")]
+
+
+def set_twice(body: str) -> list[tuple[int, str, int]]:
+    """Each key set again in the same mapping, at any depth: (its line in `body`, from 0; the key's path, such as
+    `metadata.author`; the line it was first set on). YAML allows each key once; PyYAML keeps the last value and the
+    Agent Skills spec's reference validator refuses the file (owner, 2026-11-05, R17: "duplicates only")."""
+    out, seen = [], set()
+
+    def walk(node, path):
+        if id(node) in seen:
+            return
+        seen.add(id(node))
+        if isinstance(node, yaml.MappingNode):
+            first = {}
+            for k, v in node.value:
+                if isinstance(k, yaml.ScalarNode):
+                    if k.value in first:
+                        out.append((k.start_mark.line, path + k.value, first[k.value]))
+                    else:
+                        first[k.value] = k.start_mark.line
+                    walk(v, path + k.value + ".")
+                else:
+                    walk(v, path)
+        elif isinstance(node, yaml.SequenceNode):
+            for v in node.value:
+                walk(v, path)
+
+    root = yaml.compose(body, Loader=yaml.SafeLoader)
+    if root is not None:
+        walk(root, "")
+    return out
 
 
 def read_front(lines: list[str]) -> Front | None:
@@ -69,11 +103,12 @@ def read_front(lines: list[str]) -> Front | None:
     if end is None:
         return None
     body = lines[i + 1:end]
-    data, err = None, None
+    data, err, twice = None, None, []
     try:
         loaded = yaml.safe_load("\n".join(body))
         if isinstance(loaded, dict):
             data = loaded
+            twice = [(i + 2 + n, key, i + 2 + was) for n, key, was in set_twice("\n".join(body))]
         elif loaded is None:
             data = {}
         else:
@@ -81,7 +116,7 @@ def read_front(lines: list[str]) -> Front | None:
     except yaml.YAMLError as e:
         err = str(e).split("\n")[0]
     keys = [(i + 2 + k, m.group(1)) for k, x in enumerate(body) if (m := KEY_LINE.match(x))]
-    return Front(i, end, data, err, keys)
+    return Front(i, end, data, err, keys, twice)
 
 
 def entry_kind(row: dict) -> str | None:
@@ -110,6 +145,14 @@ def near(word: str, known) -> str | None:
 
 def _truthy(v) -> bool:
     return v is True or str(v).strip().lower() in ("true", "yes", "on", "1")
+
+
+def name_ok(name: str) -> bool:
+    """The Agent Skills spec's characters for a name, as its reference validator reads them: lowercase letters of any
+    language, digits, and hyphens, none at either end and never two together (owner, 2026-11-05, R13)."""
+    name = unicodedata.normalize("NFKC", name.strip())
+    return (bool(name) and name == name.lower() and not name.startswith("-") and not name.endswith("-")
+            and "--" not in name and all(c.isalnum() or c == "-" for c in name))
 
 
 def _text(v) -> str | None:
@@ -141,6 +184,44 @@ def _f(check, rel, line, **kw) -> dict:
     return {"check": check, "file": rel, "line": line, **kw}
 
 
+def skill_rules(rule, data: dict, keys: list, folder: str | None, twice=()) -> None:
+    """A SKILL.md's name and description rules, the Agent Skills spec's six fields and `compatibility` (R13), and a key set
+    twice (R17), each through `rule`. `keys`: the settings' (line, key) at the top level; `twice`: `Front.twice`."""
+    keyline = {k: n for n, k in keys}
+    name, desc = _text(data.get("name")), _text(data.get("description"))
+    if name is None:
+        rule("name-missing")
+    else:
+        ln = keyline.get("name")
+        if len(name) > T["name"]["max"]:
+            rule("name-long", ln, chars=len(name))
+        if not name_ok(name):
+            rule("name-chars", ln)
+        if folder and name != folder:
+            rule("name-folder", ln, folder=folder)
+        if any(w in name.lower() for w in T["name"]["reserved"]):
+            rule("name-reserved", ln)
+        if XML.search(name):
+            rule("name-xml", ln)
+    if desc is None:
+        rule("description-missing")
+    elif not desc.strip():
+        rule("description-empty", keyline.get("description"))
+    else:
+        if len(desc) > T["description_max"]:
+            rule("description-long", keyline.get("description"), chars=len(desc))
+        if XML.search(desc):
+            rule("description-xml", keyline.get("description"))
+    for n, key in keys:  # the spec's six fields only (owner, 2026-11-05, R13)
+        if key not in FIELDS:
+            rule("field-outside", n, key=key)
+    comp = _text(data.get("compatibility"))
+    if comp is not None and len(comp) > T["compatibility_max"]:
+        rule("compatibility-long", keyline.get("compatibility"), chars=len(comp))
+    for n, key, first in twice:  # YAML allows each key once (owner, 2026-11-05, R17: "duplicates only")
+        rule("key-twice", n, key=key, first=first)
+
+
 def check_entry(rel: str, kind: str, text: str, bom: bool = False) -> tuple[dict | None, list]:
     """(the trig.entry row, or None for a file Claude Code never loads as one; its findings)."""
     lines = _lines(text)
@@ -161,9 +242,15 @@ def check_entry(rel: str, kind: str, text: str, bom: bool = False) -> tuple[dict
     elif bom:
         out.append(_f("trig.frontmatter", rel, 1, kind="bom", kind_of=kind))
     folder = rel.split("/")[-2] if rel.endswith("SKILL.md") and "/" in rel else None
+
+    def rule(r, line=None, **kw):
+        out.append(_f("trig.rule", rel, line, kind_of=kind, rule=r, host=RULE_HOST[r], **kw))
+
     if front is not None and not read:
         entry.update(mode="skipped" if kind == "agent" else "unread", why=NOT_READ,
                      name=folder if kind == "skill" else None)
+        if kind == "skill" and front.data is not None:  # blank lines before ---: Claude Code does not read these settings,
+            skill_rules(rule, front.data, front.keys, folder, front.twice)  # the spec's checks do (owner, R15)
         return entry, out
     data = front.data if read else {}
     keyline = {k: n for n, k in (front.keys if read else [])}
@@ -186,9 +273,6 @@ def check_entry(rel: str, kind: str, text: str, bom: bool = False) -> tuple[dict
                  disallowed=_items(data.get(dfield)) or [],
                  preloads=_items(data.get("skills")) if kind == "agent" else None)
 
-    def rule(r, line=None, **kw):
-        out.append(_f("trig.rule", rel, line, kind_of=kind, rule=r, host=RULE_HOST[r], **kw))
-
     if kind == "agent":
         why = None
         if not name and not desc:
@@ -210,29 +294,7 @@ def check_entry(rel: str, kind: str, text: str, bom: bool = False) -> tuple[dict
         if "user-invocable" in data and not _truthy(data["user-invocable"]):
             entry["menu"] = False
     if kind == "skill":
-        if name is None:
-            rule("name-missing")
-        else:
-            ln = keyline.get("name")
-            if len(name) > T["name"]["max"]:
-                rule("name-long", ln, chars=len(name))
-            if not NAME_RX.match(name):
-                rule("name-chars", ln)
-            if folder and name != folder:
-                rule("name-folder", ln, folder=folder)
-            if any(w in name.lower() for w in T["name"]["reserved"]):
-                rule("name-reserved", ln)
-            if XML.search(name):
-                rule("name-xml", ln)
-        if desc is None:
-            rule("description-missing")
-        elif not desc.strip():
-            rule("description-empty", keyline.get("description"))
-        else:
-            if len(desc) > T["description_max"]:
-                rule("description-long", keyline.get("description"), chars=len(desc))
-            if XML.search(desc):
-                rule("description-xml", keyline.get("description"))
+        skill_rules(rule, data, front.keys if read else [], folder, front.twice if read else [])
     if kind != "agent" and len(listing) > T["listing_chars"]:
         rule("listing-cut", keyline.get("description"), chars=len(listing), lost=len(listing) - T["listing_chars"])
     if desc and desc.strip() and entry["mode"] != "skipped":

@@ -4,9 +4,11 @@
 it to?
 **Kind of evidence:** derived and counted, never judged: facts with locations and counts. Nothing here
 says a repository is good or bad.
-**Reports under:** the questions on the pages about building (will it switch on, how much of the AI's
-memory it uses, what comes in the package, will it work on another computer, other AI tools, does it ask
-only for the tools it needs, is it finished), and the matching sections of `full.md`. The step has no
+**Reports under:** the questions on the pages about building (Size and Shape: what comes in the
+package and how much of the AI's memory it uses; is it transferable to other machines: operating systems
+and other AI tools; does it ask only for the tools it needs; finished and up to date, under anything to be
+careful about), Misalignment (where a skill differs from the Agent Skills
+standard, R13), and the matching sections of `full.md`. The step has no
 section of its own; it has a row in `LOG.md` and a validation stamp.
 
 ## Inputs
