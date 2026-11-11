@@ -122,23 +122,16 @@ On Windows, keep the Walkdown folder on a short path outside OneDrive (for examp
 `git config --global core.longpaths true` lifts that limit for every repository. The
 repositories Walkdown audits are cloned with long paths on.
 
-That is all the coded steps and the report need. Optional extras, installed into the same `.venv`:
+That is all the coded steps and the report need: nothing else is installed, no OCR program and no browser. Two
+things follow, and a run says them under "What this run covered" when the repository has such files:
 
-- **Tesseract** (OCR of text in images and on PDF pages, in "What the model actually reads"): the
-  program itself (Windows `winget install UB-Mannheim.TesseractOCR`, macOS `brew install tesseract`,
-  Linux `apt install tesseract-ocr`) and its Python wrapper,
-  `.venv/bin/python -m pip install pytesseract==0.3.13`; both
-  are needed. Without it, that text is listed as not examined. PDF pages are drawn by `pypdfium2`,
-  which `requirements.txt` installs.
-- **Playwright** (HTML as a browser draws it, in "What the model actually reads"):
-  `.venv/bin/python -m pip install playwright==1.64.0`, then
-  `.venv/bin/python -m playwright install chromium-headless-shell`. Pages are drawn with their own scripts
-  off and nothing fetched from the network. Without it, HTML is read from static style only and
-  the rest is listed as not examined.
+- The text drawn inside images, and on PDF pages that are only a picture, is not examined. An image's metadata is
+  read, and the image is listed among the files no tests are run on.
+- HTML is read from its own styles and the style sheets it links in the repository (hidden elements, `@media` rules for
+  one screen, text placed off the page or clipped away, text under 2 px, text a style sheet adds, a closed
+  `<details>`). How a page looks once drawn, one element over another or text over a background image, is not examined.
 
-Without Tesseract or Playwright, the validation stamp of "What the model actually reads" reads
-INCOMPLETE: the fixture checks for what that tool reads are skipped, and everything else in that
-step is still checked.
+One optional extra, installed into the same `.venv`:
 
 - **Model reads** (`requirements-soft.txt`), chosen at run time:
   - `--reads [model]`, after the target (`walkdown.py <target> --reads claude-opus-5-5`): the way to ask for the
@@ -330,7 +323,7 @@ step against an answer sheet the step's code never reads:
 ```
 
 The same tests and graders run on GitHub on every push (Ubuntu 24.04 and 26.04 with Python 3.12
-and 3.13, macOS 15 and Windows Server 2025 with Python 3.13; Tesseract and Playwright installed), shown by the badge at the top. Each audit runs the grader first, and the result is the step's validation stamp in `LOG.md`. A
+and 3.13, macOS 15 and Windows Server 2025 with Python 3.13; nothing installed but the requirements), shown by the badge at the top. Each audit runs the grader first, and the result is the step's validation stamp in `LOG.md`. A
 step that fails its fixtures says so in the report. A stamp is reused while the code and
 fixtures are unchanged (LOG.md says when it was measured); `--revalidate` measures afresh.
 

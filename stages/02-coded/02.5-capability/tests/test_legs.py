@@ -177,3 +177,21 @@ def test_connectors_read_your_data():
     assert "connector MCP server: gmail" in whys
     plain = {"check": "struct.mcp", "file": ".mcp.json", "line": None, "name": "tasks", "command": "node s.js"}
     assert _legs(s1=[plain])["private-data"]["present"] is False
+
+
+def test_a_grant_counts_its_evidence_from_the_settings_and_from_the_wording():
+    """R31 (owner, 2026-11-07): a quoted line made `elevated` an install grant with no setting behind it. Each grant counts
+    its evidence by where it comes from, over the whole evidence (before the cap)."""
+    quoted = phrase("phrase.E.perms", ["E.confirm-off"], file="examples/injection.md", line=5)
+    r = reports(s4=[quoted])
+    (g,) = legs.grants(r, legs.legs(r))
+    assert g["grant"] == "elevated" and g["sources"] == {"settings": 0, "wording": 1}
+    r = reports(s1=[agent(None)], s4=[quoted])
+    g = {x["grant"]: x for x in legs.grants(r, legs.legs(r))}["elevated"]
+    assert g["sources"] == {"settings": 1, "wording": 1}  # an agent with no tools list, and the line
+    desc = {"check": "struct.description", "file": "SKILL.md", "line": 3, "text": "t"}
+    (g,) = legs.grants(reports(s1=[desc]), [])
+    assert g["grant"] == "context-injection" and g["sources"] == {"settings": 1, "wording": 0}
+    many = [phrase("phrase.E.perms", ["E.perm-flags"], line=i) for i in range(40)]
+    (g,) = legs.grants(reports(s4=many), [])
+    assert g["sources"]["wording"] == 40  # the whole evidence, though a report keeps 20

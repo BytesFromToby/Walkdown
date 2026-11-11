@@ -18,7 +18,7 @@ _spec = importlib.util.spec_from_file_location("walkdown_s08_test_render_one",
 _tr = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_tr)
 META, PASS, reports, pair, hit = _tr.META, _tr.PASS, _tr.reports, _tr.pair, _tr.hit
-ORDER = ["size", "transfer", "tools", "careful"]  # question 1 retired (R13)
+ORDER = ["size", "transfer", "careful", "tools"]  # question 1 retired (R13); careful above tools (R33, owner 2026-11-08)
 
 
 def phrase(check, pattern, line, quote="words"):
@@ -73,17 +73,32 @@ def text(h, qid=None):
     return H.unescape(re.sub(r"<[^>]+>", "", card(h, qid) if qid else h))
 
 
+def head(h, qid):
+    """The card's head: what shows before "More" opens (a part's own chip inside is not the card's)."""
+    return card(h, qid).split('<div class="body">')[0]
+
+
 def chip(h, qid):
-    return H.unescape(re.search(r'<span class="chip ([a-z]+)">([^<]+)</span>', card(h, qid)).group(2))
+    """The card's chip, or "" when it has none (R32: a card that found nothing has no chip)."""
+    m = re.search(r'<span class="chip ([a-z]+)">([^<]+)</span>', head(h, qid))
+    return H.unescape(m.group(2)) if m else ""
 
 
 def tone(h, qid):
-    return re.search(r'<span class="chip ([a-z]+)">', card(h, qid)).group(1)
+    m = re.search(r'<span class="chip ([a-z]+)">', head(h, qid))
+    return m.group(1) if m else ""
 
 
 def answer(h, qid):
-    return H.unescape(re.sub(r"<[^>]+>", "", re.search(r'<span class="a">(.*?)</span>(?:<span class="more">|<span class="go-row">|</div>|</summary>)',
-                                                         card(h, qid), re.S).group(1)))
+    """The card's answer line, or "" when it has none (R32: a card that found nothing is its question)."""
+    m = re.search(r'<span class="a">(.*?)</span>(?:<span class="more">|<span class="go-row">|</div>|</summary>)', card(h, qid), re.S)
+    return H.unescape(re.sub(r"<[^>]+>", "", m.group(1))) if m else ""
+
+
+def not_found(d, sid):
+    """details.html, one section's Not found fold as plain words (R32), or "" when it has none."""
+    m = re.search(rf'<details class="fold" id="{sid}-none">(.*?)</details>', d, re.S)
+    return " ".join(H.unescape(re.sub(r"<[^>]+>", " ", m.group(1))).split()) if m else ""
 
 
 def mis(d):
@@ -269,16 +284,14 @@ def test_a_failed_check_never_reads_as_clean():
     """Owner, 2026-10-25 (review C40): with no concerns, a step that ran and failed its fixture
     check changes the answer; an INCOMPLETE stamp does not."""
     failed = dict(PASS, **{"02.3-graph": Stamp("FAIL", "1/2", "1/1")})
-    assert answer(page(bare(), stamps=failed), "careful") == (
-        "Walkdown found none of the security concerns it looks for. Not every step worked, so it may "
-        "have missed some.")
+    assert answer(page(bare(), stamps=failed), "careful") == "Not every step worked, so Walkdown may have missed some."  # R32: no "found none"
     incomplete = dict(PASS, **{"02.2-reader": Stamp("INCOMPLETE", "1/2", "1/1", skipped=["rd-img-ocr"])})
     h = page(bare(), stamps=incomplete)
-    assert answer(h, "careful") == "Walkdown found none of the security concerns it looks for."
-    assert chip(h, "careful") == "Nothing found" and tone(h, "careful") == "none"
+    assert answer(h, "careful") == "" and chip(h, "careful") == ""  # R32: the card is its question
+    assert "Walkdown found none of the security concerns it looks for." in not_found(both(bare())[1], "careful")
     assert S.failed_checks(qa(results={"02.1-inventory": "PASS", "02.2-reader": "INCOMPLETE", "02.4-phrases": "FAIL"})) \
         == ["What the text asks for"]
-    assert S.headline([], (), ["What loads what"]).endswith("so it may have missed some.")
+    assert S.headline([], (), ["What loads what"]) == "Not every step worked, so Walkdown may have missed some."  # R32
 
 
 def test_a_run_missing_a_step_never_reads_as_clean():
@@ -383,15 +396,15 @@ def test_a_stop_is_a_headline_and_not_a_step_that_did_not_run():
         'This run stopped after the step "What loads what", as asked. In the steps that ran, Walkdown found security '
         "concerns: 2 places, of 1 kind.")
     assert S.headline([], ["What the model actually reads"], (), stop).startswith("This run did not complete:")
-    done = {"after": "02.6-builder", "prepared": None}  # every coded step ran: the usual headline
-    assert S.headline([], (), (), done) == "Walkdown found none of the security concerns it looks for."
+    done = {"after": "02.6-builder", "prepared": None}  # every coded step ran: the usual headline, none since R32
+    assert S.headline([], (), (), done) == ""
     h = page(r, runs_ok=ran, meta=dict(META, stop=stop))
     assert answer(h, "careful") == ('This run stopped after the step "What loads what", as asked, so Walkdown cannot '
                                     "say whether it has any of these.")
     assert chip(h, "careful") == "Not checked" and tone(h, "careful") == "unmeasured"
     assert 'id="warning"' not in h and "Not every step worked" not in text(h) and "found none" not in text(h)
-    for qid in ORDER[:-1]:
-        if tone(h, qid) == "unmeasured":
+    for qid in ORDER:
+        if qid != "careful" and tone(h, qid) == "unmeasured":  # the careful card has its own stop line, above
             assert answer(h, qid) == 'Not measured: the run stopped after the step "What loads what", as asked.', qid
     assert answer(h, "misalign") == 'Not measured: the run stopped after the step "What loads what", as asked.'  # R13
     # with places found in the steps that ran, the answer says it may have missed some
@@ -429,9 +442,7 @@ def test_a_builder_step_that_failed_its_fixture_check_is_named():
     h = page(full_set(), stamps=bad)
     w = re.search(r'<p class="warnline" id="warning">(.*?)</p>', h, re.S).group(1)
     assert "Builder checks did not pass its fixture check (FAIL)" in w
-    assert answer(page(bare(), stamps=bad), "careful") == (
-        "Walkdown found none of the security concerns it looks for. Not every step worked, so it may "
-        "have missed some.")
+    assert answer(page(bare(), stamps=bad), "careful") == "Not every step worked, so Walkdown may have missed some."  # R32
     assert S.failed_checks(qa(results={"02.6-builder": "FAIL", "02.5-capability": "PASS"})) == ["Builder checks"]
     assert S.failed_checks(qa(results={"02.6-builder": "INCOMPLETE"})) == []
     assert S.not_working(Q({}, stamps=bad, runs_ok=set(R.NAMED))) == ["Builder checks did not pass its fixture check (FAIL)"]
@@ -488,7 +499,12 @@ def test_elsewhere_question():
     assert "never says so: jq. It says to install git." in t and "never lists: pandas." in t
     assert "Windows line endings; Mac and Linux can't run it" in t
     h = page(_tr.hosty(full_set()))  # a run with slice 3's host check made slice 2's too
-    assert chip(h, "transfer").startswith("Nothing to look at \u00b7 ") and answer(h, "transfer").startswith("Yes.")
+    # R32: nothing found against other systems: no chip, no answer, no heading; the lines are under Not found
+    assert chip(h, "transfer") == "6 of 7 tools" and not answer(h, "transfer").startswith("Yes.")
+    assert "Operating systems" not in card(h, "transfer")
+    nf = not_found(both(_tr.hosty(full_set()))[1], "transfer")
+    assert "Everything it uses is something it says to install, and nothing ties it to one computer." in nf
+    assert "Nothing found against Linux, Windows, and Mac." in nf
     # a run made before the check says so, never "nothing" (recount, 2026-10-27)
     assert chip(page(full_set()), "transfer") == "Not measured"
     assert S.brief_needs_line(_tr.needy(full_set())) == (
@@ -498,12 +514,12 @@ def test_elsewhere_question():
 def test_hosts_question():
     """Slice 3 (owner, 2026-10-26): the to-do list for the tools named first, then one line per kind."""
     h = page(_tr.hosty(full_set()), meta=dict(META, hosts=["codex"]))
-    assert chip(h, "transfer").endswith(" \u00b7 3 missing for your tools")
+    assert chip(h, "transfer") == "3 missing for your tools"  # R32: other systems found nothing, so no chip of its own
     assert answer(h, "transfer").endswith("6 of the 7 AI tools Walkdown knows find its files where they sit.")
     t = text(h, "transfer")
     assert t.index("Codex: none of the skills sit where it reads them (.agents/skills).") < t.index("say different things")
     plain = page(_tr.hosty(full_set()))
-    assert chip(plain, "transfer").endswith(" \u00b7 6 of 7 tools") and "Codex: none" not in text(plain, "transfer")
+    assert chip(plain, "transfer") == "6 of 7 tools" and "Codex: none" not in text(plain, "transfer")
     assert S.brief_ready_line(_tr.hosty(full_set())) == (
         "Ready for: 6 of 7 hosts have their files here; copies that differ: 1; one-host features: 3.")
     assert S.brief_ready_line(_tr.hosty(full_set()), ["claude", "codex"]).endswith(
@@ -555,10 +571,9 @@ def test_misalignment_after_the_questions():
     assert "Where its skills differ from the Agent Skills standard, the open format for skills that many AI tools read" in t
     assert "1 skill has a header not in the expected format (YAML), so a tool that follows the standard can't read it." in t
     assert "2 settings the standard doesn't define: disable-model-invocation, allowed_tools." in t
-    assert "Descriptions too alike" in t and "No two skills describe themselves alike." in t
+    assert "Descriptions too alike" not in t and "No two skills describe themselves alike." in not_found(d, "misalign")  # R32
     assert "the AI knows" not in t and "say when to use it" not in H.unescape(s) + H.unescape(d)
-    assert S.brief_misalign_line(r) == (
-        "Misalignment: 4 skills; 3 places that differ from the Agent Skills standard; 0 pairs of skills described alike.")
+    assert S.brief_misalign_line(r) == "Misalignment: 4 skills; 3 places that differ from the Agent Skills standard."
     # Nitty gritty is gone: its one catch, a setting no tool knows, is a setting the standard doesn't define
     assert "Nitty gritty" not in d and 'id="nitty"' not in d
 
@@ -601,14 +616,14 @@ def test_skill_formatting_has_a_line_for_each_way_a_skill_differs_from_the_stand
     _tr.builder(one).extend(_tr.builder_module("trigger").findings(
         {"s/a/SKILL.md": "---\nname: a\ndescription: Does a. Use when asked.\n---\n"}, [{"file": "s/a/SKILL.md", "entry_point": "skill"}]))
     assert "Every skill's header follows the standard." in mis(both(one)[1]) and "Descriptions too alike" not in mis(both(one)[1])
-    assert answer(page(one), "misalign") == "Things that are not standard but are not security flaws. (0 issues)"
+    assert answer(page(one), "misalign") == ""  # R32: none that differ, so the card is its question
+    assert "Every skill's header follows the standard." in not_found(both(one)[1], "misalign")
     late = full_set()  # R15: blank lines before the settings are not called out, and the settings below them are checked
     _tr.builder(late).extend(_tr.builder_module("trigger").findings(
         {"s/a/SKILL.md": "\n\n---\nname: a\ndescription: Does a. Use when asked.\nversion: 1\n---\n"},
         [{"file": "s/a/SKILL.md", "entry_point": "skill"}]))
     assert "1 setting the standard doesn't define: version." in mis(both(late)[1]) and "blank lines are" not in mis(both(late)[1]).split("Skill Formatting", 1)[1]
-    assert S.brief_misalign_line(one) == ("Misalignment: 1 skill; 0 places that differ from the Agent Skills standard; "
-                                          "0 pairs of skills described alike.")
+    assert S.brief_misalign_line(one) is None  # R32: nothing found is no line
 
 
 def test_tools_question():
@@ -703,28 +718,25 @@ def test_a_partial_read_is_a_read_that_worked_and_a_read_that_asked_nothing_is_t
 def test_the_headline_says_the_coded_checks_are_complete_and_the_model_read_did_not_work():
     """Restructure M14 b: a model read never adds a concern, so "cannot say" overstates it."""
     down = ["Needs a human read"]
-    assert S.headline([], (), (), None, down) == (
-        "Walkdown found none of the security concerns it looks for. The coded checks are complete; the model read "
-        "did not work.")
+    assert S.headline([], (), (), None, down) == "The coded checks are complete; the model read did not work."  # R32
     rs = [{"places": [1, 2], "not_concerned": 0}]
     assert S.headline(rs, (), (), None, down) == (
         "Walkdown found security concerns in this repository: 2 places, of 1 kind. The coded checks are complete; "
         "the model read did not work.")
     # a coded step that failed its fixture check: the coded checks are not complete, so it says only that the read failed
-    assert S.headline([], (), ["What loads what"], None, down).endswith(
-        "so it may have missed some. The model read did not work.")
+    assert S.headline([], (), ["What loads what"], None, down) == (
+        "Not every step worked, so Walkdown may have missed some. The model read did not work.")
     # a coded step that did not run keeps its "cannot say" line, and the model read is not what it says
     assert S.headline([], ["What ships"], (), None, down).startswith('This run did not complete: the step "What ships"')
     assert "model read" not in S.headline([], ["What ships"], (), None, down)
-    assert S.headline([], (), (), None, ()) == "Walkdown found none of the security concerns it looks for."
+    assert S.headline([], (), (), None, ()) == ""  # R32: nothing found and nothing to say of the run
 
 
 def test_the_careful_answer_says_the_same_and_does_not_read_as_not_checked():
     ok = set(R.NAMED) | {"03-sweep"}
     h = page(swept(3), runs_ok=ok)
-    assert answer(h, "careful") == ("Walkdown found none of the security concerns it looks for. The coded checks are "
-                                    "complete; the model read did not work.")
-    assert chip(h, "careful") == "Nothing found" and tone(h, "careful") == "none"
+    assert answer(h, "careful") == "The coded checks are complete; the model read did not work."  # R32
+    assert chip(h, "careful") == "" and "Not checked" not in card(h, "careful")
     h = page(dict(full_set(), **{"03-sweep": None}), runs_ok=set(R.NAMED))
     assert "This run did not complete" not in text(h) and "cannot say" not in text(h)
 
@@ -775,19 +787,17 @@ def test_the_coded_checks_are_complete_only_when_none_was_skipped_for_a_missing_
     ok = set(R.NAMED) | {"03-sweep"}
     down = ["Needs a human read"]
     complete = "The coded checks are complete; the model read did not work."
-    ran = ('The coded checks ran, and "What Walkdown didn\'t check" names any skipped for a missing tool; the model read '
+    ran = ('The coded checks ran, and "What this run covered" names any skipped for a missing tool; the model read '
            "did not work.")
     assert S.model_down_sentence() == complete and S.model_down_sentence((), ()) == complete
     assert S.model_down_sentence((), ["What the model actually reads"]) == ran
     assert S.model_down_sentence(["What loads what"], ["What the model actually reads"]) == "The model read did not work."
     assert S.incomplete_checks(qa(results={"02.2-reader": "INCOMPLETE", "02.3-graph": "PASS",
                                             "03-sweep": "INCOMPLETE"})) == ["What the model actually reads"]
-    assert S.headline([], (), (), None, down, ["What the model actually reads"]) == (
-        "Walkdown found none of the security concerns it looks for. " + ran)
-    assert S.headline([], (), (), None, down, ()) == "Walkdown found none of the security concerns it looks for. " + complete
+    assert S.headline([], (), (), None, down, ["What the model actually reads"]) == ran  # R32: no "found none"
+    assert S.headline([], (), (), None, down, ()) == complete
     incomplete = dict(PASS, **{"02.2-reader": Stamp("INCOMPLETE", "1/2", "1/1", skipped=["rd-img-ocr"])})
-    assert answer(page(swept(3), stamps=incomplete, runs_ok=ok), "careful") == (
-        "Walkdown found none of the security concerns it looks for. " + ran)
+    assert answer(page(swept(3), stamps=incomplete, runs_ok=ok), "careful") == ran
     assert answer(page(swept(3), runs_ok=ok), "careful").endswith(complete)
 
 
@@ -827,14 +837,12 @@ def test_steps_whose_check_could_not_be_made_are_said_once_apart_from_the_steps_
     one = '3 steps could not be checked against their fixtures, so a "none" from them is not measured'
     assert S.unchecked_sentence(q) == one
     h = S.headline([], (), S.failed_checks(q), unchecked=S.unchecked_sentence(q))
-    assert h == ("Walkdown found none of the security concerns it looks for, but not every step worked, so it may have "
-                 f"missed some. {one}.")
+    assert h == f"Not every step worked, so Walkdown may have missed some. {one}."  # R32
     # with nothing but checks that could not be made, no step "did not work": the line is that sentence alone
     only = qa(results={"02.1-inventory": "SETUP ERROR", "02.2-reader": "no fixture set", "02.3-graph": "NOT BUILT"})
     assert S.not_working(only) == [] and S.failed_checks(only) == []
     assert S.headline([], (), S.failed_checks(only), unchecked=S.unchecked_sentence(only)) == (
-        "Walkdown found none of the security concerns it looks for. 3 steps could not be checked against their fixtures, so "
-        'a "none" from them is not measured.')
+        '3 steps could not be checked against their fixtures, so a "none" from them is not measured.')  # R32
     assert S.warning([], False, S.unchecked_sentence(only)).startswith(
         '<p class="warnline" id="warning"><b>3 steps could not be checked against their fixtures, so a &quot;none&quot; from '
         "them is not measured.</b>")
@@ -987,13 +995,16 @@ def test_size_and_shape_holds_the_package_then_the_memory():
     assert answer(s, "size") == ("3 of its 6 files do the work. The other 3 come along without being used.A small part on "
                                  "Claude. On a local AI, its biggest skill takes more than all of the memory.")
     assert '<span class="a">3 of its 6 files do the work. The other 3 come along without being used.<br>A small' in c
-    assert (c.index('<h3 class="piece">What comes in the package</h3>') < c.index('class="stack"') < c.index('class="legend"')
+    # R33 (owner, 2026-11-08: "Keep the faces"): the bar and its legend are the card's face, above the headings
+    assert (c.index('class="face"') < c.index('class="stack"') < c.index('class="legend"')
+            < c.index('<h3 class="piece">What comes in the package</h3>')
             < c.index("<h3 class=\"piece\">How much of the AI&#x27;s memory it uses</h3>") < c.index('class="tablewrap"'))
+    assert c.index('<span class="more">') < c.index('class="face"') < c.index('<div class="body">')  # in the summary element: shown closed
     assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in s and ".legend { grid-template-columns: 1fr; }" in s
     sec = re.search(r'<section id="size" class="sec">(.*?)</section>', d, re.S).group(1)
     assert "<h2>Size and Shape</h2>" in sec and 'id="memory"' not in d and 'id="package"' not in d
-    at = [sec.index(x) for x in ('What comes in the package</h3>', 'class="legend"', "Every file, by group",
-                                 "memory it uses</h3>", 'class="tablewrap"')]
+    at = [sec.index(x) for x in ('class="stack"', 'class="legend"', 'What comes in the package</h3>',  # the face first (R33)
+                                 "Every file, by group", "memory it uses</h3>", 'class="tablewrap"')]
     assert at == sorted(at)
     assert 'href="#size">Size and Shape</a>' in d
     none = both(full_set())[0]
@@ -1010,15 +1021,18 @@ def test_transferable_holds_other_systems_then_other_ai_tools():
     c = card(s, "transfer")
     assert '<span class="q">Is this transferable to other machines?</span>' in c
     assert '<li id="elsewhere">' not in s and '<li id="hosts">' not in s and "someone else&#x27;s computer?" not in s
-    at = [c.index(x) for x in ('<h3 class="piece">Operating systems</h3>', 'class="hosts systems"',
+    at = [c.index(x) for x in ('class="hosts systems"',  # the three system boxes are the card's face (R33), above the headings
+                               '<h3 class="piece">Operating systems</h3>',
                                "Windows line endings", '<h3 class="piece">Other AI tools</h3>', '<div class="hosts">',
                                "say different things")]
     assert at == sorted(at)
     boxes = re.search(r'<div class="hosts systems">(.*?)</span></div></div>', c, re.S).group(0)
     names = re.findall(r'<div class="host( has)?"><b>(.) (\w+)</b><span class="st">([^<]+)</span>', boxes)
-    assert [x[2] for x in names] == ["Linux", "Windows", "Mac"]
+    # R32: a box for each system something found trips, in order; Windows, which nothing trips, is under Not found
+    assert [x[2] for x in names] == ["Linux", "Mac"]
     for has, mark, _, st in names:
-        assert (has, mark) == ((" has", "\u2713") if st == "nothing found against it" else ("", "\u2717")), (has, mark, st)
+        assert (has, mark) == ("", "\u2717") and st.endswith("to look at"), (has, mark, st)
+    assert "Nothing found against Windows." in not_found(d, "transfer")
     assert ".host { border: 1px solid var(--look-ink);" in s and ".host.has { border-color: var(--s1); }" in s
     assert 'href="#transfer">Other machines</a>' in d and 'id="elsewhere"' not in d
     sec = re.search(r'<section id="transfer" class="sec">(.*?)</section>', d, re.S).group(1)
@@ -1032,7 +1046,7 @@ def test_each_system_box_counts_the_kinds_that_trip_it():
     import glance as G
     nd = lambda *port: {"port": list(port)}  # noqa: E731
     box = lambda h: dict(re.findall(r'<b>. (\w+)</b><span class="st">([^<]+)</span>', h))  # noqa: E731
-    assert set(box(G.system_tiles(nd())).values()) == {"nothing found against it"}
+    assert G.system_tiles(nd()) == ""  # R32: nothing trips any system: no boxes
     got = box(G.system_tiles(nd(("port.crlf", "", "", [{}]), ("graph.case", "", "", [{}]), ("port.path", "", "", [{}]),
                                 ("port.os", "", "", [{"os": "unix"}, {"os": "macos"}]))))
     assert got == {"Linux": "3 things to look at", "Windows": "1 thing to look at", "Mac": "1 thing to look at"}
@@ -1088,7 +1102,7 @@ def test_careful_lines_have_a_color_and_run_red_then_yellow_then_blue():
     d = both(sk)[1]
     keys = re.search(r'id="careful-keys".*?</details>', d, re.S).group(0)
     assert "Wording that gathers secrets or credentials" in keys and "Passwords, keys, and secrets" in keys
-    places = re.search(r'id="careful-places".*?id="careful-hidden-text"', d, re.S).group(0)
+    places = re.search(r'id="careful-places".*?id="careful-(?:hidden-text|wording|links|keys)"', d, re.S).group(0)
     assert "gathering secrets" not in places and "send the notes" not in H.unescape(places)  # moved, not listed twice
 
 
@@ -1116,3 +1130,80 @@ def test_the_passwords_group_counts_what_its_lines_count():
     d = both(r)[1]
     assert 'id="careful-secret"' not in d and "Looks like a committed secret (" not in d
 
+
+
+def test_lines_full_md_has_that_no_place_holds_are_counted_never_found_none():
+    """R28 (owner, 2026-11-07, after an outside tester's report): a hit whose pattern is not on the summary's list reached
+    full.md only, and the careful card said Nothing found. It says how many lines full.md has, with places or without; a
+    line a place is on, and a line in a file written for people, are not counted."""
+    off = [phrase("phrase.H.anti-review", "H.suppress", 30, "do not tell the user"),
+           phrase("phrase.E.perms", "E.confirm-off", 31, "turn off the confirmation prompts"),
+           phrase("phrase.K.exfil", "K.telemetry-send", 14, "send usage data")]  # line 14 also holds K.dns: a place
+    readme = dict(phrase("phrase.H.anti-review", "H.suppress", 2, "silently"), file="README.md", audience="human")
+    r = bare()
+    r["02.4-phrases"]["findings"] = off[:2] + [readme]
+    h = page(r)
+    assert answer(h, "careful") == "full.md has 2 more lines with risky wording, not listed here (section 4)."
+    assert chip(h, "careful") == ""  # R32: "none on its list" is under Not found on details.html
+    assert "Walkdown found none of the security concerns on its list." in not_found(both(r)[1], "careful")
+    r = full_set()  # holds one such line already (12, H.report-only)
+    assert "full.md has 1 more line with risky wording, not listed here (section 4)." in text(page(r), "careful")
+    r["02.4-phrases"]["findings"] += off + [readme]
+    assert "full.md has 3 more lines with risky wording, not listed here (section 4)." in text(page(r), "careful")
+    assert S.headline([], off=1) == "full.md has 1 more line with risky wording, not listed here (section 4)."
+
+
+def test_the_summary_says_what_was_found_and_details_ends_each_section_with_what_was_not():
+    """R32 (owner, 2026-11-07: "things not found (say an API Key written plainly is not found) I do not want that fact in the
+    summary. I can see the use in details, listed after found things in each section, a not found section that starts
+    collapsed."; "Keep the question, drop the card's answer line"; "yes drop the chip")."""
+    r = _tr.hosty(bare())  # every check ran; the tools and finished checks found nothing
+    _tr.builder(r).extend([{"check": "fit.checked", "file": None, "line": None, "entries": 1, "with_grants": 1, "inheriting": 0},
+                           {"check": "clean.checked", "file": None, "line": None, "files": 3}])
+    s, d = both(r)
+    for words in ("Nothing to look at", "Nothing found", "Nothing extra", "nothing found against it", "Yes. ",
+                  "found none of the security concerns", "No lines look like a saved password", "Nothing hidden from people",
+                  "No step repeats", "It has no hooks"):
+        assert words not in H.unescape(s), words
+    assert answer(s, "careful") == "" and chip(s, "careful") == ""  # the card is its question
+    assert '<span class="q">Anything to be careful about?</span>' in card(s, "careful")
+    nf = not_found(d, "careful")
+    assert "No lines look like a saved password, key, or token." in nf and "Nothing hidden from people." in nf
+    assert "Walkdown found none of the security concerns it looks for." in nf
+    assert 'id="careful-keys"' not in d and 'id="careful-hidden-text"' not in d  # no part with nothing found in it
+    fold = re.search(r'<details class="fold" id="careful-none">', d)
+    assert fold and " open" not in fold.group(0)  # it starts closed
+    sec = re.search(r'<section id="careful" class="sec">(.*?)</section>', d, re.S).group(1)
+    assert re.findall(r'<details class="fold[^"]*" id="([^"]+)"', sec)[-1] == "careful-none"  # after every found part
+    for sid, line in (("transfer", "Nothing found against Linux, Windows, and Mac."),
+                      ("tools", "No step repeats \u201cuntil it works\u201d without a limit."),
+                      ("tools", "Every tool it is allowed to use is one it actually uses, and nothing it asks for is missing."),
+                      ("careful", "Finished and up to date: no unfinished notes, no dates that will go stale, and no older "
+                                  "tool names.")):
+        assert line in not_found(d, sid), (sid, line)
+    assert answer(s, "tools") == "" and chip(s, "tools") == "" and "Finished and up to date" not in s
+    # a found thing keeps its place and words
+    found = page(full_set())
+    assert chip(found, "careful").endswith("to look at") and answer(found, "careful").startswith("Walkdown found ")
+
+
+def test_r33_glyphs_faces_rail_and_tier_bar():
+    """R33 (owner, 2026-11-07 and 2026-11-08: "I like the changes"; "Keep the faces"): one glyph per section, the same on
+    both pages; a face on the Size and Shape, transferable, and careful cards and at the top of their sections; the
+    examined bar; the rail on details.html in the summary's order with a Summary button; no "p=" from the svg."""
+    s, d = both(_tr.hosty(_tr.needy(_tr.costed(full_set()))))
+    for qid in ORDER + ["misalign"]:
+        assert f'<svg class="ico"' in card(s, qid), qid
+        assert f'<section id="{qid}" class="sec"><details class="secfold"><summary><span class="sec-head"><svg class="ico"' in d, qid
+    for qid in ("size", "transfer", "careful"):
+        assert 'class="face' in card(s, qid), qid
+        sec = re.search(rf'<section id="{qid}" class="sec">.*?</section>', d, re.S).group(0)
+        assert sec.index('class="sec-body">') < sec.index('class="face') < sec.index('<h3 class="piece">' if qid != "careful" else '<ul class="bul">'), qid
+    assert 'class="face' not in card(s, "tools") and 'class="face' not in card(s, "misalign")
+    dots = re.search(r'<div class="face kinds" role="img" aria-label="([^"]+)">(.*?)</div>', card(s, "careful"), re.S)
+    assert dots and dots.group(2).count('<i class="kd ') == sum(int(x.split()[0]) for x in dots.group(1).split(", "))
+    assert '<div class="tierbar" role="img"' in s and '<span class="tseg t-examined"' in s
+    rail = re.search(r'<nav class="rail" aria-label="Sections">(.*?)</nav>', d, re.S).group(1)
+    assert rail.startswith('<a class="back" href="summary.html">')
+    assert re.findall(r'data-sec="(\w+)"', rail) == ["can", "examined", *ORDER, "misalign", "limits"]
+    assert 'stroke-linecap=' not in s and 'stroke-linecap=' not in d  # no "p=" from the glyphs (test_no_probability)

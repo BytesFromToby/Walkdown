@@ -118,9 +118,23 @@ def legs(reports: dict) -> list[dict]:
     return out
 
 
+# Where a grant's evidence comes from (R31, owner 2026-11-07, after an outside tester's report: a quoted example line made
+# `elevated` an install grant): the settings (`02.1-inventory`: tools lists, hooks, descriptions, MCP servers) or the wording
+# (`02.4-phrases`). Counted here, before the evidence is capped, so a report can say which.
+SOURCE_OF = {"02.1-inventory": "settings", "02.4-phrases": "wording"}
+
+
+def sources(ev: list[dict]) -> dict:
+    """{"settings": n, "wording": n}: the grant's evidence entries by where they come from."""
+    out = {"settings": 0, "wording": 0}
+    for e in ev:
+        out[SOURCE_OF.get(e.get("stage"), "settings")] += 1
+    return out
+
+
 def grants(reports: dict, leg_findings: list[dict]) -> list[dict]:
-    """One `cap.grant` finding for each grant that has evidence. Each of the grants counts as looked at where it is judged,
-    whether it has evidence or not."""
+    """One `cap.grant` finding for each grant that has evidence, with `sources` (R31). Each of the grants counts as looked
+    at where it is judged, whether it has evidence or not."""
     by_leg = {f["leg"]: f["evidence"] for f in leg_findings}
     out = []
     for g in GRANTS:
@@ -128,5 +142,5 @@ def grants(reports: dict, leg_findings: list[dict]) -> list[dict]:
         cov.look("cap.grant")
         if ev:
             out.append({"check": "cap.grant", "file": None, "line": None, "grant": g,
-                        "evidence": ev})
+                        "evidence": ev, "sources": sources(ev)})
     return out

@@ -278,7 +278,8 @@ def test_a_stop_and_continue_through_the_router_print_the_two_briefs(tiny_repo, 
     assert wd.main(["continue", os.path.relpath(run, elsewhere)]) == 0
     whole = capsys.readouterr().out
     assert whole == (run / "brief.md").read_text("utf-8") and "Stopped after" not in whole and "To go on" not in whole
-    assert whole.startswith("Walkdown brief: demo\n") and "Walkdown found none of the security concerns" in whole
+    # every step ran: the boxes are measured; with nothing found the brief has no "found none" line (R32, 2026-11-07)
+    assert whole.startswith("Walkdown brief: demo\n") and "What it can do:\n  [" in whole and "found none" not in whole
     assert wd.main(["continue", str(run)]) == 2  # it went through: nothing to continue
     assert "did not stop" in capsys.readouterr().err
 

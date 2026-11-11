@@ -11,14 +11,15 @@
 - Nothing from `data/` (`reads` in `stages/stages.json` is empty): it walks the folder itself, with
   02.1's rules.
 - `Library/invisible.yaml`, through `stages/_shared/library.py`: the one list of invisible characters.
-- Optional tools: Tesseract through `pytesseract` (OCR of images and PDF pages) and Playwright with its
-  Chromium (HTML drawn as a browser draws it). A missing tool gives a skip, never a pass.
+- Nothing installed apart (R35, R36, 2026-11-11): no OCR program and no browser. The text drawn inside images, and on
+  PDF pages that are only a picture, is not examined; HTML is read from its own styles and linked style sheets, and how
+  it looks once drawn is not examined. The step says each, once, when the repository has such a file.
 
 ## Process
 
 Each file by kind (`files.py`) is read as reading A (what a parser or model gets) and reading B (what a
-human sees): Markdown (`read_md.py`), HTML (`read_html.py`, `render_html.py`), SVG (`read_svg.py`), PDF
-(`read_pdf.py`, `render_pdf.py`), DOCX (`read_docx.py`), images (`read_image.py`). The checks:
+human sees): Markdown (`read_md.py`), HTML (`read_html.py`), SVG (`read_svg.py`), PDF (`read_pdf.py`), DOCX
+(`read_docx.py`); an image's metadata (`read_image.py`). The checks:
 
 - `read.fold` (`fold.py`): each line folded (NFKC, invisible characters removed, confusables to ASCII);
   one finding per line the fold changes.
@@ -42,13 +43,14 @@ folding; pass a file it could not read.
 ## The human check
 
 A divergence quotes the hidden text verbatim and names the carrier (a comment, `display:none`, a zero-width
-character, an image), so a person can open the file at that line and see it. The fixtures
+character, text placed off the page), so a person can open the file at that line and see it. The fixtures
 `Fixtures/02.2-reader/` (one hidden-text case per format and carrier) and
-`python tools/grader/grader.py 02.2-reader` give the validation stamp in `LOG.md`; without Tesseract the
-stamp is INCOMPLETE and says so, and `data/limits.md` lists what was not read.
+`python tools/grader/grader.py 02.2-reader` give the validation stamp in `LOG.md` (one recall row, a paragraph covered
+by another element, stays a miss on purpose: only drawing the page finds it), and `data/limits.md` lists what was not
+read.
 
 ## Spec
 
 `specs/reader.SPEC.md`: one section per script, `run` first and the others in alphabetical order
 (`colors`, `files`, `fold`, `language`, `read_docx`, `read_html`, `read_image`, `read_md`, `read_pdf`,
-`read_svg`, `render_html`, `render_pdf`, `script_runs`).
+`read_svg`, `script_runs`).

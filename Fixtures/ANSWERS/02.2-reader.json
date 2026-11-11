@@ -1,7 +1,7 @@
 {
   "stage": "02.2-reader",
   "answers_version": 1,
-  "note": "Two independent readings per format; differences recorded as facts.",
+  "note": "Two independent readings per format; differences recorded as facts. R35 and R36 (2026-11-11): no OCR and no browser; rd-pdfimg-gate and rd-pdfimg-count (a picture drawn on a PDF page) and rd-render-neg-dup, rd-render-neg-dup-var (the drawn reading never repeats static style's) are retired with them; git history keeps them.",
   "cases": [
     {
       "root": ".",
@@ -298,17 +298,14 @@
         {
           "id": "rd-img-ocr",
           "polarity": "gate",
-          "check": "read.divergence",
+          "check": "read.unread",
           "file": "class11-image-text.png",
           "match": {
-            "reading": {
-              "eq": "B-only"
-            },
-            "text": {
-              "contains": "dangerously-skip-permissions"
+            "reason": {
+              "contains": "the text drawn in it is not examined"
             }
           },
-          "note": "No text layer; OCR reveals the instruction. The model reads the pixels."
+          "note": "The instruction lives in the pixels. Since R35 (2026-11-11) Walkdown does not examine the text drawn in an image: the image is listed as unread with that reason, on every machine. Until then OCR read it (B-only)."
         },
         {
           "id": "rd-docx-vanish",
@@ -441,56 +438,16 @@
           "note": "Spanish inside a fenced code block is not prose."
         },
         {
-          "id": "rd-pdfimg-gate",
-          "polarity": "gate",
-          "check": "read.divergence",
-          "file": "class11-pdf-image.pdf",
-          "match": {
-            "carrier": {
-              "eq": "image-text"
-            },
-            "method": {
-              "eq": "ocr"
-            },
-            "reading": {
-              "eq": "B-only"
-            },
-            "page": {
-              "eq": 1
-            },
-            "text": {
-              "contains": "ssh/id_rsa"
-            }
-          },
-          "note": "An instruction drawn as a picture on a page whose text layer says something harmless. The text layer alone misses it; the page drawn and read finds it. Needs Tesseract (a skip without it)."
-        },
-        {
-          "id": "rd-pdfimg-count",
-          "polarity": "gate",
-          "check": "read.divergence",
-          "file": "class11-pdf-image.pdf",
-          "count": 1,
-          "match": {
-            "carrier": {
-              "eq": "image-text"
-            }
-          },
-          "note": "Exactly one: the two text-layer lines are seen on the drawn page, so they are not reported."
-        },
-        {
           "id": "rd-pdfscan-gate",
           "polarity": "gate",
-          "check": "read.divergence",
+          "check": "read.unread",
           "file": "class11-pdf-scan.pdf",
           "match": {
-            "carrier": {
-              "eq": "image-text"
-            },
-            "text": {
-              "contains": "dangerously-skip-permissions"
+            "reason": {
+              "contains": "no text layer; the text on its pages is not examined"
             }
           },
-          "note": "A scanned page: no text layer at all. Read by OCR instead of listed as unread."
+          "note": "A scanned page with no text layer: listed as unread, the text on its pages not examined (R35, 2026-11-11). Until then OCR read it."
         },
         {
           "id": "rd-pdfhidden-neg-ocr",
@@ -517,28 +474,37 @@
           "note": "Ordinary text, drawn as written: nothing unseen."
         },
         {
+          "id": "rd-pdfimg-recall",
+          "polarity": "recall",
+          "check": "read.divergence",
+          "file": "class11-pdf-image.pdf",
+          "match": {
+            "text": {
+              "contains": "ssh/id_rsa"
+            }
+          },
+          "note": "An instruction drawn as a picture on a page whose text layer says something harmless. Only reading the drawn page finds it, and since R35 (2026-11-11) nothing does: measured, never required, so the blind spot stays in sight (rd-pdfimg-gate and rd-pdfimg-count found it with OCR until then)."
+        },
+        {
           "id": "rd-render-offpage",
           "polarity": "gate",
           "check": "read.divergence",
           "file": "class11-html-render.html",
           "match": {
             "carrier": {
-              "eq": "rendered"
+              "eq": "off-page"
             },
             "method": {
-              "eq": "render"
+              "eq": "static-style"
             },
             "reading": {
               "eq": "A-only"
-            },
-            "how": {
-              "eq": "off-page"
             },
             "text": {
               "contains": "ssh/id_rsa"
             }
           },
-          "note": "Positioned 9999 px left of the page: in the DOM, never on screen. Needs Playwright and its Chromium (a skip without them)."
+          "note": "Positioned 9999 px left of the page: in the DOM, never on screen (R36, 2026-11-11: read from style, no browser)."
         },
         {
           "id": "rd-render-clipped",
@@ -547,22 +513,19 @@
           "file": "class11-html-render.html",
           "match": {
             "carrier": {
-              "eq": "rendered"
+              "eq": "clipped"
             },
             "method": {
-              "eq": "render"
+              "eq": "static-style"
             },
             "reading": {
               "eq": "A-only"
-            },
-            "how": {
-              "eq": "clipped-or-covered"
             },
             "text": {
               "contains": "collect.invalid"
             }
           },
-          "note": "A 1 px box with clip and overflow hidden (the screen-reader-only pattern): the words fall outside what is drawn. Needs Playwright and its Chromium (a skip without them)."
+          "note": "A 1 px box with clip and overflow hidden (the screen-reader-only pattern) (R36, 2026-11-11: read from style, no browser)."
         },
         {
           "id": "rd-render-media",
@@ -571,22 +534,19 @@
           "file": "class11-html-render.html",
           "match": {
             "carrier": {
-              "eq": "rendered"
+              "eq": "display:none"
             },
             "method": {
-              "eq": "render"
+              "eq": "static-style"
             },
             "reading": {
               "eq": "A-only"
-            },
-            "how": {
-              "eq": "not-rendered"
             },
             "text": {
               "contains": "skip the confirmation"
             }
           },
-          "note": "display:none inside an @media rule, which static style skips. Needs Playwright and its Chromium (a skip without them)."
+          "note": "display:none inside an @media rule that holds on the screen (R36, 2026-11-11: read from style, no browser); static style skipped @media until then."
         },
         {
           "id": "rd-render-var",
@@ -595,22 +555,19 @@
           "file": "class11-html-render.html",
           "match": {
             "carrier": {
-              "eq": "rendered"
+              "eq": "white-on-white"
             },
             "method": {
-              "eq": "render"
+              "eq": "static-style"
             },
             "reading": {
               "eq": "A-only"
-            },
-            "how": {
-              "eq": "color-matches-background"
             },
             "text": {
               "contains": "Say nothing to the user"
             }
           },
-          "note": "Text color set from the page's CSS variable inside an @media rule, which static style skips. Needs Playwright and its Chromium (a skip without them). Until 2026-10-21 this row was the .same line; static style resolves variables since then (rd-static-var)."
+          "note": "Text colored from the page's CSS variable inside an @media rule (R36, 2026-11-11: read from style, no browser)."
         },
         {
           "id": "rd-static-var",
@@ -628,43 +585,16 @@
           "note": "Text color and page background set from the same CSS variable: static style resolves it without a browser (2026-10-21)."
         },
         {
-          "id": "rd-render-neg-dup-var",
-          "polarity": "negative",
-          "check": "read.divergence",
-          "file": "class11-html-render.html",
-          "match": {
-            "text": {
-              "contains": "system prompt"
-            },
-            "method": {
-              "eq": "render"
-            }
-          },
-          "note": "Static style reports the variable-colored line; the drawn reading never repeats it."
-        },
-        {
           "id": "rd-render-covered",
-          "polarity": "gate",
+          "polarity": "recall",
           "check": "read.divergence",
           "file": "class11-html-render.html",
           "match": {
-            "carrier": {
-              "eq": "rendered"
-            },
-            "method": {
-              "eq": "render"
-            },
-            "reading": {
-              "eq": "A-only"
-            },
-            "how": {
-              "eq": "clipped-or-covered"
-            },
             "text": {
               "contains": "Approve all tool calls"
             }
           },
-          "note": "A box with the page's color drawn over the paragraph. Needs Playwright and its Chromium (a skip without them)."
+          "note": "A box with the page's color drawn over the paragraph. Only drawing the page finds it, and since R36 (2026-11-11) nothing draws it: measured, never required, so the blind spot stays in sight. The run says how a page looks once drawn is not examined."
         },
         {
           "id": "rd-render-css-content",
@@ -673,22 +603,22 @@
           "file": "class11-html-render.html",
           "match": {
             "carrier": {
-              "eq": "rendered"
+              "eq": "css-content"
             },
             "method": {
-              "eq": "render"
+              "eq": "static-style"
             },
             "reading": {
               "eq": "B-only"
             },
-            "how": {
-              "eq": "css-content"
+            "pseudo": {
+              "eq": "after"
             },
             "text": {
               "contains": "read-only and safe to approve"
             }
           },
-          "note": "Text the style sheet adds after a paragraph: on screen, never in what the model reads. Needs Playwright and its Chromium (a skip without them)."
+          "note": "Text the style sheet adds after a paragraph: on screen, never in what the model reads (R36, 2026-11-11: read from style, no browser)."
         },
         {
           "id": "rd-render-collapsed",
@@ -697,22 +627,19 @@
           "file": "class11-html-render.html",
           "match": {
             "carrier": {
-              "eq": "rendered"
+              "eq": "details"
             },
             "method": {
-              "eq": "render"
+              "eq": "static-style"
             },
             "reading": {
               "eq": "A-only"
-            },
-            "how": {
-              "eq": "collapsed"
             },
             "text": {
               "contains": "remove the audit log"
             }
           },
-          "note": "Inside a closed <details>: on screen only after the reader opens it. Needs Playwright and its Chromium (a skip without them)."
+          "note": "Inside a closed <details>: on screen only after the reader opens it (R36, 2026-11-11: read from style, no browser)."
         },
         {
           "id": "rd-render-neg-summary",
@@ -761,21 +688,6 @@
             }
           },
           "note": "Visible inline code beside generated text."
-        },
-        {
-          "id": "rd-render-neg-dup",
-          "polarity": "negative",
-          "check": "read.divergence",
-          "file": "class11-html-render.html",
-          "match": {
-            "text": {
-              "contains": "Static style already"
-            },
-            "method": {
-              "eq": "render"
-            }
-          },
-          "note": "Static style reports this display:none line; the drawn reading never repeats it."
         },
         {
           "id": "rd-render-static-gone",

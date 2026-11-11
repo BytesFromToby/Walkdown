@@ -39,7 +39,7 @@ Library/         tables, lists, and their sources: data only, never code (README
 tools/           the grader, compare_runs.py, baserates.py, specimen.py, fixture generators, model evaluation
 Fixtures/        fixtures by stage; ANSWERS/ is grader-only and never read in a blind build
 docs/, .claude/skills/   the public docs, and the walkdown skill
-pre-planning/, cases/    the private design corpus and history; case reports held back
+pre-planning/, post-planning/, cases/   the private design corpus, plans for a later version, history; case reports held back
 ReposToExamine/, RepoResults/   repositories to audit, and audit runs (neither is in git)
 ```
 

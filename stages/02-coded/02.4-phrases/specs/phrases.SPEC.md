@@ -25,7 +25,7 @@ Part 1 is the pattern engine and its phrase checks; part 2 (below) adds the harn
   frontmatter: the model receives all of it. Walk with `02.1-inventory`'s rules (no
   symlinks out of the tree, no `.git/`). Files that do not decode as text (PDF,
   DOCX, images) are scanned from `02.2-reader`'s extracted text when the run passes
-  `--normalized` (2026-10-18): the text layer, text drawn on PDF pages, image OCR;
+  `--normalized` (2026-10-18): the text layer of a PDF or a DOCX (text drawn on PDF pages and image OCR until R35, 2026-11-11);
   phrase patterns only, cited by `text_line` with `line` null. Without it they are
   not scanned; either way stderr says which.
 
@@ -221,7 +221,7 @@ python stages/02-coded/02.4-phrases/run.py <input_dir> [--inventory <file>] [--p
   (for tests). A table that fails validation exits 2.
 - `--normalized <dir>`: `02.2-reader`'s normalized folder (`<run>/normalized`, 2026-10-18). A file
   `02.1-inventory` found not to be text (PDF, DOCX, an image) whose extracted text `02.2-reader` wrote
-  (`<dir>/text/<rel>.txt`: a document's text layer, text drawn on its pages, or an image's OCR)
+  (`<dir>/text/<rel>.txt`: a document's text layer)
   is scanned from that text. A folder that does not exist counts as no folder (a run of stages
   1 and 4 only, as `baserates.py` makes).
 

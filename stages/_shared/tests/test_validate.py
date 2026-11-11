@@ -103,15 +103,6 @@ def test_fingerprint_covers_the_library(tmp_path):
     assert validate.fingerprint(root) != b
 
 
-def test_fingerprint_changes_when_an_optional_tool_appears(tmp_path, monkeypatch):
-    import validate
-    root = _root(tmp_path)
-    monkeypatch.setattr(validate, "optional_tools", lambda: "tesseract=0")
-    a = validate.fingerprint(root)
-    monkeypatch.setattr(validate, "optional_tools", lambda: "tesseract=1")
-    assert validate.fingerprint(root) != a
-
-
 def test_cached_stamp_is_reused_and_says_so(tmp_path):
     import json
     import sys
@@ -303,7 +294,8 @@ def test_a_stamp_that_measured_nothing_is_not_kept_so_the_next_run_measures_agai
     assert not (root / ".cache/stamps.json").exists() or not json.loads((root / ".cache/stamps.json").read_text())
 
 
-def test_the_fingerprint_does_not_ask_for_gitleaks():
-    """No stage runs it, so a copy on the machine changes no stamp."""
+def test_the_fingerprint_asks_for_no_installed_program():
+    """No coded step uses a program installed apart since R35 and R36 (2026-11-11): Tesseract, Playwright, and gitleaks on
+    the machine change no stamp."""
     import validate
-    assert "gitleaks" not in validate.optional_tools()
+    assert not hasattr(validate, "optional_tools") and not hasattr(validate, "_playwright")

@@ -38,6 +38,14 @@ FAMILY = [  # "Matches ..." states what the pattern found, never what the author
     ("E.persist", "Writes to a shell profile or git hooks"),
     ("G.", "Matches the wording of telling a person to run something risky"),
     ("creds.", "Matches the wording of gathering secrets or credentials"),
+    # R29 (2026-11-07): families of the patterns that became places then; before, they read "Matches a pattern worth reading"
+    ("B.lookalike", "Names an address made to look like a harmless example"),
+    ("B.", "Matches the wording of a definition that widens what a request covers"),
+    ("H.consequence", "Matches the wording of warning of harm unless an instruction is followed"),
+    ("C.guard", "Matches the wording of telling a reviewer what to decide"),
+    ("C.", "Matches the wording of instructions handed on to another AI or file"),
+    ("E.write-then-exec", "Matches the wording of writing a file and then running it"),
+    ("J.", "Matches the wording of an action a person should approve first"),
 ]
 
 
@@ -245,6 +253,9 @@ CARRIER_PLAIN = {
     "not-rendered": "text the page never shows", "aria-label": "screen-reader labels",
     "desc": "image descriptions inside SVG files", "metadata": "SVG metadata", "script": "SVG scripts",
     "rendered": "web page text a browser does not show, or shows from the style sheet only",
+    # R36 (2026-11-11): what the browser found, read from style ("image-text" and "rendered" are kept for runs made before)
+    "off-page": "text placed off the page", "clipped": "text clipped out of view", "zero-size": "text in a box with no size",
+    "tiny-text": "text too small to read", "css-content": "text a style sheet adds",
 }
 
 
@@ -444,8 +455,9 @@ def _leg_ev(r, cap_full=None) -> dict:
 
 
 def _allows(r) -> dict:
-    """{key: (name, details, present)} for what installing it allows, in plain words."""
-    grants = {g["grant"]: g for g in R.fnd(r, "02.5-capability", "cap.grant")}
+    """{key: (name, details, present)} for what installing it allows, in plain words. A grant only the wording asks for is
+    not one (R31: `render.grant_split`); `glance.can_rest` says it apart."""
+    grants = {g["grant"]: g for g in R.grant_split(r)[0]}
     hooks = [h for h in R.fnd(r, "02.1-inventory", "struct.hooks") if not R.is_test_data(h.get("file"))]
     mcp = [m for m in R.fnd(r, "02.1-inventory", "struct.mcp") if not R.is_test_data(m.get("file"))]
     agents = [a for a in R.fnd(r, "02.1-inventory", "struct.agent-tools") if not R.is_test_data(a.get("file"))]
@@ -582,20 +594,33 @@ def render_page(meta, r, stamps, notes, runs_ok, changes=None, marks=None) -> st
     import summary_html as S  # the title (R6); summary_html imports this module
     qs = G.questions(meta, r, stamps, runs_ok, marks)
     toc = ("".join(f'<a href="#{q.id}">{esc(TOC[q.id])}</a>' for q in qs) + '<a href="#misalign">Misalignment</a>'
-           + '<a href="#limits">Not checked</a>')
+           + '<a href="#limits">Coverage</a>')
     tiers = coverage.section_html(r, files=True).replace("<h2>What Walkdown examined</h2>", "", 1)
+    rail = rail_html(qs, bool(tiers), bool(changes), G)  # R33: the summary's order as a rail that stays in view on a wide screen
     body = (f'<header>{G.back("")}<h1>{esc(S.title(meta["repo"]))}, in detail</h1><p class="meta">{esc(G.meta_line(meta, r))}</p>'
             f'{license_line(r)}<p class="what">{G.what_it_is(r, meta["repo"])} {esc(LEDE)}</p></header>'
-            + G.can_detail(r)  # in the summary's order (R11): what it can do, what was examined, then the questions
-            + (G.fold_section("examined", "<h2>What Walkdown examined</h2>", "", tiers, "examined") if tiers else "")
+            + f'<div class="layout">{rail}<div class="content">' + G.can_detail(r)  # in the summary's order (R11): what it can do, what was examined, then the questions
+            + (G.fold_section("examined", G.icon("examined") + "<h2>What Walkdown examined</h2>", "", tiers, "examined") if tiers else "")
             + f'<nav class="toc">{toc}</nav>' + "".join(G.section(q) for q in qs)
             + G.misalign_detail(r, meta.get("stop"))  # after the questions, as on the summary (R13)
             + G.changes_section(changes)
             + G.not_checked(r, notes, qaview.of(meta), meta.get("stop"))
             + '<footer><p>Mark each place as you go: <a href="review.html">go through each place</a> \u00b7 '
             'every finding with its file and line: <a href="full.md">full.md</a></p>'
-            f"<p>{esc(R.NOT_WHAT)}</p></footer>")
+            f"<p>{esc(R.NOT_WHAT)}</p></footer></div></div>")
     return G.page(f"{S.title(meta['repo'])}, in detail", meta, r, body)
+
+
+RAIL = {"can": "What it can do", "examined": "Examined", "misalign": "Misalignment", "changes": "Changes", "limits": "Coverage"}
+
+
+def rail_html(qs, examined, changes, G) -> str:
+    """R33: the page's sections in the summary's order, each with its glyph, as a rail that stays in view on a wide screen
+    (the toc keeps the job on a phone). Its Summary button goes back to the card the reader came from (the script sets it)."""
+    ids = (["can"] + (["examined"] if examined else []) + [q.id for q in qs] + ["misalign"]
+           + (["changes"] if changes else []) + ["limits"])
+    links = "".join(f'<a href="#{i}" data-sec="{i}">{G.icon(i)}<span>{esc(TOC.get(i) or RAIL[i])}</span></a>' for i in ids)
+    return f'<nav class="rail" aria-label="Sections">{G.back("")}{links}</nav>'
 
 
 # Under what it is (R1, 2026-11-05: every part folds, closed but the one a link opens).

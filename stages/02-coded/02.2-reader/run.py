@@ -10,6 +10,7 @@ import json
 import sys
 from collections import Counter
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "_shared"))  # the note helper
@@ -18,13 +19,11 @@ import files  # noqa: E402
 import fold  # noqa: E402
 import read_docx  # noqa: E402
 import read_html  # noqa: E402
-import render_html  # noqa: E402
 import read_image  # noqa: E402
 import read_md  # noqa: E402
 import read_pdf  # noqa: E402
 import read_svg  # noqa: E402
 import language  # noqa: E402
-import render_pdf  # noqa: E402
 import script_runs  # noqa: E402
 import coverlines as cov  # noqa: E402
 import stagenote  # noqa: E402
@@ -32,11 +31,11 @@ import stagenote  # noqa: E402
 STAGE = "02.2-reader"
 # What the step looked at (`stages/_shared/coverlines.py`). Every file is read by `read_one` or has a `read.unread`, and every file
 # that is read has its lines folded and its script runs looked for; only a file with two readings (Markdown, HTML, SVG, a PDF,
-# a DOCX, a picture) has a divergence between them to look for; only a PDF, a DOCX, or an image has metadata; and the language
-# check judges the prose among the files. A check counts the files in its scope where the kind of file is known, before the file
+# a DOCX) has a divergence between them to look for; only a PDF, a DOCX, or an image has metadata; and the language check
+# judges the prose among the files. An image has one reading only since R35 (2026-11-11): the text drawn in it is not examined. A check counts the files in its scope where the kind of file is known, before the file
 # is read (`cov.of`), and where it has handled each one (`cov.look`).
 FILES, DIVERGENCE, METADATA, LANGUAGE = "read.unread", "read.divergence", "read.metadata", "read.language"
-DIVERGENCE_KINDS = ("markdown", "html", "svg", "pdf", "docx", "image")
+DIVERGENCE_KINDS = ("markdown", "html", "svg", "pdf", "docx")
 LINES = [((FILES, "read.fold", "read.script"), "files"),
          ((DIVERGENCE,), "files"),
          ((METADATA,), "files"),
@@ -55,25 +54,20 @@ def eprint(*a):
     print(*a, file=sys.stderr)
 
 
-def optional_tools() -> dict:
-    ocr_ok, ocr_why = read_image.ocr_available()
-    html_ok, html_why = render_html.available()
-    return {"tesseract": ocr_ok, "tesseract_detail": ocr_why,
-            "playwright": html_ok, "playwright_detail": html_why}
-
-
-# Checks the method calls for that have no code yet (2026-10-12, an outside audit): `02.2-reader`
-# once looked for pdf2image, Playwright, and lingua and called each missing tool the reason, but
-# nothing here uses them, so installing one would have hidden the gap. Reported as not built,
-# always, apart from a missing tool, until the code exists. Built and left this list
-# (2026-10-18): language within Latin script (language.py, no dependency) and PDF render + OCR
-# (render_pdf.py: pypdfium2, a core dependency; the OCR needs Tesseract, a skip without it).
-# HTML render left it 2026-10-20 (render_html.py: Playwright, optional, a skip without it).
+# Checks the method calls for that have no code yet (2026-10-12, an outside audit). Empty since 2026-10-20.
 NOT_BUILT: list[tuple[str, str]] = []
 LANGUAGE_NOTE = ("v1 limit: the language check (read.language) reads prose only: Markdown, plain "
-                 "text, PDF, DOCX, and OCR text; Markdown code blocks, comments in code, config "
+                 "text, PDF, and DOCX; Markdown code blocks, comments in code, config "
                  "values, and HTML are not checked for language, and a paragraph under five words "
                  "is too short to judge")
+# What this reader does not examine, in the files a repository has (R35, R36; owner, 2026-11-11: "We state we do not
+# examine images"; "go with option 1"). Walkdown installs with pip and nothing else: no OCR program, no browser. One note
+# each, written only when the repository has such a file; the report shows them under What this run covered.
+NOT_EXAMINED_IMAGES = "not examined: the text drawn inside images ({n}); their metadata is read"
+NOT_EXAMINED_PDF = "not examined: the text on PDF pages that are only a picture ({n} with no text layer)"
+NOT_EXAMINED_HTML = ("not examined: how a web page looks once drawn ({n}): one element drawn over another, clipping that "
+                     "depends on where things land, text over a background image; the page's own styles are read")
+PDF_NO_LAYER = "pdf: no text layer; the text on its pages is not examined"
 
 
 def div(file, line, text, carrier, method="static-style", reading="A-only", **extra):
@@ -137,81 +131,43 @@ def language_checks(rel, lines, markdown, state, line_based=True):
     return language.language_findings(rel, lines, markdown, line_based=line_based)
 
 
-def pdf_pages(rel, data, lines, tools, state):
-    """Draw each page and read it (render_pdf): OCR lines missing from the text layer are B-only
-    image-text divergences, appended to the lines so the line checks and --out see them. Returns
-    (findings, lines, no_layer_unread)."""
-    has_layer = any(ln.strip() for ln in lines)
-    if not tools["tesseract"]:
-        why = tools["tesseract_detail"]
-        state["pdf_pages"] += render_pdf.page_ocr(data, ocr=False).total
-        return ([{"check": "read.divergence", "file": rel, "line": None, "carrier": "image-text",
-                  "skipped": f"pdf pages not drawn and read ({why})"}],
-                lines, None if has_layer else f"pdf has no text layer; OCR not run ({why})")
-    po = render_pdf.page_ocr(data)
-    state["pdf_pages"] += po.total
-    state["pdf_pages_read"] += len(po.pages)
-    state["pdf_low_confidence"] += sum(len(b) for low in po.low
-                                       for b in render_pdf.unseen(low, lines))
-    out, lines = [], list(lines)
-    for page_no, text in enumerate(po.pages, start=1):
-        for block in render_pdf.unseen(text, lines):
-            if lines and lines[-1] != "":
-                lines.append("")
-            out.append(div(rel, None, "\n".join(block), "image-text", method="ocr",
-                           reading="B-only", page=page_no, text_line=len(lines) + 1))
-            lines.extend(block)
-    if po.skipped:
-        out.append({"check": "read.divergence", "file": rel, "line": None, "carrier": "image-text",
-                    "skipped": f"pdf pages not drawn and read ({po.skipped})"})
-    elif po.total > len(po.pages):
-        out.append({"check": "read.divergence", "file": rel, "line": None, "carrier": "image-text",
-                    "skipped": f"pdf pages {len(po.pages) + 1} to {po.total} not drawn and read "
-                               f"(the first {render_pdf.MAX_PAGES} are)"})
-    no_layer = None
-    if not has_layer and (po.skipped or not po.pages):
-        no_layer = f"pdf has no text layer; OCR not run ({po.skipped or 'no page read'})"
-    return out, lines, no_layer
+def css_loader(root: Path, rel: str, state) -> callable:
+    """The style sheets an HTML file links, read from the input folder (R36): a relative `href` from the file's folder, or
+    one starting `/` from the folder's root. A URL with a scheme or a host, or a path that leaves the folder, gives None:
+    nothing is fetched. Each sheet read is counted (`state["css_files"]`)."""
+    base = (root / rel).parent
 
-
-def html_drawn(rel, text, static, tools, state, session):
-    """The page as a browser draws it (render_html): text a person never sees, and text only the
-    style sheet shows, beyond what static style found. A skip naming carrier `rendered` when
-    Playwright is missing, the run is past MAX_FILES, or the page fails to load."""
-    state["html_files"] += 1
-
-    def skip(why):
-        return [{"check": "read.divergence", "file": rel, "line": None, "carrier": "rendered",
-                 "skipped": f"html not drawn ({why})"}]
-    if not tools.get("playwright") or session is None:
-        return skip(tools.get("playwright_detail") or "playwright not installed")
-    if state["html_files"] > render_html.MAX_FILES:
-        return skip(f"the first {render_html.MAX_FILES} are")
-    try:
-        probe = session.render(rel)
-    except render_html.RenderError as exc:
-        return skip(str(exc))
-    state["html_drawn"] += 1
-    out = []
-    for d in render_html.divergences(probe, text, [s["text"] for s in static]):
-        extra = {"pseudo": d["pseudo"]} if "pseudo" in d else {}
-        out.append(div(rel, d["line"], d["text"], "rendered", method="render", reading=d["reading"],
-                       how=d["how"], **extra))
-    return out
+    def load(href: str) -> str | None:
+        u = urlparse(href.strip())
+        if u.scheme or u.netloc or not u.path:
+            return None
+        path = unquote(u.path)
+        target = (root / path.lstrip("/")) if path.startswith("/") else (base / path)
+        try:
+            target = target.resolve()
+            target.relative_to(root)
+            if not target.is_file():
+                return None
+            data = target.read_bytes()[:read_html.CSS_CAP]
+        except (OSError, ValueError):
+            return None
+        state["css_files"] += 1
+        return files.decode(data)[0]
+    return load
 
 
 METADATA_KINDS = ("pdf", "docx", "image")
 
 
 def prose_candidate(rel, kind) -> bool:
-    """Whether the language check is to judge this file: Markdown, plain-text prose, and the text of a PDF, a DOCX, or an
-    image (`read_one` runs it on exactly these)."""
-    return kind in ("markdown", "pdf", "docx", "image") or (kind == "text" and files.ext_of(rel) in PROSE_EXTS)
+    """Whether the language check is to judge this file: Markdown, plain-text prose, and the text of a PDF or a DOCX
+    (`read_one` runs it on exactly these)."""
+    return kind in ("markdown", "pdf", "docx") or (kind == "text" and files.ext_of(rel) in PROSE_EXTS)
 
 
-def read_one(rel, data, kind, tools, state, session=None):
-    """Findings for one file, and (text_lines, folded_lines) or None. `session`: the
-    render_html.Session HTML files are drawn in (None: not drawn, a skip)."""
+def read_one(rel, data, kind, state, root=None):
+    """Findings for one file, and (text_lines, folded_lines) or None. `root`: the input folder, from which an HTML file's
+    linked style sheets are read (None: inline styles and `<style>` only)."""
     out = []
     if kind in TEXT_KINDS:
         text, _enc = files.decode(data)
@@ -231,10 +187,11 @@ def read_one(rel, data, kind, tools, state, session=None):
                 if c["carrier"] == "comment":
                     state["markdown_comments"] += 1
         elif kind == "html":
-            static = read_html.read_html(text)["divergences"]
-            for d in static:
-                out.append(div(rel, d["line"], d["text"], d["carrier"]))
-            out += html_drawn(rel, text, static, tools, state, session)
+            state["html_files"] += 1
+            load = css_loader(Path(root), rel, state) if root is not None else None
+            for d in read_html.read_html(text, load)["divergences"]:
+                extra = {k: d[k] for k in ("pseudo",) if k in d}
+                out.append(div(rel, d["line"], d["text"], d["carrier"], reading=d.get("reading", "A-only"), **extra))
         elif kind == "svg":
             try:
                 for d in read_svg.read_svg(data)["divergences"]:
@@ -259,9 +216,9 @@ def read_one(rel, data, kind, tools, state, session=None):
             out.append(div(rel, None, d["text"], d["carrier"], **extra))
         cov.look(DIVERGENCE)  # a PDF's or a DOCX's two readings have been set against each other
         state["divergence_files"] += 1
-        if kind == "pdf":
-            page_fs, lines, no_layer = pdf_pages(rel, data, r.lines, tools, state)
-            out += page_fs
+        if kind == "pdf" and not any(ln.strip() for ln in lines):
+            no_layer = PDF_NO_LAYER  # the text on its pages is not examined (R35)
+            state["pdf_no_layer"] += 1
         fs, folded = line_checks(rel, lines, line_based=False)
         fs += language_checks(rel, lines, False, state, line_based=False)
         if no_layer:
@@ -273,40 +230,24 @@ def read_one(rel, data, kind, tools, state, session=None):
         state["metadata_files"] += 1
         return out + fs + meta, (lines, folded)
 
-    if kind == "image":
+    if kind == "image":  # its metadata is read; the text drawn in it is not examined (R35), so it is listed as unread
+        state["images"] += 1
         r = read_image.read_image(data)
         if r.unread:
             return [unread(rel, r.unread)], None
         meta = [{"check": "read.metadata", "file": rel, "line": None, **m} for m in r.metadata]
         cov.look(METADATA)
         state["metadata_files"] += 1
-        cov.look(DIVERGENCE)  # the text a picture shows (OCR) is its second reading, or its skip says it was not read
-        state["divergence_files"] += 1
-        if r.ocr_text is not None:
-            ocr_lines = files.split_lines(r.ocr_text.strip())
-            if r.ocr_text.strip():
-                out.append(div(rel, None, r.ocr_text.strip(), "image-text", method="ocr",
-                               reading="B-only"))
-            fs, folded = line_checks(rel, ocr_lines, line_based=False)
-            fs += language_checks(rel, ocr_lines, False, state, line_based=False)
-            cov.look(FILES)
-            return out + fs + meta, (ocr_lines, folded)
-        out.append(unread(rel, f"image: no text layer; OCR not run ({r.ocr_skipped})"))
-        skip = {"check": "read.divergence", "file": rel, "line": None, "skipped": r.ocr_skipped}
-        return out + meta + [skip], None
+        return [unread(rel, read_image.NOT_EXAMINED)] + meta, None
 
     return [unread(rel, UNREAD_REASON.get(kind, kind))], None
 
 
+def plural(k: int, one: str, many: str) -> str:
+    return f"{k} {one if k == 1 else many}"
+
+
 def build_report(input_dir: Path, out_dir: Path | None = None) -> dict:
-    tools = optional_tools()
-    if not tools["tesseract"]:
-        stagenote.note(f"{tools['tesseract_detail']}: images and PDF pages are skipped for OCR "
-                       "(read.divergence skip); images and PDFs with no text layer are listed as "
-                       "read.unread")
-    if not tools.get("playwright"):
-        stagenote.note(f"html render: {tools.get('playwright_detail') or 'playwright not installed'}: "
-                       "HTML files are read with static style only (read.divergence skip, carrier rendered)")
     for what, covers in NOT_BUILT:
         stagenote.note(f"not built: {what}: {covers}")
     stagenote.note(f"{LANGUAGE_NOTE}")
@@ -319,68 +260,66 @@ def build_report(input_dir: Path, out_dir: Path | None = None) -> dict:
     entries = files.list_files(input_dir)
     cov.of(FILES, len(entries))  # every file is to be read, or listed as unread
     root = Path(input_dir).resolve()
-    # one browser for the run's HTML files, started at the first one (render_html, 2026-10-20)
-    session = render_html.Session(root) if tools.get("playwright") else None
-    try:
-        for e in entries:
-            if e.kind == "symlink":
-                fs = [unread(e.rel, "symlink, not followed", target=e.target)]
-                findings.extend(fs)
-                unread_list.append(e.rel)
-                cov.explain(FILES)
-                continue
-            try:
-                data = (root / e.rel).read_bytes()
-            except OSError as exc:
-                findings.append(unread(e.rel, f"could not read bytes: {exc}"))
-                unread_list.append(e.rel)
-                cov.explain(FILES)
-                continue
-            total_bytes += len(data)
-            kind = files.classify(e.rel, data)
-            prose = prose_candidate(e.rel, kind)
-            if prose:
-                cov.of(LANGUAGE)  # a file the language check is to judge, counted before the file is read
-            has_meta = kind in METADATA_KINDS
-            if has_meta:
-                cov.of(METADATA)  # a PDF, a DOCX, or an image, whose metadata is to be read
-            has_div = kind in DIVERGENCE_KINDS
-            if has_div:
-                cov.of(DIVERGENCE)  # a file with two readings, whose divergence is to be looked for
-            judged_before, metadata_before = state["language_files"], state["metadata_files"]
-            div_before = state["divergence_files"]
-            try:
-                fs, texts = read_one(e.rel, data, kind, tools, state, session)
-            except Exception as exc:  # a reader bug must not pass a file silently
-                stagenote.warning(f"reader failed on {e.rel}: {type(exc).__name__}: {exc}")
-                fs, texts = [unread(e.rel, f"reader error: {type(exc).__name__}: {exc}"[:300])], None
-            fs.sort(key=lambda f: ((ORDER.get(f["check"], 9) if "skipped" not in f else 10), f.get("line") or 0))
+    for e in entries:
+        if e.kind == "symlink":
+            fs = [unread(e.rel, "symlink, not followed", target=e.target)]
             findings.extend(fs)
-            if any(f["check"] == "read.unread" for f in fs):
-                unread_list.append(e.rel)
-                cov.explain(FILES)
-                if prose and state["language_files"] == judged_before:  # unread before the language check ran: its reason is the unread row
-                    cov.explain(LANGUAGE)
-                if has_meta and state["metadata_files"] == metadata_before:  # unread before its metadata was read
-                    cov.explain(METADATA)
-                if has_div and state["divergence_files"] == div_before:  # unread before its readings were set against each other
-                    cov.explain(DIVERGENCE)
-            else:
-                read_files += 1
-                read_bytes += len(data)
-            if texts is not None:
-                normalized[e.rel] = texts
-    finally:
-        if session is not None:
-            session.close()
+            unread_list.append(e.rel)
+            cov.explain(FILES)
+            continue
+        try:
+            data = (root / e.rel).read_bytes()
+        except OSError as exc:
+            findings.append(unread(e.rel, f"could not read bytes: {exc}"))
+            unread_list.append(e.rel)
+            cov.explain(FILES)
+            continue
+        total_bytes += len(data)
+        kind = files.classify(e.rel, data)
+        prose = prose_candidate(e.rel, kind)
+        if prose:
+            cov.of(LANGUAGE)  # a file the language check is to judge, counted before the file is read
+        has_meta = kind in METADATA_KINDS
+        if has_meta:
+            cov.of(METADATA)  # a PDF, a DOCX, or an image, whose metadata is to be read
+        has_div = kind in DIVERGENCE_KINDS
+        if has_div:
+            cov.of(DIVERGENCE)  # a file with two readings, whose divergence is to be looked for
+        judged_before, metadata_before = state["language_files"], state["metadata_files"]
+        div_before = state["divergence_files"]
+        try:
+            fs, texts = read_one(e.rel, data, kind, state, root)
+        except Exception as exc:  # a reader bug must not pass a file silently
+            stagenote.warning(f"reader failed on {e.rel}: {type(exc).__name__}: {exc}")
+            fs, texts = [unread(e.rel, f"reader error: {type(exc).__name__}: {exc}"[:300])], None
+        fs.sort(key=lambda f: ((ORDER.get(f["check"], 9) if "skipped" not in f else 10), f.get("line") or 0))
+        findings.extend(fs)
+        if any(f["check"] == "read.unread" for f in fs):
+            unread_list.append(e.rel)
+            cov.explain(FILES)
+            if prose and state["language_files"] == judged_before:  # unread before the language check ran: its reason is the unread row
+                cov.explain(LANGUAGE)
+            if has_meta and state["metadata_files"] == metadata_before:  # unread before its metadata was read
+                cov.explain(METADATA)
+            if has_div and state["divergence_files"] == div_before:  # unread before its readings were set against each other
+                cov.explain(DIVERGENCE)
+        else:
+            read_files += 1
+            read_bytes += len(data)
+        if texts is not None:
+            normalized[e.rel] = texts
 
     carriers = Counter(f["carrier"] for f in findings
                        if f["check"] == "read.divergence" and "carrier" in f)
     not_examined = []
-    if not tools["tesseract"]:
-        not_examined.append("image and PDF page OCR (tesseract not installed)")
-    if not tools.get("playwright"):
-        not_examined.append(f"HTML as a browser draws it ({tools.get('playwright_detail') or 'playwright not installed'})")
+    if state["images"]:
+        not_examined.append(NOT_EXAMINED_IMAGES.format(n=plural(state["images"], "image", "images")))
+    if state["pdf_no_layer"]:
+        not_examined.append(NOT_EXAMINED_PDF.format(n=plural(state["pdf_no_layer"], "PDF", "PDFs")))
+    if state["html_files"]:
+        not_examined.append(NOT_EXAMINED_HTML.format(n=plural(state["html_files"], "HTML file", "HTML files")))
+    for line in not_examined:
+        stagenote.note(line)
     not_examined += [f"{what} (not built)" for what, _ in NOT_BUILT]
     reading = {  # named `coverage` until M9 slice C, which gave that name to the lines of every step
         "files": len(entries), "files_read": read_files,
@@ -391,10 +330,8 @@ def build_report(input_dir: Path, out_dir: Path | None = None) -> dict:
         "markdown_comments": state["markdown_comments"],
         "language": {"files": state["language_files"], "judged": state["language_judged"],
                      "short": state["language_short"]},
-        "pdf_pages": {"total": state["pdf_pages"], "read": state["pdf_pages_read"],
-                      "low_confidence": state["pdf_low_confidence"]},
-        "html": {"files": state["html_files"], "drawn": state["html_drawn"]},
-        "optional_tools": {k: v for k, v in tools.items() if not k.endswith("_detail")},
+        "images": state["images"], "pdf_no_text_layer": state["pdf_no_layer"],
+        "html": {"files": state["html_files"], "css_files": state["css_files"]},
         "not_examined": not_examined,
     }
     stagenote.note(f"read {read_files}/{len(entries)} files, {read_bytes}/{total_bytes} bytes; "

@@ -6,7 +6,7 @@ A run produces these reports, at the top of its run folder
 | File | For | What it holds |
 |---|---|---|
 | `summary.html` | anyone, no computer skills needed | one page, four questions at a glance, each with a short label and a one-line answer, then Misalignment; tap a line for more |
-| `details.html` | improving or investigating it | the same four questions and Misalignment with everything behind them: tables, charts, and every place in folded lists; then what Walkdown didn't check |
+| `details.html` | improving or investigating it | the same four questions and Misalignment with everything behind them: tables, charts, and every place in folded lists; then what this run covered |
 | `review.html` | walking through the places | one card per place, with the lines around it, for you to mark |
 | `full.md` | checking a point | every finding, by section, with file and line |
 
@@ -26,8 +26,9 @@ pages. The marks you saved on the earlier run still carry over to the new one.
 1. **Every finding is a location.** It says "this text, at this file and line, matches this
    shape". It does not say the author meant harm.
 2. **No score.** Nothing is added up into a rating. Counts come with what they were counted over.
-3. **Clean means not found.** "Nothing to look at" means these checks found nothing there. Read
-   "What Walkdown didn't check" on `details.html` before trusting it.
+3. **Clean means not found.** A question on the summary with no answer and no label means its checks found nothing
+   there; `details.html` lists what each check did not find in a closed "Not found" fold at the end of its section. Read
+   "What this run covered" on `details.html` before trusting it.
 
 ## A suggested reading order
 
@@ -55,12 +56,12 @@ installing it allows, are under "What it can do" at the top of `details.html`.
 **What Walkdown examined** (since 2026-11-04), in three colours, by file type (its extension):
 
 - **White, Examined:** the checks read the file's text. It decodes as text, or the reader drew text out of it (a PDF,
-  a Word document, an image read by OCR).
+  a Word document).
 - **Yellow, Archives, looked inside for programs only:** archives and zip-based documents (zip, tar, 7z, RAR, zstd,
   a spreadsheet). Walkdown looked inside for programs, compiled Python, and Office macros; the text inside was not
   read.
 - **Red, No tests are run on these file types:** everything else, such as a `.wasm`, a `.pkl`, a font, a compiled
-  program, an image when OCR was not run, or a file that could not be read: "Walkdown does not analyze files with
+  program, an image (its metadata is read; the text drawn in it is not examined), or a file that could not be read: "Walkdown does not analyze files with
   these extensions. Use with caution." The line says how many of them the AI loads.
 
 Red marks what Walkdown cannot see, not a risk in the repository. Walkdown will never read every kind of file; this
@@ -71,14 +72,17 @@ for a few plain bullets.
 
 **Details →** buttons take you to `details.html`: one ends each line that has a part of its own there, and one at the
 bottom of each question opens its section. The page opens at that part, with the rest closed, and its **← Summary**
-button brings you back to the line you left.
+button brings you back to the line you left. Each question has a small glyph, the same on both pages, so you land on the
+one you left; on a wide screen `details.html` keeps the sections down its left side, the one on screen marked, with the
+**← Summary** button at the top of that list. Three cards show a picture on their face, open or closed: the package bar,
+the three system boxes, and one dot per place found, by colour.
 
 | Label | Means |
 |---|---|
 | **N to look at** (amber) | something a rule found: a host's rule broken, a security kind, the tools against the words |
 | **N notes** (amber) | published guidance and harmless facts |
 | a measure (blue) | a fact such as "up to 21%" or "3 of 7 tools" |
-| **Nothing to look at** (green) | the question's checks ran and found nothing |
+| no label, no answer | the question's checks ran and found nothing (the "Not found" fold on `details.html` says what each did not find) |
 | **Not measured** (grey) | a step did not run, or the run was stopped before it (`--until`) |
 
 1. **Size and Shape** (a working name). Two parts, the package first:
@@ -170,9 +174,9 @@ may have missed some." Steps that ran and whose fixture check could not be made 
 own ('8 steps could not be checked against their fixtures, so a "none" from them is not measured.'), which does not say a
 step failed. When a step did not run at all, it never says "found none". A run you
 stopped with `--until` says it stopped after a step as you asked, and the steps after it are not
-named as steps that did not work; the cards no step measured say "Not measured" and why. A missing
-optional tool (OCR, HTML as a browser draws it) is never named on this page; "What Walkdown didn't
-check" on `details.html` and `full.md` list what it left unread.
+named as steps that did not work; the cards no step measured say "Not measured" and why. What Walkdown does not
+examine in this repository's files (the text drawn in images, how HTML looks once drawn) is listed under "What this run
+covered" on `details.html`, and `full.md` lists every file it left unread.
 
 The footer says the one thing to keep in mind: Walkdown reads the files without running anything,
 leaves the judgment to you, and finding nothing does not mean a repository is safe.
@@ -269,8 +273,8 @@ a link works or what it serves.
 many in test data were set aside; then the wording that gathers secrets or asks for a password or key. Values are not
 shown in these reports: open the file to check one. When no
 scanner ran, it says it was not checked. A file the scanner could not scan is named here as well,
-and it may hold one. So is a lock file, which the scan leaves out because the hashes in one look like keys. A model read does not send a line flagged here, so it did not read what else stands on that line: "What
-Walkdown didn't check" says how many lines, and names a file a read did not send because the scanner could not scan it.
+and it may hold one. So is a lock file, which the scan leaves out because the hashes in one look like keys. A model read does not send a line flagged here, so it did not read what else stands on that line: "What this run
+covered" says how many lines, and names a file a read did not send because the scanner could not scan it.
 
 The scan goes by the shapes of known keys and by keywords, so finding nothing here does not prove no key is there. It does not flag a key
 in a shape it does not know, a key spelled only in hidden characters, a password in a sentence ("the password is ..."), `token = value`,
@@ -288,7 +292,7 @@ Walkdown changed since: what changed, in counts and Walkdown's own words, with e
 by file, in `changes.md`. New and gone phrase hits say where they came from: changes in the
 repository, Walkdown's search terms, or Walkdown's matching code.
 
-### What Walkdown didn't check
+### What this run covered
 
 Last on the page: a step that did not work, the optional model reads when they did not run, or
 that every step ran and passed its own checks. Then every limit of this run, folded: checks
@@ -405,7 +409,7 @@ Every finding, grouped by section:
 | 2 What the model actually reads | divergences (raw against rendered, and PDF pages as drawn against their text layer), lines changed by folding, non-Latin runs, passages in another language, metadata, unread files |
 | 3 What loads what | entry points used, orphans, load-only files, dynamic loads, components on disk a manifest leaves out, dangling references, depth |
 | 4 What the text asks for | every hit, by group (4a to 4d) and check, then the tables: endpoints, guarded actions, definitions, conflicts, safety words; and the builder checks on triggering, other AI hosts, and what is current and clean |
-| 5 What this touches | each trifecta leg with every citation, install grants with evidence, bytes in context at load, agent posture, pairs; and the builder checks on what it costs and what ships, and whether the tools fit |
+| 5 What this touches | each trifecta leg with every citation, install grants with evidence (what the settings grant, then what only the wording asks for), bytes in context at load, agent posture, pairs; and the builder checks on what it costs and what ships, and whether the tools fit |
 | 6 Needs a human read | the model reads that ran (the sweep's flagged passages, with the pinpoint's line when it ran), or one line saying none was chosen |
 | 7 Not examined | the same list as `data/limits.md`, including, for each model read that has passages with no answer, how many ("5 of 12 passages got no answer, after one retry"), the reasons counted, and the call log |
 

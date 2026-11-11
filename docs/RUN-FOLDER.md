@@ -41,8 +41,8 @@ RepoResults/<name>/<date>_<hash7>/          one run, e.g. RepoResults/my-skill/2
     graph.json            the reference graph: nodes and edges
     hits.json             the phrase hits with counts per check and per pattern, and the files not scanned
     normalized/           the text of each file the reader read: text/ as the model receives it (for a PDF,
-                          DOCX, or image, the text read from it, OCR included; the phrase step matches
-                          that), folded/ with invisible and look-alike characters folded away
+                          or DOCX, the text read from it; the phrase step matches that), folded/ with
+                          invisible and look-alike characters folded away
 ```
 
 Only when you chose a model read, these files are also in `data/` (a model that takes text has no `probabilities` or `p_any` in
@@ -126,7 +126,7 @@ Soft models: none (no model read was chosen)
 |---|---|---|---|---|---|
 | 01-intake | ... | ... | data/01-intake.json | 1 findings | PASS (gate 1/1, negative 2/2) |
 | 02.1-inventory | ... | ... | data/02.1-inventory.json | 116 findings | PASS (gate 26/26, negative 7/7) |
-| 02.2-reader | ... | ... | data/02.2-reader.json | 116 findings | INCOMPLETE (gate 37/41, negative 28/30, recall 8/8; skipped: rd-img-ocr, rd-pdfimg-gate, rd-pdfimg-count) |
+| 02.2-reader | ... | ... | data/02.2-reader.json | 116 findings | PASS (gate 38/38, negative 28/28, recall 8/9) |
 ...
 | 05-qa | ... | ... | data/05-qa.json | 31 findings | PASS (gate 61/61, negative 16/16) |
 | 06-report | | ... | summary.html, details.html, review.html, full.md, brief.md, data/limits.md | written | |

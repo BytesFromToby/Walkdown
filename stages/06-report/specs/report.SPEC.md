@@ -27,7 +27,7 @@ A run folder (`docs/RUN-FOLDER.md`) holds the reports at the top and everything 
 | File | Reader | What it is | Spec |
 |---|---|---|---|
 | `summary.html` | anyone, no computer skills needed (owner, 2026-10-27) | One page, four questions at a glance, each with a short label and a one-line answer, then Misalignment (R13): how much of the AI's memory it uses (the one place for tokens), what comes in the package, will it work on someone else's computer, with other AI tools, does it ask only for the tools it needs, is it finished and up to date, anything to be careful about | the `summary_html` section, the `glance` section |
-| `details.html` | improving | The same four questions and Misalignment with everything behind them: tables, charts, and every place in folded lists; then what Walkdown didn't check | the `details_html` section, the `glance` section |
+| `details.html` | improving | The same four questions and Misalignment with everything behind them: tables, charts, and every place in folded lists; then what this run covered | the `details_html` section, the `glance` section |
 | `review.html` | improving | The places to check, one at a time, each marked Concerned, Not concerned, or Not sure | the `review_html` section |
 | `full.md` | either | Every finding with file and line: the complete record, as text | the `render` section |
 | `changes.md` | either | What changed since the previous run of the same repository | the `drift` section |
@@ -52,8 +52,8 @@ The brief that `walkdown.py` prints (it is `brief.md`) names `summary.html` firs
   names only in small "where" notes, tokens in the memory question only, and no repository text but hidden
   text that reads like an instruction (80 characters; owner, 2026-10-27).
 - **Nothing found never means safe.** `summary.html` says so once, in its footer, and names any
-  step that did not run or did not pass its fixture check; what was not checked is in "What
-  Walkdown didn't check" on `details.html` and in `full.md` section 7. A question whose check did
+  step that did not run or did not pass its fixture check; what was not checked is in "What this run
+  covered" on `details.html` and in `full.md` section 7. A question whose check did
   not run says "Not measured", never "nothing".
 - **Capability, never intent.** A box says what the repository could do. Whether it does is only
   seen by running it, and the cards say so.
@@ -308,7 +308,7 @@ Exit 0; 2 for a folder that is not a run, a run made before this version, or a b
   be read; before, it crashed the report stage when `continue` released the run (and `drift.load`, which compares a run with the
   previous one, is tolerant the same way). The notes the pages read are a step's own `note: ...` lines, and none from a step
   that failed: a crashed step's stderr was read as notes before, so a line of an error's message with a limit word in it
-  reached "What Walkdown didn't check" on `details.html`.
+  reached "What this run covered" on `details.html`.
 - 2026-11-01: `load` masks the saved reader in memory (`secretmask.mask_reader`), so every report reads the one masked copy and a
   re-render writes no step output (`test_a_run_saved_before_the_mask_is_masked_when_drawn_and_its_data_is_left_alone`,
   `test_a_key_the_scan_flagged_is_in_no_report_and_no_step_output`). A run the runner has masked is the same; a run stopped before
@@ -475,6 +475,8 @@ writes one for every file it does not read); the builder's `cap.ship` groups (wh
 
 ### Outputs
 
+- `tier_bar(c)` (R33): one bar above the rows on both pages, white, yellow, red, each segment as wide as its share of
+  the files (`flex-grow`), a tier with no files has no segment; `aria-label` gives the three counts.
 - `rows(r)`: per file but symlinks (never followed; "Files worth a look" lists them), its `tier`:
   - `examined` (white): it decodes as text, or the reader ran and did not list it as unread (it drew the text out of a
     PDF, a Word document, or an image by OCR);
@@ -546,6 +548,11 @@ are marked.
    `inv.pin`) shows no line. It names the license a file matches, never what the license allows.
    Then what it is (`glance.what_it_is(r, name)`), and `LEDE`: "Everything behind the summary, question by question. Every
    part is folded; tap one to open it."
+   **The rail** (`rail_html`, R33): under the header, the sections in the summary's order (What it can do, Examined, the
+   questions, Misalignment, Changes when there is one, Coverage), each with its glyph, in a `nav.rail` that stays in view
+   down the left on a screen 1000 pixels or wider; the section on screen is marked (`a.cur`, the page script). Its
+   "← Summary" button goes to the top of the summary, or, when the page was opened from a "Details →" button (`?from=`), back
+   to that button. Below 1000 pixels the rail is hidden and `nav.toc` does its job.
    Then, in the summary's order (R11, owner 2026-11-05: "the detail should match the order of the summary"): **What it can
    do** (`glance.can_detail`, id `can`; closed, the summary's one sentence; inside, the three boxes, how many of the three this
    one does and what installing it allows, then "Why it can do these": the credit and why each box is ticked; none when
@@ -559,12 +566,12 @@ are marked.
 4. **Misalignment** (`glance.misalign_detail`, id `misalign`, R13), as on the summary (the `glance` section, Misalignment).
    Nitty gritty (R9) is gone: its one catch, a setting no tool knows, is one of the settings the standard doesn't define.
 
-**Folds** (R1, owner 2026-11-05). Every section (the seven, Misalignment, What Walkdown examined, What changed, What Walkdown didn't check)
+**Folds** (R1, owner 2026-11-05). Every section (the seven, Misalignment, What Walkdown examined, What changed, What this run covered)
 is a fold whose title shows what the summary's card shows (question, chip, answer, "More ›"), and every part inside it folds
 under its heading (`glance.part`, `glance.fold`). Every fold is closed when the page opens; a link to a part opens it and the
 folds around it, scrolls there, and marks it for a moment (`glance.SCRIPT`). Each fold's title line has "← Summary" while
 it is open: to its question's card on the summary (`summary.html#<question>`), to What it can do for "Why it can do these"
-(`#can`), to What Walkdown examined (`#examined`), to Misalignment (`#misalign`), or to the top for What changed and What Walkdown didn't check; a page
+(`#can`), to What Walkdown examined (`#examined`), to Misalignment (`#misalign`), or to the top for What changed and What this run covered; a page
 reached from a Details button sends the back links of the part it opened to that button (`from`). The ids of the parts:
 `memory-room` (an id on the summary's heading too), `memory-sizes`, `package-files`,
 `package-<group>`, `package-worth`, `package-worth-<reason>`, `elsewhere-where`, `elsewhere-<check>`, `elsewhere-programs`,
@@ -575,12 +582,19 @@ reached from a Details button sends the back links of the part it opened to that
 4. **What changed since run X**, only when an earlier run of the same repository is a different
    version, or the same version and something differs (`run.changes_for`, `drift.since`; review
    C22 b): the drift lines and a link to `changes.md`.
-5. **What Walkdown didn't check** (`glance.not_checked(r, notes, qa, stop)`; the steps that did not work and every limit
+5. **What this run covered** (`glance.not_checked(r, notes, qa, stop)`; the steps that did not work and every limit
    are the check of the run's): a step that did not work, the model reads
    when they did not run (the line "The optional model reads (a second opinion from an AI) were not
    run." only when neither AI stage, `03-sweep` or `04-pinpoint`, has a report in the run), or that
-   every step ran and passed; then every limit of the run, folded (`render.limits`, which names INCOMPLETE stamps
-   and skipped checks). The files no check read are one item, "Files the checks did not read: <n> archives looked inside
+   every step ran and passed; checks skipped in this run under "Skipped in this run:" (it said "..., most often because
+   an optional tool is not installed" until R35 and R36, 2026-11-11: no coded check waits on an installed program now);
+   what the reader does not examine in this repository's files under **Words** "Not examined, in the files this
+   repository has:" (`glance.NOT_EXAMINED_HEAD`; `render.not_examined(notes)`: each `02.2-reader` note that starts
+   `not examined: ` as a sentence, "The text drawn inside images (3 images); their metadata is read.", "How a web page
+   looks once drawn (1 HTML file): one element drawn over another, ...; the page's own styles are read.", and the PDF
+   pages that are only a picture; nothing for a repository with none of those files; never a skipped check, R35 and R36,
+   `test_what_the_reader_does_not_examine_is_its_own_list_and_never_a_skipped_check`); then every limit of the run,
+   folded (`render.limits`, which names INCOMPLETE stamps and skipped checks). The files no check read are one item, "Files the checks did not read: <n> archives looked inside
    for programs only and <n> files no tests are run on (What Walkdown examined, at the top)" (`render.glance`, from
    `coverage`; since 2026-11-04 it replaces "<n> files could not be read" and the phrase step's "not text" files, which
    counted the yellow and red tiers again; `test_files_no_check_read_are_one_line_pointing_at_the_tiers`). A run that stopped as asked (O3) says 'Every step that ran passed its own checks.', then lines of their own, apart
@@ -641,7 +655,10 @@ No Not concerned boxes and no marks bar (owner, 2026-10-27): marking is on `revi
 - `CARRIER_PLAIN`: the plain words for how `02.2-reader` saw text differ (`carrier`). It names the
   kinds of invisible character: `zero-width` "invisible characters", `bidi` "text-direction
   controls", `soft-hyphen` "soft hyphens", `filler` "blank letters and cells", `tag-chars` "hidden
-  tag characters", `variation-selectors` "runs of variation selectors", `nul` "NUL characters".
+  tag characters", `variation-selectors` "runs of variation selectors", `nul` "NUL characters". The kinds the static HTML
+  reader gained with R36 (2026-11-11): `off-page` "text placed off the page", `clipped` "text clipped out of view",
+  `zero-size` "text in a box with no size", `tiny-text` "text too small to read", `css-content` "text a style sheet
+  adds". `image-text` and `rendered` stay for runs made before R35 and R36.
   `carrier_plain(carrier)` gives the words for one carrier; a carrier joined with `+`
   ("zero-width+bidi") reads as its parts' words: "A and B" for two parts, "A, B, and C" for three or
   more (commas, with "and" before the last), and a carrier with no entry reads as it is written.
@@ -671,7 +688,7 @@ No Not concerned boxes and no marks bar (owner, 2026-10-27): marking is on `revi
    (`test_items_say_what_hidden_text_spells`).
 5. The license line and the summary's short license (`test_license_line_in_header`,
    `test_license_line_unrecognized_field_none_and_old_run`).
-6. Changes only when they apply (`test_changes_only_when_relevant`); What Walkdown didn't check last
+6. Changes only when they apply (`test_changes_only_when_relevant`); What this run covered last
    (`test_not_checked_last_with_every_limit`); the model-reads line is there for a default run and
    gone for a run with a `03-sweep` report
    (`test_not_checked_says_the_model_reads_did_not_run_only_when_no_ai_stage_has_a_report`).
@@ -697,6 +714,8 @@ No Not concerned boxes and no marks bar (owner, 2026-10-27): marking is on `revi
     `test_not_checked_says_each_fact_about_a_model_read_once`).
 
 ### History
+
+- 2026-11-08 (R33, owner 2026-11-07 "I like the changes", 2026-11-08 "Keep the faces"; prototype on `report/visual`, pre-planning/REPORT-CHANGES-2026-11-05.md): glyphs, card faces, the brand line, careful above tools; `details.html` rail; the examined bar.
 
 - 2026-10-07: HTML summary page (report v1, now at tag `report-v1`).
 - 2026-10-12: review page link; trifecta legs checked first, colored by position (owner).
@@ -973,12 +992,34 @@ expected context (default `render.DEFAULT_CONTEXT`, 32,000); `meta["hosts"]` the
 `Q`: `id`, `question`, `chip`, `tone` (`look`, `notes`, `fact`, `none`, `unmeasured`), `answer`
 (escaped HTML), `bullets` (HTML), `more` (on both pages), `detail` (on `details.html` only).
 
+### What was not found (R32)
+
+Owner, 2026-11-07: "things not found (say an API Key written plainly is not found) I do not want that fact in the summary.
+I can see the use in details, listed after found things in each section, a not found section that starts collapsed.";
+"Keep the question, drop the card's answer line"; "yes drop the chip"; "brief follows the summary".
+
+- `summary.html` says what was found. A card whose checks all found nothing is its question alone: no answer line and no
+  chip (`glance.card`). A part of a card with nothing found (Operating systems, Finished and up to date) has no heading;
+  a box for a system nothing trips, or for an AI tool that finds none of its files, is not drawn. A run-health sentence
+  stays (a step that did not run or did not work, a stop, a model read that did not work, checks that could not be made),
+  and so does the footer.
+- Each question keeps what its checks did not find in `Q.none` (escaped lines). `details.html` lists them in a closed fold,
+  "Not found (<N>)" (`glance.not_found`, id `<section>-none`), the last thing in the section, after every found part. A
+  part with nothing found in it ("Text hidden from people", "Passwords, keys, and secrets") is not drawn; its line is in
+  the fold ("Nothing hidden from people.", "No lines look like a saved password, key, or token."). Misalignment's section
+  has its own ("Every skill's header follows the standard.", "No two skills describe themselves alike.").
+- The brief follows the summary: a count line leaves out its zero counts and is no line when every count is zero; no
+  "Install grants: none."; no "found none" headline (`headline` returns what is left, which may be nothing).
+- `full.md` keeps every count, zeros included: it is the whole record.
+- Not changed: What it can do's three boxes (an unticked box), whose point is the three together.
+
 ### Chips
 
 Never a verdict. **N to look at** (amber: a host rule, a security kind, or the words against the
 grants found something), **N notes** (amber: published guidance and harmless facts), a **fact**
-(blue: a measure), **Nothing to look at** (green: the checks ran and found nothing), **Not
-measured** (grey: the run was made before the check, or a step did not run; never "nothing").
+(blue: a measure), **Not measured** (grey: the run was made before the check, or a step did not run; never "nothing").
+**Nothing to look at** (green) and **Nothing found** were the chips of checks that found nothing until R32: such a card
+has no chip.
 
 ### The four questions, in order
 
@@ -995,11 +1036,14 @@ other AI tools (R22), and "Finished and up to date" is a heading under "Anything
 
 1. **Size and Shape** (`size`; R21, owner 2026-11-06: "combine the How much of the AI's memory does it use? and What comes in the package? into one section ... Let's call it Size and Shape for now"; "the what comes in the package comes first. the 4 notes on what the bar is should be 2 columns"). `glance.q_size` joins two parts. Chip (fact): the parts'
    chips joined by " · ", such as "3 extra files · up to 21%". Answer: the package answer, a line break, the memory
-   answer. More: each part under its heading (`h3.piece`), "What comes in the package" then "How much of the AI's memory it
-   uses". On `details.html` (`Q.details_body`) each part's More and then its Detail. Not measured when neither part is; a
+   answer. The package bar and its legend are the card's face (`Q.face`, R33): shown closed or open, above the headings,
+   and at the top of the section on `details.html`. More: each part under its heading (`h3.piece`), "What comes in the
+   package" (its saving line) then "How much of the AI's memory it uses". On `details.html` (`Q.details_body`) each part's
+   More and then its Detail. Not measured when neither part is; a
    part not measured says so in the answer and has no heading.
    - **What comes in the package** (the first part, was question `package`; slice 1). Not measured without file groups. Chip
-     (fact): "<N> extra files" or "Nothing extra". Answer: "<W> of its <F> files do the work. The other
+     (fact): "<N> extra files", or none when every file does the work (R32; "Every file does the work; nothing else comes
+     along." is under Not found). Answer: "<W> of its <F> files do the work. The other
      <N> come along without being used." More: one stacked bar of the four groups (do the work, notes
      for people, tests and build tools, files not linked or referred to (R14)), the legend in two columns (one on a phone), and the saving (a fact,
      never an order). Detail: every file by group; **Files worth a look** (`details_html.file_concerns`:
@@ -1021,9 +1065,11 @@ other AI tools (R22), and "Finished and up to date" is a heading under "Anything
 2. **Is this transferable to other machines?** (`transfer`; R22, owner 2026-11-06: "let's combine the will it work under other machines. Is it transferable to other machines? Yeah, that's good wording"; boxes "for Linux, Windows, and Mac"; "When it's not highlighted, have a yellow outline and keep the blue for good ones"; "put the boxes, the judgment boxes under the title instead of after the list of things"). `glance.q_transfer` joins two parts
    as Size and Shape does (`glance.joined`): the chips joined by " · " (tone look when a part has something to look
    at), the two answers on lines of their own, each part under its heading (`h3.piece`) with its boxes first and then its
-   lines, and on `details.html` each part's detail after it. The parts: "Operating systems" with three boxes,
-   Linux, Windows, and Mac (`glance.system_tiles`): blue with "✓" and "nothing found against it" when no kind trips
-   that system, otherwise a yellow outline with "✗" and "<N> thing(s) to look at", counting kinds. The systems each
+   lines (the system boxes are the card's face, R33: above the headings, shown closed or open; the AI-tool boxes
+   stay under theirs), and on `details.html` each part's detail after it. The parts: "Operating systems" with its boxes,
+   Linux, Windows, and Mac (`glance.system_tiles`): a yellow outline with "✗" and "<N> thing(s) to look at", counting
+   kinds, for each system a kind found trips; a system nothing trips has no box, and with none the card has no face (R32:
+   "Nothing found against <systems>." is under Not found; until then a blue box said "nothing found against it"). The systems each
    kind trips are `Library/tools.yaml`'s `systems` (Windows line endings, backslashes, scripts not marked runnable, and
    `python`: Mac and Linux; case-only references: Linux), and `port.os` by its program's `os` (`os_systems`: a Linux-only
    or Mac-only program trips the other two, a Unix one Windows, a Windows one Mac and Linux). Personal paths and programs
@@ -1033,8 +1079,8 @@ other AI tools (R22), and "Finished and up to date" is a heading under "Anything
      found programs, packages, or places here, or holds slice 3's `host.coverage` (there is no marker
      finding; `render.needs_of`). Chip: one to look at per kind (programs never declared, or packages
      when every program is; each `port.*` kind; case-only references). Answer: "<Two> things could
-     trip it up on another computer." or "Yes. Everything it uses is something it says to install,
-     and nothing ties it to one computer." Bullets: one template per kind (`PORT_PLAIN`, from `Library/tools.yaml`), with "(N
+     trip it up on another computer."; with none, no answer and no chip, and "Everything it uses is something it says to
+     install, and nothing ties it to one computer." is under Not found (R32; it was the answer, after "Yes."). Bullets: one template per kind (`PORT_PLAIN`, from `Library/tools.yaml`), with "(N
      of them in <folder>/)" when one top folder holds half or more. Detail: the largest kind by file,
      the programs table, every place by kind.
    - **Other AI tools** (the second part, was question `hosts`; slice 3). Not measured without host
@@ -1045,19 +1091,26 @@ other AI tools (R22), and "Finished and up to date" is a heading under "Anything
      per tool, blue when it finds files here, a yellow outline when not (R22). Never says which tool a repository should support.
 3. **Does it ask only for the tools it needs?** (`tools`; slice 5). Not measured without
    `fit.checked`. To look at: unused grants, tasks with no tool, read-only claims contradicted,
-   loops with no stated limit, hooks on every prompt or tool call. Answer with none: "Yes. Every
-   tool it is allowed to use is one it actually uses, and nothing it asks for is missing." Bullets:
+   loops with no stated limit, hooks on every prompt or tool call. With none, no answer and no chip; "Every tool it is
+   allowed to use is one it actually uses, and nothing it asks for is missing.", "No step repeats ... without a limit.",
+   and "It has no hooks ..." are under Not found (R32). "None of its skills or helpers lists its tools; they use whatever
+   the AI already has." is a fact about it and stays the answer. Bullets:
    one per kind (`FIT_PLAIN`, templates from `Library/fit.yaml`). Detail: every place by kind, the helpers and their tools.
 4. **Anything to be careful about?** (`careful`). Rows from `summary_html.rows` (the fixed concern
-   kinds and order). Chip: "<N> to look at"; "Nothing found" (never "safe"); "Not checked" when a
+   kinds and order). Chip: "<N> to look at"; none when nothing was found (R32; it was "Nothing found", never "safe");
+   "Not checked" when a
    step did not run and nothing was found. Answers: one kind, "<N> place(s) has/have <plain row
    name>." ("Both are the same text." when the hidden places share their text); several, "Walkdown
-   found <N> places worth a look, of <K> kinds: <short names>."; none, "Walkdown found none of the
-   security concerns it looks for." with " Not every step worked, so it may have missed some." when
+   found <N> places worth a look, of <K> kinds: <short names>."; none, no answer line (R32: "Walkdown found none of the
+   security concerns it looks for." (`NONE_FOUND`) is under Not found), or, when `full.md` lists lines no place holds
+   (`off_list`: `02.4-phrases` hits outside human-facing files and test data on a line no place is on, R28), "full.md has
+   <N> more lines with risky wording, not listed here (section 4)." (`OFF_LIST`; "Walkdown found none of the security
+   concerns on its list." (`NONE_ON_LIST`) is under Not found), with " Not every step worked, so it may have missed some." when
    a step failed its fixture check or did not run; a step that did not run and nothing found, "This
    run did not complete: ..., so Walkdown cannot say whether it has any of these." (a coded step: a
    model read that did not work adds " The coded checks are complete; the model read did not work."
-   instead, M9; chip "Nothing found"). A run that stopped as
+   instead, M9; no chip). With nothing found, a sentence about the run stands alone as the answer: "Not every step
+   worked, so Walkdown may have missed some." A run that stopped as
    asked before its last coded step (`meta["stop"]`, O3) says 'This run stopped after the step "<plain>", as
    asked, so Walkdown cannot say whether it has any of these.' when nothing was found, chip "Not checked", and adds
    ' The run stopped after the step "<plain>", as asked, so it may have missed some.' to an answer that found
@@ -1070,10 +1123,16 @@ other AI tools (R22), and "Finished and up to date" is a heading under "Anything
    row's fold, or the passwords part; the answer and the brief still count by `CONCERNS`; for hidden text, what it says, up to 80 characters with comment
    marks taken out (the one repository text on the summary); the wording-only count and "<M> of <N>
    places marked so far. Go through each place and mark it." (`marked_line`: the rule-found review
-   cards, any mark, own or carried). No More: What it can do is a section of its own at the top of the summary since
+   cards, any mark, own or carried). With places, the lines no place holds are a blue line of their own, "full.md has <N>
+   more lines with risky wording, not listed here (section 4)." (R28). No More: What it can do is a section of its own at the top of the summary since
    2026-11-05 (`can_section`, R4); on `details.html` it is a section at the top, in the summary's place (`can_detail`, R11:
    the three boxes, how many of the three this one does and what installing it allows (`can_rest`), the credit (the lethal
-   trifecta, Simon Willison's name), and why each box is ticked). Detail: **Every
+   trifecta, Simon Willison's name), and why each box is ticked; then, R31, "What installing it grants" (`grants_detail`: each
+   grant a setting gives, by its plain name, with its reasons counted, "descriptions, always loaded (9)", and "and <N> lines
+   of wording" when there are some) and "What its wording asks for" (each grant only the wording gives, its line count, up
+   to four places, "No setting grants these: each comes from wording only. full.md section 5 cites every line."). What
+   installing it allows counts only grants a setting gives; `can_rest` adds "Its wording asks to <plain> (<N> lines); no
+   setting grants it." for the rest (`ASK_PLAIN`)). Detail: **Every
    place, by kind** (a fold per row, each place linked to its review card, quoted, with Walkdown's
    note for any kind but a phrase match, and a model read that questions it); hidden text (by how
    it hides, by file, every place; lines read differently once invisible characters or look-alike
@@ -1086,8 +1145,10 @@ other AI tools (R22), and "Finished and up to date" is a heading under "Anything
 
    - **Finished and up to date** (was question `clean`, "Is it finished and up to date?"; slice 6; R23, owner 2026-11-06: "I think is it finished and up to date can be moved under anything to be careful about. It should get its own header under there. So it's distinct, but it doesn't need its own full tab."; "Finished and up to date under careful, go ahead"). `glance.finished_under_careful`: a heading (`h3.piece`, id `finished`) at the end of the careful card, after its lines, with this part's answer and its chip beside it (`p.finished-a`), then its lines; on `details.html` at the end of the careful section, after its detail, then its folds. The careful card keeps its own chip and answer. Not measured without `clean.checked`.
      Notes: unfinished text, dated claims, older tool names; pinned model IDs are a fact inside.
-     Answers: "Nearly. <counts>." or "Yes. No unfinished notes, no dates that will go stale, and no
-     older tool names." The summary shows no line of the repository's; details quotes each place.
+     Answers: "Nearly. <counts>."; with none, the part has no heading on either page, and "Finished and up to date: no
+     unfinished notes, no dates that will go stale, and no older tool names." and "... no AI model names fixed in place."
+     are under the careful section's Not found (R32; it answered "Yes. ..."). The summary shows no line of the
+     repository's; details quotes each place.
 
 **Counting.** A place counts once, as `review.html` counts it: findings on one line are one place
 (`summary_html.rows` ids, `total`, `wording_count`). A place may fall in two rows; the answer's
@@ -1132,15 +1193,17 @@ fold on `details.html` (`misalign-<group>`) listing every place (`render.misalig
 7. `fields`, "Settings the standard doesn't define" (`field-outside`): "<N> setting(s) the standard doesn't define:
    <key> (<count>), ..." (the four most common, then "and others"); the fold lists each key on its line.
 With none: "Every skill's header follows the standard."; with no skill, "No skills here; the standard covers skills only."
+Both are under Misalignment's Not found (R32), and the heading "Skill Formatting" is drawn only with a place under it.
 
 **Descriptions too alike**, only with two skills or more: "<N> pair(s) of skills with descriptions so alike that the AI may
 pick the wrong one." (`trig.overlap` between two skills; Walkdown's own measure, said so in the fold, `misalign-alike`), or
-"No two skills describe themselves alike."
+"No two skills describe themselves alike." under Not found (R32), with no heading.
 
 **summary.html** (`glance.misalign_card`, R24, owner 2026-11-06: "For misalignment. Should be another section like Is this transferable to other machines? but no expand. the subtitle says 'Things that are not standard but are not security flaws. (# of issues)'"): the last card in the list, "Misalignment", with no label and
 nothing to open; its "Details →" on its face opens the section on `details.html`. Its line: "Things that are not standard
 but are not security flaws. (<N> issue(s))", counting the places that differ from the standard and the pairs of skills
-described alike; with no skill, "... (No skills here; the standard covers skills only.)". Not measured: "Not measured:
+described alike; with no skill, or none that differ, no line (R32: the card is its question; until then "... (No skills
+here; the standard covers skills only.)" and "(0 issues)"). Not measured: "Not measured:
 this run was made before this check, or a step did not run.", or, for a run stopped as asked, 'Not measured: the run
 stopped after the step "<plain>", as asked.' (`misalign_unmeasured`).
 
@@ -1181,6 +1244,17 @@ every limit folded).
 - Show a secret's value, or open, fetch, or check a link.
 - Emit unescaped repository text.
 
+**Glyphs and faces (R33, owner 2026-11-07, "I like the changes"; 2026-11-08, "Keep the faces").** `icon(sid)`: one stroke
+glyph per section in the link colour, the same on `summary.html` and `details.html` (`can` a shield, `examined` a file,
+`size` a box, `transfer` two screens, `tools` a wrench, `careful` a magnifier, `misalign` a ruler, `changes` arrows, `limits`
+a crossed circle); identity, never a colour of its own, and no `stroke-linecap=` attribute (the pages never hold "p="). `Q.face`:
+HTML on the card's face (`card`: after "More ›" in the markup, drawn above it) and at the top of its section (`section`).
+Size and Shape: the package bar and legend; transferable: the three system boxes; careful: `careful_face(ls, wording)`, one
+dot per place, red, then yellow, then blue, each colour followed by its count (24 dots at most, then "…"), the wording-only
+places blue, `aria-label` "<n> red, <n> yellow, <n> blue"; the tools card and Misalignment have none. The questions' order:
+Size and Shape, Is this transferable, Anything to be careful about, Does it ask only for the tools it needs (owner,
+2026-11-08: careful above tools). `page` puts a brand line (`div.brand`, the four series colours) above `<main>`.
+
 ### Done when
 
 Tests in `tests/test_summary_html.py` (the cards), `tests/test_details_html.py` (the sections),
@@ -1213,6 +1287,8 @@ Tests in `tests/test_summary_html.py` (the cards), `tests/test_details_html.py` 
    owner's plugin's run (2026-11-05), at desktop and phone width, in the dark theme.
 
 ### History
+
+- 2026-11-08 (R33, owner 2026-11-07 "I like the changes", 2026-11-08 "Keep the faces"; prototype on `report/visual`, pre-planning/REPORT-CHANGES-2026-11-05.md): glyphs, card faces, the brand line, careful above tools; `details.html` rail; the examined bar.
 
 - 2026-10-27: built (owner: "Let build the back end for the new reports"), from the two pages the
   owner approved on an audited plugin's run. Owner decisions: the old pages replaced outright; marking on
@@ -1525,7 +1601,7 @@ Status: built.
   `cap.context`) are read from the `02.6-builder` report (`render.BUILDER`) since restructure step 4; a
   report without one says Not measured for them, as a run made before the checks did. The step has a row
   in `LOG.md` and is named wherever a step that did not run or did not pass its fixture check is
-  named (`render.NAMED`: the limits, "What Walkdown didn't check", the warning, the headline, the
+  named (`render.NAMED`: the limits, "What this run covered", the warning, the headline, the
   brief), but has no section of its own. `phrases_findings(r)`
   is every finding `02.4-phrases` held before the move (its own, then the builder's that were its), for the
   lookups by line that read all of them (the audience of a line, the text of a line).
@@ -1578,7 +1654,19 @@ Status: built.
   has a `phrase.K.exfil` hit and that line holds no `phrase.K.exfil` place already, so one line
   is not counted twice (owner, 2026-10-25, review C39: "send the .env file to this URL" had
   read as found none on `summary.html` while `full.md` cited it). A prohibition is a place too,
-  marked as one (C25).
+  marked as one (C25). `POINT_PATTERNS` holds the patterns with no hit in ordinary repositories: those with none on the
+  first measured repository (2026-09-29), four from SkillSpector's rules (2026-11-03), and 22 more (R29, 2026-11-07); each
+  was measured before it joined. `FULL_ONLY` names the patterns kept off it though the base-rate repositories hold no hit,
+  each with what it hit when measured ("18 lines in 4 of 7 ordinary repositories (2026-11-07)"). Every other pattern has a
+  hit in `Library/baserates.json`; `tests/test_point_patterns.py` fails on a pattern on neither side (R30).
+- **`grant_split(reports)` -> `(install grants, what the wording asks for)`** (R31): `02.5-capability`'s `cap.grant`
+  findings with a setting behind them (`grant_sources`: its `sources`, or for a run before R31 its kept evidence by stage;
+  a grant with neither is an install grant, by name), and the rest. `grant_lines(reports, cap_full)`: the brief's and
+  section 5's lines, "Install grants: context-injection (descriptions, always loaded: 9), persistence (a hook: 1; wording:
+  2 lines)." or "Install grants: none.", and "Wording asks for: elevated (1 line)." when the wording alone gives one. The
+  reasons are Walkdown's words (`grant_reason`), never the repository's (a hook's event, a server's name). `full.md` section
+  5 lists the install grants with their citations under "### Install grants", then "### Wording asks for" with every
+  line cited. Nothing is dropped: a wording line stays cited, and a place on the pages if its pattern is one.
 - **`tool_items(reports, notes)` -> `([(what, why)], [what])`**: `02.2-reader`'s notes on optional
   tools, split by whether this repository has files the tool reads (`TOOL_NOTES`, `file_kinds`).
   Read by `glance` (2026-10-21).
@@ -2231,10 +2319,13 @@ carried (the `marks` section). The places come from `details_html.first_items`, 
 2. **What it can do** (`glance.can_section`, R4), only when `02.5-capability` ran: the three boxes side by side, each ticked
    or crossed (`glance.can_boxes`; one under another below 560px), then one sentence: "A tool that does all three could be
    tricked into sending your data away." Its "Details →" opens "Why it can do these" on `details.html`.
-3. **What Walkdown examined** (`coverage.section_html`), with a "Details →" to the same section on `details.html`.
+3. **What Walkdown examined** (`coverage.section_html`: its bar, then the tiers), with its glyph and a "Details →" to the same
+   section on `details.html`.
 4. **At a glance**: the four questions as cards (`glance.card`), in order: size (Size and Shape, R21),
-   transfer (R22), tools, careful (with "Finished and up to date" under it, R23). Each card shows the question, its chip, and
-   its answer; "More ›" opens the bullets and, for Size and Shape, its bar and table. Inside, a "Details →" button ends each
+   transfer (R22), careful (with "Finished and up to date" under it, R23), tools (careful above tools: R33, owner
+   2026-11-08). Each card shows its glyph, the question, its chip, its answer, and its face when it has one (`Q.face`, R33:
+   the package bar and legend, the three system boxes, the careful dots); "More ›" opens the bullets and, for Size and
+   Shape, its table. Inside, a "Details →" button ends each
    line that has a part of its own on `details.html`, and one at the bottom opens the question's section. A card with
    nothing more to show has no "More ›", and its "Details →" is on its face, when `details.html` has more for it.
    Then **Misalignment**, the last card (`glance.misalign_card`, R24; the `glance` section, Misalignment): one line,
@@ -2246,8 +2337,8 @@ carried (the `marks` section). The places come from `details_html.first_items`, 
    this run.", each such step by its plain name with "did not run" (no output), "did not pass its
    fixture check (FAIL)"; that a step that did not work can
    miss places, so this page may show fewer than there are (left out when the only step that did not work is a model
-   read, which adds no place this page counts: `only_model_reads`, `warning(..., model_only=)`); and a link to "What
-   Walkdown didn't check" on `details.html`. A step with nothing in this repository to test, and a fixture check
+   read, which adds no place this page counts: `only_model_reads`, `warning(..., model_only=)`); and a link to "What this run
+   covered" on `details.html`. A step with nothing in this repository to test, and a fixture check
    that did not run because an optional tool is not installed (INCOMPLETE, any stage), never reach
    this page (owner, 2026-10-25); `details.html` and `full.md` list both. A run made without
    validation has no stamps and gets no line for them. A model read in which no passage got an answer, even after the
@@ -2303,21 +2394,22 @@ place (stage, file, line) not so marked. Model reads are never concerns.
 
 - With concerns: "Walkdown found security concerns in this repository: <N> places, of <K> kinds."
   (`total`), with "(<M> of them marked Not concerned.)" when the reader marked some.
-- With none: "Walkdown found none of the security concerns it looks for."
+- With none: nothing (R32: no "found none"), or, when `full.md` lists lines no place holds, "full.md has <N> more lines
+  with risky wording, not listed here (section 4)." (R28), with any sentence about the run after it.
 - When a step produced no output (`not_run(qa)`), never "found none": 'This run did not complete: the
   step "<name>" did not run' (or '<n> steps did not run, starting with "<name>"'), then "so Walkdown
   cannot say whether this repository has the security concerns it looks for." or, with concerns
   from the steps that ran, "In the steps that ran, Walkdown found security concerns: ..."
   (2026-10-21, an outside tester: an empty .venv crashed `02.1-inventory` and the page read as clean).
-- With none and a step that failed its fixture check (`failed_checks(qa)`), never plain "found none":
-  "..., but not every step worked, so it may have missed some." (owner, 2026-10-25, review C40).
+- With none and a step that failed its fixture check (`failed_checks(qa)`): "Not every step worked, so Walkdown may have
+  missed some." (owner, 2026-10-25, review C40; R32 took "Walkdown found none ..." from its front).
 - A model read that did not work (`model_down`: a chosen read that left no output, or one that ran and got no answer for
   any passage even after the retry; M9, restructure M14 b) does not make the headline say Walkdown cannot say: a model
   read adds no security concern. `headline(..., model=, incomplete=)` adds to the usual line "The coded checks are
   complete; the model read did not work." With a coded step that failed its fixture check it adds only "The model read
   did not work.", since the coded checks are not complete. With a coded step INCOMPLETE (a check skipped for a missing
-  tool, `incomplete_checks`) the checks are not "complete" either, so it adds 'The coded checks ran, and "What Walkdown
-  didn't check" names any skipped for a missing tool; the model read did not work.' (`model_down_sentence`).
+  tool, `incomplete_checks`) the checks are not "complete" either, so it adds 'The coded checks ran, and "What this run
+  covered" names any skipped for a missing tool; the model read did not work.' (`model_down_sentence`).
   `not_run(qa)` names the coded steps alone (`ai=True` adds a chosen read that left no output), and `headline` is given
   those as `missing`.
   A coded step that did not run keeps its "did not complete" line.
@@ -2396,6 +2488,8 @@ check". Any other run has none.
 
 ### History
 
+- 2026-11-08 (R33, owner 2026-11-07 "I like the changes", 2026-11-08 "Keep the faces"; prototype on `report/visual`, pre-planning/REPORT-CHANGES-2026-11-05.md): glyphs, card faces, the brand line, careful above tools; `details.html` rail; the examined bar.
+
 - 2026-09-29: first summary (text, `summary.md`).
 - 2026-10-07: HTML summary page (report v1).
 - 2026-10-16: report v2, the long page in the owner's order (now the `details_html` section).
@@ -2460,6 +2554,29 @@ check". Any other run has none.
 - 2026-10-31: M1 slice A, fix round: the backend is flattened and cut where the details page writes it (`Read by <backend> as telling the reader to:`, a clear place and a near one) and in the log header's line for a stop (`prepared.backend`). They wrote it as it came.
 - 2026-10-31: M1 slice A, fix round 2: the model name in the fixture line and in the waiting line of a stopped run is cut at `MODEL_CAP`; it was one line and uncut (the command to go on keeps the option as typed). Test: `test_tokens_line.py::test_the_model_name_in_the_line_is_cut_at_the_cap`.
 - 2026-10-31: M1 slice A, fix round 3: the command to go on, and the line above it, print a backend the record kept only if it is a model option (`common_lines.record_option`); a value changed by hand in `data/run.json` is left out, with one sentence. It printed whatever the record held, flattened.
+- 2026-11-11 (owner, R35 and R36): no OCR program and no browser. What this run covered lists what the reader does not
+  examine in this repository's files (`render.not_examined`, "Not examined, in the files this repository has:"), apart
+  from the skipped checks, whose heading no longer says "most often because an optional tool is not installed";
+  `CARRIER_PLAIN` has words for the five kinds the static HTML reader gained; an image a model is pointed at reads "Walkdown
+  does not examine the text drawn in images, so open it and look" (`IMAGE_READ`). `TOOL_NOTES` stays for runs made before.
+- 2026-11-07 (owner, R32): what was not found leaves the summary and the brief; on `details.html` it is a closed "Not
+  found" fold at the end of its section (`Q.none`, `glance.not_found`). The chips "Nothing to look at", "Nothing found",
+  "None on the list", "Nothing extra", and "Nothing missing for your tools", the "Yes. ..." answers, "nothing found
+  against it" boxes, and the zero counts of the brief's lines are gone; a card that found nothing is its question
+  (`tests/test_summary_html.py::test_the_summary_says_what_was_found_and_details_ends_each_section_with_what_was_not`).
+  R28's "Walkdown found none of the security concerns on its list." moved to that fold; its count of lines stays.
+- 2026-11-07 (owner, R28 to R31, after two outside testers' reports): (R28) the careful card, `details.html`, and the brief
+  never say "found none" while `full.md` lists lines no place holds: "on its list", the count, and the section; chip "None
+  on the list" (`summary_html.off_list`). A send, a hide-from-the-user, and a turn-off-confirmations line had read as
+  Nothing found. (R29) the 45 patterns with no hit in the base-rate repositories and not yet measured went through the
+  2026-11-03 test on the same seven ordinary repositories: 22 hit none and join `POINT_PATTERNS`; 23 hit and are in
+  `FULL_ONLY` with their counts, beside `E.tls-off` and `E.registry-config`, which hit again. Each new place takes its check's
+  group and an existing careful line; `FAMILY` gains seven titles (`B.lookalike`, `B.`, `H.consequence`, `C.guard`, `C.`,
+  `E.write-then-exec`, `J.`), which read "Matches a pattern worth reading" before. (R30) `FULL_ONLY`, and a test that every
+  pattern is on one side; the specimen's family lines come from `FAMILY` itself; variants `only-in-full-md` and
+  `every-pattern`. (R31) install grants by where they come from (`grant_split`): a quoted example line had made `elevated`
+  an install grant (`tests/test_point_patterns.py`, `tools/tests/test_specimen.py::test_every_pattern_shows_where_the_list_puts_it`,
+  `tests/test_brief.py::test_the_brief_says_what_the_settings_grant_and_what_the_wording_asks_for`).
 - 2026-11-03 (owner): `K.prompt-leak`, `L.never-refuse`, `L.no-disclaimer`, and `E.decode-exec` join `POINT_PATTERNS`: none hit in
   seven ordinary repositories (three skill collections, four MCP servers), as the rows already there. `E.tls-off` and
   `E.registry-config` hit in them (a `curl -k` to localhost, the public npm registry) and stay in `full.md`, as `E.mcp` does.

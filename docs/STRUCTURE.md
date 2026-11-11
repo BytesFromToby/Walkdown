@@ -99,12 +99,11 @@ them uses a model.
 ### 3.3 `02.2-reader`: What the model actually reads
 
 - **Reads:** the input folder.
-- **Scripts (14, 2,886 lines):** `files.py` (list, classify, decode), one reader per format
-  (`read_md.py`, `read_html.py`, `read_pdf.py`, `read_docx.py`, `read_svg.py`, `read_image.py`),
-  drawn readings (`render_html.py` with Playwright, `render_pdf.py`), `colors.py`, `fold.py` (folded
-  copy; reads `Library/invisible.yaml`), `language.py`, `script_runs.py`, `run.py`.
-- **Optional tools:** Tesseract (OCR of images and PDF pages), Playwright with Chromium (HTML as a
-  browser draws it).
+- **Scripts (12, 2,628 lines, 2026-11-11):** `files.py` (list, classify, decode), one reader per format
+  (`read_md.py`, `read_html.py`, `read_pdf.py`, `read_docx.py`, `read_svg.py`, `read_image.py`: its metadata),
+  `colors.py`, `fold.py` (folded copy; reads `Library/invisible.yaml`), `language.py`, `script_runs.py`, `run.py`.
+- **Nothing installed apart** since R35 and R36 (2026-11-11): the drawn readings (`render_html.py` with Playwright,
+  `render_pdf.py` with Tesseract) are gone; HTML is read from its styles, and the text drawn in images is not examined.
 - **Writes:** `data/02.2-reader.json` and `data/normalized/` (the text it read from each file,
   including PDF, DOCX, and image text). Checks: `read.divergence`, `read.fold`, `read.language`,
   `read.metadata`, `read.script`, `read.unread`.
@@ -227,8 +226,8 @@ them uses a model.
   lines every step writes),
   `library.py` (how a step reads the Library), `earlier_steps.py` and `upstream.py` (run or load
   the steps a step reads), `audience.py` (who a file is written for), `readtext.py` and
-  `linetext.py` (bytes to lines), `secretmask.py`, `softdata.py`, `rates.py`, `termdiff.py`,
-  `playwright_check.py`. No step imports another step's module; shared code comes from here.
+  `linetext.py` (bytes to lines), `secretmask.py`, `softdata.py`, `rates.py`, `termdiff.py`. No step imports another
+  step's module; shared code comes from here.
 
 ## 4. Validation: the grader stamps each step
 

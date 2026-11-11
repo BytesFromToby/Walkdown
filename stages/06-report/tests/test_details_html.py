@@ -16,7 +16,7 @@ _spec = importlib.util.spec_from_file_location("walkdown_s08_test_render_v2",
 _tr = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_tr)
 META, PASS, reports = _tr.META, _tr.PASS, _tr.reports
-ORDER = ["size", "transfer", "tools", "careful"]  # question 1 retired (R13)
+ORDER = ["size", "transfer", "careful", "tools"]  # question 1 retired (R13); careful above tools (R33, owner 2026-11-08)
 
 
 def page(r=None, stamps=PASS, changes=None, meta=None, notes=None, runs_ok=None):
@@ -438,7 +438,7 @@ def test_changes_only_when_relevant():
 def test_not_checked_last_with_every_limit():
     h = page()
     t = H.unescape(re.search(r'<section id="limits" class="sec">(.*?)</section>', h, re.S).group(1))
-    assert "What Walkdown didn't check" in t and "Every limit of this run (" in t
+    assert "What this run covered" in t and "Every limit of this run (" in t
     assert "The optional model reads (a second opinion from an AI) were not run." in t
     assert h.index('id="limits"') > h.index('<section id="careful"')
     bad = dict(PASS, **{"02.4-phrases": Stamp("FAIL", "1/2", "1/1")})
@@ -500,7 +500,7 @@ def test_not_checked_says_the_model_reads_did_not_run_only_when_no_ai_stage_has_
     r = _tr._sweep_reports()
     assert r["03-sweep"]["findings"]
     ran = H.unescape(section(page(r), "limits"))
-    assert "What Walkdown didn't check" in ran and MODEL_READS_NOT_RUN not in ran
+    assert "What this run covered" in ran and MODEL_READS_NOT_RUN not in ran
     # a chosen stage that failed left no report: the reads did not run, and the line stays
     r = reports()
     r["03-sweep"] = None
@@ -825,3 +825,46 @@ def test_the_script_opens_the_part_a_link_names_and_points_its_back_link_home():
     part's back links go to the button the reader came from (`from`). Checked by hand in a browser (2026-11-05)."""
     for word in ("openAround", 'get("from")', "scrollIntoView", "landed", "hashchange"):
         assert word in G.SCRIPT, word
+
+
+def test_what_installing_it_grants_and_what_its_wording_asks_for():
+    """R31 (owner, 2026-11-07): a grant only the wording gives is never what installing it allows; details says it apart,
+    with where its lines are. A run before R31 has no `sources`: its kept evidence is counted by stage."""
+    r = reports()
+    word = {"stage": "02.4-phrases", "check": "phrase.E.perms", "file": "examples/x.md", "line": 5, "why": "phrase.E.perms: x"}
+    desc = {"stage": "02.1-inventory", "check": "struct.description", "file": "SKILL.md", "line": 2,
+            "why": "description: always-on text"}
+    r["02.5-capability"]["findings"] = [f for f in r["02.5-capability"]["findings"] if f["check"] != "cap.grant"] + [
+        {"check": "cap.grant", "file": None, "line": None, "grant": "context-injection", "evidence": [desc, desc]},
+        {"check": "cap.grant", "file": None, "line": None, "grant": "elevated", "evidence": [word]}]
+    assert G.can_rest(r).endswith(" Its wording asks to have more permissions than the default (1 line); no setting grants it.")
+    assert "more permissions" not in G.can_rest(r).split(" Its wording")[0]
+    g = G.grants_detail(r)
+    assert "<b>Adds text to the AI&#x27;s context before you type</b>: descriptions, always loaded (2)" in g
+    assert "<h3>What its wording asks for</h3>" in g and '<span class="where">examples/x.md:5</span>' in g
+    assert G.R.grant_lines(r) == ["Install grants: context-injection (descriptions, always loaded: 2).",
+                                "Wording asks for: elevated (1 line)."]
+
+
+def test_what_the_reader_does_not_examine_is_its_own_list_and_never_a_skipped_check():
+    """R35, R36 (owner, 2026-11-11: "We state we do not examine images"; "go with option 1"): the reader's notes on what it
+    does not examine in this repository's files are a list of their own under What this run covered, and the run has no
+    "skipped ... optional tool" line."""
+    import render as R
+    notes = {"02.2-reader": [
+        "not examined: the text drawn inside images (3 images); their metadata is read",
+        "not examined: how a web page looks once drawn (1 HTML file): one element drawn over another, clipping that depends "
+        "on where things land, text over a background image; the page's own styles are read",
+        "v1 limit: the language check (read.language) reads prose only"]}
+    assert R.not_examined(notes) == [
+        "The text drawn inside images (3 images); their metadata is read.",
+        "How a web page looks once drawn (1 HTML file): one element drawn over another, clipping that depends on where things "
+        "land, text over a background image; the page's own styles are read."]
+    t = H.unescape(re.search(r'<section id="limits" class="sec">(.*?)</section>', page(notes=notes), re.S).group(1))
+    head = "Not examined, in the files this repository has:"
+    assert head in t and t.index(head) < t.index("Every limit of this run (")
+    assert "The text drawn inside images (3 images); their metadata is read." in t.split("Every limit of this run")[0]
+    skipped = t.split(head)[0].split("Skipped in this run:")[-1] if "Skipped in this run:" in t else ""
+    assert "images" not in skipped and "web page" not in skipped  # never a skipped check
+    assert "optional tool is not installed" not in t
+    assert R.not_examined({}) == [] and head not in H.unescape(page())

@@ -1045,10 +1045,11 @@ interpreter it was started with can import every core one before it runs anythin
 ### Outputs
 
 - `CORE_MODULES`: the import names of `requirements.txt`'s packages, less pytest (no stage imports it): `yaml`,
-  `charset_normalizer`, `pdfminer`, `pypdf`, `pypdfium2`, `bs4`, `lxml`, `PIL`, `regex`, `confusable_homoglyphs`,
+  `charset_normalizer`, `pdfminer`, `pypdf`, `bs4`, `lxml`, `PIL`, `regex`, `confusable_homoglyphs`,
   `detect_secrets`, `zstandard` (2026-11-04: the inventory reads zstd archives). `walkdown.py` imports it.
-- `OPTIONAL_MODULES`: what a stage imports when it is there and does without when it is not: `filetype`, `magic`, `playwright`,
-  `pytesseract`, `typesafe_sdk`. `OWN_MODULES` is the two together.
+- `OPTIONAL_MODULES`: what a stage imports when it is there and does without when it is not: `filetype`, `magic`,
+  `typesafe_sdk`. `OWN_MODULES` is the two together. `playwright`, `pytesseract`, and `pypdfium2` left with R35 and R36
+  (2026-11-11).
 
 ### Must never
 
@@ -1319,38 +1320,6 @@ runs `02.1-inventory` and `02.4-phrases` only.
   `test_an_edge_of_the_graph_file_is_masked_with_the_rest`, `test_a_step_run_alone_for_another_masks_nothing_at_the_last_step_that_reads_the_words`,
   `test_a_file_the_mask_does_not_change_is_not_written_again`, `test_pinpoints_report_is_masked_when_it_has_run`). The saved files follow the rule the owner chose for
   `02.2-reader`, each masked after the last step that reads its words; the owner confirmed this one (2026-11-01).
-
-## playwright_check
-
-Restructure step 7.
-
-Whether Playwright and the Chromium it launches are here. The reader draws HTML as a browser does only
-when they are (`02.2-reader/render_html.py`), and the validation step needs to know whether they are,
-because installing them changes what a stage can measure (`validate.optional_tools`). Both ask here; the
-validation step used to import the reader's `render_html` for this one check (notes M13).
-
-### Outputs
-
-- `available() -> (bool, why)`: cheap, no browser started. The package is importable and the Chromium
-  build it launches is installed (`expected_build`: the `chromium_headless_shell-<revision>` the package's
-  own `browsers.json` names). A build for another Playwright version is not enough. `why` says what is
-  missing and how to install it (`INSTALL`).
-- `PLAYWRIGHT_BROWSERS_PATH=0` means the bundled browsers: available when the package is.
-
-### Must never
-
-- Start a browser or open a page.
-- Import a stage.
-
-### Done when (each backed by a test in `tests/test_playwright_check.py`)
-
-1. It names what is missing (`test_available_names_what_is_missing`).
-2. It wants the build this Playwright launches (`test_available_wants_the_build_this_playwright_launches`).
-
-### History
-
-- 2026-10-20: built as `render_html.available` (HTML render); 2026-10-21 wants the exact build.
-- 2026-10-29: restructure step 7: moved here from the reader; `render_html` imports it, and so does `validate.py`.
 
 ## probability
 
@@ -2879,12 +2848,10 @@ or `INCOMPLETE (gate 14/15, negative 12/12; skipped: rd-img-ocr)`.
 
 - `fingerprint(root, env)`: sha256 over every file under `stages/`, `tools/grader/`, `Fixtures/`, and
   `Library/` (the tables the stages read; added 2026-10-29, restructure step 3; path and bytes,
-  `__pycache__` skipped), the Python major.minor, which optional
-  tools are present (`optional_tools()`: Tesseract with pytesseract; added
-  2026-10-08; pdf2image and Playwright dropped 2026-10-12, since no stage used them; Playwright
-  back 2026-10-20 with `02.2-reader`'s own check, `render_html.available`), and the `WALKDOWN_SOFT_*` variables in `env`. Any change to
-  code, fixtures, answers, a Library table, installed optional tools, or the AI choices gives a new
-  fingerprint, so installing Tesseract never reuses a `02.2-reader` INCOMPLETE measured without it.
+  `__pycache__` skipped), the Python major.minor, and the `WALKDOWN_SOFT_*` variables in `env`. Any change to
+  code, fixtures, answers, a Library table, or the AI choices gives a new fingerprint. It asked which optional tools were
+  installed (`optional_tools()`, Tesseract and Playwright, 2026-10-08 to 2026-11-11) until R35 and R36 removed them: no
+  installed program changes what a coded step measures (`test_the_fingerprint_asks_for_no_installed_program`).
   Test for the Library: `test_fingerprint_covers_the_library`.
 - `stamps(..., cache=True)` reuses `.cache/stamps.json` entries keyed `<stage>|<fingerprint>`
   and runs the grader only for misses, saving each new PASS, INCOMPLETE, or `no fixture set` with the date

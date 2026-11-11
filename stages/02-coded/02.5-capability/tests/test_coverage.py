@@ -46,10 +46,7 @@ def earlier(root, monkeypatch):
     """The four earlier steps' reports and the graph, made in this process."""
     inv = load("walkdown_s05_cov_inv", CODED / "02.1-inventory" / "run.py").build_report(root)
     reader = load("walkdown_s05_cov_reader", CODED / "02.2-reader" / "run.py")
-    monkeypatch.setattr(reader, "optional_tools", lambda: {"tesseract": False, "tesseract_detail": "tesseract not installed",
-                                                          "playwright": False, "playwright_detail": "playwright not installed"})
-    monkeypatch.setattr(reader.read_image, "ocr_available", lambda: (False, "tesseract not installed"))
-    rd = reader.build_report(root)
+    rd = reader.build_report(root)  # the same on every machine: no installed program changes it (R35, R36)
     graph_mod = load("walkdown_s05_cov_graph", CODED / "02.3-graph" / "run.py")
     gr, graph = graph_mod.build_report(root, inv)
     ph_mod = load("walkdown_s05_cov_phrases", CODED / "02.4-phrases" / "run.py")

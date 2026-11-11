@@ -3,8 +3,8 @@
 A model with vision reads the text in an image, instructions included, while a person skimming
 the repository sees a picture (2026-10-07). An image reaches the model only when a file the
 model reads points at it, so the signal is the reference, not the pixels: one cap.pair per image
-a model-read file references directly or loads, with what `02.2-reader` could read of its text. OCR
-and model reads of the image itself are extra detail on top of this.
+a model-read file references directly or loads, with what `02.2-reader` could read of its text: since R35 (2026-11-11)
+nothing, as the text drawn in an image is not examined (`unread`); an SVG's text is read from its source.
 """
 from __future__ import annotations
 

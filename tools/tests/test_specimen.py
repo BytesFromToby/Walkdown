@@ -51,23 +51,49 @@ def test_every_kind_the_tables_and_the_pages_know_shows_in_everything(out):
     assert [w for w in want if w not in pages] == []
     assert {rid for rid, _, _ in D.file_concerns(made.build("everything")["reports"])} == FILE_FLAGS
     for words in ("What it can do", "What Walkdown examined", "Misalignment", "Skill Formatting", "Descriptions too alike",
-                  "What changed since run", "License:", "Web addresses", "Passwords, keys, and secrets"):
+                  "What changed since run", "License:", "Web addresses", "Passwords, keys, and secrets",
+                  "What installing it grants", "What its wording asks for", "Its wording asks to"):  # R31
         assert words in pages, words
     for note in ("Decoded from base64", D.TOOL_TEXT_NOTE, D.HOOK_NOTES["cursor-environment"], "spell:"):
         assert note in rv, note
 
 
 @pytest.mark.parametrize("variant, page, words", [
-    ("nothing-found", "summary.html", "Walkdown found none of the security concerns it looks for."),
+    ("nothing-found", "details.html", "Walkdown found none of the security concerns it looks for."),  # R32: under Not found
     ("step-failed", "summary.html", "Not every step worked in this run."),
     ("step-failed", "details.html", "Skipped in this run"),
     ("step-did-not-run", "brief.md", "This run did not complete"),
     ("stopped", "summary.html", "nothing was sent"),
     ("model-read-no-answer", "summary.html", "got no answer for any passage"),
     ("not-measured", "summary.html", "Not measured"),
+    ("only-in-full-md", "summary.html", "full.md has 3 more lines with risky wording, not listed here (section 4)."),  # R28
+    ("only-in-full-md", "details.html", "Walkdown found none of the security concerns on its list."),  # R32: Not found
+    ("only-in-full-md", "brief.md", "full.md has 3 more lines with risky wording, not listed here (section 4)."),
+    ("everything", "brief.md", "Wording asks for: persistence (2 lines), elevated (1 line)."),  # R31
+    ("everything", "full.md", "### Wording asks for"),
+    ("everything", "details.html", "Not examined, in the files this repository has:"),  # R35, R36
 ])
 def test_each_variant_shows_the_state_it_is_for(out, variant, page, words):
     assert words in text(out / variant / page)
+
+
+def test_every_pattern_shows_where_the_list_puts_it(out):
+    """R30 (owner, 2026-11-07: "we basically built/called out things that never triggered"): a pattern on the summary's list
+    is a place on the pages, under its family's title; any other is in full.md only and counted on the careful card."""
+    run = made.build("every-pattern")
+    r = run["reports"]
+    marked = R.POINT_PATTERNS | R.SEND_SHAPE
+    every = {p["id"] for p in made.patterns()}
+    placed = {p for h, _ in R.point_hits(r) for p in h["patterns"]}
+    assert placed == every & marked
+    assert marked <= every  # nothing on the list is a pattern Walkdown does not have
+    off = len(every - marked)
+    pages = text(out / "every-pattern" / "summary.html") + " " + text(out / "every-pattern" / "details.html")
+    assert S.off_list_sentence(off) in pages
+    for p in sorted(every & marked):
+        assert D._family([p]) in pages, p
+    full = (out / "every-pattern" / "full.md").read_text(encoding="utf-8")
+    assert all(f"(made-up line matching {p})" in full for p in every)
 
 
 def test_a_variant_it_does_not_know_is_refused():

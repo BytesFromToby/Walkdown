@@ -31,6 +31,12 @@ CONCERNS = (
     ("lasting", "Lasting changes or permissions", "risky"),
 )
 WORDING = "{n} {be} wording only: instructions that change how the AI reads, decides, or answers."
+# R28 (owner, 2026-11-07, after an outside tester's report): a phrase hit becomes a place only through its pattern
+# (`render.point_hits`), so a line no place holds reached full.md only and the pages said Nothing found. They never say
+# "found none" now without the lines full.md has, and with places they count them too.
+NONE_FOUND = "Walkdown found none of the security concerns it looks for."
+NONE_ON_LIST = "Walkdown found none of the security concerns on its list."
+OFF_LIST = "full.md has {n} with risky wording, not listed here (section 4)."
 # The careful card's lines on the summary (R26, owner 2026-11-06: "Each line should have a color code. And we'll order them by color."; "Password and key should be a red section"; "color list is fin"; "Yes build on that plan."; the color list in
 # pre-planning/REPORT-CHANGES-2026-11-05.md): a line per kind, red, then yellow, then blue, the first three under
 # "Passwords, keys, and secrets". A place a concern row holds that no kind here names takes its row's color: steps that
@@ -193,6 +199,20 @@ def total(rs) -> int:
     return sum(len(x["places"]) for x in rs)
 
 
+def off_list(r, places) -> int:
+    """The lines full.md lists under What the text asks for that no place on the pages is on (R28): `02.4-phrases` hits
+    outside human-facing files and test data, as places are, on a line no place holds."""
+    at = lambda x: (x.get("file"), x.get("line"), x.get("page"))  # noqa: E731
+    held = {at(h) for h, _ in R.point_hits(r)} | {at(it.get("src") or {}) for it in places}
+    return len({at(h) for h in R.phrase_hits(r)
+                if h.get("audience") not in ("human", "test-data") and "skipped" not in h} - held)
+
+
+def off_list_sentence(k) -> str:
+    """"full.md has 3 more lines with risky wording, not listed here (section 4)." (R28)"""
+    return OFF_LIST.format(n=R.n(k, "more line"))
+
+
 def wording_count(r, places, rs, marks=None) -> int:
     """The places that are wording only, each once, leaving out a place a concern row holds."""
     card_of, _ = _place_marks(r, marks)
@@ -230,7 +250,7 @@ def model_down_sentence(failed=(), incomplete=()) -> str:
     if failed:
         return R.MODEL_READ_DOWN.capitalize() + "."
     if incomplete:
-        return ("The coded checks ran, and \"What Walkdown didn't check\" names any skipped for a missing tool; "
+        return ("The coded checks ran, and \"What this run covered\" names any skipped for a missing tool; "
                 f"{R.MODEL_READ_DOWN}.")
     return f"The coded checks are complete; {R.MODEL_READ_DOWN}."
 
@@ -264,7 +284,7 @@ def unchecked_sentence(qa) -> str | None:
     return common_lines.UNCHECKED_MANY.format(n=len(got))
 
 
-def headline(rs, missing=(), failed=(), stop=None, model=(), incomplete=(), unchecked=None) -> str:
+def headline(rs, missing=(), failed=(), stop=None, model=(), incomplete=(), unchecked=None, off=0) -> str:
     """`missing`: coded steps that did not run (`not_run`); `failed`: steps that ran and failed their
     fixture check (`failed_checks`). A run missing a step never says it found none (2026-10-21,
     an outside tester: an empty .venv crashed `02.1-inventory` and the page said "found none"), and with
@@ -275,7 +295,8 @@ def headline(rs, missing=(), failed=(), stop=None, model=(), incomplete=(), unch
     read did not work, and does not say it cannot say (M9, restructure M14 b); `incomplete`: coded steps with a
     check skipped for a missing tool (`incomplete_checks`), for which "complete" is worded truly. `unchecked`: the one
     sentence for steps whose fixture check could not be made (`unchecked_sentence`); they ran, so it is not "not every step
-    worked", and it follows the answer."""
+    worked", and it follows the answer. `off`: the lines full.md has that no place holds (`off_list`, R28); with no
+    concerns the line says "on its list" and counts them."""
     n = total(rs)
     if missing:
         steps = (f'the step "{missing[0]}" did not run' if len(missing) == 1 else
@@ -296,17 +317,19 @@ def headline(rs, missing=(), failed=(), stop=None, model=(), incomplete=(), unch
         nc = sum(x["not_concerned"] for x in rs)
         return (f"Walkdown found security concerns in this repository: {R.n(n, 'place')}, of "
                 f"{R.n(len(rs), 'kind')}." + (f" ({nc} of them marked Not concerned.)" if nc else "") + down)
+    # R32 ("brief follows the summary"): with no concerns, no "found none"; what is left is what full.md has that no place
+    # holds, and that not every step worked or the model read did not; it may be nothing at all
+    more = off_list_sentence(off) if off else ""
     if failed:
-        return ("Walkdown found none of the security concerns it looks for, but not every step "
-                "worked, so it may have missed some." + down)
-    return "Walkdown found none of the security concerns it looks for." + down
+        return " ".join(x for x in (more, "Not every step worked, so Walkdown may have missed some." + down) if x)
+    return (more + down).strip()
 
 
 def not_working_pairs(qa) -> list[tuple[str, str]]:
     """(stage, words) for each step that did not work in this run (owner, 2026-10-20): the check of the run's gaps, in its
     order. A step with no output, one that ran and failed its fixture check, and a model read that got no answer for any
     passage, even after the retry (M9). Never a step with nothing here to test, a check that did not run for a missing
-    optional tool (INCOMPLETE; owner, 2026-10-25), or a step the run's stop left out (O3): "What Walkdown didn't check"
+    optional tool (INCOMPLETE; owner, 2026-10-25), or a step the run's stop left out (O3): "What this run covered"
     on details.html lists those. A run made without validation has no stamps and adds none here. A gap of a kind
     this does not know (a later check's) is worded from what it found."""
     out = []
@@ -365,16 +388,24 @@ def model_note(qa) -> str:
     return f'<p class="since" id="modelread">{esc(" ".join(lines))}</p>' if lines else ""
 
 
+# R32 (owner, 2026-11-07: "brief follows the summary"): a brief line says what was found; a count of none is left out, and a
+# line with nothing found is no line.
+def _found(parts) -> list[str]:
+    """The parts whose count is not zero: [(count, words), ...] -> [words]."""
+    return [w for k, w in parts if k]
+
+
 def brief_misalign_line(r) -> str | None:
-    """The brief's line (R13, 2026-11-05; it took the place of "Will it trigger"): counts only, as the page has them."""
+    """The brief's line (R13, 2026-11-05; it took the place of "Will it trigger"): counts only, as the page has them; only
+    what was found (R32)."""
     m = R.misalign_of(r)
-    if not m["measured"]:
+    if not m["measured"] or not m["skills"]:
         return None
-    if not m["skills"]:
-        return "Misalignment: no skills here."
     places = sum(len(v) for v in m["groups"].values())
-    return (f"Misalignment: {R.n(m['skills'], 'skill')}; {R.n(places, 'place')} that {'differs' if places == 1 else 'differ'} "
-            f"from the Agent Skills standard; {R.n(len(m['alike']), 'pair')} of skills described alike.")
+    found = _found(((places, f"{R.n(places, 'place')} that {'differs' if places == 1 else 'differ'} from the Agent Skills "
+                              "standard"),
+                    (len(m["alike"]), f"{R.n(len(m['alike']), 'pair')} of skills described alike")))
+    return f"Misalignment: {R.n(m['skills'], 'skill')}; " + "; ".join(found) + "." if found else None
 
 
 def brief_ready_line(r, targets=()) -> str | None:
@@ -383,12 +414,13 @@ def brief_ready_line(r, targets=()) -> str | None:
     if not rd["measured"]:
         return None
     have = sum(1 for c in rd["coverage"] if R.has_files(c))
-    s = (f"Ready for: {have} of {len(rd['coverage'])} hosts have their files here; copies that differ: "
-         f"{len(rd['differ'])}; one-host features: {sum(len(p) for *_, p in rd['features'])}.")
-    if targets:
-        left = [x for x in R.todo(r, targets) if not x.endswith(": nothing missing.")]
-        s += f" For the hosts named: {R.n(len(left), 'thing')} missing."
-    return s
+    feats = sum(len(p) for *_, p in rd["features"])
+    found = _found(((have, f"{have} of {len(rd['coverage'])} hosts have their files here"),
+                    (len(rd["differ"]), f"copies that differ: {len(rd['differ'])}"), (feats, f"one-host features: {feats}")))
+    left = [x for x in R.todo(r, targets) if not x.endswith(": nothing missing.")] if targets else []
+    s = ("Ready for: " + "; ".join(found) + "." if found else "") + (
+        f" For the hosts named: {R.n(len(left), 'thing')} missing." if left else "")
+    return s.strip() or None
 
 
 def brief_clean_line(r) -> str | None:
@@ -398,9 +430,11 @@ def brief_clean_line(r) -> str | None:
         return None
     k = {kind: len(p) for kind, _, _, p in cl["kinds"]}
     m = k.get("models", 0)
-    return (f"Current and clean: {k.get('unfinished', 0)} unfinished, {R.n(k.get('dated', 0), 'dated claim')}, "
-            f"{R.n(m, 'pinned model ID')}" + (f" ({len(cl['models'])} distinct)" if m and len(cl["models"]) != m else "")
-            + f", {R.n(k.get('older', 0), 'older tool name')}.")
+    found = _found(((k.get("unfinished", 0), f"{k.get('unfinished', 0)} unfinished"),
+                    (k.get("dated", 0), R.n(k.get("dated", 0), "dated claim")),
+                    (m, R.n(m, "pinned model ID") + (f" ({len(cl['models'])} distinct)" if m and len(cl["models"]) != m else "")),
+                    (k.get("older", 0), R.n(k.get("older", 0), "older tool name"))))
+    return "Current and clean: " + ", ".join(found) + "." if found else None
 
 
 def brief_fit_line(r) -> str | None:
@@ -409,9 +443,12 @@ def brief_fit_line(r) -> str | None:
     if not ft["measured"]:
         return None
     c = R.brief_fit_counts(ft)
-    return (f"Tools fit: {c['unused']} granted and never used, {R.n(c['missing'], 'task')} with no tool, "
-            f"{R.n(c['loops'], 'loop')} with no stated limit; {R.n(c['hooks'], 'hook')} "
-            f"{'runs' if c['hooks'] == 1 else 'run'} on every prompt or tool call.")
+    first = ", ".join(_found(((c["unused"], f"{c['unused']} granted and never used"),
+                              (c["missing"], f"{R.n(c['missing'], 'task')} with no tool"),
+                              (c["loops"], f"{R.n(c['loops'], 'loop')} with no stated limit"))))
+    hooks = (f"{R.n(c['hooks'], 'hook')} {'runs' if c['hooks'] == 1 else 'run'} on every prompt or tool call" if c["hooks"] else "")
+    said = "; ".join(x for x in (first, hooks) if x)
+    return f"Tools fit: {said}." if said else None
 
 
 def brief_needs_line(r) -> str | None:
@@ -420,8 +457,11 @@ def brief_needs_line(r) -> str | None:
     if not n_["measured"]:
         return None
     places = sum(len(p) for *_, p in n_["port"])
-    return (f"Needs: {R.n(len(n_['commands']), 'program')}, {R.n(len(n_['packages']), 'package')}; "
-            f"{len(n_['undeclared'])} not declared. Ties to one machine: {R.n(places, 'place')}.")
+    uses = ", ".join(_found(((len(n_["commands"]), R.n(len(n_["commands"]), "program")),
+                             (len(n_["packages"]), R.n(len(n_["packages"]), "package")))))
+    needs = "; ".join(x for x in (uses, f"{len(n_['undeclared'])} not declared" if n_["undeclared"] else "") if x)
+    s = (f"Needs: {needs}." if needs else "") + (f" Ties to one machine: {R.n(places, 'place')}." if places else "")
+    return s.strip() or None
 
 
 def brief_cost_lines(r, ctx: int) -> list[str]:
@@ -456,7 +496,7 @@ def render_page(meta, r, stamps, notes, runs_ok, marks=None, changes=None) -> st
     known = ({q.id for q in qs} | G.ids_in("".join(q.more + q.detail for q in qs)) | {"examined", "can"}
              | G.ids_in(G.misalign_detail(r, meta.get("stop"))))
     examined = coverage.section_html(r).replace(
-        "<h2>What Walkdown examined</h2>", f'<div class="head-row" id="examined"><h2>What Walkdown examined</h2>{G.go("examined")}</div>', 1)
+        "<h2>What Walkdown examined</h2>", f'<div class="head-row" id="examined"><h2>{G.icon("examined")}What Walkdown examined</h2>{G.go("examined")}</div>', 1)
     body = (f'<header><h1>{esc(title(meta["repo"]))}</h1><p class="meta">{esc(G.meta_line(meta, r))}</p>'
             f'<p class="how">{esc(made_by(meta["repo"]))}</p><p class="what">{G.what_it_is(r, meta["repo"])}</p></header>'
             + G.draw_goes(G.can_section(r), "can", known)

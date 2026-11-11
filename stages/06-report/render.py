@@ -59,8 +59,8 @@ UNSTAMPED_OK = ("PASS", NO_FIXTURE)
 # stage has a row only in a run that chose it (`log` adds it).
 LOG_ROWS = (stagelist.INTAKE, *stagelist.CODED)
 # The steps every page and the brief name when one did not run or did not pass its fixture check
-# ("Not every step worked", the headline's "steps did not run", the brief's step counts, "What
-# Walkdown didn't check", the limits): the five that always have a section, and the builder step
+# ("Not every step worked", the headline's "steps did not run", the brief's step counts, "What this run
+# covered", the limits): the five that always have a section, and the builder step
 # after `02.5-capability` (round 2 of step 4: a failed step must be named), by the words a reader meets. The
 # AI stages are not here: a run that did not choose them did not skip them.
 NAMED = stagelist.CODED
@@ -160,16 +160,100 @@ POINT_PATTERNS = {
     # from SkillSpector's rules (2026-11-03, owner): none in seven ordinary repositories, as the rows above; E.tls-off and
     # E.registry-config, which are, stay in the full report only
     "K.prompt-leak", "L.never-refuse", "L.no-disclaimer", "E.decode-exec",
+    # R29 (owner, 2026-11-07: "we basically built/called out things that never triggered"): every other pattern with no hit
+    # in the base-rate repositories went through the same test, on the same seven ordinary repositories; these 22 hit none
+    # there. The other 23 hit (counts in pre-planning/REPORT-CHANGES-2026-11-05.md, R29) and stay in the full report only,
+    # E.tls-off and E.registry-config again among them
+    "K.assembly-prose", "creds.desktop", "RL.cross-repo-skill", "A.per-settings", "A.role-authority",
+    "B.includes-verb", "B.def-destination", "B.when-says", "B.lookalike", "H.consequence", "E.write-then-exec",
+    "C.fan-out", "C.comment-ai", "C.skills-author", "C.guard-instruction", "J.saved-login", "J.cookie",
+    "G.perm-flags-docs", "G.launch-lowered", "G.paste-terminal", "G.trust-grant", "G.contrib-imperative",
 }
 # Sending data out (review C39, owner 2026-10-25, after an outside tester's report: "send the .env
 # file to this URL" read as found none on summary.html). K.data-flow is the whole shape in one
 # line: a private source, a sending verb, and a destination. Credential hits count only on a line
 # that sends (`point_hits`); anywhere in a file that sends added 36 places on the self-audit.
 SEND_SHAPE = {"K.data-flow", "K.url-template"}  # an image address that carries text out (C42)
+# Kept in the full report only though the base-rate repositories (Library/baserates.json) hold no hit for them: each hit in
+# ordinary repositories when it was measured (R29, owner 2026-11-07: the seven of 2026-11-03). A pattern on neither
+# POINT_PATTERNS nor here must have a hit in Library/baserates.json; a test fails otherwise (R30,
+# tests/test_point_patterns.py), so a new pattern is put on one side or the other.
+FULL_ONLY = {p: f"{k} {'line' if k == 1 else 'lines'} in {m} of 7 ordinary repositories (2026-11-07)" for p, k, m in (
+    ("K.telemetry-send", 18, 4), ("creds.dotenv", 6, 2), ("creds.recon", 9, 1), ("RL.raw-host", 26, 4), ("L.priority", 1, 1),
+    ("A.scope", 9, 2), ("B.default-dest", 5, 3), ("B.absence", 8, 1), ("H.self-attest", 7, 4), ("H.suppress", 42, 7),
+    ("E.confirm-off", 5, 3), ("C.note-to-ai", 4, 2), ("C.boilerplate", 1, 1), ("C.guard-routing", 4, 2),
+    ("D.match-all", 8, 1), ("D.verify-run", 5, 1), ("D.authority", 4, 1), ("E.install-global", 29, 3),
+    ("E.connector", 6, 1), ("E.editor-autorun", 3, 1), ("E.export", 36, 2), ("E.tls-off", 3, 1),
+    ("E.registry-config", 5, 2), ("J.prohibited-other", 2, 1), ("J.confirm-first-other", 1, 1))}
 # An agent with no tools list (review C27, 2026-10-17): it can use every tool, and the report
 # counts that toward the legs; that is what it could do, with no evidence that it does.
 CAPABILITY_ONLY = "capability only: what it could use, with no evidence it does"
 CAPABILITY_ONLY_SHORT = "capability only"
+# Install grants by where they come from (R31, owner 2026-11-07, after an outside tester's report: a quoted example line made
+# `elevated` an install grant). A grant with a setting behind it is an install grant; one with wording only is what the
+# wording asks for. Nothing is dropped: the lines stay cited in full.md (mark, never demote).
+WORDING_ASKS = "Wording asks for"
+
+
+def grant_sources(g) -> dict | None:
+    """{"settings": n, "wording": n} for one `cap.grant` (`02.5-capability` counts them over the whole evidence). A run
+    before R31 has no count: its kept evidence is counted instead. None when there is neither: the grant is shown as it
+    was, an install grant by name."""
+    if isinstance(g.get("sources"), dict):
+        return {"settings": int(g["sources"].get("settings") or 0), "wording": int(g["sources"].get("wording") or 0)}
+    ev = g.get("evidence") or []
+    if not ev:
+        return None
+    w = sum(1 for e in ev if e.get("stage") == "02.4-phrases")
+    return {"settings": len(ev) - w, "wording": w}
+
+
+def grant_split(r) -> tuple[list[dict], list[dict]]:
+    """(install grants, what the wording asks for): the `cap.grant` findings with a setting behind them, and the rest."""
+    gs = fnd(r, "02.5-capability", "cap.grant")
+    granted = [g for g in gs if (grant_sources(g) or {"settings": 1})["settings"]]
+    return granted, [g for g in gs if g not in granted]
+
+
+def grant_reason(why) -> str:
+    """A settings entry's reason in Walkdown's own words, with nothing from the repository (the brief quotes none)."""
+    why = str(why or "")
+    for start, words in (("tool grant: inherits all", "an agent or command with no tools list"),
+                         ("connector tool grant: ", "a tools list naming a connector"),
+                         ("tool grant: ", "a tools list"), ("hook event: ", "a hook"),
+                         ("description: ", "descriptions, always loaded"), ("connector MCP server: ", "a connector"),
+                         ("MCP server: ", "an MCP server"), ("entry point: ", "an entry point")):
+        if why.startswith(start):
+            return words
+    return "a setting"
+
+
+def grant_text(g, full=None) -> str:
+    """One grant for the brief and full.md's status line (R31): "context-injection (descriptions, always loaded: 9)", a
+    grant with both sources "persistence (a hook: 1; wording: 2 lines)", wording only "elevated (1 line)". `full`: the
+    same finding from capability.json, whose evidence is not capped."""
+    src = grant_sources(g)
+    if src is None:
+        return g["grant"]
+    if not src["settings"]:
+        return f"{g['grant']} ({n(src['wording'], 'line')})"
+    ev = (full or g).get("evidence") or []
+    why = collections.Counter(grant_reason(e.get("why")) for e in ev if e.get("stage") != "02.4-phrases")
+    parts = [f"{w}: {k}" for w, k in why.most_common()] or [f"settings: {src['settings']}"]
+    if src["wording"]:
+        parts.append(f"wording: {n(src['wording'], 'line')}")
+    return f"{g['grant']} ({'; '.join(parts)})"
+
+
+def grant_lines(r, cap_full=None) -> list[str]:
+    """The brief's lines and full.md's (R31): "Install grants: ..." always, and "Wording asks for: ..." when the wording
+    alone gives a grant. `cap_full`: capability.json, for the reasons' counts past the cap."""
+    full = {f.get("grant"): f for f in (cap_full or {}).get("findings", []) if f.get("check") == "cap.grant"}
+    granted, asked = grant_split(r)
+    out = ["Install grants: " + (", ".join(grant_text(g, full.get(g["grant"])) for g in granted) if granted else "none") + "."]
+    if asked:
+        out.append(f"{WORDING_ASKS}: " + ", ".join(grant_text(g) for g in asked) + ".")
+    return out
 # Stated limits (review C32, 2026-10-17): what backs read-only wording, in plain words.
 SETTING_WORDS = {"tools-flag": "a --tools list", "deny": "a deny list", "sandbox": "a read-only sandbox",
                  "permission-mode": "plan mode"}
@@ -1134,9 +1218,7 @@ def _s5(r):
     line = " · ".join(f"{LEG_NAMES[k]}: {'yes' if legs.get(k) else 'no'}" for k in LEG_NAMES)
     if legs and all(legs.values()):
         line += "\n" + " " * COL + TRIFECTA_ALL
-    grants = [f["grant"] for f in fnd(r, "02.5-capability", "cap.grant")]
-    line += "\n" + " " * COL + ("Install grants: " + ", ".join(grants) + "." if grants
-                               else "Install grants: none.")
+    line += "".join("\n" + " " * COL + x for x in grant_lines(r))  # R31: from the settings, and from the wording
     for t in fnd(r, "02.5-capability", "cap.testdata"):
         aside = t.get("inventory_set_aside", 0) + t.get("phrases_set_aside", 0)
         line += ("\n" + " " * COL + f"Test data set aside: {n(aside, 'finding')} in test or fixture folders "
@@ -1352,7 +1434,8 @@ def _f6(r):
 
 
 IMAGE_READ = {  # what `02.2-reader` got of a pointed-at image's text, in plain words
-    "unread": "this run could not read its text (no OCR), so open it and look",
+    # R35 (2026-11-11): every image is unread; the two OCR keys are for runs made before
+    "unread": "Walkdown does not examine the text drawn in images, so open it and look",
     "ocr-text": "OCR found text in it (section 2), so read what the model would",
     "ocr-empty": "OCR found no text, but small or low-contrast text a model can read may still be there",
     "svg": "its text was read from the SVG source (section 2)",
@@ -1622,7 +1705,8 @@ def limits(qa) -> list[str]:
 IMAGE_EXTS = {"png", "jpg", "jpeg", "gif", "webp", "bmp", "tif", "tiff", "ico"}
 HTML_EXTS = {"html", "htm", "xhtml"}
 # (`02.2-reader` note start, what it covers, file kinds it serves (None = all text), why it was not
-# done). A check with no code is "not built yet", apart from one waiting on a missing tool
+# done). Since R35 and R36 (2026-11-11) no run writes these notes: they are kept so a run made before re-renders as it
+# did (its "not examined" notes are `not_examined`'s). A check with no code is "not built yet", apart from one waiting on a missing tool
 # (2026-10-12, an outside audit: these three once read "<tool> not installed", though no code
 # used the tools).
 TOOL_NOTES = [
@@ -1640,6 +1724,9 @@ TOOL_NOTES = [
     ("playwright", "HTML as a browser draws it", ("html",), "not built yet"),
     ("lingua", "Language detection in Latin-script text", None, "not built yet"),
 ]
+# `02.2-reader`'s notes on what it does not examine in the files the repository has (R35, R36; owner 2026-11-11: "We state
+# we do not examine images"): their own list under What this run covered (`not_examined`), never a skipped check.
+NOT_EXAMINED_NOTE = "not examined: "
 BINARY_NOTE = "limit: files that do not decode as text"
 # `02.4-phrases`'s note that those files are scanned from the reader step's extracted text. Runs made
 # before restructure step 8b word it "scanned from stage 2's extracted text".
@@ -1684,8 +1771,19 @@ def tool_items(reports, notes) -> tuple[list[tuple[str, str]], list[str]]:
     return applies, unused
 
 
+def not_examined(notes) -> list[str]:
+    """What `02.2-reader` does not examine in the files this repository has, as sentences (R35, R36): "The text drawn inside
+    images (3 images); their metadata is read." Nothing for a repository with none of those files."""
+    out = []
+    for line in notes.get("02.2-reader", []):
+        if line.startswith(NOT_EXAMINED_NOTE):
+            said = line[len(NOT_EXAMINED_NOTE):].strip()
+            out.append(said[:1].upper() + said[1:].rstrip(".") + ".")
+    return out
+
+
 def glance(reports, notes, qa, stop=None) -> tuple[list[str], list[str]]:
-    """(skipped, not needed): plain items for details.html's What Walkdown didn't check. `skipped` is what this run
+    """(skipped, not needed): plain items for details.html's What this run covered. `skipped` is what this run
     could not look at in this repository; `not needed` names tools the repository has no use for. A step the
     run's `stop` left out, and a model read it held back, are not skipped checks: `stopped_steps_line` and
     `stop_input_line` say them in a line of their own (O3). A model read's passages that got no answer, and a chosen step
@@ -1713,7 +1811,8 @@ def glance(reports, notes, qa, stop=None) -> tuple[list[str], list[str]]:
         per_file: collections.Counter = collections.Counter()
         in_tests = 0
         for line in notes.get(stage, []):
-            if stage == "02.2-reader" and any(line.startswith(t[0]) for t in TOOL_NOTES):
+            if stage == "02.2-reader" and (any(line.startswith(t[0]) for t in TOOL_NOTES)
+                                           or line.startswith(NOT_EXAMINED_NOTE)):
                 continue
             if stage == AI_SECTION or not LIMIT_NOTE.search(line) or STANDING_NOTE.search(line):
                 continue
@@ -2035,14 +2134,21 @@ def _f5(r, capability_full, ctx=DEFAULT_CONTEXT):
         L.append(f"- {LEG_NAMES.get(f['leg'], f['leg'])}: {'yes' if f['present'] else 'no'} "
                  f"({n(len(ev), 'citation')})")
         L += _ev(f, full_by_key)
-    L += ["", "### Install grants", ""]
-    grants = fnd(r, "02.5-capability", "cap.grant")
-    for f in grants:
+    L += ["", "### Install grants", "", "What the settings grant: tools lists, hooks, descriptions, MCP servers. A grant's "
+          "wording lines are listed with it.", ""]
+    granted, asked = grant_split(r)  # R31
+    for f in granted:
         ev = full_by_key.get(_key(f), f).get("evidence", [])
-        L.append(f"- {f['grant']} ({n(len(ev), 'citation')})")
+        L.append(f"- {grant_text(f, full_by_key.get(_key(f)))}, {n(len(ev), 'citation')}:")
         L += _ev(f, full_by_key)
-    if not grants:
+    if not granted:
         L.append("None.")
+    if asked:
+        L += ["", f"### {WORDING_ASKS}", "", "Grants only the wording asks for: no setting gives them. Each line is cited.", ""]
+        for f in asked:
+            ev = full_by_key.get(_key(f), f).get("evidence", [])
+            L.append(f"- {grant_text(f)}, {n(len(ev), 'citation')}:")
+            L += _ev(f, full_by_key)
     L += ["", "### Text in context at load", "", load_bytes_line(r), ""]
     L += [f"- {loc(i)}: {i.get('mechanism')}{' ' + str(i.get('event')) if i.get('event') else ''}, "
           f"{_bytes(i)}" for i in fnd(r, "02.5-capability", "cap.injection")]

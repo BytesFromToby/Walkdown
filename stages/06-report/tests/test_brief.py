@@ -209,7 +209,7 @@ def test_the_brief_counts_passages_with_no_answer_and_a_read_that_got_none_is_a_
     # a coded check skipped for a missing tool (INCOMPLETE) is neither a failure nor "complete": the headline says so truly
     b = brief_of(d, {**PASS6, "02.2-reader": "INCOMPLETE", "03-sweep": "PASS"})
     assert "The coded checks are complete" not in b
-    assert ('The coded checks ran, and "What Walkdown didn\'t check" names any skipped for a missing tool; the model '
+    assert ('The coded checks ran, and "What this run covered" names any skipped for a missing tool; the model '
             "read did not work.") in b
 
 
@@ -233,11 +233,10 @@ def test_brief_headline_follows_a_failed_check(tmp_path):
     _edit(d, "02.1-inventory", lambda doc: doc.update(findings=doc["findings"][:1]))  # the pin alone: no hook row
     stamps = {"02.1-inventory": "PASS", "02.2-reader": "INCOMPLETE"}
     b = brief_of(d, stamps)
-    assert "Walkdown found none of the security concerns it looks for.\n" in b
+    assert "found none" not in b  # R32 (owner, 2026-11-07: "brief follows the summary"): nothing found is no line
     assert "Fixture checks: no step failed." in b and "INCOMPLETE" not in b
     b = brief_of(d, {**stamps, "02.3-graph": "FAIL"})
-    assert ("Walkdown found none of the security concerns it looks for, but not every step worked, "
-            "so it may have missed some.") in b
+    assert "\nNot every step worked, so Walkdown may have missed some.\n" in b and "found none" not in b
     assert "Not every step worked in this run: What loads what did not pass its fixture check (FAIL)." in b
     assert "INCOMPLETE" not in b and "What the model actually reads" not in b
     assert "Fixture checks: none, this run was made without validation." in brief_of(d, {})
@@ -473,7 +472,7 @@ def test_brief_misalign_line(tmp_path):
     _edit(d, "02.6-builder", lambda doc: doc["findings"].extend(
         trigger.findings(texts, [{"check": "inv.file", "file": f, "entry_point": "skill"} for f in texts])))
     b = brief_of(d)
-    line = "Misalignment: 1 skill; 2 places that differ from the Agent Skills standard; 0 pairs of skills described alike."
+    line = "Misalignment: 1 skill; 2 places that differ from the Agent Skills standard."  # R32: no "0 pairs"
     assert line in b and SENTINEL not in b and "Will it trigger" not in b
     assert b.index(line) < b.index("What it can do:")
 
@@ -488,8 +487,7 @@ def test_brief_fit_line(tmp_path):
          "matcher": None, "how_often": "every-tool-call", "adds_context": False, "bytes": None, "over_cap": False},
         {"check": "fit.checked", "file": None, "line": None, "entries": 1, "with_grants": 1, "inheriting": 0}]))
     b = brief_of(d)
-    assert ("Tools fit: 1 granted and never used, 0 tasks with no tool, 0 loops with no stated limit; "
-            "1 hook runs on every prompt or tool call.") in b
+    assert "Tools fit: 1 granted and never used; 1 hook runs on every prompt or tool call." in b  # R32: no zero counts
     assert SENTINEL not in b
 
 
@@ -501,7 +499,7 @@ def test_brief_clean_line(tmp_path):
         {"check": "clean.model", "file": f"{SENTINEL}.md", "line": 2, "model": SENTINEL, "where": "text"},
         {"check": "clean.checked", "file": None, "line": None, "files": 1}]))
     b = brief_of(d)
-    assert "Current and clean: 1 unfinished, 0 dated claims, 1 pinned model ID, 0 older tool names." in b
+    assert "Current and clean: 1 unfinished, 1 pinned model ID." in b  # R32: no zero counts
     assert SENTINEL not in b
 
 
@@ -528,3 +526,27 @@ def test_changes_since_the_previous_run_come_from_the_one_comparison(tmp_path):
     old = dict(walkdown, same=False, header=None, lines=[why], not_comparable=True)
     assert f"Changes since 2026-10-01_aaa:\n  {why}\n" in brief_of(d, changes=old)
     assert "version drift" not in brief_of(d, changes=old)
+
+
+def test_the_brief_says_what_the_settings_grant_and_what_the_wording_asks_for(tmp_path):
+    """R31 (owner, 2026-11-07, after an outside tester's report: a quoted example line made `elevated` an install grant):
+    a grant with a setting behind it is an install grant, with its reasons in Walkdown's words; one only the wording
+    gives is what the wording asks for. A hook's event and a server's name are the repository's, and stay out."""
+    d = _run_dir(tmp_path)
+    hook = {"stage": "02.1-inventory", "check": "struct.hooks", "file": "h.json", "line": None, "why": f"hook event: {SENTINEL}"}
+    mcp = {"stage": "02.1-inventory", "check": "struct.mcp", "file": "m.json", "line": None, "why": f"MCP server: {SENTINEL}"}
+    word = {"stage": "02.4-phrases", "check": "phrase.E.perms", "file": "examples/x.md", "line": 5, "why": "phrase.E.perms: x"}
+
+    def grants(doc):
+        doc["findings"] = [f for f in doc["findings"] if f["check"] != "cap.grant"] + [
+            {"check": "cap.grant", "file": None, "line": None, "grant": "exec-at-load", "evidence": [hook],
+             "sources": {"settings": 1, "wording": 0}},
+            {"check": "cap.grant", "file": None, "line": None, "grant": "network", "evidence": [mcp, word],
+             "sources": {"settings": 1, "wording": 3}},
+            {"check": "cap.grant", "file": None, "line": None, "grant": "elevated", "evidence": [word],
+             "sources": {"settings": 0, "wording": 1}}]
+    _edit(d, "02.5-capability", grants)
+    b = brief_of(d, {"02.1-inventory": "PASS"})
+    assert "  Install grants: exec-at-load (a hook: 1), network (an MCP server: 1; wording: 3 lines).\n" in b
+    assert "  Wording asks for: elevated (1 line).\n" in b
+    assert SENTINEL not in b

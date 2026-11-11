@@ -26,19 +26,20 @@ Per file, in path order, by kind (`files.classify`):
 
 | Kind | Reading A text | Findings |
 |---|---|---|
-| markdown, html, svg, text | decoded text, original lines | `read.fold` and `read.script` per line; `read.divergence` for invisible characters per line (`fold.invisible_finding`); plus markdown carriers (`read_md`), HTML (`read_html`), or SVG (`read_svg`) divergences; `read.language` (`language.language_findings`) for markdown and for text files with a prose extension (`txt`, `text`, `rst`, `adoc`, `asciidoc`) |
-| pdf | `read_pdf` lines, then the OCR lines of each page the text layer lacks (`render_pdf.unseen`), after a blank line | `read.fold` / `read.script` / `read.language` over those lines; static divergences; one `B-only` `image-text` divergence (method `ocr`, `page`, `text_line` of its first appended line) per unseen block; `read.metadata`. Without Tesseract: a `read.divergence` skip per PDF, with `carrier` `image-text` (only the OCR is skipped; the static readings ran); a render error or pages past `render_pdf.MAX_PAGES` are skips too |
+| markdown, html, svg, text | decoded text, original lines | `read.fold` and `read.script` per line; `read.divergence` for invisible characters per line (`fold.invisible_finding`); plus markdown carriers (`read_md`), HTML (`read_html`, with the style sheets the file links in the input folder: `css_loader`), or SVG (`read_svg`) divergences; `read.language` (`language.language_findings`) for markdown and for text files with a prose extension (`txt`, `text`, `rst`, `adoc`, `asciidoc`) |
+| pdf | `read_pdf` lines | `read.fold` / `read.script` / `read.language` over those lines; static divergences; `read.metadata`. A PDF with no text layer is `read.unread`, "pdf: no text layer; the text on its pages is not examined" (R35) |
 | docx | `read_docx` lines | same as pdf |
-| image | none | `read.metadata`; OCR text as a `B-only` divergence, or a `read.divergence` skip plus `read.unread` |
+| image | none | `read.metadata`; and `read.unread`, "image: the text drawn in it is not examined (its metadata is read)" (R35): one reading, so no divergence and no language check |
 | office-other, archive, binary | none | `read.unread` with the reason |
 | symlink | none | `read.unread` (`symlink, not followed`, plus `target`) |
 
 Every `read.divergence` carries `reading`, `text`, `carrier`, `method`
-(`static-style` or `ocr`). Text formats use the original line number in `line`.
+(`static-style`; `ocr` and `render` in runs made before R35 and R36). Text formats use the original line number in `line`.
+A `css-content` divergence (text a style sheet adds, `B-only`) also has `pseudo`, `before` or `after`.
 In a text format, a divergence whose text reaches past its first line also has `end_line`, the last line it reaches
 (`reach`: its words found in order from `line`, in each line as written and with its entities decoded). The mask of a line the
 secret scan flags needs it (`stages/_shared/secretmask.py`), since a parser's text has lost its line breaks, stripped or
-collapsed. A word that cannot be found (tags between its letters glue it, a browser made it) leaves the reach unknown, so
+collapsed. A word that cannot be found (tags between its letters glue it, a style sheet made it) leaves the reach unknown, so
 `end_line` is the last line of the file.
 PDF and DOCX findings are not line-based: `line` is null and `text_line` gives
 the line in the normalized text (`page` / `paragraph` too). A file that cannot
@@ -51,21 +52,20 @@ Within a file, findings are ordered: `read.unread`, `read.divergence`,
 `reading` (called `coverage` until M9 slice C gave that name to the coverage lines, below): `files`, `files_read`, `bytes`, `bytes_read`, `unread` (list of
 paths), `carriers` (count of divergences per carrier), `markdown_files`,
 `markdown_comments`, `language` (`files` checked for language, paragraphs `judged`, and
-paragraphs too `short` to judge), `pdf_pages` (`total` pages in PDFs, pages `read` by OCR),
-`html` (`files` HTML files seen, `drawn` by a browser; added 2026-10-20),
-`optional_tools` (Tesseract and Playwright present or absent), and
-`not_examined`: what this run left unchecked, each item saying why, "(tesseract not
-installed)" or "(not built)".
+paragraphs too `short` to judge), `images` (images seen), `pdf_no_text_layer` (PDFs with none),
+`html` (`files` HTML files seen, `css_files` linked style sheets read), and
+`not_examined`: what this run does not examine in the repository's files (the three notes below), and any check in
+`NOT_BUILT` with "(not built)". `pdf_pages`, `optional_tools`, and `html.drawn` left with R35 and R36 (2026-11-11).
 
-stderr: notes, including a missing Tesseract and what it skips, a missing Playwright
-(`note: html render: <why>`, 2026-10-20), and one `note: not built:`
-line for each check in `NOT_BUILT` (empty since HTML render was built, 2026-10-20), on every run (2026-10-12:
-these were once reported as missing tools, though no code uses those tools, so installing one
-hid the gap), and one `note: v1 limit:` line saying what the language check does not read
-(code, config, HTML, paragraphs under five words). Language within Latin script left
-`NOT_BUILT` when `language.py` was built, and PDF render + OCR when `render_pdf.py` was
-(2026-10-18). A PDF with no text layer is read by OCR when Tesseract is installed, and is
-`read.unread` when it is not (or when no page could be read).
+stderr: notes. What the step does not examine, one note each and only when the repository has such a file (R35, R36;
+owner 2026-11-11: "We state we do not examine images"; the report lists them under What this run covered):
+`note: not examined: the text drawn inside images (<n> images); their metadata is read`,
+`note: not examined: the text on PDF pages that are only a picture (<n> PDFs with no text layer)`, and
+`note: not examined: how a web page looks once drawn (<n> HTML files): one element drawn over another, clipping that
+depends on where things land, text over a background image; the page's own styles are read`. One `note: not built:`
+line for each check in `NOT_BUILT` (empty since 2026-10-20), and one `note: v1 limit:` line saying what the language check
+does not read (code, config, HTML, paragraphs under five words). No check waits on an installed program: Walkdown installs
+with pip and nothing else, so a run reads the same on every machine.
 
 `--out <dir>` also writes `<dir>/normalized/text/<rel>.txt` (reading A) and
 `<dir>/normalized/folded/<rel>.txt` (each line folded), one per file with
@@ -82,34 +82,38 @@ missing or non-folder argument or a bad `--out`.
 - Run anything from the input, follow a symlink, or fetch a URL.
 - Emit a skip for a check that did run (a check not built is a stderr note, not a skip).
 - Report a check as waiting on a tool when no code would use the tool.
+- Read a style sheet from outside the input folder or from a URL (`css_loader` gives None for either).
 
 ### Done when (each backed by a test in `tests/test_run.py`)
 
 1. On a small mixed folder, stdout parses as a contract-1 report with stage `02.2-reader`, and the exit code is 0.
 2. A markdown file with a zero-width line, a comment, and a Cyrillic line gives `read.fold`, `read.divergence` (invisible and comment), and `read.script` findings at the right lines.
 3. An HTML file with a `display:none` div gives a `display:none` divergence with method `static-style`.
-4. A PNG without OCR gives a `read.divergence` skip and a `read.unread` finding; an unknown binary gives `read.unread`.
+4. A PNG gives a `read.unread` finding saying the text drawn in it is not examined, no skip, and the run's note with the
+   count; an unknown binary gives `read.unread` (`test_an_image_is_unread_and_its_drawn_text_not_examined`).
 5. `--out` writes text and folded files with equal line counts, and folded lines differ only where `read.fold` fired.
 6. `--out` inside the input exits non-zero; the input folder is byte-identical after a run.
 7. A missing folder exits non-zero without printing a report.
 8. A markdown file with a Spanish line in an English list gives one `read.language` finding at that line; the same line in a `.py` file gives none; a PDF line gives one with `text_line`; `reading.language` counts files and paragraphs; stderr has no `not built: language` line and has the language `v1 limit` line.
-9. A PDF whose page shows text its text layer lacks gives one `image-text` divergence with `page` and a `text_line` after the layer, and the text is in `--out`'s normalized text; a scanned PDF is read, not unread; `reading.pdf_pages` counts pages. Without Tesseract: one skip per PDF, a PDF with no text layer is `read.unread`, and `not_examined` names image and PDF page OCR.
+9. A PDF with no text layer is `read.unread` saying the text on its pages is not examined, with no skip, and the run's
+   note counts it (`test_a_pdf_with_no_text_layer_is_unread_and_its_pages_not_examined`).
+11. An HTML file is read with the style sheets it links in the input folder and never one outside it or at a URL; no
+    check is skipped; the run's note says how a page looks once drawn is not examined
+    (`test_html_is_read_from_its_styles_and_its_linked_sheets_inside_the_folder_only`).
 
 10. Hidden text that reaches past its first line says how far, in Markdown, HTML, and SVG (`test_hidden_text_that_reaches_past_its_first_line_says_how_far`, `test_a_markdown_comment_keeps_an_entity_as_written`); one-line hidden text and a line of hidden characters have no `end_line` (`test_a_line_of_hidden_characters_has_no_reach`); a word that cannot be placed runs to the end of the file (`test_a_word_that_cannot_be_placed_runs_to_the_end_of_the_file`).
 
 ### History
 
 - 2026-11-01: `end_line` on a divergence that reaches past its first line, for the mask of a flagged line. `02.5-capability` still goes by the line breaks in `text`, as it did.
-
-### HTML drawn (added 2026-10-20)
-
-Each HTML file, after its static reading, is drawn by `render_html.Session` (`html_drawn`): one
-browser for the run, closed at the end even when a file fails. Its findings are
-`read.divergence` with `carrier` `rendered`, `method` `render`, and `how`
-(the `render_html` section). Without Playwright, past `render_html.MAX_FILES`, or when a page
-fails to load, the file gets a skip naming carrier `rendered`; `not_examined` lists "HTML as a
-browser draws it (<why>)" when the tool is missing. Test: `tests/test_run.py`
-(`test_html_not_drawn_without_playwright`).
+- 2026-11-11 (owner, R35 and R36: "Tesseract removal I think is fine. We state we do not examine images."; "go with option
+  1"): no OCR program and no browser. `render_pdf.py` (PDF pages drawn by pypdfium2 and read by Tesseract, 2026-10-18) and
+  `render_html.py` (HTML drawn in Playwright's Chromium, 2026-10-20), with `optional_tools`, are gone; an image and a PDF
+  with no text layer are `read.unread` with a reason that says what is not examined; `read_html` reads what style alone can
+  tell (its section), with the linked style sheets in the input folder (`css_loader`); the step says, in a note each, what
+  it does not examine in the repository's files. No check is skipped for a missing tool any more, so the step is never
+  INCOMPLETE for one. Grader: the drawn-HTML rows moved to the static carriers; the covered paragraph is a recall row
+  (only drawing finds it); the OCR rows of a picture on a PDF page are retired.
 
 ## colors
 
@@ -325,17 +329,18 @@ scope where the kind of file is known (`cov.of`, before the file is read) and wh
   files `read_one` read, counted at the end of each branch that read the file (a PDF with no text layer, and an image whose text
   was not read, are listed as unread and are not counted here); `explained` is the files with a `read.unread` finding (a symlink,
   bytes that cannot be read, a format the reader does not read, a reader error), counted in the loop where the unread row is seen.
-- `read.divergence`: `of` is the files with two readings (Markdown, HTML, SVG, a PDF, a DOCX, a picture: `DIVERGENCE_KINDS`);
+- `read.divergence`: `of` is the files with two readings (Markdown, HTML, SVG, a PDF, a DOCX: `DIVERGENCE_KINDS`; a picture
+  has one since R35, its metadata);
   `looked_at` is counted in the branch of each, where its readings are set against each other; `explained` is such a file that is
   unread before that. A plain text or script file has one reading and is not one of them.
 - `read.metadata`: `of` is the PDFs, DOCX files, and images (the files that carry metadata); `looked_at` is counted where the
   metadata is read; `explained` is such a file that is unread before its metadata was read.
-- `read.language`: `of` is the files the language check is to judge (Markdown, plain-text prose, and the text of a PDF, a DOCX, or
-  an image: `prose_candidate`); `looked_at` is counted inside `language_checks`; `explained` is such a file that is unread before the
+- `read.language`: `of` is the files the language check is to judge (Markdown, plain-text prose, and the text of a PDF or a
+  DOCX: `prose_candidate`; an image is no prose since R35); `looked_at` is counted inside `language_checks`; `explained` is such a file that is unread before the
   check ran.
 
-An image with no OCR (Tesseract not installed) is such a file: it is explained by its `read.unread` row and its skip, so a missing
-optional tool leaves the run as it was and no gap. A file a branch passes over without a finding or a skip leaves a line short.
+An image is such a file: its text drawn in it is not examined (R35), and it is explained by its `read.unread` row, a limit
+and no gap. A file a branch passes over without a finding or a skip leaves a line short.
 The tests are in `tests/test_coverage.py`, with one for each line that makes the reader leave a file out, and one with a PDF and a
 DOCX that counts the metadata where each is read.
 13. A tag character between the selectors of a run reads as one word in `decoded` (`test_a_tag_character_between_selectors_reads_as_one_word`).
@@ -420,8 +425,8 @@ other-language words in the order met, at most 10; empty for the diacritics rule
 `language_findings(file, lines, markdown, line_based=True) -> list[dict]`: one
 `read.language` finding per unit: `check`, `file`, `line`, `end_line`, `rule`, `words`,
 `english`, `other`, `matched`, and `text` (the unit's lines joined with `\n`, verbatim, cut
-at 500 characters with `truncated: true` when longer). When `line_based` is false (PDF, DOCX,
-OCR text), `line` is null and `text_line` / `end_text_line` give the lines in the extracted
+at 500 characters with `truncated: true` when longer). When `line_based` is false (PDF,
+DOCX), `line` is null and `text_line` / `end_text_line` give the lines in the extracted
 text.
 
 `stats(lines, markdown) -> dict`: `paragraphs` (prose paragraphs), `judged` (paragraphs with
@@ -534,25 +539,50 @@ member over 50 MB uncompressed is not read.
 HTML readings A and B from static style. `02.2-reader`, check `read.divergence` for
 HTML. Nothing in the page runs; no URL is fetched.
 
+Since R36 (owner, 2026-11-11: "go with option 1": teach the static reader, drop the browser) it does what the browser check
+did where style alone can tell; how a page looks once drawn (one element over another, clipping that depends on where
+things land, contrast over a background image) is not examined, and the run says so.
+
 ### Inputs
 
 The decoded text of one HTML file.
 
 ### Outputs
 
-`read_html(text) -> {"divergences": [...], "painted": [str]}`.
+`read_html(text, load_css=None) -> {"divergences": [...], "painted": [str]}`. `load_css(href) -> str | None`: the text of
+a style sheet the page links, read from the input folder by the caller (`run.css_loader`), or None; it fetches nothing.
 
 Reading A is all DOM text plus comments and the attributes `alt`, `title`,
 `aria-label`. Reading B is the text a browser would paint, from static style:
 
-- Style sources: `<style>` rules (selectors matched with soupsieve, cascade by
-  specificity then source order; at-rules skipped) and inline `style`
-  attributes (win over rules). Unmatchable selectors are ignored.
+- Style sources, in document order: `<style>` rules and, with `load_css`, the `<link rel="stylesheet">` files of the
+  repository (up to `CSS_CAP`, 1 MB, each); a `media` attribute that does not hold on the screen leaves its sheet out.
+  Selectors matched with soupsieve, cascade by importance, then specificity, then source order; inline `style`
+  attributes win over rules. Unmatchable selectors are ignored.
+- `@media` (R36): its rules apply when its query holds on one screen, `SCREEN` (1280 x 800, light, landscape, a mouse,
+  as the browser check drew it): `all` and `screen` hold, `print` and other types do not; `not` and `only`; `min-` and
+  `max-width` and `-height` (px, pt, em, rem, vw, vh), the range forms (`width >= 1000px`), `orientation`,
+  `prefers-color-scheme`, `hover`, `pointer`, and the like (`media_matches`). A query with a feature Walkdown does not
+  know does not hold, so a rule in it makes no claim (as an unknown color makes none). `@supports` rules apply; every
+  other at-rule is skipped.
 - An element is not painted when it or an ancestor has `display:none`,
   `visibility:hidden` (inherited, a child may set `visible`), the `hidden`
   attribute, `opacity:0`, or `font-size:0`; or its text color (inherited,
   default black) `hides` against its effective background (nearest ancestor
   or self with a background color, default white) per `colors.py`.
+- Since R36, also: text placed **off the page** (`off_page`: an absolutely or fixed positioned box with `left`, `top`,
+  `right`, or `bottom` 1,000 px or more negative, `FAR_PX`; a `text-indent`, `margin-left`, or `margin-top` that far
+  negative; a `translate` that far), **clipped** away (`clipped`: `clip` to a rectangle with no area on a positioned box,
+  `clip-path: inset(50%)` or more, `circle(0)`), in a box with **no size** (`zero_size`: `width`, `height`, `max-width`,
+  or `max-height` 1 px or less with `overflow` hidden or clip, or a `scale(0)`), and inside a closed `<details>` outside
+  its `<summary>`. Each holds for the element's children too, as `display:none` does. The usual screen-reader-only class
+  (absolute, 1 px, overflow hidden, `clip: rect(0 0 0 0)`) is `clipped`.
+- Font size (R36) is followed down the tree from 16 px (`font_px`: px, pt, em, rem, %, keywords, `smaller` and
+  `larger`); text under 2 px (`TINY_PX`) is `tiny-text`. A size Walkdown cannot read (`calc()`) makes no claim.
+- Text a style sheet adds (R36): the plain strings of a `::before` or `::after` `content` (one or two colons; counters,
+  `attr()`, and images are not read; CSS escapes are decoded) with three letters or more, on an element that is shown, is a
+  `B-only` divergence with carrier `css-content` and `pseudo` `before` or `after`: a person sees it, the model reading the
+  page's text does not.
 - CSS variables (2026-10-21): custom properties (`--name`) inherit down the tree as in CSS,
   and `var(--name)` / `var(--name, fallback)` in `color`, `background`, or `background-color`
   resolves against them. A color or background an element declares that still cannot be read
@@ -568,7 +598,8 @@ hidden text with whitespace runs collapsed to one space; `line` the source line
 of the element (or of the comment); carriers `display:none`,
 `visibility:hidden`, `hidden`, `opacity:0`, `font-size:0`, `white-on-white` /
 `color-matches-background` / `transparent`, `comment`, `alt`, `title`,
-`aria-label`, `script`, `document-title`, `head`, `template`, `noscript`.
+`aria-label`, `script`, `document-title`, `head`, `template`, `noscript`, and since R36 `off-page`, `clipped`,
+`zero-size`, `tiny-text`, `details`, and `css-content` (`B-only`).
 Consecutive hidden text under the same hiding element is one divergence. A
 candidate whose text equals a painted text block is dropped (it is in both
 readings).
@@ -577,8 +608,9 @@ readings).
 
 ### Must never
 
-- Run a script, load a stylesheet or image, or fetch a URL.
+- Run a script, load an image, or fetch a URL; read a style sheet other than through `load_css`.
 - Interpret the hidden text.
+- Claim text is hidden by a media query, a size, or a color it cannot read.
 
 ### Done when (each backed by a test in `tests/test_read_html.py`)
 
@@ -589,11 +621,25 @@ readings).
 4. `visibility:hidden` on a parent with a `visible` child reports only the parent's own text.
 5. A `<title>` equal to a painted heading is not reported; any other `<title>` is reported as `document-title`.
 6. The `hidden` attribute is reported; painted text appears in `painted`.
+8. A linked style sheet from the repository is read; with no loader only the page's own styles are; a print sheet does
+   not apply (`test_a_linked_style_sheet_from_the_repository_is_read_and_a_url_is_not_fetched`).
+9. `@media` rules apply for the one screen, and a query with an unknown feature makes no claim
+   (`test_media_rules_apply_for_one_screen_and_an_unknown_feature_makes_no_claim`).
+10. Text a style sheet adds before or after an element is `css-content`, `B-only`, with `pseudo`; under three letters, on a
+    hidden element, or from a counter or `attr()` it is not (`test_text_a_style_sheet_adds_before_or_after_an_element`).
+11. Text under 2 px is `tiny-text` (`test_text_under_two_pixels_is_tiny`).
+12. Text placed off the page, clipped away, or in a box with no size is reported, and a small nudge or a zero width that
+    lets text spill is not (`test_text_placed_off_the_page_clipped_away_or_in_a_box_with_no_size`); a visually hidden
+    class hides its children (`test_a_visually_hidden_class_hides_its_children_too`).
+13. Text in a closed `<details>` outside its summary is `details`; an open one is shown
+    (`test_text_in_a_closed_details_outside_its_summary`).
 
 ## read_image
 
-Images: metadata and (optionally) OCR. `02.2-reader`, checks `read.metadata`,
-`read.divergence`, and `read.unread` for images.
+Images: their metadata. `02.2-reader`, checks `read.metadata` and `read.unread` for images.
+
+The text drawn inside an image is not examined (R35, owner 2026-11-11: "Tesseract removal I think is fine. We state we do
+not examine images."): Walkdown installs with pip and nothing else, and reading pixels took a program installed apart.
 
 ### Inputs
 
@@ -601,10 +647,7 @@ The bytes of one image file (PNG, JPEG, GIF, WebP, BMP, TIFF, ICO).
 
 ### Outputs
 
-`ocr_available() -> (bool, str)`: True when `pytesseract` imports and the
-Tesseract binary answers; the string says what is missing otherwise.
-
-`read_image(data, ocr=True) -> ImageReading` with:
+`read_image(data) -> ImageReading` with:
 
 - `metadata`: `{field, text}`, verbatim, non-empty only:
   - PNG text chunks (tEXt, zTXt, iTXt): `field` `png:<keyword>`;
@@ -613,19 +656,14 @@ Tesseract binary answers; the string says what is missing otherwise.
   - JPEG / GIF comments: `field` `comment`.
   Byte values are decoded as UTF-8 (then Latin-1); an EXIF UserComment drops
   its 8-byte character-code prefix. Values that are not text are skipped.
-- `ocr_text`: the OCR text when OCR ran, else None.
-- `ocr_skipped`: None when OCR ran, else why it did not (`tesseract not
-  installed` and so on).
 - `unread`: None, or the reason Pillow could not open the image.
 
-Reading A of an image is empty (no text layer). When OCR runs, its non-empty
-text is reading B, so run.py reports it as a `B-only` divergence (carrier
-`image-text`, method `ocr`). Without OCR run.py emits a `read.divergence` skip
-and a `read.unread` finding.
+`NOT_EXAMINED`, "image: the text drawn in it is not examined (its metadata is read)": the reason run.py gives every
+readable image's `read.unread`, so the image is a file no tests are run on, and says why.
 
 ### Must never
 
-- Pass an image whose text was not read: no OCR means a skip, never silence.
+- Pass an image as read: the text drawn in it is not examined, and its `read.unread` says so.
 - Decode an image beyond Pillow's decompression-bomb limit.
 
 ### Done when (each backed by a test in `tests/test_read_image.py`)
@@ -633,60 +671,14 @@ and a `read.unread` finding.
 1. A PNG with a tEXt chunk reports `png:<keyword>` with its text.
 2. A JPEG with an EXIF ImageDescription reports `exif:ImageDescription`.
 3. A plain PNG reports no metadata.
-4. With OCR disabled or unavailable, `ocr_skipped` is set and `ocr_text` is None.
-5. Non-image bytes give `unread`.
+4. Non-image bytes give `unread`.
+5. There is no OCR, and the reason says the text drawn in an image is not examined
+   (`test_the_text_drawn_in_an_image_is_not_examined`).
 
-### OCR preprocessing (2026-10-04; rebuilt 2026-10-18 from the OCR spike)
+### History
 
-`ocr_views(im, enlarge=True) -> list[Image]`: the grayscale views Tesseract reads, in reading
-order. `ocr_lines(im, enlarge=True) -> list[(text, confidence)]`: the OCR lines of every view,
-in order, each with the median of Tesseract's word confidences (0 to 100); used by
-`render_pdf`, which drops low-confidence lines (image OCR keeps every line). `ocr_read(im, enlarge=True) -> str`: their OCR text joined with newlines (the views'
-texts in order). Both are used for images and, with `enlarge=False`, for rendered PDF pages
-(`render_pdf`): one view of the crop, steps 1, 2 and 5 only, never enlarged or tiled.
-
-1. Grayscale. The **background** is the most common gray value.
-2. **Crop** to the pixels that differ from the background by more than `INK` (3), plus a
-   `MARGIN` (12 px). An image with no such pixel has no views (no text).
-3. A crop under `OCR_SMALL` (2000) px on its longer side is **one view**, enlarged `OCR_SCALE`
-   (3) times, but never past `OCR_MAX` (6000) px.
-4. A larger crop is read whole first, at its own size, then cut into **tiles** of `TILE`
-   (1000) px overlapping by `OVERLAP` (120) px, row by row; a tile with no ink is dropped; each
-   tile is enlarged `TILE_SCALE` (2) times. The whole view keeps words in large type that
-   straddle a tile overlap (2026-10-18: a 2752 x 1536 banner's title, read whole by the old
-   preprocessing, was cut to "Claude Fami" by tiles alone); the tiles add the small text the
-   whole view misses. `ocr_read` keeps a line read by more than one view once; a line cut
-   differently in two views can still appear twice.
-5. Each view's **contrast is stretched** to the full range (`autocontrast`), and a view whose
-   background is dark (under 128) is **inverted**, so the text is dark on light. Both happen
-   before the view is enlarged. Measured over 60 faint small cases (5 fonts, 7 to 9 px, gray
-   170 and 210, two lines, in a 2400 x 1600 image): this order read more words in 13, fewer in
-   4, the same in 43 (mean 0.814 against 0.804). One DejaVu case had shown 0.92 against 0.69;
-   with Pillow's built-in font the same case goes the other way, so the gain is small and
-   font-dependent, not the 23-point gap one case suggested.
-
-Why (`pre-planning/history/02.2-reader/OCR-SPIKE-2026-10-18.md`): small text in a large image was read at its natural size and
-missed (9 px text in a 2400 x 1600 image: 64% of words; 8 px light gray: 23%). With crop,
-contrast, and tiling: 100% and 92%, and near-invisible text (`#EEE` on white) is still read.
-Tiny text is a way to hide an instruction in an image (the first CI run with Tesseract missed
-the class 11 fixture's 11-pixel text), and so is faint text.
-
-Done when (tests in `tests/test_read_image.py`):
-
-6. A small image gives one view, grayscale, cropped to its ink and enlarged 3x.
-7. A blank image gives no views.
-8. A dark image gives a view whose background is light.
-9. A large image with ink in two far corners gives the whole crop, then tiles for those
-   corners only.
-10. A view never exceeds `OCR_MAX` on its longer side.
-12. `enlarge=False` gives one view the size of the crop, however large.
-13. With Tesseract installed: a word in large type across a tile overlap of a large image is
-    read whole, and a line read by two views appears once.
-11. With Tesseract installed: 9 px text in the corner of a 2400 x 1600 image, `#EEE` text on
-    white, and 8 px light-gray text in a 2400 x 1600 image are read (most of their words in
-    `ocr_read`), drawn with Pillow's built-in font so the test runs on any OS. The bars test
-    that the text is read at all (the old preprocessing read 64% and 23% of such words), not one
-    Tesseract version's exact score.
+- 2026-10-04 to 2026-11-11: OCR with Tesseract, its preprocessing rebuilt 2026-10-18 from the OCR spike
+  (`pre-planning/history/02.2-reader/OCR-SPIKE-2026-10-18.md`). Removed by R35; git history keeps it.
 
 ## read_md
 
@@ -771,9 +763,8 @@ The bytes of one PDF file.
 Colors: gray, RGB, and CMYK fill values are converted to RGB; pattern or
 unknown colors count as visible.
 
-The other direction, text painted on the page but absent from the text layer, is
-`render_pdf` (pages drawn by pypdfium2 and read by Tesseract, 2026-10-18); run.py
-compares the two.
+The other direction, text painted on the page but absent from the text layer, is not examined since R35 (2026-11-11);
+`render_pdf` drew and read the pages with Tesseract from 2026-10-18 until then.
 
 ### Must never
 
@@ -847,193 +838,6 @@ first line (lxml's `sourceline` of a comment is its last).
 ### History
 
 - 2026-11-01: a multi-line comment's `line` is its first line. It named its last, so the words above it were outside the lines the mask of a flagged line goes by.
-
-## render_html
-
-Added 2026-10-20.
-
-HTML as a browser draws it. `02.2-reader`'s static reader (`read_html.py`) works out what is painted
-from inline style and `<style>` rules; a browser also applies `@media` rules (and the CSS variables set inside them),
-selectors the static matcher cannot run, positioning, clipping, and elements drawn over others,
-and shows text that a style sheet adds with `::before` and `::after`. This module draws each
-HTML file in a headless Chromium and reports what a person would and would not see. It was the
-last check listed as "not built".
-
-### Inputs
-
-- The input folder (the run's root) and each HTML file's path in it.
-- The file's text and the static reader's divergences (to leave out what it already found).
-
-Optional: Playwright and its Chromium (`pip install playwright`, then
-`python -m playwright install chromium-headless-shell`). `available()` checks without starting a
-browser: the package is importable and the Chromium build it launches is installed, read from
-the package's own `browsers.json` (`chromium_headless_shell-<revision>`; 2026-10-21: any
-Chromium was enough before, so a build for another Playwright version passed the check and then
-failed on every page). A Chromium for another version gives its own reason. When
-`browsers.json` cannot be read, any Chromium counts, as before; `PLAYWRIGHT_BROWSERS_PATH` `0`
-means the bundled browsers. Without them every HTML file gets a skip. A browser that does not
-start gives a skip whose reason is the error's first line only.
-
-### How a page is drawn
-
-- One browser per `02.2-reader` run (`Session`), started at the first HTML file and closed at the
-  end; a fresh browser context per file.
-- The page's own JavaScript is off; the context is offline; downloads and service workers are
-  off; every request is aborted unless it is a `file:` URL inside the input folder, so a page can
-  load its own style sheets and images from the repository and nothing else.
-- The page is loaded from its file (a 1280 x 800 window, 10 s limit), then a fixed probe runs in
-  it. With the page's scripts off, the functions the probe calls are the browser's own.
-- At most `MAX_FILES` (200) files are drawn per run; the rest get a skip saying so.
-
-### Outputs
-
-The probe returns, for each text node under `<body>` that a person would not see, its text and
-`how` (checked in this order):
-
-| `how` | Meaning |
-|---|---|
-| `collapsed` | inside a closed `<details>`, outside its summary: on screen only after the reader opens it (one item per section) |
-| `not-rendered` | no box at all (`display:none`, including inside `@media`, and the like) |
-| `invisible` | `visibility` is not `visible` |
-| `transparent` | the element or an ancestor has opacity 0 |
-| `zero-size` | every box is under 1 px wide or high |
-| `tiny-text` | font size under 2 px |
-| `off-page` | every box lies outside the page (left of 0, above 0, or past its width or height) |
-| `clipped-or-covered` | at the middle of each box the browser finds another element: the text is clipped by an ancestor or covered (not tested when the text ignores the pointer) |
-| `transparent-text` | the text color has alpha 0 |
-| `color-matches-background` | contrast with the nearest background color under 1.15 (not judged over a background image) |
-
-and each plain string a `::before` or `::after` adds (three letters or more; counters, `attr()`
-and images are not read) as `how` `css-content`.
-
-Form controls (`select`, `option`, `optgroup`, `datalist`, `textarea`) and everything in
-`head`, `script`, `style`, `template`, `noscript`, `title` are left out.
-
-`divergences(probe, source, static_texts)` turns that into `{line, text, how, reading}`: hidden
-text is `A-only` (the model reads it, a person does not), consecutive text of one element hidden
-the same way is one item, and any text that the static reader already reported (either text
-inside the other) is left out; generated text is `B-only` with `pseudo`. `line` is where the text
-starts in the source (`line_of`: the whole text, its first 40 characters, or its first words with
-tags, entities, or white space between), or null.
-
-`02.2-reader` (`run.html_drawn`) reports each as `read.divergence` with `carrier` `rendered`,
-`method` `render`, and `how`. A file not drawn gets a skip with `carrier` `rendered`
-(`html not drawn (<why>)`), so the grader skips only the rows about drawn HTML. Coverage gains
-`html: {files, drawn}`; without Playwright, `not_examined` lists "HTML as a browser draws it" and
-the notes say so.
-
-### Must never
-
-- Run the page's scripts, fetch anything from the network, or read a file outside the input
-  folder.
-- Report again what static style found.
-- Judge what the hidden text means.
-
-### Done when (tests in `tests/test_render_html.py`)
-
-1. (`available` is `stages/_shared/playwright_check.py`'s since restructure step 7, and its tests are there; `render_html.available` is that function.) `available` is false without the package or without a Chromium, with the reason; with a Chromium build for another Playwright version it is false and says so, and with the build `browsers.json` names it is true.
-2. `line_of` finds the line by the whole text, by its start, and across tags and entities, and
-   gives null when the text is not in the source.
-3. `divergences` merges one element's text, leaves out what static style found (either way),
-   and reports generated text as `B-only`.
-4. The request filter lets through only `file:` URLs inside the input folder.
-5. With Playwright present: text off the page, clipped, hidden by `@media`, colored like the page
-   through a CSS variable set in an `@media` rule, covered, and in a closed `<details>` (its summary visible) is found with
-   the right `how`; text a `::after` adds is
-   `B-only`; visible text and text far down a long page are not reported; a page script that
-   would reveal or add text does not run.
-6. Without Playwright, an HTML file gets the `rendered` skip and the run says so (`tests/test_run.py`).
-
-Measured 2026-10-20: Compound Engineering at 7a68002, 10 HTML files, 6 findings, all closed
-`<details>` sections in plan pages (before `collapsed` existed, the same text gave 114
-`clipped-or-covered` findings, one per text node: Chrome lays a closed section out and paints
-nothing there); a second repository, 1 file, none.
-
-Fixture: `Fixtures/02.2-reader/class11-html-render.html` (grader rows `rd-render-*`; the drawn rows
-are skipped without Playwright).
-
-- 2026-10-29: restructure step 7: `available` and its helpers moved to `stages/_shared/playwright_check.py` (notes M13); this module imports them.
-
-## render_pdf
-
-PDF pages drawn and read as images (2026-10-18). `02.2-reader`, `read.divergence` (carrier
-`image-text`, method `ocr`) and the reading of a PDF that has no text layer.
-
-The text layer is what a parser hands a model; a page as drawn can carry more: a screenshot of
-an instruction, text drawn as shapes, a scanned page. A model that reads the page as an image
-sees it. Reading the text layer alone misses it.
-
-### Inputs
-
-The bytes of one PDF file, and the PDF's text layer (`read_pdf` lines).
-
-### Outputs
-
-`page_ocr(data, max_pages=MAX_PAGES) -> PageOcr` with:
-
-- `pages`: one OCR text per page read, in page order. Each page is rendered by **pypdfium2**
-  (core dependency, pip, BSD-3-Clause / Apache-2.0; no poppler) at `RENDER_SCALE` (3, which is
-  216 dpi, so 6 pt text is 18 px), then read by `read_image.ocr_views(..., enlarge=False)` and
-  Tesseract: cropped to the ink, contrast stretched, dark pages inverted, not enlarged and not
-  tiled (a rendered page's text is already large enough). Only lines whose median word
-  confidence is `CONF` (70) or more are kept; `low` holds the rest, per page, so the runner can
-  count what was set aside (`reading.pdf_pages.low_confidence`: unseen lines set aside).
-- `total`: the page count. `skipped`: None, or why no page was read (`tesseract not
-  installed`, a render error). Pages after `max_pages` (`MAX_PAGES`, 50) are not read; the
-  runner says so as a skip.
-
-`unseen(ocr_text, layer_lines) -> list[list[str]]`: the blocks of consecutive OCR lines the
-text layer does not hold. Words are runs of two or more letters or digits, lowercased, NFKC
-folded. An OCR line is **unseen** when it has at least `MIN_WORDS` (3) words and at least
-`UNSEEN_SHARE` (60%) of them are neither in the text layer nor within one OCR slip of a word in
-it (`difflib` ratio 0.8 or more against a layer word of similar length; words of five letters
-or more only, since `then` is no slip of `the`). A line of three words
-or more that fails is **seen** and ends the block. A shorter line never opens a block; it joins
-an open one when none of its words is in the layer, and otherwise is passed over. A line with
-no words is passed over. A PDF with no text layer has every OCR line of three words or more
-unseen.
-
-### Measured (2026-10-18)
-
-150 PDFs sampled from the pdf.js test corpus (`mozilla/pdf.js` `test/pdfs`, deliberately odd
-files: broken fonts, CJK, forms), first three pages each: 142 read, 165 pages, 1 render error.
-Without the confidence floor, 13 PDFs gave an unseen block: 4 real text missing from the text
-layer (an embedded picture's caption, a calendar header drawn as shapes, a statement title,
-"Hello World"), 9 OCR garbage from pictures, symbols, and CJK read as English. Median word
-confidence separated them: every real line 94 to 96, every fixture line 94 to 96, garbage 0 to
-37 with outliers at 57.5 and 76. Run again at 70: 4 PDFs with a block, 3 of them the real text
-(the caption, the calendar header, the statement title) and one a font-test page of repeated
-glyph rows with no text layer (drawn text, arguably real); "Hello World" fell out as a
-two-word line. The cost: a real instruction drawn degraded enough to fall under 70 is set
-aside, and counted, not listed. Image OCR keeps every line (the class 11 image fixture's first
-line scores 34).
-
-0.8 seconds per page on this run's CPU (131 s for 165 pages); the first 50 pages of a PDF are
-read.
-
-### Must never
-
-- Run PDF JavaScript, open an embedded file, or fetch a URL (pypdfium2 renders; forms and
-  JavaScript are not initialized).
-- Report a page as clean when it was not read: no Tesseract, a render error, or a page past
-  the cap is a skip.
-- Call text unseen for one misread word: an OCR slip of a word in the layer is still seen.
-
-### Done when (each backed by a test in `tests/test_render_pdf.py`)
-
-1. `unseen` gives nothing when the OCR lines are the text layer with OCR slips
-   (`sumrnary`, `Summarlze`); a short word close to a layer word (`then`, `the`) is not a slip.
-2. `unseen` gives a block of the lines that are not in the text layer, and two blocks when a
-   seen line sits between them.
-3. A line of fewer than three words never opens a block; one with no layer word joins an open
-   block.
-4. With no text layer, every OCR line of three words or more is unseen.
-5. With Tesseract installed: a PDF whose text layer says one thing and whose page carries an
-   image of an instruction gives the instruction in `pages` and in `unseen`; an image-only
-   (scanned) PDF gives its text; a picture of Chinese text, which English OCR reads as garbage
-   at low confidence, puts nothing unseen in `pages` and the garbage in `low`.
-6. Without Tesseract (`ocr=False`), `page_ocr` gives no pages and a `skipped` reason; the page
-   cap gives `total` larger than `len(pages)`.
 
 ## script_runs
 

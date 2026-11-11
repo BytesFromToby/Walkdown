@@ -244,7 +244,10 @@ def test_sending_data_out_reaches_the_summary(tmp_path):
     assert "2 places have steps that read secrets, call out, or share." in s and "2 to look at" in s  # report v3
     assert "Wording that sends data out</b> (2)" in s  # the summary's line by kind since R26 (was the group's name)
     n = html.unescape((next((res / "notes").iterdir()) / "summary.html").read_text(encoding="utf-8"))
-    assert "Walkdown found none of the security concerns it looks for." in n
+    # ordinary storage advice is no place; its .env line is in full.md, and since R28 (2026-11-07) the page says so; since
+    # R32 the card has no "found none" and no chip
+    assert "full.md has 1 more line with risky wording, not listed here (section 4)." in n
+    assert "found none" not in n and "None on the list" not in n and "Nothing found" not in n
 
 
 def test_context_and_hosts_reach_the_log_the_pages_and_the_brief(tiny_repo, tmp_path):

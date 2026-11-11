@@ -1,7 +1,7 @@
 """The report stage's view of the check of the run (`data/05-qa.json`). Spec: specs/report.SPEC.md, qaview.
 
 Section 7 of `full.md`, `data/limits.md`, and the lists of steps that did not work (the headline, the warning, the
-brief, "What Walkdown didn't check") are drawn from the check's findings and no longer gathered here (M9 slice B): the
+brief, "What this run covered") are drawn from the check's findings and no longer gathered here (M9 slice B): the
 check decides what is a gap and what is a limit, in what order, and the report words them. This module only reads the
 file and answers the questions the pages ask of it.
 """

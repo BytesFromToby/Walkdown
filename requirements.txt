@@ -1,12 +1,10 @@
-# Walkdown core dependencies: pip-installable only (TOOLING "Usable by everyone").
-# Optional tools (Tesseract, Playwright) are never listed here;
-# a stage that lacks one emits a skip. Versions pinned 2026-09-25 (stage 2 build).
+# Walkdown core dependencies: pip-installable only (TOOLING "Usable by everyone"), and nothing else to install:
+# no OCR program and no browser since R35 and R36 (2026-11-11). Versions pinned 2026-09-25 (stage 2 build).
 pytest==9.1.1
 PyYAML==6.0.3
 charset-normalizer==3.5.1
 pdfminer.six==20260107
 pypdf==6.19.0
-pypdfium2==5.14.0
 beautifulsoup4==4.15.0
 lxml==6.1.3
 Pillow==12.3.0

@@ -1,14 +1,12 @@
 name: tests
 
 # Every push and pull request: the spec tests, then every stage against its fixtures.
-# Tesseract is installed here so 02.2-reader's image check runs (locally it is optional and
-# its absence gives INCOMPLETE); Playwright's Chromium likewise, so HTML is drawn. The AI stages
-# (03-sweep, 04-pinpoint) run with no model backend: Sweep's recall rows are skipped, and Pinpoint
-# has no fixture set.
+# Nothing is installed but requirements.txt: no OCR program and no browser since R35 and R36
+# (2026-11-11), the same as on a person's machine. The AI stages (03-sweep, 04-pinpoint) run with
+# no model backend: Sweep's recall rows are skipped, and Pinpoint has no fixture set.
 # Each runner version is named explicitly, so GitHub moving a "-latest" label cannot change
-# results unannounced. Both Ubuntu versions are tested because their Tesseract differs; macOS and
-# Windows (added 2026-10-20) run one Python each, to catch path, line-ending, and install
-# differences. Fixtures keep their bytes on Windows through .gitattributes (Fixtures/** -text).
+# results unannounced. Two Ubuntu versions with two Pythons; macOS and Windows (added 2026-10-20)
+# run one Python each, to catch path, line-ending, and install differences. Fixtures keep their bytes on Windows through .gitattributes (Fixtures/** -text).
 on:
   push:
     branches: [main]
@@ -37,22 +35,8 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: pip
-      - name: Install Tesseract (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update -q && sudo apt-get install -y -q tesseract-ocr
-      - name: Install Tesseract (macOS)
-        if: runner.os == 'macOS'
-        run: brew install tesseract
-      - name: Install Tesseract (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          choco install tesseract -y --no-progress
-          "C:\Program Files\Tesseract-OCR" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install requirements
-        run: python -m pip install -r requirements.txt pytesseract==0.3.13 playwright==1.64.0
-      - name: Install Chromium for HTML drawing (Playwright)
-        run: python -m playwright install chromium-headless-shell
+        run: python -m pip install -r requirements.txt
       - name: Spec tests
         run: python -m pytest -q
       - name: Stage fixtures (grader)

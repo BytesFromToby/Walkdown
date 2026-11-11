@@ -122,8 +122,8 @@ section 1.
 that differs between the two is text one of them misses.
 
 Each file is read twice: **reading A** is the raw text a model receives, **reading B** is what a
-person sees (rendered Markdown, styled HTML, the visible layer of a PDF or Office file, OCR of
-an image).
+person sees (rendered Markdown, styled HTML, the visible layer of a PDF or Office file). An image has one reading, its
+metadata: the text drawn inside it is not examined.
 
 | Check | What it records | Why it matters |
 |---|---|---|
@@ -148,15 +148,15 @@ white-on-white or `display:none` text.
 `summary.html`, and hidden characters that spell out text no pattern matched are the second, each
 with a card on `review.html`. Section 2, and the Hidden text section of `details.html`, whose count
 opens every hidden place and says what each one's characters spell, with a callout for hidden text
-that reads like an instruction. Tesseract, when
-installed, reads text inside images and on PDF pages (each page is drawn and read, and lines
-its text layer lacks are listed, as when a page shows a picture of an instruction); when it is
-missing, section 7 says so. Playwright, when installed with its Chromium, draws each HTML file
-as a browser would, with the page's own scripts off and nothing fetched from the network, and
-lists what static style cannot see: text in a closed `<details>` section, moved off the page,
-clipped or covered by another element, hidden or colored like the page by an `@media` rule (carrier
-`rendered`, with `how`), and text a style sheet adds with `::before` or `::after`, which a
-person sees and the model never receives. When it is missing, section 7 says so. The language
+that reads like an instruction. Walkdown installs nothing but Python packages (2026-11-11), so it runs no OCR program
+and no browser. The text drawn inside images, and on PDF pages that are only a picture, is not examined: an image's
+metadata is read, the image is listed as unread, and "What this run covered" says so when the repository has one. HTML
+is read from its own styles and the style sheets it links in the repository, never a URL: hidden elements, `@media`
+rules for one 1280 x 800 screen, text placed off the page (`off-page`), clipped away (`clipped`), in a box 1 px or
+smaller that hides what overflows (`zero-size`), under 2 px (`tiny-text`), inside a closed `<details>` (`details`), and
+text a style sheet adds with `::before` or `::after` (`css-content`), which a person sees and the model never receives.
+How a page looks once drawn, one element over another, clipping that depends on where things land, text over a
+background image, is not examined, and "What this run covered" says so when the repository has HTML. The language
 check needs nothing installed; it reads prose only (not code comments, config values, or HTML),
 and section 7 says so.
 
@@ -311,6 +311,11 @@ sending your data away.
 | persistence | phrases that write shell profiles, git config or hooks, memory or settings files, editor autorun, global installs |
 | network | the "Can send data out" leg, or a global install |
 | elevated | skip-permission flags, allow-list edits, confirmations turned off, or an agent inheriting all tools |
+
+Each grant counts its evidence by where it comes from: the settings (a tools list, a hook, a description, an MCP server)
+or the wording (a phrase hit). The report lists a grant with a setting behind it under "Install grants", with its reasons,
+and one that only the wording asks for under "Wording asks for", with every line cited. A line that only quotes such
+wording, in a file of examples, reads as what the wording asks for, not as what installing grants.
 
 ### The rest of "What this touches"
 
@@ -504,14 +509,14 @@ passages with no answer, how many ("5 of 12 passages got no answer, after one re
 counted, and the call log. Each step names its own skips in its output, and the report step gathers
 them.
 
-**In the report.** Section 7 of `full.md`, "What Walkdown didn't check" on `details.html`, and
+**In the report.** Section 7 of `full.md`, "What this run covered" on `details.html`, and
 `data/limits.md`, all drawn from the check of the run's output (`data/05-qa.json`). A step that did not run or did not pass validation is also named at the
 bottom of `summary.html`, and in its headline when it found nothing. A missing optional tool is
 not named there. A model read in which no passage got an answer, even after the retry, is named as a
 step that did not work, and the headline then says the coded checks are complete and the model read
 did not work: a model read never adds a security concern, so a missing one does not make the coded
 result less complete. (When a coded check was skipped for a missing tool, the headline says the coded
-checks ran, and that "What Walkdown didn't check" names any skipped.) Each fact about a model read is
+checks ran, and that "What this run covered" names any skipped.) Each fact about a model read is
 said once on a page: the count and its reasons in section 7 and on the details page, and on the summary
 for a read that answered some.
 

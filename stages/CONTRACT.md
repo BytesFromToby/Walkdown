@@ -101,14 +101,14 @@ by the grader.
 A **skip** is a finding with a `skipped` field instead of results:
 
 ```json
-{"check": "read.divergence", "file": "class11-image-text.png", "line": null,
- "skipped": "tesseract not installed"}
+{"check": "read.divergence", "file": "notes.svg", "line": null,
+ "skipped": "svg is not well-formed XML: mismatched tag: line 4, column 2"}
 ```
 
-A stage emits a skip when a check could not run (missing optional tool,
-unreadable input). A skip is never a pass: the grader reports the stage as
+A stage emits a skip when a check could not run (unreadable input; a missing optional tool, which no coded
+step has since 2026-11-11). A skip is never a pass: the grader reports the stage as
 INCOMPLETE, and a real run lists it in the limits (`data/limits.md`). A skip may name a `carrier` when only that part
-of the check was skipped (`02.2-reader`'s PDF page OCR, `image-text`, 2026-10-18: the static PDF
+of the check was skipped (`02.2-reader`'s PDF page OCR, `image-text`, 2026-10-18 to 2026-11-11: the static PDF
 readings still ran); the grader then skips only the rows about that carrier.
 
 ## Coverage lines
@@ -282,7 +282,7 @@ evidence is an edge in `02.3-graph`'s `graph.json` (a file that loads or names a
 | Check | One finding per | Fields |
 |---|---|---|
 | `cap.leg` | trifecta leg, always three (`file`, `line` null) | `leg`: `private-data`, `untrusted-content`, `external-comms`; `present`: bool; `evidence` |
-| `cap.grant` | install grant present (`file`, `line` null) | `grant`: `exec-at-load`, `context-injection`, `persistence`, `network`, `elevated`; `evidence` |
+| `cap.grant` | install grant present (`file`, `line` null) | `grant`: `exec-at-load`, `context-injection`, `persistence`, `network`, `elevated`; `evidence`; `sources` (`settings`, `wording`: evidence counts, R31) |
 | `cap.injection` | path by which text reaches context at load | `mechanism`: `description` or `hook`; `event` (hooks); `bytes`: int or null; `basis`: `exact`, `estimate`, `unknown` |
 | `cap.load-bytes` | hook config, one per host (`file` the config; null when no hook injects at load) | `bytes`; `basis`; `unknown_parts` |
 | `cap.posture` | agent or command definition | `tools`; `posture`: list of `read`, `write`, `execute`, `network`, `delegate`, `all`, `other`; `least_privilege`: bool; `description` |
@@ -352,7 +352,7 @@ the contract from here on:
 | `read.divergence` | `chars`, `page`, `paragraph`, `text_line`, `used`, `end_line`, `masked` | invisible code points found; PDF page; DOCX paragraph; line in the extracted text for formats without source lines; whether a Markdown reference definition is used; the last line a text in a text format reaches, when that is past its first (added 2026-11-01); true when a line it quotes holds a `secret.found`, with `text` and `decoded` replaced and `chars` reduced to each code point once, sorted (added 2026-11-01) |
 | `read.fold` | `masked` | true when the line holds a `secret.found`, with `folded` replaced and `removed` reduced to each code point once, sorted (added 2026-11-01) |
 | `read.script` | `col`, `masked` | the column where the non-Latin run starts; true when the line holds a `secret.found`, with `text` replaced (added 2026-11-01) |
-| `read.language` | `text_line`, `end_text_line`, `masked` | for PDF, DOCX, and OCR text, the passage's lines in the extracted text (`line` is null); true when a line of the passage holds a `secret.found`, with `text` replaced (added 2026-11-01) |
+| `read.language` | `text_line`, `end_text_line`, `masked` | for PDF and DOCX text, the passage's lines in the extracted text (`line` is null); true when a line of the passage holds a `secret.found`, with `text` replaced (added 2026-11-01) |
 | `graph.dangling` | `form` | where the reference was found: `prose`, `config`, `script`, `fenced`, `comment` |
 | `cap.injection` | `command` | the hook command (hook mechanism) |
 | `cap.load-bytes` | `parts` | how many injection paths were summed |

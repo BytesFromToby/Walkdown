@@ -123,6 +123,15 @@ def stop_lines(stop: dict, run_dir, waiting=(), backends=None) -> list[str]:
                             for s in waiting if s not in unusable)]
 
 
+def _capability_full(data) -> dict | None:
+    """capability.json, the capability step's findings with their evidence uncapped (for the grants' reasons, R31)."""
+    import pipeline  # stages/_shared, on the path as for run.py
+    try:
+        return pipeline.read_report(Path(data) / "capability.json")
+    except Exception:  # noqa: BLE001 - an older run, or none: the kept evidence is counted
+        return None
+
+
 def build(meta: dict, reports: dict, stamps: dict, changes: dict | None, run_dir, data: Path) -> str:
     """The brief's text. `reports`: {stage: report}, with None for an AI stage that was chosen, started,
     and left no report; `stamps`: {stage: Stamp}; `changes`: `drift.changes` or None; `data`: the
@@ -135,7 +144,6 @@ def build(meta: dict, reports: dict, stamps: dict, changes: dict | None, run_dir
     stop = meta.get("stop")
     left = R.stopped_left(stop)
     legs = {x["leg"]: x["present"] for x in R.fnd(reports, "02.5-capability", "cap.leg")}
-    grants = [x["grant"] for x in R.fnd(reports, "02.5-capability", "cap.grant")]
     every = details_html.first_items(reports)
     items = [it for it in every if not details_html.is_model_read(it)]
     model = [it for it in every if details_html.is_model_read(it)]
@@ -166,20 +174,26 @@ def build(meta: dict, reports: dict, stamps: dict, changes: dict | None, run_dir
         for k, name in R.LEG_NAMES.items():
             L.append(f"  [{'x' if legs.get(k) else ' '}] {name}")
         L.append(f"  {summary_html.TOGETHER}")
-        L.append(f"  Install grants: {', '.join(grants) if grants else 'none'}.")
+        L += [f"  {x}" for x in R.grant_lines(reports, _capability_full(data))  # R31
+              if x != "Install grants: none."]  # R32: none found is no line
     rs = summary_html.rows(reports, items)
     wording = summary_html.wording_count(reports, items, rs)
     missing = summary_html.not_run(qa)  # the coded steps: a model read that did not work is said apart (M9)
     down = summary_html.model_down(qa)
     res = {s: w for s, w in st.items() if s in ok and w != "not run"}
-    L += ["", summary_html.headline(rs, missing, summary_html.failed_checks(qa), stop, down,
-                                    summary_html.incomplete_checks(qa), summary_html.unchecked_sentence(qa))]
+    off = summary_html.off_list(reports, items)  # R28
+    head = summary_html.headline(rs, missing, summary_html.failed_checks(qa), stop, down,
+                                 summary_html.incomplete_checks(qa), summary_html.unchecked_sentence(qa),
+                                 0 if missing or R.stopped_left(stop) else off)
+    L += ["", head] if head else []  # R32: nothing found and nothing to say of the run is no line
     if summary_html.not_run(qa, ai=True):  # the first step that left nothing, a chosen AI step included, never one nobody chose
         L += [f"  {stage_error(data, stage)}" for stage in qa.steps_missing()][:1]
     L += [f"  {x['name']} ({len(x['places'])})" for x in rs]
     if wording:
         n = R.n(wording, "more place" if rs else "place")
         L.append("  " + summary_html.WORDING.format(n=n, be="is" if wording == 1 else "are"))
+    if off and rs and not missing and not R.stopped_left(stop):
+        L.append("  " + summary_html.off_list_sentence(off))
     if stop:
         L += ["", *stop_lines(stop, run_dir, R.waiting_reads(meta.get("chosen"), reports, stop, meta.get("not_started")),
                               meta.get("backends"))]

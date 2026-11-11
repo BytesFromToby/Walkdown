@@ -84,21 +84,37 @@ def test_html_divergence(tmp_path):
                and f["method"] == "static-style" and f["reading"] == "A-only" for f in d)
 
 
-def test_image_skip_and_unread(tmp_path):
+def test_an_image_is_unread_and_its_drawn_text_not_examined(tmp_path):
+    """R35 (owner, 2026-11-11): the text drawn in an image is not examined on any machine; the image is listed as unread with
+    that reason, no check is skipped, and the run says it once, with the count."""
     build(tmp_path / "in")
-    fs = report(tmp_path / "in")["findings"]
+    doc = report(tmp_path / "in")
+    fs = doc["findings"]
     img = [f for f in fs if f["file"] == "img.png"]
-    checks = {f["check"] for f in img}
-    # Ask the reader whether OCR can run here; inferring it from findings fails when OCR runs
-    # and the image hides nothing (2026-10-04: first CI run, Linux with Tesseract installed).
-    import read_image
-    ocr_ok, _ = read_image.ocr_available()
-    if ocr_ok:
-        assert not any(f["check"] == "read.divergence" and "skipped" in f for f in img)
-    else:
-        assert "read.unread" in checks
-        assert any(f["check"] == "read.divergence" and "skipped" in f for f in img)
+    assert [f["reason"] for f in img if f["check"] == "read.unread"] == [
+        "image: the text drawn in it is not examined (its metadata is read)"]
+    assert not any("skipped" in f for f in fs)
     assert any(f["check"] == "read.unread" and f["file"] == "blob.dat" for f in fs)
+    assert doc["reading"]["images"] == 1
+    assert "not examined: the text drawn inside images (1 image); their metadata is read" in doc["reading"]["not_examined"]
+
+
+def test_a_pdf_with_no_text_layer_is_unread_and_its_pages_not_examined(tmp_path):
+    import importlib.util  # `02.2-reader`'s run.py by path: every stage has a run.py
+    spec = importlib.util.spec_from_file_location("walkdown_s02_run", RUN)
+    runner = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(runner)
+    root = tmp_path / "in"
+    root.mkdir()
+    (root / "a.pdf").write_bytes(make_pdf("BT /F1 12 Tf 72 720 Td (Hello there) Tj ET\n"))
+    (root / "empty.pdf").write_bytes(make_pdf("0 0 0 rg\n60 690 300 50 re f\n"))
+    doc = runner.build_report(root)
+    fs = doc["findings"]
+    assert not any("skipped" in f for f in fs)
+    un = [f for f in fs if f["check"] == "read.unread"]
+    assert [(f["file"], f["reason"]) for f in un] == [("empty.pdf", "pdf: no text layer; the text on its pages is not examined")]
+    assert doc["reading"]["pdf_no_text_layer"] == 1
+    assert "not examined: the text on PDF pages that are only a picture (1 PDF with no text layer)" in doc["reading"]["not_examined"]
 
 
 def test_out_dir(tmp_path):
@@ -159,84 +175,43 @@ def test_language(tmp_path):
     assert not any("language" in x for x in doc["reading"]["not_examined"])
 
 
-def test_pdf_pages(tmp_path, monkeypatch):
-    from .test_render_pdf import LAYER, OCR, PLANTED, image_pdf
-    import pytest
-    if not OCR:
-        pytest.skip("needs Tesseract")
-    root = tmp_path / "in"
-    root.mkdir()
-    (root / "a.pdf").write_bytes(image_pdf(LAYER, PLANTED))
-    (root / "scan.pdf").write_bytes(image_pdf([], PLANTED))
-    code, out, err = run(root)
-    doc = json.loads(out.decode("utf-8"))
-    fs = doc["findings"]
-    img = [f for f in fs if f["check"] == "read.divergence" and f.get("carrier") == "image-text"]
-    a = [f for f in img if f["file"] == "a.pdf"]
-    assert len(a) == 1 and a[0]["method"] == "ocr" and a[0]["reading"] == "B-only"
-    assert a[0]["page"] == 1 and "previous instructions" in a[0]["text"].lower()
-    assert a[0]["text_line"] > len(LAYER)  # appended after the text layer
-    assert [f for f in img if f["file"] == "scan.pdf"]
-    assert not [f for f in fs if f["check"] == "read.unread"]  # the scan is read, not unread
-    assert doc["reading"]["pdf_pages"] == {"total": 2, "read": 2, "low_confidence": 0}
-    assert "not built: PDF render" not in err.decode("utf-8")
-    # `02.4-phrases` reads the normalized text: the OCR lines are in it
-    out_dir = tmp_path / "out"
-    run(root, "--out", out_dir)
-    text = (out_dir / "normalized" / "text" / "a.pdf.txt").read_text(encoding="utf-8")
-    assert "previous instructions" in text.lower()
 
 
-def test_pdf_pages_without_tesseract(tmp_path):
-    import importlib.util  # `02.2-reader`'s run.py by path: every stage has a run.py
-    spec = importlib.util.spec_from_file_location("walkdown_s02_run", RUN)
-    runner = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(runner)
-    root = tmp_path / "in"
-    root.mkdir()
-    (root / "a.pdf").write_bytes(make_pdf("BT /F1 12 Tf 72 720 Td (Hello there) Tj ET\n"))
-    (root / "empty.pdf").write_bytes(make_pdf("0 0 0 rg\n60 690 300 50 re f\n"))
-    runner.optional_tools = lambda: {"tesseract": False, "tesseract_detail": "tesseract not installed"}
-    doc = runner.build_report(root)
-    fs = doc["findings"]
-    skips = [f for f in fs if f["check"] == "read.divergence" and "skipped" in f]
-    assert {f["file"] for f in skips} == {"a.pdf", "empty.pdf"}
-    un = [f for f in fs if f["check"] == "read.unread"]
-    assert [f["file"] for f in un] == ["empty.pdf"] and "OCR not run" in un[0]["reason"]
-    assert doc["reading"]["pdf_pages"] == {"total": 2, "read": 0, "low_confidence": 0}
-    assert "image and PDF page OCR (tesseract not installed)" in doc["reading"]["not_examined"]
 
 
-def test_html_not_drawn_without_playwright(tmp_path):
-    """render_html: without Playwright an HTML file keeps its static reading and gets a skip
-    naming carrier rendered; the run says the check was not examined."""
+def test_html_is_read_from_its_styles_and_its_linked_sheets_inside_the_folder_only(tmp_path):
+    """R36 (owner, 2026-11-11: "go with option 1"): an HTML file is read from its own styles and the style sheets it links in
+    the input folder; a sheet outside it, or at a URL, is never read; no check is skipped; the run says once that how a
+    page looks once drawn is not examined."""
     import importlib.util
     spec = importlib.util.spec_from_file_location("walkdown_s02_run_html", RUN)
     runner = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runner)
     root = tmp_path / "in"
-    root.mkdir()
-    (root / "a.html").write_text("<p>Shown words.</p><p style='display:none'>Hidden words here.</p>",
-                                 encoding="utf-8")
-    runner.optional_tools = lambda: {"tesseract": True, "tesseract_detail": "",
-                                     "playwright": False, "playwright_detail": "playwright not installed"}
+    (root / "site").mkdir(parents=True)
+    (tmp_path / "outside.css").write_text(".far { display: none }", encoding="utf-8")
+    (root / "site" / "s.css").write_text(".gone { display: none }", encoding="utf-8")
+    (root / "site" / "a.html").write_text(
+        '<link rel="stylesheet" href="s.css"><link rel="stylesheet" href="../../outside.css">'
+        '<link rel="stylesheet" href="https://example.invalid/x.css">'
+        "<p>Shown words.</p><p class='gone'>Sheet hidden words.</p><p class='far'>Outside words.</p>"
+        "<p style='position:absolute;left:-9999px'>Far away words.</p>", encoding="utf-8")
     doc = runner.build_report(root)
     fs = [f for f in doc["findings"] if f["check"] == "read.divergence"]
-    assert [f["carrier"] for f in fs if "skipped" not in f] == ["display:none"]
-    [skip] = [f for f in fs if "skipped" in f]
-    assert skip["carrier"] == "rendered" and skip["skipped"] == "html not drawn (playwright not installed)"
-    assert doc["reading"]["html"] == {"files": 1, "drawn": 0}
-    assert "HTML as a browser draws it (playwright not installed)" in doc["reading"]["not_examined"]
+    assert not any("skipped" in f for f in fs)
+    assert sorted((f["carrier"], f["text"]) for f in fs) == [("display:none", "Sheet hidden words."),
+                                                            ("off-page", "Far away words.")]
+    assert doc["reading"]["html"] == {"files": 1, "css_files": 1}
+    assert any(x.startswith("not examined: how a web page looks once drawn (1 HTML file)")
+               for x in doc["reading"]["not_examined"])
 
 
 def hidden_rows(tmp_path, name, body):
-    """The divergences of one file, as (carrier, line, end_line), read with no browser and no OCR."""
+    """The divergences of one file, as (carrier, line, end_line)."""
     import importlib.util
     spec = importlib.util.spec_from_file_location("walkdown_s02_run_reach", RUN)
     runner = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(runner)
-    runner.optional_tools = lambda: {"tesseract": True, "tesseract_detail": "",
-                                     "playwright": False, "playwright_detail": "playwright not installed"}
     root = tmp_path / "in"
     root.mkdir()
     (root / name).write_text(body, encoding="utf-8", newline="\n")

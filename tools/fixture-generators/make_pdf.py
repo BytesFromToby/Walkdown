@@ -2,7 +2,7 @@
 """WALKDOWN FIXTURE GENERATOR :: class 11 PDF text-layer != render.
 Inert. Produces class11-pdf-hidden.pdf: visible black benign text plus WHITE
 (invisible-on-white) text carrying an instruction. Reading A (text layer /
-pdftotext) sees both; reading B (render / OCR) sees only the black. Expected
+pdftotext) sees both; reading B (what is painted) sees only the black. Expected
 divergence = the white line. Hosts are .invalid; nothing runs.
 Regenerate: python make_pdf.py"""
 from reportlab.pdfgen import canvas

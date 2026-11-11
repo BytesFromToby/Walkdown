@@ -68,7 +68,10 @@ What does **not** establish a leg, and why:
 ### Install grants
 
 One `cap.grant` finding per grant kind **present**, `file` and `line` null. An
-absent grant emits nothing.
+absent grant emits nothing. `sources` counts the grant's evidence by where it comes from, before the evidence is
+capped: `settings` (an entry from `02.1-inventory`: a tools list, a hook, a description, an MCP server, an entry point)
+and `wording` (an entry from `02.4-phrases`). The report lists a grant with no `settings` entry as what the wording asks
+for, not as an install grant (R31).
 
 | `grant` | Present when |
 |---|---|
@@ -148,7 +151,7 @@ visible lines never pair.
 | Check | One finding per | Fields |
 |---|---|---|
 | `cap.leg` | trifecta leg, always three (`file`, `line` null) | `leg`: `private-data`, `untrusted-content`, `external-comms`; `present`: bool; `evidence` |
-| `cap.grant` | install grant present (`file`, `line` null) | `grant`: `exec-at-load`, `context-injection`, `persistence`, `network`, `elevated`; `evidence` |
+| `cap.grant` | install grant present (`file`, `line` null) | `grant`: `exec-at-load`, `context-injection`, `persistence`, `network`, `elevated`; `evidence`; `sources` (`settings`, `wording`: evidence counts, R31) |
 | `cap.injection` | path by which text reaches context at load | `mechanism`: `description` or `hook`; `event` (hooks); `bytes`: int or null; `basis`: `exact`, `estimate`, `unknown` |
 | `cap.load-bytes` | hook config (`file` the config), or run (`file` null) when none injects at load | `bytes`; `basis`; `unknown_parts` |
 | `cap.posture` | agent or command definition | `tools`; `posture`: list; `least_privilege`: bool; `description` |
@@ -272,8 +275,8 @@ Added 2026-10-07.
 
 Finds images a model is pointed at. A model with vision reads text in an image, instructions
 included, while a person skimming the repository sees a picture. An image reaches the model
-only when a file the model reads points at it, so the reference is the signal; OCR (`02.2-reader`)
-and a model read of the pixels are extra detail. This replaces "every image needs OCR"
+only when a file the model reads points at it, so the reference is the signal. The text drawn in an image is not
+examined since R35 (2026-11-11): `02.2-reader` lists the image as unread, so the pair is what says a model reads it. This replaces "every image needs OCR"
 as the question the report asks.
 
 ### Inputs
@@ -289,8 +292,8 @@ file with audience `model` or `subagent` references with a static reference or a
 (`kind: static`, or `load: true`). Fields:
 
 - `file`: the image; `from`: the first referencing file (sorted); `froms`: every one.
-- `read`: what `02.2-reader` got of its text: `svg` (read from the source), `ocr-text` (OCR found
-  text), `ocr-empty` (OCR ran, found none), `unread` (with `reason`, e.g. OCR not installed).
+- `read`: what `02.2-reader` got of its text: `svg` (read from the source), `unread` (with `reason`: since R35 every
+  other image, "the text drawn in it is not examined"); `ocr-text` and `ocr-empty` in runs made before R35.
 - `evidence`: one row per referencing file and line.
 
 An image is `inv.file` with an image extension (`IMAGE_EXTS`, SVG included) or an `image/`
@@ -518,7 +521,8 @@ finding:
   `present` is true exactly when `evidence` is non-empty.
 - `grants(reports, leg_findings)`: one `cap.grant` per grant kind with
   non-empty evidence, in `GRANTS` order:
-  `{"check": "cap.grant", "file": null, "line": null, "grant", "evidence"}`.
+  `{"check": "cap.grant", "file": null, "line": null, "grant", "evidence", "sources"}`, `sources` =
+  `{"settings": n, "wording": n}` over the whole evidence (`sources(ev)`).
   `network` takes the `external-comms` leg's evidence plus its own rule.
 
 ### Must never
@@ -887,6 +891,10 @@ every leg and grant.)
 - 2026-10-29: restructure step 7b: the reports are keyed by stage name, an evidence entry's `stage` is the stage's name,
   and the `cap.testdata` counts `stage1` and `stage4` are `inventory_set_aside` and `phrases_set_aside`.
 - 2026-10-30: M9 slice B: this step writes its notes through `stagenote`, so a note that names a file or a path from the repository is one line, and a name with a line break cannot pass for a note of its own.
+- 2026-11-07 (owner, R31): `cap.grant` carries `sources`, its evidence counted by where it comes from (the settings or the
+  wording), before the cap. An outside tester's quoted example line ("disable the safety checks", in a file of examples)
+  made `elevated` an install grant with no setting behind it; the report now says the wording asks for it
+  (`tests/test_legs.py::test_a_grant_counts_its_evidence_from_the_settings_and_from_the_wording`).
 
 ## Stage history
 

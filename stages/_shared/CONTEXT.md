@@ -35,7 +35,7 @@ Each module does one thing for several steps, so it has one home:
 - The run folder: `layout.py` (where things live), `record.py` (`data/run.json` and the rule for the
   previous run), `validate.py` (the grader's results as validation stamps, cached in `.cache/stamps.json`).
 - For the report: `rates.py` (base rates), `termdiff.py` (what changed between two runs' `terms`
-  blocks), `playwright_check.py` (whether Playwright and its Chromium are here).
+  blocks).
 
 Never: import a stage's code (`runner.py` and `earlier_steps.py` start stages as subprocesses); hold data
 (it goes in `Library/`); open a file of the audited repository anywhere but `readtext.read_row` and
@@ -58,5 +58,5 @@ step's fixtures and grader stamp (`LOG.md`) fail if a shared rule moves a findin
 
 `specs/shared.SPEC.md`: one section per module, in alphabetical order (`audience`, `back_claude`, `calllog`,
 `common_lines`, `coverlines`, `earlier_steps`, `jevkey`, `layout`, `library`, `limitnote`, `linetext`, `options`, `packages`,
-`pipeline`, `playwright_check`, `probability`, `rates`, `readtext`, `record`, `runner`, `secretmask`, `softdata`, `stagelist`,
+`pipeline`, `probability`, `rates`, `readtext`, `record`, `runner`, `secretmask`, `softdata`, `stagelist`,
 `stagenote`, `steperror`, `termdiff`, `textmodel`, `toolversion`, `upstream`, `usage`, `validate`).

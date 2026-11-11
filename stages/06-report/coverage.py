@@ -2,10 +2,11 @@
 specs/report.SPEC.md, coverage.
 
 - `examined` (white): the checks read the file's text, because it decodes as text, or because the reader step drew text out
-  of it (a PDF, a Word document, an image it read by OCR).
+  of it (a PDF, a Word document).
 - `archive` (yellow): an archive or a zip-based document the inventory looked inside for programs, compiled Python, and
   Office macros; the text inside it was not read.
-- `not` (red): anything else. No tests are run on it: Walkdown did not read it, and a person has to open it.
+- `not` (red): anything else. No tests are run on it: Walkdown did not read it, and a person has to open it. An image is
+  here since R35 (2026-11-11): its metadata is read, the text drawn in it is not examined (its reason says so).
 
 A file type is its extension, lowercased. The tiers are bookkeeping drawn from what the steps recorded (`02.1-inventory`'s
 file rows and `archive` flags, `02.2-reader`'s unread files), not a judgment of the files. Symlinks are left out: they are
@@ -138,7 +139,17 @@ def section_html(r, files: bool = False) -> str:
         lis.append(f'<li class="tier t-not"><b>{LABEL["not"]}</b>: {_esc(types_line(tiers["not"]))}'
                    f'{_esc(loads_phrase(tiers["not"]))}. {NOT_NOTE}'
                    + (_files_html(tiers["not"], by_file) if files else "") + "</li>")
-    return '<h2>What Walkdown examined</h2><ul class="rows tiers">' + "".join(lis) + "</ul>"
+    return '<h2>What Walkdown examined</h2>' + tier_bar(c) + '<ul class="rows tiers">' + "".join(lis) + "</ul>"
+
+
+def tier_bar(c) -> str:
+    """R33: the three tiers as one bar, white, yellow, red, each segment as wide as its share of the files; the rows under
+    it carry the counts and names. A tier with no files has no segment."""
+    total = sum(c.values())
+    segs = "".join(f'<span class="tseg t-{k}" style="flex-grow:{c[k]}" title="{LABEL[k]}: {c[k]:,}"></span>'
+                   for k in ("examined", "archive", "not") if c[k])
+    return (f'<div class="tierbar" role="img" aria-label="{total:,} files: {c["examined"]:,} examined, '
+            f'{c["archive"]:,} archives, {c["not"]:,} not tested">{segs}</div>')
 
 
 def full_lines(r) -> list[str]:

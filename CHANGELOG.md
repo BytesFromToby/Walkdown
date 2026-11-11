@@ -4,15 +4,35 @@ Each version lists what a user would notice. The version is in `VERSION`, printe
 `python walkdown.py --version`, and recorded in every run's LOG.md with the git commit
 ("+modified" when the code had uncommitted changes).
 
-## Unreleased
+## 0.4.1 (2026-11-11)
 
+- **The report pages, redesigned.** `summary.html` asks four questions at a glance (Size and Shape; is it transferable to
+  other machines; anything to be careful about; does it ask only for the tools it needs), then Misalignment: where its
+  skills differ from the Agent Skills standard. A card says only what was found; what a check did not find is in a closed
+  "Not found" fold at the end of its section on `details.html`, and the brief leaves out counts of zero. The careful card
+  lists each kind of place with a colour, red, then yellow, then blue, and says how many more lines `full.md` holds that the
+  summary does not list. Install grants say what the settings grant apart from what only the wording asks for. Every
+  pattern was measured against ordinary repositories, and those with no hit there now reach the summary. The last section
+  of `details.html` is "What this run covered"; every section has its own icon, and on a wide screen `details.html` keeps
+  the list of sections down the left.
+- **Walkdown installs with pip and nothing else.** Tesseract (OCR) and Playwright (a browser for HTML) are no longer used,
+  and neither is the PDF page renderer, so a run reads the same on every machine and the step that reads files is never
+  marked incomplete for a missing tool. Two things follow, and each run says them under "What this run covered" when the
+  repository has such files: the text drawn inside images, and on PDF pages that are only a picture, is not examined (an
+  image's metadata is still read, and the image is listed among the files no tests are run on); and how a web page looks
+  once drawn (one element over another, clipping that depends on where things land, text over a background image) is not
+  examined. To make up for most of what the browser found, the HTML reader now reads the repository's own linked style
+  sheets (never a URL), applies `@media` rules for one 1280 x 800 screen, and reports text a style sheet adds with
+  `::before` or `::after`, text under 2 px, text placed off the page, clipped away, or in a box with no size, and text
+  inside a closed `<details>`. If you installed Tesseract, `pytesseract`, Playwright, or its Chromium for Walkdown, they can
+  go.
 - **Base rates measured again** (`Library/baserates.json`), on the same four audited repositories at the same pins, so only
   the patterns changed. The six patterns added since 0.4.0 hit none of them, so "rare: in 0 of 4" is now a measurement where
   it was the reading of a missing row. One pattern moves: `H.report-only` from uncommon to rare (the lines it hit in one
   repository no longer match since it was narrowed). Five other counts move by a few lines.
 - **Every report says what Walkdown examined, in three colours.** Walkdown will not read every kind of file, so the
   summary, `details.html`, `full.md`, and the brief now sort the files by type: white for what the checks read (text,
-  and PDFs, Word documents, and images the reader drew text out of), yellow for archives (looked inside for programs
+  and PDFs and Word documents the reader drew text out of), yellow for archives (looked inside for programs
   only), and red, "No tests are run on these file types", for everything else, with how many of them the AI loads.
   `details.html` names the yellow and red files, and `full.md` every one with why. "Unknown file type" is gone from
   "Files worth a look" (its files are red), and the archive row there says what was checked. The brief's first line

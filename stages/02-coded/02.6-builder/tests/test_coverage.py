@@ -48,9 +48,7 @@ def earlier_for(root, monkeypatch, graph=True):
     """The earlier steps' output the builder reads, made in this process."""
     inv = load("walkdown_s06_cov_inv", CODED / "02.1-inventory" / "run.py").build_report(root)
     reader = load("walkdown_s06_cov_reader", CODED / "02.2-reader" / "run.py")
-    monkeypatch.setattr(reader, "optional_tools", lambda: {"tesseract": False, "tesseract_detail": "tesseract not installed",
-                                                          "playwright": False, "playwright_detail": "playwright not installed"})
-    rd = reader.build_report(root)
+    rd = reader.build_report(root)  # the same on every machine: no installed program changes it (R35, R36)
     gr, g = load("walkdown_s06_cov_graph", CODED / "02.3-graph" / "run.py").build_report(root, inv)
     ph_mod = load("walkdown_s06_cov_phrases", CODED / "02.4-phrases" / "run.py")
     monkeypatch.setattr(ph_mod.secret_scan, "_detect_secrets", lambda root_, rels, skips=None: [])
