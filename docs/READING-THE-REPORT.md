@@ -32,9 +32,9 @@ pages. The marks you saved on the earlier run still carry over to the new one.
 
 ## A suggested reading order
 
-1. **`summary.html`**: the eight answers.
+1. **`summary.html`**: the four questions and Misalignment.
 2. **`review.html`**, to walk the places one at a time and mark each.
-3. **`details.html`** for everything behind an answer, and for what this run did not check.
+3. **`details.html`** for everything behind an answer, and for what this run covered.
 4. **`full.md`** for any point you want to check.
 
 ## summary.html
@@ -99,26 +99,22 @@ the three system boxes, and one dot per place found, by colour.
      4 bytes of English per token. When an earlier run of the same repository exists, a line says
      what changed since then.
 2. **Is this transferable to other machines?** Two parts:
-   - **Operating systems.** Three boxes first, Linux, Windows, and Mac: blue when nothing found trips
-     that system, a yellow outline and a count when something does. Then programs it expects but never says to install, add-ons
+   - **Operating systems.** A box first for each of Linux, Windows, and Mac that something found trips, with a yellow
+     outline and a count; a system nothing trips has no box (the "Not found" fold on `details.html` names it). Then
+     programs it expects but never says to install, add-ons
      its scripts use but never list, and places that tie it to the computer it was built on: personal
      paths, scripts saved with Windows line endings, commands for one system only, backslashes in
      paths, scripts not marked as runnable, `python` where many computers have only `python3`, and
      file names that match only when capital letters are ignored.
-   - **Other AI tools.** A box per tool first, blue when it finds files here. Which of seven AI tools (Claude Code, Codex,
+   - **Other AI tools.** A blue box first for each tool that finds files here; a tool that finds none has no box. Which
+     of seven AI tools (Claude Code, Codex,
      Gemini CLI, Cursor, GitHub Copilot, Windsurf, and others that read `AGENTS.md`) find its files
      where they sit, copies kept for two tools that say different things, and features only one tool
      understands. Run with `--hosts claude,codex` (any of `claude`, `codex`, `gemini`, `cursor`,
      `copilot`, `windsurf`, `agents-md`) and the label counts what the tools you named are missing.
      Which tools to support is yours. What each tool reads is a dated list in
      `Library/hosts.yaml`.
-3. **Does it ask only for the tools it needs?** Each skill's, command's, and helper's own words,
-   over the files it reads, against the tools it is allowed: tools allowed and never used, work it
-   asks for that no allowed tool can do, helpers with no tools list (they get every tool), read-only
-   claims a tool beside them contradicts, steps that repeat "until it works" with no stated limit,
-   and hooks that run on every message or action. The cue lists are in `Library/asks.yaml`
-   and `Library/fit.yaml`.
-4. **Anything to be careful about?** The places in six fixed security kinds, always in this order:
+3. **Anything to be careful about?** The places in six fixed security kinds, always in this order:
    1. **Hidden text that reads like an instruction**: text the AI receives and a person does not
       see, which also matches the wording of an instruction. The summary quotes what it says, up
       to 80 characters: the only text from the repository on this page.
@@ -139,16 +135,25 @@ the three system boxes, and one dot per place found, by colour.
    The first red lines sit under **Passwords, keys, and secrets**: a saved password, key, or token,
    wording that gathers secrets, and wording that asks for one, ending "Values are not shown in these
    reports." Each line gives its count and its first place. Then how many more places are only wording that shapes
-   how the AI decides, and how many places you have marked so far, with a link to the review page.
+   how the AI decides, how many more lines `full.md` holds with risky wording that this page does not list (their
+   patterns turn up in ordinary repositories too, so they are not places; section 4 has them), and how many places you
+   have marked so far, with a link to the review page. When nothing was found, the card is its question alone.
    What it can do is at the top of the page (above). Model reads are never counted here.
 
-   **Finished and up to date**, a heading at the end of this card with its own label: "To do" marks and placeholders in what ships, claims tied to
+   **Finished and up to date**, a heading at the end of this card with its own label, when it found something: "To do"
+   marks and placeholders in what ships, claims tied to
    a date ("before August 2025, use the old API" becomes wrong), AI model versions fixed in place
    (a fact: a name like "sonnet" follows the newest version), and older tool names. The summary
-   shows no line of the repository's here; `details.html` quotes each one.
+   shows no line of the repository's here; `details.html` quotes each one. With nothing found it has no heading.
+4. **Does it ask only for the tools it needs?** Each skill's, command's, and helper's own words,
+   over the files it reads, against the tools it is allowed: tools allowed and never used, work it
+   asks for that no allowed tool can do, helpers with no tools list (they get every tool), read-only
+   claims a tool beside them contradicts, steps that repeat "until it works" with no stated limit,
+   and hooks that run on every message or action. The cue lists are in `Library/asks.yaml`
+   and `Library/fit.yaml`.
 
 **Misalignment**, the last card: "Things that are not standard but are not security flaws.", with the number of
-issues, and nothing to open; its **Details →** opens the section on `details.html`, which holds the rest: where its
+issues (the card is its title alone when there are none), and nothing to open; its **Details →** opens the section on `details.html`, which holds the rest: where its
 skills differ from the
 [Agent Skills standard](https://agentskills.io/specification), the open format for skills that many AI tools read
 (developed by Anthropic and released as an open standard). Only skills are looked at; the standard does not cover
@@ -169,8 +174,8 @@ When a model read got an answer for some passages and none for others, one line 
 (it did not run, it did not pass its fixture check, or a model read got no answer for any passage), a
 line at the bottom names it. A step that did not work can miss places, so the page may show fewer
 than there are; a model read adds no place to this page, so that is left out when the model read is the only
-step that did not work. When Walkdown found nothing, question 7 says so too: "Not every step worked, so it
-may have missed some." Steps that ran and whose fixture check could not be made are said in a sentence of their
+step that did not work. When Walkdown found nothing, the careful card says so too: "Not every step worked, so
+Walkdown may have missed some." Steps that ran and whose fixture check could not be made are said in a sentence of their
 own ('8 steps could not be checked against their fixtures, so a "none" from them is not measured.'), which does not say a
 step failed. When a step did not run at all, it never says "found none". A run you
 stopped with `--until` says it stopped after a step as you asked, and the steps after it are not
@@ -184,6 +189,7 @@ leaves the judgment to you, and finding nothing does not mean a repository is sa
 ## details.html
 
 The same four questions, each opening with the same label and answer, then everything behind it, then Misalignment.
+Each section ends with a closed **Not found** fold: what each of its checks did not find, one line each.
 Every question, and every part inside it, is folded and closed when you open the page; tap one to open it. A bar
 under the header jumps to each question. A part you reach from a Details button on the summary opens by itself, and
 every open fold has a **← Summary** button back to the summary.
@@ -215,8 +221,8 @@ section 1.
 2. **Other machines**: the other-systems part, the places by file, the programs it expects and whether it says to
    install each, and every place by kind; then the other-AI-tools part, every tool with the files here it reads, the
    skills to install, every copy kept for two tools, and every one-tool feature by kind.
-3. **Tools**: every place by kind, and each helper with its tools.
-4. **Careful**: below; then **Finished and up to date**, every place by kind, with its line quoted.
+3. **Careful**: below; then **Finished and up to date**, every place by kind, with its line quoted.
+4. **Tools**: every place by kind, and each helper with its tools.
 
 After the four questions, **Misalignment**: the standard and its six settings, then a fold for each Skill Formatting
 line with every place, and one for the skills too alike.
@@ -225,7 +231,9 @@ line with every place, and one for the skills too alike.
 
 **What it can do** is at the top of `details.html`, as on the summary: the three boxes, ticked or crossed; how many of
 the three this one does and what installing it allows (runs commands by itself, adds its own text before you type, and so
-on); and, under "Why it can do these", why each box is ticked. The details page follows the summary's order throughout. The
+on), and apart from it what only its wording asks for; under "Why it can do these", why each box is ticked; then
+**What installing it grants**, each grant its settings give with the reasons (descriptions that are always loaded, a
+hook), and **What its wording asks for**: a grant no setting gives, with how many lines ask for it and where. The details page follows the summary's order throughout. The
 three boxes are what Simon Willison calls the
 [lethal trifecta](https://simonw.substack.com/p/the-lethal-trifecta-for-ai-agents):
 
@@ -247,10 +255,11 @@ characters spell).
 
 **Text hidden from people.** Text the AI receives that a person reading the file on screen would
 not see: how many places, by how they hide (hidden comments, invisible characters, text colored
-like its background, image descriptions, and the like), by file, and every one. It also counts the
-other direction for images and PDFs: text inside an image, or drawn on a PDF page but missing from
-the PDF's text layer (a picture of an instruction), which a model that reads the page as an image
-sees. A location in a PDF, DOCX, or image reads "file (extracted text, page N, line M)": the line
+like its background, image descriptions, and the like), by file, and every one. In a web page that includes text placed
+off the page, clipped away, in a box with no size, under 2 px, or inside a closed `<details>`, read from the page's own
+styles and the style sheets it links; and the other direction, text a style sheet adds with `::before` or `::after`,
+which a person sees and the model never receives. The text drawn inside images, and on PDF pages that are only a
+picture, is not examined. A location in a PDF or DOCX reads "file (extracted text, page N, line M)": the line
 in the text Walkdown read from it, since such a file has no lines of its own. Then lines that hold
 invisible characters or letters from another alphabet that look like plain ones, counted by kind;
 typography (curly quotes, dashes, ellipses, non-breaking spaces, symbols) is left off this page,
@@ -295,9 +304,12 @@ repository, Walkdown's search terms, or Walkdown's matching code.
 ### What this run covered
 
 Last on the page: a step that did not work, the optional model reads when they did not run, or
-that every step ran and passed its own checks. Then every limit of this run, folded: checks
-skipped (usually an optional tool not installed), and the limits of every run (static only, English only, MCP servers read in Python, JavaScript, TypeScript, and Go only,
-patterns can miss).
+that every step ran and passed its own checks. Then any checks skipped in this run, and under **Not examined, in the
+files this repository has:** what Walkdown does not look at in the kinds of file this repository has: the text drawn
+inside images, the text on PDF pages that are only a picture, and how a web page looks once drawn (one element over
+another, clipping that depends on where things land, text over a background image). Then every limit of this run,
+folded: the limits of every run (static only, English only, MCP servers read in Python, JavaScript, TypeScript, and Go
+only, patterns can miss).
 The files no check read are one line there, "Files the checks did not read: ... (What Walkdown examined, at the top)": the
 yellow and red rows at the top of the page name them, so this list does not count them again (since 2026-11-04).
 After that, in a fold of its own, "Checks that found nothing (N)": what the checks that found nothing looked at, a line for each step,
@@ -406,7 +418,7 @@ Every finding, grouped by section:
 | Section | Holds |
 |---|---|
 | 1 What ships | entry points, the structural census, descriptions, tool grants, hooks, manifests |
-| 2 What the model actually reads | divergences (raw against rendered, and PDF pages as drawn against their text layer), lines changed by folding, non-Latin runs, passages in another language, metadata, unread files |
+| 2 What the model actually reads | divergences (the raw text against what a page shows), lines changed by folding, non-Latin runs, passages in another language, metadata, unread files |
 | 3 What loads what | entry points used, orphans, load-only files, dynamic loads, components on disk a manifest leaves out, dangling references, depth |
 | 4 What the text asks for | every hit, by group (4a to 4d) and check, then the tables: endpoints, guarded actions, definitions, conflicts, safety words; and the builder checks on triggering, other AI hosts, and what is current and clean |
 | 5 What this touches | each trifecta leg with every citation, install grants with evidence (what the settings grant, then what only the wording asks for), bytes in context at load, agent posture, pairs; and the builder checks on what it costs and what ships, and whether the tools fit |

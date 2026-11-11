@@ -256,8 +256,9 @@ data). **Rare** means in none of them, **uncommon** in one, **common** in two or
 pattern means more when it hits. The table is `Library/baserates.json`, rebuilt as the
 corpus grows (`tools/baserates.py`); the repository being audited is never counted against itself.
 
-**Worth a closer look.** Rare patterns, the shape of sending data out (a private source, a
-sending verb, and a destination in one line), and credentials named on a line that sends, in
+**Worth a closer look.** The patterns that hit nothing in ordinary repositories (each was measured on seven before it
+joined the summary's list; one that hits there stays in `full.md` with its count), the shape of sending data out (a
+private source, a sending verb, and a destination in one line), and credentials named on a line that sends, in
 model-read files (listed as places to check); hosts the
 docs never name; prohibited-tier actions with no confirmation step; a safety word redefined; a
 word defined two different ways.
@@ -268,8 +269,9 @@ measured (REPORTING rule 2: a count comes with its benign share, so the report s
 none).
 
 **In the report.** Section 4 of `full.md`, "What the text asks for": counts per group in the status line, split by
-audience, and every hit grouped by check. Those hits and the part 2 highlights are places
-to check, listed under Risky asks on `details.html` and walked on `review.html`.
+audience, and every hit grouped by check. A hit whose pattern is on the summary's list is a place to check, under
+"Anything to be careful about" on both pages and walked on `review.html`; the careful card says how many more lines
+section 4 holds that the summary does not list.
 
 ---
 
@@ -502,8 +504,9 @@ phrase hits in text a model reads.
 
 **Why.** A zero is only as good as what was looked at.
 
-It lists: steps that did not finish or did not pass validation; checks skipped for a missing
-optional tool; files unread or not scanned; the test-data rule and how much it set aside; and
+It lists: steps that did not finish or did not pass validation; checks skipped; what the reader does not examine in
+the kinds of file this repository has (the text drawn inside images, the text on PDF pages that are only a picture, how a
+web page looks once drawn); files unread or not scanned; the test-data rule and how much it set aside; and
 the standing limits (English only, static only, known shapes); and, for each model read that has
 passages with no answer, how many ("5 of 12 passages got no answer, after one retry"), the reasons
 counted, and the call log. Each step names its own skips in its output, and the report step gathers
@@ -511,12 +514,12 @@ them.
 
 **In the report.** Section 7 of `full.md`, "What this run covered" on `details.html`, and
 `data/limits.md`, all drawn from the check of the run's output (`data/05-qa.json`). A step that did not run or did not pass validation is also named at the
-bottom of `summary.html`, and in its headline when it found nothing. A missing optional tool is
-not named there. A model read in which no passage got an answer, even after the retry, is named as a
+bottom of `summary.html`, and in its headline when it found nothing. What the reader does not examine is a list of its
+own under "What this run covered", never a skipped check. A model read in which no passage got an answer, even after the
+retry, is named as a
 step that did not work, and the headline then says the coded checks are complete and the model read
 did not work: a model read never adds a security concern, so a missing one does not make the coded
-result less complete. (When a coded check was skipped for a missing tool, the headline says the coded
-checks ran, and that "What this run covered" names any skipped.) Each fact about a model read is
+result less complete. Each fact about a model read is
 said once on a page: the count and its reasons in section 7 and on the details page, and on the summary
 for a read that answered some.
 

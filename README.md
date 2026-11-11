@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml/badge.svg)](https://github.com/BytesFromToby/Walkdown/actions/workflows/ci.yml)
 
-**Status: alpha, version 0.4.0** ([CHANGELOG](CHANGELOG.md)). It runs end to end and produces a report you can read. Parts of it are
+**Status: alpha, version 0.4.1** ([CHANGELOG](CHANGELOG.md)). It runs end to end and produces a report you can read. Parts of it are
 experimental, and they are marked as such below.
 
 Walkdown examines the instruction layer of AI skills and agents: the SKILL.md files, agent
@@ -14,10 +14,11 @@ run with your permissions. It answers two questions, each answer cited to a file
 
 Ordinary security scanners read code. Here the payload is English, so they miss it.
 
-For someone building a skill or agent, the same reading answers the builder's questions too: will
-it trigger, what does it cost in an AI's context (against the context you expect), what do you
-ship that nothing uses, will it run on someone else's machine, is it ready for AI hosts other
-than Claude Code, do the tools it grants fit what its words ask for, and is it current and clean.
+For someone building a skill or agent, the same reading answers the builder's questions too: what
+does it cost in an AI's context (against the context you expect), what do you ship that nothing
+uses, will it run on someone else's machine, is it ready for AI hosts other than Claude Code, do the
+tools it grants fit what its words ask for, is it current and clean, and where do its skills differ
+from the Agent Skills standard.
 
 Walkdown reports what an artifact *can* do and where that is written. It does not guess at the
 author's intent, it gives no score, and it reaches no verdict. You read the evidence and decide.
@@ -51,9 +52,9 @@ One command runs every step and writes a run folder:
 RepoResults/<name>/<date>_<hash7>/
   summary.html    one page, four questions at a glance: its size and shape (what comes in the
                   package, how much of the AI's memory it uses), is it transferable to other
-                  machines (operating systems, other AI tools), does it ask only for the tools
-                  it needs, anything to be careful about (finished and up to date is part of
-                  it); then where its skills differ from the Agent Skills standard (Misalignment)
+                  machines (operating systems, other AI tools), anything to be careful about
+                  (finished and up to date is part of it), does it ask only for the tools it
+                  needs; then where its skills differ from the Agent Skills standard (Misalignment)
   details.html    the same four questions and Misalignment with everything behind them, every place folded
   review.html     one card per place to check, one at a time, for you to mark
   full.md         every finding, with file and line
@@ -82,7 +83,7 @@ Each step has a folder under `stages/` and a name the reports use.
 |---|---|---|
 | `01-intake` | | Which copy is audited? A folder is read in place, a URL is cloned or an earlier clone updated |
 | `02-coded/02.1-inventory` | What ships | What ships? Files, formats, hooks, agents, manifests, MCP servers |
-| `02-coded/02.2-reader` | What the model actually reads | What does the model actually receive? Hidden text, invisible characters, rendered vs raw, text in images and on PDF pages, text in another language |
+| `02-coded/02.2-reader` | What the model actually reads | What does the model actually receive? Hidden text, invisible characters, what a page shows against its raw text, metadata, text in another language (the text drawn in images is not examined) |
 | `02-coded/02.3-graph` | What loads what | What loads what? Entry points, references, files nothing names, components a manifest leaves out |
 | `02-coded/02.4-phrases` | What the text asks for | What does the text ask for? About 130 patterns for reaching out, taking the wheel, changing the environment, talking to the human |
 | `02-coded/02.5-capability` | What this touches | What does installing it grant? The three legs of Simon Willison's lethal trifecta, install grants, pairs worth reading |
@@ -219,19 +220,19 @@ with what ran, with every gap named on the pages and in section 7:
 .venv/bin/python walkdown.py continue RepoResults/<name>/<run>
 ```
 
-or fix the cause (a missing key, say) and audit the repository again. A check skipped for a missing optional tool,
-the steps a `--until` stop left out, and a model read that answered some passages do not hold a run.
+or fix the cause (a missing key, say) and audit the repository again. The steps a `--until` stop left out, and a model
+read that answered some passages, do not hold a run.
 
 A URL is cloned into `ReposToExamine/<repo>` (running it again updates that clone to the
 latest commit; `--keep` audits it as it is, and `--fresh` clones it again). A folder link clones
 the repository at that branch and audits only that folder. A repository that is not there, or is
 private, stops at once: Walkdown never asks for a login. A folder is examined where it is. The run
 lands in `RepoResults/<repo>/`, and the command ends with a short brief (`brief.md`) in the summary
-page's terms: how many skills, commands, and agents it has and how many places break a host rule,
-the tokens it takes every session and at its largest, the files not used at run time, what it
-needs and how much of that is not declared, how many AI hosts have their files here, tools granted and never used, unfinished text and pinned model IDs, the
-trifecta legs, the security concerns by kind, whether any step failed its fixture checks, and the paths to the
-reports. Open `summary.html` first.
+page's terms: the tokens it takes every session and at its largest, the files not used at run time, what it
+needs and how much of that is not declared, how many AI hosts have their files here, tools granted and never used,
+unfinished text and pinned model IDs, where its skills differ from the Agent Skills standard, the trifecta legs, what
+installing it grants and what only its wording asks for, the security concerns by kind, whether any step failed its
+fixture checks, and the paths to the reports. A count of none is left out. Open `summary.html` first.
 
 ### Version drift
 
@@ -350,7 +351,7 @@ fixtures are unchanged (LOG.md says when it was measured); `--revalidate` measur
   [docs/MODEL-ACCURACY.md](docs/MODEL-ACCURACY.md).
 - **Secrets are found, never shown.** A line that looks like a committed secret is reported by
   location; its value is not shown in the report, and a model read does not send that line. The scan can miss a key, and one kind
-  of flagged line can still show one: [Reading the report](docs/READING-THE-REPORT.md), under "Passwords and keys".
+  of flagged line can still show one: [Reading the report](docs/READING-THE-REPORT.md), under "Passwords, keys, and secrets".
 
 ## What it is not
 
@@ -358,7 +359,8 @@ Not a verdict, a score, or a certification. "Clean" means these checks found not
 not mean safe. Not a linter for forceful language: "YOU MUST" is common, recommended style.
 Not a judgment of authors: findings name files and lines, never people.
 
-The full statement is `pre-planning/CHARTER.md`.
+The full statement is the charter in the design notes (`pre-planning/`), which are kept private; the rules the build
+holds to are in [CLAUDE.md](CLAUDE.md).
 
 ## Layout
 
@@ -375,7 +377,7 @@ Library/          the tables, lists, and sources the steps look things up in (da
 tools/            the factory's tools: grader/ (runs a step on its fixtures and scores it),
                   compare_runs.py, baserates.py, specimen.py, fixture-generators/, model-eval/
 Fixtures/         fixture repositories per step; ANSWERS/ is read only by the grader
-pre-planning/     the design: charter, method, threat classes, reporting standard
+pre-planning/     the design notes: charter, method, threat classes, reporting standard (kept private)
 docs/             reading the report, how it works, what a run leaves, the structure map
 ReposToExamine/   your copies of repositories to audit (not in git)
 RepoResults/      audit runs (not in git)

@@ -5,7 +5,10 @@ build can be walked step by step and checked. They have the same numbered shape,
 boxes of each picture match the numbered sections of its map. A map changes nothing.
 
 - **Version 0.4.0** (2026-10-29), the restructured build, is first. Its picture is
-  [structure-map-0.4.0.png](structure-map-0.4.0.png).
+  [structure-map-0.4.0.png](structure-map-0.4.0.png). Version 0.4.1 (2026-11-11) keeps its shape and changes two
+  steps inside it: the report pages (four questions and Misalignment, "What this run covered"; the map's "eight
+  questions" are the 0.4.0 pages) and the reader, which installs nothing apart (no OCR program, no browser; its entry
+  below says so). What changed, in a user's words, is in the [CHANGELOG](../CHANGELOG.md).
 - **Version 0.3.1** (commit `815fe76`) follows it, as it was written, with the names of that
   version. Its picture is [structure-map.png](structure-map.png).
 
